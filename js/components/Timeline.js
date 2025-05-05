@@ -1,4 +1,26 @@
 const Timeline = () => {
+  const [timelineItems, setTimelineItems] = React.useState([]);
+  const [loading, setLoading] = React.useState(true);
+  
+  React.useEffect(() => {
+    const loadContent = async () => {
+      try {
+        const items = await ContentFetcher.fetchTimeline();
+        setTimelineItems(items);
+      } catch (error) {
+        console.error('Error loading timeline content:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadContent();
+  }, []);
+  
+  if (loading) {
+    return <div>Loading timeline...</div>;
+  }
+  
+  // Rest of your component remains the same...
   const styles = {
     section: {
       marginBottom: '80px'

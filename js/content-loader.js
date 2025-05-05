@@ -10,6 +10,29 @@ async function loadSectionContent() {
     );
 
     await Promise.all(loadPromises);
+    
+    // Update about content with CMS data
+    const aboutData = await ContentFetcher.fetchAbout();
+    if (aboutData) {
+        updateAboutSection(aboutData);
+    }
+}
+
+function updateAboutSection(data) {
+    const aboutContent = document.querySelector('#about-content #about');
+    if (aboutContent && data.short) {
+        // Update the short bio paragraph
+        const shortParagraph = aboutContent.querySelector('p');
+        if (shortParagraph) {
+            shortParagraph.innerHTML = data.short;
+        }
+        
+        // Update expandable content if exists
+        const expandableContent = aboutContent.querySelector('.expandable-content');
+        if (expandableContent && data.expandable) {
+            expandableContent.innerHTML = data.expandable;
+        }
+    }
 }
 
 async function loadSection(sectionId, url) {

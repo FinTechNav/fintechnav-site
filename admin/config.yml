@@ -1,0 +1,53 @@
+backend:
+  name: git-gateway
+  branch: main
+
+media_folder: "images"
+public_folder: "/images"
+
+local_backend: true
+
+collections:
+  - name: "timeline"
+    label: "Career Timeline"
+    folder: "content/timeline"
+    create: true
+    slug: "{{fields.slug}}"
+    identifier_field: "company"
+    fields:
+      - {label: "Company Name", name: "company", widget: "string"}
+      - {label: "URL", name: "url", widget: "string"}
+      - {label: "Date Range", name: "date", widget: "string"}
+      - {label: "Role", name: "role", widget: "string"}
+      - {label: "Description", name: "description", widget: "text"}
+      - label: "Highlights"
+        name: "highlights"
+        widget: "list"
+        field: {label: "Highlight", name: "highlight", widget: "string"}
+      - {label: "Conclusion", name: "conclusion", widget: "text", required: false}
+      - label: "Metadata"
+        name: "metadata"
+        widget: "object"
+        fields:
+          - {label: "Side", name: "side", widget: "select", options: ["left", "right"]}
+          - {label: "Z-Index", name: "zIndex", widget: "number"}
+      - {label: "File Name", name: "slug", widget: "string", hint: "File name (e.g., fiska)"}
+  
+  - name: "interests"
+    label: "Interests"
+    folder: "content/interests"
+    create: true
+    fields:
+      - {label: "Title", name: "title", widget: "string"}
+      - {label: "Content", name: "content", widget: "markdown"}
+  
+  - name: "about"
+    label: "About"
+    files:
+      - label: "About Page"
+        name: "about"
+        file: "content/about/content.md"
+        fields:
+          - {label: "Short Bio", name: "short", widget: "markdown"}
+          - {label: "Long Bio", name: "long", widget: "markdown"}
+          - {label: "Expanded Sections", name: "expandable", widget: "markdown"}

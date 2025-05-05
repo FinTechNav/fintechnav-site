@@ -8,6 +8,9 @@
     <!-- SEO Meta Tags -->
     <meta name="description" content="Brad Jensen - Product Management Executive in FinTech with 25+ years experience">
     <meta name="keywords" content="fintech, product management, payment processing, brad jensen">
+
+    <!-- Add after existing meta tags -->
+    <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
     
     <!-- PWA Manifest -->
     <link rel="manifest" href="/manifest.json">
@@ -118,5 +121,20 @@
 
     <!-- Finally load Timeline component -->
     <script type="text/babel" src="js/components/Timeline.js"></script>
+    <!-- Add before closing body tag -->
+    <script>
+        if (window.netlifyIdentity) {
+        window.netlifyIdentity.on("init", user => {
+            if (!user) {
+            window.netlifyIdentity.on("login", () => {
+                document.location.href = "/admin/";
+            });
+            }
+        });
+        }
+    </script>
+    
+    <!-- Add link to admin panel -->
+    <a href="/admin/" style="position: fixed; bottom: 20px; right: 20px; background: #c9a15f; color: white; padding: 10px 20px; border-radius: 5px; text-decoration: none; z-index: 1000;">Admin Panel</a>
 </body>
 </html>

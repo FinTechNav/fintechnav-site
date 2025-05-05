@@ -3,9 +3,13 @@
   "version": "1.0.0",
   "description": "Professional biography website",
   "dependencies": {
-    "@sendgrid/mail": "^7.7.0"
+    "@sendgrid/mail": "^7.7.0",
+    "gray-matter": "^4.0.3",
+    "glob": "^8.1.0"
   },
   "scripts": {
-    "build": "echo 'No build step necessary'"
+    "build": "node scripts/generate-content.js",
+    "migrate": "node scripts/migrate-content.js",
+    "dev": "python -m http.server 8000"
   }
 }
