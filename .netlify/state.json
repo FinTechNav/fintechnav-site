@@ -1,0 +1,21 @@
+{
+	"siteId": "0eb3dfa9-0f88-4696-a607-b8c6f159c1c5",
+	"geolocation": {
+		"data": {
+			"city": "Atlanta",
+			"country": {
+				"code": "US",
+				"name": "United States"
+			},
+			"subdivision": {
+				"code": "GA",
+				"name": "Georgia"
+			},
+			"timezone": "America/New_York",
+			"latitude": 33.7696,
+			"longitude": -84.3374,
+			"postalCode": "30307"
+		},
+		"timestamp": 1746405149600
+	}
+}
