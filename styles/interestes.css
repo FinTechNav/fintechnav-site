@@ -1,0 +1,38 @@
+/* Interests sections */
+.interests {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+}
+
+.interest-box {
+    width: 48%;
+    margin-bottom: 30px;
+    background-color: #3a3a3a;
+    padding: 25px;
+    border-radius: 6px;
+    opacity: 0;
+    transform: translateY(50px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+.interest-box h3 {
+    margin-top: 0;
+    color: #c9a15f;
+}
+
+.interest-box a {
+    color: #c9a15f;
+    text-decoration: none;
+}
+
+.interest-box a:hover {
+    text-decoration: underline;
+}
+
+/* Responsive design */
+@media screen and (max-width: 768px) {
+    .interest-box {
+        width: 100%;
+    }
+}

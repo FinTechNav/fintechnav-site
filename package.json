@@ -1,0 +1,11 @@
+{
+  "name": "brad-jensen-site",
+  "version": "1.0.0",
+  "description": "Professional biography website",
+  "dependencies": {
+    "@sendgrid/mail": "^7.7.0"
+  },
+  "scripts": {
+    "build": "echo 'No build step necessary'"
+  }
+}

@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brad Jensen | FinTech Navigator</title>
+    
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="Brad Jensen - Product Management Executive in FinTech with 25+ years experience">
+    <meta name="keywords" content="fintech, product management, payment processing, brad jensen">
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#c9a15f">
+    
+    <!-- Preconnect for performance -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="styles/interests.css">
+    <link rel="stylesheet" href="styles/contact.css">
+    
+    <!-- Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Person",
+      "name": "Brad Jensen",
+      "jobTitle": "VP of Product",
+      "worksFor": {
+        "@type": "Organization",
+        "name": "Fiska"
+      },
+      "url": "https://fintechnav.com",
+      "sameAs": [
+        "https://www.linkedin.com/in/brad-jensen-0624563",
+        "https://heavypourwine.com"
+      ]
+    }
+    </script>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>So, you've found my site, huh?</h1>
+        </div>
+    </header>
+    
+    <nav role="navigation" aria-label="Main navigation">
+        <div class="container">
+            <ul>
+                <li><a href="#about" aria-label="Navigate to About section">About</a></li>
+                <li><a href="#career" aria-label="Navigate to Career section">Career</a></li>
+                <li><a href="#music" aria-label="Navigate to Music section">Music</a></li>
+                <li><a href="#wine" aria-label="Navigate to Wine section">Wine</a></li>
+                <li><a href="#contact" aria-label="Navigate to Contact section">Contact</a></li>
+            </ul>
+        </div>
+    </nav>
+    
+    <main class="container">
+        <!-- Hero section -->
+        <section class="hero" role="banner">
+            <div class="hero-image">
+                <img src="brad-in-vienna.jpg" alt="Brad Jensen" loading="lazy">
+            </div>
+            <div class="hero-text">
+                <p class="hero-main-text fade-in">Great! I hope you'll stick around to learn a bit about me and what I do. By day, I'm a product management executive who's spent the last 25+ years navigating the world of FinTech. By night (and weekends), I'm a drummer, wine enthusiast, and husband to my amazing wife Dio. This is where my professional life and personal passions come together.</p>
+            </div>
+        </section>
+        
+        <!-- Include section content -->
+        <div id="about-content"></div>
+        <div id="career"></div>
+        <div id="interests-content"></div>
+        <div id="contact-content"></div>
+    </main>
+    
+    <footer>
+        <div class="container">
+            <div class="social-links">
+                <a href="https://www.linkedin.com/in/brad-jensen-0624563" target="_blank" rel="noopener noreferrer">LinkedIn</a>
+                <a href="https://heavypourwine.com" target="_blank" rel="noopener noreferrer">Wine Blog</a>
+            </div>
+            <p>Thanks for hanging out!</p>
+            <p>~ Brad</p>
+        </div>
+    </footer>
+
+    <!-- React libraries -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Framer Motion for animations -->
+    <script src="https://cdn.jsdelivr.net/npm/framer-motion@10.12.0/dist/framer-motion.umd.min.js"></script>
+    
+    <!-- Your scripts (non-module versions) -->
+    <script src="js/content-loader.js"></script>
+    <script src="js/animations.js"></script>
+    <script src="js/navigation.js"></script>
+    <script src="js/contact-form.js"></script>
+    <script type="text/babel" src="js/components/Timeline.js"></script>
+</body>
+</html>
