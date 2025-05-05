@@ -2,24 +2,38 @@
 <html>
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="robots" content="noindex" />
-  <title>Content Manager - Fiska</title>
-  <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+  <title>Content Manager</title>
 </head>
 <body>
   <script src="https://unpkg.com/@staticcms/app@^2.0.0/dist/static-cms-app.js"></script>
+  <script src="https://unpkg.com/@staticcms/core@^2.0.0/dist/static-cms-core.js"></script>
   <script>
-    const branch = window.location.hostname.includes('feature-netlify-cms') 
-      ? 'feature/netlify-cms' 
-      : 'main';
-      
-    window.CMS.init({
+    window.StaticCMS.init({
       config: {
         backend: {
-          name: 'git-gateway',
-          branch: branch
-        }
+          name: 'github',
+          repo: 'FinTechNav/fintechnav-site',
+          branch: 'main',
+          base_url: 'https://api.netlify.com',
+          auth_endpoint: 'auth'
+        },
+        media_folder: 'images',
+        public_folder: '/images',
+        collections: [
+          {
+            name: 'timeline',
+            label: 'Career Timeline',
+            folder: 'content/timeline',
+            create: true,
+            fields: [
+              {label: 'Company Name', name: 'company', widget: 'string'},
+              {label: 'URL', name: 'url', widget: 'string'},
+              {label: 'Date Range', name: 'date', widget: 'string'},
+              {label: 'Role', name: 'role', widget: 'string'},
+              {label: 'Description', name: 'description', widget: 'text'}
+            ]
+          }
+        ]
       }
     });
   </script>
