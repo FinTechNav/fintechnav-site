@@ -101,7 +101,7 @@ const Timeline = () => {
       position: 'relative',
       maxWidth: '1200px',
       margin: '0 auto',
-      padding: '40px 0 40px 40px'
+      padding: '40px 0'
     },
     mobileTimelineItem: {
       position: 'relative',
@@ -151,9 +151,8 @@ const Timeline = () => {
         Over the past 25+ years, I've been fortunate to work with some incredible companies and even more incredible people. What follows is my journey through both the technology and payment industries - a path shaped by professional relationships and some interesting transitions:
       </p>
       
-      <div style={isMobile ? styles.mobileTimeline : styles.timeline}>
+                <div style={isMobile ? styles.mobileTimeline : styles.timeline}>
         {!isMobile && <div style={styles.centerLine}></div>}
-        {isMobile && <div style={styles.mobileCenterLine}></div>}
         
         {timelineItems.map((item, index) => (
           <div 
@@ -224,7 +223,6 @@ const Timeline = () => {
             {/* Mobile Layout */}
             {isMobile && (
               <React.Fragment>
-                <div style={styles.mobileCircle}></div>
                 <div style={styles.mobileContentBox}>
                   <h3 style={styles.h3}>
                     <a href={item.company.url} target="_blank" style={styles.link}>
