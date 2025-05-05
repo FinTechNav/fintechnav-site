@@ -1,11 +1,12 @@
 backend:
-  name: git-gateway
+  name: github
+  repo: FinTechNav/fintechnav-site
   branch: main
+  base_url: https://api.netlify.com
+  auth_endpoint: auth
 
 media_folder: "images"
 public_folder: "/images"
-
-local_backend: true
 
 collections:
   - name: "timeline"
