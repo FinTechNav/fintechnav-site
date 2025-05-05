@@ -1,0 +1,123 @@
+/* File: styles/timeline-responsive.css */
+
+/* Base timeline styles (desktop) - preserve existing layout */
+.timeline-wrapper {
+  position: relative;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 40px 0;
+}
+
+.timeline-center-line {
+  content: '';
+  position: absolute;
+  width: 2px;
+  background-color: #444;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  margin-left: -1px;
+}
+
+.timeline-item {
+  position: relative;
+  margin-top: -40px;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.timeline-item.first {
+  margin-top: 0;
+}
+
+.timeline-circle {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 16px;
+  height: 16px;
+  background-color: #c9a15f;
+  border-radius: 50%;
+  border: 3px solid #1a1a1a;
+  z-index: 10;
+}
+
+.timeline-left-content {
+  width: 55%;
+  text-align: right;
+  padding-right: 40px;
+}
+
+.timeline-right-content {
+  width: 55%;
+  padding-left: 40px;
+}
+
+.timeline-content-box {
+  background-color: #3a3a3a;
+  padding: 24px;
+  border-radius: 6px;
+  display: inline-block;
+  text-align: left;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+  position: relative;
+}
+
+/* Mobile responsive styles */
+@media screen and (max-width: 768px) {
+  .timeline-center-line {
+    display: none;
+  }
+  
+  .timeline-wrapper {
+    padding-left: 40px;
+  }
+  
+  .timeline-item {
+    margin-top: 0;
+    margin-bottom: 40px;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .timeline-item.first {
+    margin-bottom: 40px;
+  }
+  
+  .timeline-circle {
+    left: -32px;
+    transform: none;
+    margin-left: 0;
+  }
+  
+  .timeline-left-content,
+  .timeline-right-content {
+    width: 100%;
+    text-align: left;
+    padding-right: 0;
+    padding-left: 0;
+  }
+  
+  .timeline-content-box {
+    width: 100%;
+    box-sizing: border-box;
+    display: block;
+  }
+  
+  /* Create a vertical line for mobile timeline */
+  .timeline-wrapper::before {
+    content: '';
+    position: absolute;
+    width: 2px;
+    background-color: #444;
+    top: 0;
+    bottom: 0;
+    left: 24px;
+    z-index: 1;
+  }
+  
+  .section {
+    padding: 0 15px;
+  }
+}
