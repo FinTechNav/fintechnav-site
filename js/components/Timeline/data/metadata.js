@@ -1,30 +1,30 @@
 const metadata = {
   fiska: {
     side: 'left',
-    zIndex: 7
+    zIndex: 7,
   },
   vesta: {
     side: 'right',
-    zIndex: 6
+    zIndex: 6,
   },
   shift4: {
     side: 'left',
-    zIndex: 5
+    zIndex: 5,
   },
   globalPayments: {
     side: 'right',
-    zIndex: 4
+    zIndex: 4,
   },
   abanco: {
     side: 'left',
-    zIndex: 3
+    zIndex: 3,
   },
   goSoftware: {
     side: 'right',
-    zIndex: 2
+    zIndex: 2,
   },
   unionCamp: {
     side: 'left',
-    zIndex: 1
-  }
+    zIndex: 1,
+  },
 };
