@@ -14,12 +14,14 @@ This repository contains the source code for my professional portfolio website a
 - React-based timeline component
 - Server-side email functionality via Netlify Functions
 - Progressive Web App (PWA) capabilities
+- Pre-commit code quality checks with ESLint and Prettier
 
 ## Technologies Used
 
 - **Frontend**: HTML5, CSS3, JavaScript, React
 - **Backend**: Netlify Functions, SendGrid API
 - **Deployment**: Netlify
+- **Code Quality**: ESLint (v8.56+), Prettier, Husky, lint-staged
 - **Other**: Babel (for JSX), Google Fonts
 
 ## Project Structure
@@ -72,12 +74,33 @@ project/
    - Run `npm install` to install dependencies
    - Use the Netlify CLI for local function testing: `netlify dev`
 
+## Code Quality Tools
+
+This project uses several tools to maintain code quality:
+
+- **ESLint**: Configured with a modern flat config system for JavaScript linting
+- **Prettier**: Ensures consistent code formatting
+- **Husky**: Manages Git hooks for pre-commit validation
+- **lint-staged**: Runs linters only on staged files for efficient pre-commit checks
+
+These tools automatically format and lint code before each commit, ensuring consistent style and quality.
+
 ## Deployment
 
 This site is deployed on Netlify with continuous deployment from the main branch.
 
 Environment variables required for deployment:
+
 - SENDGRID_API_KEY
+
+## Special Architecture Notes
+
+This project uses a specific modular architecture for the timeline component:
+
+- Individual company data is stored in separate files for easier maintenance
+- Content is separated from presentation logic
+- Global variable approach is used instead of ES6 modules for direct browser compatibility
+- Specific script loading order must be maintained in index.html
 
 ## Performance Optimizations
 
