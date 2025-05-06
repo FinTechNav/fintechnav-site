@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://fintechnav.com/sitemap.xml
