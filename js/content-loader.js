@@ -10,6 +10,10 @@ async function loadSectionContent() {
     );
 
     await Promise.all(loadPromises);
+    
+    // Check for responsive layout, control interest boxes
+    adjustInterestsLayout();
+    window.addEventListener('resize', adjustInterestsLayout);
 }
 
 async function loadSection(sectionId, url) {
@@ -52,6 +56,30 @@ function showErrorMessage(message) {
     main.insertBefore(errorDiv, main.firstChild);
     
     setTimeout(() => errorDiv.remove(), 5000);
+}
+
+// Function to adjust interests layout based on window size
+function adjustInterestsLayout() {
+    // Only run if interests section exists
+    const interestsSection = document.querySelector('#interests');
+    if (!interestsSection) return;
+    
+    const interestBoxes = document.querySelectorAll('.interest-box');
+    const isMobile = window.innerWidth <= 768;
+    
+    if (interestBoxes.length >= 2) {
+        if (isMobile) {
+            // Stack them on mobile
+            interestBoxes.forEach(box => {
+                box.style.width = '100%';
+            });
+        } else {
+            // Side by side on desktop
+            interestBoxes.forEach(box => {
+                box.style.width = '48%';
+            });
+        }
+    }
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
