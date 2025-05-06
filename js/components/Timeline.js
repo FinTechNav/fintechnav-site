@@ -3,6 +3,10 @@ const Timeline = () => {
     section: {
       marginBottom: '80px'
     },
+    sectionContent: {
+      maxWidth: '800px',
+      margin: '0 auto'
+    },
     h2: {
       fontFamily: "'Poiret One', cursive",
       fontSize: '2.8rem',
@@ -13,7 +17,7 @@ const Timeline = () => {
     },
     p: {
       fontFamily: "'Cormorant Garamond', serif",
-      lineHeight: '1.7', // Increased for better readability
+      lineHeight: '1.7',
       fontSize: '1.1rem',
       color: '#e0e0e0',
       marginBottom: '40px'
@@ -68,7 +72,12 @@ const Timeline = () => {
       display: 'inline-block',
       textAlign: 'left',
       boxShadow: '0 4px 6px rgba(0, 0, 0, 0.2)',
-      position: 'relative'
+      position: 'relative',
+      transition: 'box-shadow 0.3s ease, transform 0.3s ease'
+    },
+    contentBoxHover: {
+      boxShadow: '0 5px 15px rgba(201, 161, 95, 0.3)',
+      transform: 'translateY(-5px)'
     },
     h3: {
       fontFamily: "'Poiret One', cursive",
@@ -84,13 +93,17 @@ const Timeline = () => {
       marginBottom: '8px'
     },
     contentText: {
-      color: '#e0e0e0'
+      fontFamily: "'Cormorant Garamond', serif",
+      color: '#e0e0e0',
+      fontSize: '1.1rem'
     },
     list: {
       listStyle: 'disc',
       paddingLeft: '30px',
       color: '#e0e0e0',
-      marginTop: '8px'
+      marginTop: '8px',
+      fontFamily: "'Cormorant Garamond', serif",
+      fontSize: '1.1rem'
     },
     circle: {
       position: 'absolute',
@@ -103,39 +116,50 @@ const Timeline = () => {
       border: '3px solid #1a1a1a',
       zIndex: 10
     },
+    // Company link styling with subtle arrow
+    companyLink: {
+      position: 'relative',
+      color: '#c9a15f',
+      fontWeight: '500',
+      display: 'inline-block',
+      padding: '0 2px',
+      margin: '0 2px',
+      borderRadius: '2px',
+      backgroundImage: 'linear-gradient(to right, transparent 50%, rgba(201, 161, 95, 0.2) 50%)',
+      backgroundSize: '200% 100%',
+      backgroundPosition: '0 0',
+      transition: 'background-position 0.3s ease, color 0.3s ease, transform 0.2s ease'
+    },
+    companyLinkHover: {
+      backgroundPosition: '-100% 0',
+      textDecoration: 'none',
+      transform: 'translateY(-1px)'
+    },
+    companyLinkArrow: {
+      fontSize: '0.5em', // Smaller arrow
+      position: 'relative',
+      top: '-0.3em',
+      marginLeft: '1px', // Closer to the text
+      opacity: '0.5', // More subtle
+      transition: 'opacity 0.3s ease, transform 0.3s ease'
+    },
+    companyLinkArrowVisible: {
+      opacity: '1',
+      transform: 'translateX(1px)'
+    },
     // Mobile styles
     mobileTimeline: {
       position: 'relative',
       maxWidth: '1200px',
       margin: '0 auto',
-      padding: '40px 0'
+      padding: '30px 0'
     },
     mobileTimelineItem: {
       position: 'relative',
-      marginBottom: '40px',
+      marginBottom: '30px',
       display: 'flex',
       flexDirection: 'column',
       width: '100%'
-    },
-    mobileCenterLine: {
-      content: '',
-      position: 'absolute',
-      width: '2px',
-      backgroundColor: '#444',
-      top: '0',
-      bottom: '0',
-      left: '24px',
-      zIndex: 1
-    },
-    mobileCircle: {
-      position: 'absolute',
-      left: '-32px',
-      width: '16px',
-      height: '16px',
-      backgroundColor: '#c9a15f',
-      borderRadius: '50%',
-      border: '3px solid #1a1a1a',
-      zIndex: 10
     },
     mobileContentBox: {
       backgroundColor: '#3a3a3a',
@@ -145,20 +169,41 @@ const Timeline = () => {
       boxShadow: '0 4px 6px rgba(0, 0, 0, 0.2)',
       position: 'relative',
       width: '100%',
-      boxSizing: 'border-box'
+      boxSizing: 'border-box',
+      transition: 'box-shadow 0.3s ease, transform 0.3s ease'
     }
   };
 
-  const isMobile = window.innerWidth <= 768;
+  // Add React Hooks for hover state and responsive behavior
+  const [hoveredItem, setHoveredItem] = React.useState(null);
+  const [isMobile, setIsMobile] = React.useState(false);
+  
+  // Update mobile state based on window width
+  React.useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 950); // Increased breakpoint from 768px to 950px
+    };
+    
+    // Initial check
+    checkMobile();
+    
+    // Add event listener for window resize
+    window.addEventListener('resize', checkMobile);
+    
+    // Cleanup event listener
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   return (
     <section className="section fade-in" style={styles.section}>
-      <h2 style={styles.h2}>My Professional Journey</h2>
-      <p style={styles.p}>
-        Over the past 25+ years, I've been fortunate to work with some incredible companies and even more incredible people. What follows is my journey through both the technology and payment industries - a path shaped by professional relationships and some interesting transitions:
-      </p>
+      <div style={styles.sectionContent}>
+        <h2 style={styles.h2}>My Professional Journey</h2>
+        <p style={styles.p}>
+          Over the past 25+ years, I've been fortunate to work with some incredible companies and even more incredible people. What follows is my journey through both the technology and payment industries - a path shaped by professional relationships and some interesting transitions:
+        </p>
+      </div>
       
-                <div style={isMobile ? styles.mobileTimeline : styles.timeline}>
+      <div style={isMobile ? styles.mobileTimeline : styles.timeline}>
         {!isMobile && <div style={styles.centerLine}></div>}
         
         {timelineItems.map((item, index) => (
@@ -173,13 +218,38 @@ const Timeline = () => {
             {!isMobile && item.side === 'left' && (
               <React.Fragment>
                 <div style={styles.leftContent}>
-                  <div style={styles.contentBox}>
+                  <div 
+                    style={{
+                      ...styles.contentBox, 
+                      ...(hoveredItem === `left-${index}` ? styles.contentBoxHover : {})
+                    }}
+                    onMouseEnter={() => setHoveredItem(`left-${index}`)}
+                    onMouseLeave={() => setHoveredItem(null)}
+                  >
                     <h3 style={styles.h3}>
-                      <a href={item.company.url} target="_blank" style={styles.link}>
+                      <a 
+                        href={item.company.url} 
+                        target="_blank" 
+                        className="company-link"
+                        style={{
+                          ...styles.companyLink,
+                          ...(hoveredItem === `companyLeft-${index}` ? styles.companyLinkHover : {})
+                        }}
+                        onMouseEnter={() => setHoveredItem(`companyLeft-${index}`)}
+                        onMouseLeave={() => setHoveredItem(`left-${index}`)}
+                      >
                         {item.company.name}
+                        <span 
+                          style={{
+                            ...styles.companyLinkArrow,
+                            ...(hoveredItem === `companyLeft-${index}` ? styles.companyLinkArrowVisible : {})
+                          }}
+                        >
+                          ↗
+                        </span>
                       </a>
                     </h3>
-                    <p style={styles.date}>{item.company.date}</p>
+                    <p style={{...styles.date, ...styles.contentText}}>{item.company.date}</p>
                     <p style={styles.contentText}>{item.company.role}</p>
                     <p style={styles.contentText}>{item.description}</p>
                     {item.highlights && (
@@ -203,13 +273,38 @@ const Timeline = () => {
                 <div style={styles.leftContent}></div>
                 <div style={styles.circle}></div>
                 <div style={styles.rightContent}>
-                  <div style={styles.contentBox}>
+                  <div 
+                    style={{
+                      ...styles.contentBox, 
+                      ...(hoveredItem === `right-${index}` ? styles.contentBoxHover : {})
+                    }}
+                    onMouseEnter={() => setHoveredItem(`right-${index}`)}
+                    onMouseLeave={() => setHoveredItem(null)}
+                  >
                     <h3 style={styles.h3}>
-                      <a href={item.company.url} target="_blank" style={styles.link}>
+                      <a 
+                        href={item.company.url} 
+                        target="_blank" 
+                        className="company-link"
+                        style={{
+                          ...styles.companyLink,
+                          ...(hoveredItem === `companyRight-${index}` ? styles.companyLinkHover : {})
+                        }}
+                        onMouseEnter={() => setHoveredItem(`companyRight-${index}`)}
+                        onMouseLeave={() => setHoveredItem(`right-${index}`)}
+                      >
                         {item.company.name}
+                        <span 
+                          style={{
+                            ...styles.companyLinkArrow,
+                            ...(hoveredItem === `companyRight-${index}` ? styles.companyLinkArrowVisible : {})
+                          }}
+                        >
+                          ↗
+                        </span>
                       </a>
                     </h3>
-                    <p style={styles.date}>{item.company.date}</p>
+                    <p style={{...styles.date, ...styles.contentText}}>{item.company.date}</p>
                     <p style={styles.contentText}>{item.company.role}</p>
                     <p style={styles.contentText}>{item.description}</p>
                     {item.highlights && (
@@ -227,30 +322,53 @@ const Timeline = () => {
               </React.Fragment>
             )}
             
-            {/* Mobile Layout */}
+            {/* Mobile Layout - Simplified with no circles or center line */}
             {isMobile && (
-              <React.Fragment>
-                <div style={styles.mobileContentBox}>
-                  <h3 style={styles.h3}>
-                    <a href={item.company.url} target="_blank" style={styles.link}>
-                      {item.company.name}
-                    </a>
-                  </h3>
-                  <p style={styles.date}>{item.company.date}</p>
-                  <p style={styles.contentText}>{item.company.role}</p>
-                  <p style={styles.contentText}>{item.description}</p>
-                  {item.highlights && (
-                    <ul style={styles.list}>
-                      {item.highlights.map((highlight, i) => (
-                        <li key={i} dangerouslySetInnerHTML={{ __html: highlight }}></li>
-                      ))}
-                    </ul>
-                  )}
-                  {item.conclusion && (
-                    <p style={styles.contentText}>{item.conclusion}</p>
-                  )}
-                </div>
-              </React.Fragment>
+              <div 
+                style={{
+                  ...styles.mobileContentBox,
+                  ...(hoveredItem === `mobile-${index}` ? styles.contentBoxHover : {})
+                }}
+                onMouseEnter={() => setHoveredItem(`mobile-${index}`)}
+                onMouseLeave={() => setHoveredItem(null)}
+              >
+                <h3 style={styles.h3}>
+                  <a 
+                    href={item.company.url} 
+                    target="_blank" 
+                    className="company-link"
+                    style={{
+                      ...styles.companyLink,
+                      ...(hoveredItem === `companyMobile-${index}` ? styles.companyLinkHover : {})
+                    }}
+                    onMouseEnter={() => setHoveredItem(`companyMobile-${index}`)}
+                    onMouseLeave={() => setHoveredItem(`mobile-${index}`)}
+                  >
+                    {item.company.name}
+                    <span 
+                      style={{
+                        ...styles.companyLinkArrow,
+                        ...(hoveredItem === `companyMobile-${index}` ? styles.companyLinkArrowVisible : {})
+                      }}
+                    >
+                      ↗
+                    </span>
+                  </a>
+                </h3>
+                <p style={{...styles.date, ...styles.contentText}}>{item.company.date}</p>
+                <p style={styles.contentText}>{item.company.role}</p>
+                <p style={styles.contentText}>{item.description}</p>
+                {item.highlights && (
+                  <ul style={styles.list}>
+                    {item.highlights.map((highlight, i) => (
+                      <li key={i} dangerouslySetInnerHTML={{ __html: highlight }}></li>
+                    ))}
+                  </ul>
+                )}
+                {item.conclusion && (
+                  <p style={styles.contentText}>{item.conclusion}</p>
+                )}
+              </div>
             )}
           </div>
         ))}

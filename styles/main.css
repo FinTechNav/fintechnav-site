@@ -13,9 +13,10 @@
     --transition-speed: 0.3s;
     --border-radius: 6px;
     --border-radius-large: 12px;
+    --box-shadow-hover: 0 5px 15px rgba(201, 161, 95, 0.3);
 }
 
-/* Update base styles */
+/* Base styles - Dark Theme */
 body {
     font-family: var(--font-family-body);
     line-height: 1.6;
@@ -26,12 +27,6 @@ body {
     font-size: 1.1rem; /* Slightly larger for better readability with Cormorant */
 }
 
-h1, h2, h3, h4, h5, h6 {
-    font-family: var(--font-family-heading);
-    font-weight: 400; /* Poiret One looks better with normal weight */
-    letter-spacing: 0.03em; /* Slight letter spacing for headings */
-}
-
 .container {
     max-width: 1200px;
     margin: 0 auto;
@@ -40,15 +35,39 @@ h1, h2, h3, h4, h5, h6 {
 
 /* Header styles */
 header {
-    padding: 20px 0;
+    padding: 40px 0;
     text-align: center;
     background-color: #252525;
-    border-bottom: 1px solid rgba(201, 161, 95, 0.2);
     transition: background-color var(--transition-speed) ease;
 }
 
+h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-family-heading);
+    font-weight: 400; /* Poiret One looks better with normal weight */
+    letter-spacing: 0.03em; /* Slight letter spacing for headings */
+}
+
 h1 {
-    font-size: 3.8rem; /* Slightly larger to account for Poiret's style */
+    font-size: 3.8rem;
+    margin-bottom: 10px;
+    color: var(--color-text-header);
+}
+
+h2 {
+    font-size: 2.8rem;
+    font-weight: 400;
+    margin-bottom: 30px;
+    color: var(--color-text-light);
+}
+
+h3 {
+    color: #d4d4d4;
+    margin-top: 40px;
+}
+
+h4 {
+    color: var(--color-primary);
+    margin-top: 20px;
 }
 
 /* Navigation */
@@ -118,7 +137,7 @@ nav a.active {
 }
 
 .hero-image img:hover {
-    box-shadow: 0 5px 15px rgba(201, 161, 95, 0.3);
+    box-shadow: var(--box-shadow-hover);
     transform: translateY(-5px);
 }
 
@@ -187,18 +206,9 @@ nav a.active {
     margin-bottom: 80px;
 }
 
-h2 {
-    font-size: 2.8rem;
-}
-
-h3 {
-    color: #d4d4d4;
-    margin-top: 40px;
-}
-
-h4 {
-    color: var(--color-primary);
-    margin-top: 20px;
+.section-content {
+    max-width: 800px; /* Limit text width for better readability on desktop */
+    margin: 0 auto;
 }
 
 /* Links */
@@ -210,6 +220,39 @@ a {
 
 a:hover {
     text-decoration: underline;
+}
+
+/* Company links special styling */
+.company-link {
+    position: relative;
+    color: var(--color-primary);
+    font-weight: 500;
+    display: inline-block;
+    padding: 0 2px;
+    border-radius: 2px;
+    background-image: linear-gradient(to right, transparent 50%, rgba(201, 161, 95, 0.2) 50%);
+    background-size: 200% 100%;
+    background-position: 0 0;
+    transition: background-position 0.3s ease, color 0.3s ease;
+}
+
+.company-link:hover {
+    background-position: -100% 0;
+    text-decoration: none;
+}
+
+.link-arrow {
+    font-size: 0.7em;
+    position: relative;
+    top: -0.5em;
+    margin-left: 2px;
+    opacity: 0.7; /* Always visible but subtle */
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.company-link:hover .link-arrow {
+    opacity: 1;
+    transform: translateX(2px);
 }
 
 /* Lists */
@@ -256,39 +299,6 @@ footer {
     transform: translateY(0);
 }
 
-/* Responsive design */
-@media screen and (max-width: 768px) {
-    .hero {
-        grid-template-columns: 1fr;
-        text-align: center;
-    }
-    
-    .hero-image {
-        margin: 0 auto;
-    }
-    
-    .hero-image img {
-        max-width: 100%;
-    }
-    
-    .hero-image::before {
-        max-width: 100%;
-    }
-    
-    .hero-highlights {
-        justify-content: center;
-    }
-    
-    nav ul {
-        flex-wrap: wrap;
-        justify-content: center;
-    }
-    
-    nav li {
-        margin: 10px;
-    }
-}
-
 /* Expandable sections */
 .expandable-section {
     margin-top: 20px;
@@ -320,4 +330,60 @@ details[open] .expand-icon {
     margin-top: 15px;
     padding-left: 20px;
     border-left: 2px solid var(--color-primary);
+}
+
+/* Two-column layout for interests on desktop */
+.interests {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    margin: 0 auto;
+    max-width: 1200px;
+}
+
+/* Contact section - no indentation */
+#contact {
+    max-width: 100%;
+    width: 100%;
+}
+
+#contact form {
+    margin-top: 30px;
+}
+
+/* Responsive design */
+@media screen and (max-width: 950px) {
+    .hero {
+        grid-template-columns: 1fr;
+        text-align: center;
+    }
+    
+    .hero-image {
+        margin: 0 auto;
+    }
+    
+    .hero-image img {
+        max-width: 100%;
+    }
+    
+    .hero-image::before {
+        max-width: 100%;
+    }
+    
+    .hero-highlights {
+        justify-content: center;
+    }
+    
+    nav ul {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    
+    nav li {
+        margin: 10px;
+    }
+    
+    .section-content {
+        max-width: 100%; /* Full width on mobile */
+    }
 }

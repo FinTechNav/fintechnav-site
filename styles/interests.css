@@ -3,6 +3,8 @@
     display: flex;
     justify-content: space-between;
     flex-wrap: wrap;
+    margin: 0 auto;
+    max-width: 1200px;
 }
 
 .interest-box {
@@ -13,12 +15,28 @@
     border-radius: 6px;
     opacity: 0;
     transform: translateY(50px);
-    transition: opacity 0.6s ease, transform 0.6s ease;
+    transition: opacity 0.6s ease, transform 0.6s ease, box-shadow 0.3s ease;
+    cursor: default;
+    box-sizing: border-box;
+}
+
+.interest-box.active {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Hover effect for timeline boxes */
+.interest-box:hover {
+    box-shadow: 0 5px 15px rgba(201, 161, 95, 0.3);
+    transform: translateY(-5px);
 }
 
 .interest-box h3 {
     margin-top: 0;
     color: #c9a15f;
+    font-family: var(--font-family-heading);
+    font-weight: 400;
+    letter-spacing: 0.03em;
 }
 
 .interest-box a {
@@ -30,8 +48,23 @@
     text-decoration: underline;
 }
 
+/* Link arrow styling */
+.link-arrow {
+    font-size: 0.7em;
+    position: relative;
+    top: -0.5em;
+    margin-left: 2px;
+    opacity: 0.7;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.company-link:hover .link-arrow {
+    opacity: 1;
+    transform: translateX(2px);
+}
+
 /* Responsive design */
-@media screen and (max-width: 768px) {
+@media screen and (max-width: 950px) {
     .interest-box {
         width: 100%;
     }
