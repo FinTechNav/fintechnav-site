@@ -9,7 +9,7 @@ const vestaData = {
     'This is where I learned how to combat online credit card fraud. During my time at Vesta, I:',
   highlights: [
     'Helped restructure our offerings by unbundling the technology stack',
-    'Led our transition from Waterfall to Agile methodologies (anyone who\'s been through this knows it\'s quite the adventure)',
+    "Led our transition from Waterfall to Agile methodologies (anyone who's been through this knows it's quite the adventure)",
     'Streamlined release processes, eliminating those pesky maintenance windows',
   ],
   conclusion:
