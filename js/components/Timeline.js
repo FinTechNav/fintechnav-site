@@ -8,7 +8,7 @@ const Timeline = () => {
       margin: '0 auto'
     },
     h2: {
-      fontFamily: "'Poiret One', cursive",
+      fontFamily: '\'Poiret One\', cursive',
       fontSize: '2.8rem',
       fontWeight: '400',
       marginBottom: '30px',
@@ -16,7 +16,7 @@ const Timeline = () => {
       letterSpacing: '0.03em'
     },
     p: {
-      fontFamily: "'Cormorant Garamond', serif",
+      fontFamily: '\'Cormorant Garamond\', serif',
       lineHeight: '1.7',
       fontSize: '1.1rem',
       color: '#e0e0e0',
@@ -80,7 +80,7 @@ const Timeline = () => {
       transform: 'translateY(-5px)'
     },
     h3: {
-      fontFamily: "'Poiret One', cursive",
+      fontFamily: '\'Poiret One\', cursive',
       color: '#ffffff',
       fontWeight: '400',
       marginTop: '0',
@@ -93,7 +93,7 @@ const Timeline = () => {
       marginBottom: '8px'
     },
     contentText: {
-      fontFamily: "'Cormorant Garamond', serif",
+      fontFamily: '\'Cormorant Garamond\', serif',
       color: '#e0e0e0',
       fontSize: '1.1rem'
     },
@@ -102,7 +102,7 @@ const Timeline = () => {
       paddingLeft: '30px',
       color: '#e0e0e0',
       marginTop: '8px',
-      fontFamily: "'Cormorant Garamond', serif",
+      fontFamily: '\'Cormorant Garamond\', serif',
       fontSize: '1.1rem'
     },
     circle: {
