@@ -6,7 +6,7 @@ const abancoData = {
     role: 'Product Manager',
   },
   description:
-    "After GO Software was purchased by VeriFone and I felt the culture change wasn't for me, I followed a sales colleague I had worked closely with at GO Software to Abanco:",
+    "TEMP After GO Software was purchased by VeriFone and I felt the culture change wasn't for me, I followed a sales colleague I had worked closely with at GO Software to Abanco:",
   highlights: [
     "Increased platform availability from two 9's to five 9's through process improvement and monitoring tools",
     'Worked closely with Sales, Marketing, Customer Support, Training, and IT teams',
