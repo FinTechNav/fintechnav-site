@@ -6,6 +6,8 @@
     "@sendgrid/mail": "^7.7.0"
   },
   "scripts": {
-    "build": "echo 'No build step necessary'"
+    "build": "echo 'No build step necessary'",
+    "lint": "eslint js/",
+    "format": "prettier --write 'js/**/*.js'"
   }
 }

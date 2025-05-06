@@ -377,4 +377,61 @@ const Timeline = () => {
   );
 };
 
-ReactDOM.render(<Timeline />, document.getElementById('career'));
+// Add this right before the final ReactDOM.render call
+function SafeTimeline() {
+  const [hasError, setHasError] = React.useState(false);
+  const [errorMessage, setErrorMessage] = React.useState('');
+
+  // Create effect to catch errors during rendering
+  React.useEffect(() => {
+    const handleError = (event) => {
+      event.preventDefault();
+      setHasError(true);
+      setErrorMessage(event.error?.message || 'Unknown error in Timeline component');
+    };
+    
+    // Add global error handler
+    window.addEventListener('error', handleError);
+    
+    // Clean up
+    return () => {
+      window.removeEventListener('error', handleError);
+    };
+  }, []);
+
+  if (hasError) {
+    return (
+      <div className="error-boundary" style={{
+        padding: '20px',
+        backgroundColor: '#4a2d2d',
+        border: '1px solid #7a4a4a',
+        borderRadius: '6px',
+        color: '#ff8080',
+        margin: '20px 0',
+        textAlign: 'center'
+      }}>
+        <h3>Something went wrong with the timeline</h3>
+        <p>{errorMessage}</p>
+        <button 
+          onClick={() => window.location.reload()}
+          style={{
+            backgroundColor: '#c9a15f',
+            color: '#fff',
+            border: 'none',
+            padding: '8px 16px',
+            borderRadius: '4px',
+            cursor: 'pointer'
+          }}
+        >
+          Try reloading the page
+        </button>
+      </div>
+    );
+  }
+
+  // If no error, render Timeline normally
+  return <Timeline />;
+}
+
+// Replace the original render with the safe version
+ReactDOM.render(<SafeTimeline />, document.getElementById('career'));
