@@ -16,6 +16,11 @@ function initializeNavigation() {
                     top: offsetPosition,
                     behavior: "smooth"
                 });
+                
+                // Update active nav link manually after scroll
+                setTimeout(() => {
+                    updateActiveNavLink();
+                }, 500);
             }
         });
     });
@@ -28,32 +33,56 @@ function initializeNavigation() {
         const aboutSection = document.querySelector('#about-content #about') || document.querySelector('#about');
         const careerSection = document.querySelector('#career');
         const interestsSection = document.querySelector('#interests-content #interests') || document.querySelector('#interests');
+        const musicSection = document.querySelector('#music');
+        const wineSection = document.querySelector('#wine');
         const contactSection = document.querySelector('#contact-content #contact') || document.querySelector('#contact');
         
         const sections = [
             { element: aboutSection, id: 'about' },
             { element: careerSection, id: 'career' },
             { element: interestsSection, id: 'interests' },
+            { element: musicSection, id: 'music' },
+            { element: wineSection, id: 'wine' },
             { element: contactSection, id: 'contact' }
         ].filter(section => section.element); // Remove any null elements
 
         let current = '';
-        const scrollPosition = window.pageYOffset;
+        const scrollPosition = window.scrollY;
+        const windowHeight = window.innerHeight;
+        const isMobile = window.innerWidth <= 950;
         
-        sections.forEach(section => {
-            const sectionElement = section.element;
-            const sectionTop = sectionElement.offsetTop;
-            const sectionHeight = sectionElement.clientHeight;
-            
-            // Adjust the trigger point to highlight the section when it's more prominently visible
-            if (scrollPosition >= sectionTop - 200 && scrollPosition < sectionTop + sectionHeight - 200) {
-                current = section.id;
-            }
-        });
-
-        // Set first section as active if at the top of page
+        // Adjust threshold for mobile
+        const threshold = isMobile ? 150 : 200;
+        
+        // Handle initial page load - highlight About section by default
         if (scrollPosition < 100) {
             current = 'about';
+        } else {
+            // Find which section is currently visible
+            for (const section of sections) {
+                const sectionElement = section.element;
+                const sectionRect = sectionElement.getBoundingClientRect();
+                
+                // Consider a section visible if it's within the viewport threshold
+                // For mobile, make the threshold smaller to account for smaller screen size
+                if (
+                    (sectionRect.top <= threshold && sectionRect.bottom >= 0) ||
+                    (sectionRect.top <= windowHeight && sectionRect.bottom >= windowHeight) ||
+                    (sectionRect.top <= 0 && sectionRect.bottom >= windowHeight)
+                ) {
+                    current = section.id;
+                    
+                    // Special handling for music and wine sections
+                    if (section.id === 'music' || section.id === 'wine') {
+                        // Check if we're scrolled past the main interests section intro
+                        if (interestsSection && interestsSection.getBoundingClientRect().top < -50) {
+                            current = 'interests';
+                        }
+                    }
+                    
+                    break;
+                }
+            }
         }
 
         navLinks.forEach(link => {
@@ -65,12 +94,16 @@ function initializeNavigation() {
                 link.classList.add('active');
             } else if (href === '#career' && current === 'career') {
                 link.classList.add('active');
-            } else if ((href === '#music' || href === '#wine') && current === 'interests') {
+            } else if ((href === '#music' || href === '#wine') && 
+                       (current === 'interests' || current === 'music' || current === 'wine')) {
                 link.classList.add('active');
             } else if (href === '#contact' && current === 'contact') {
                 link.classList.add('active');
             }
         });
+        
+        // Log current section for debugging
+        console.log('Current section:', current);
     }
 
     // Run on scroll with debounce for performance
@@ -82,8 +115,9 @@ function initializeNavigation() {
         scrollTimeout = setTimeout(updateActiveNavLink, 50);
     });
     
-    // Run on load
+    // Run on load and resize
     window.addEventListener('load', updateActiveNavLink);
+    window.addEventListener('resize', updateActiveNavLink);
     
     // Run when sections are loaded
     const observer = new MutationObserver(() => {
@@ -93,4 +127,7 @@ function initializeNavigation() {
         childList: true,
         subtree: true
     });
+    
+    // Make updateActiveNavLink globally available for other scripts
+    window.updateActiveNavLink = updateActiveNavLink;
 }
