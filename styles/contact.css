@@ -6,8 +6,10 @@
     opacity: 0;
     transform: translateY(50px);
     transition: opacity 0.6s ease, transform 0.6s ease, box-shadow 0.3s ease;
+    width: 800px;
     max-width: 100%;
-    margin: 30px 0;
+    margin: 30px auto;
+    box-sizing: border-box;
 }
 
 .contact-form.active {
@@ -100,5 +102,13 @@ button:disabled {
     to {
         opacity: 1;
         transform: translateY(0);
+    }
+}
+
+/* Responsive adjustment */
+@media screen and (max-width: 950px) {
+    .contact-form {
+        width: 90%;
+        max-width: 90%;
     }
 }

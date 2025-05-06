@@ -58,6 +58,7 @@ h2 {
     font-weight: 400;
     margin-bottom: 30px;
     color: var(--color-text-light);
+    text-align: left;
 }
 
 h3 {
@@ -208,7 +209,15 @@ nav a.active {
 
 .section-content {
     max-width: 800px; /* Limit text width for better readability on desktop */
-    margin: 0 auto;
+    margin: 0 auto 0 0; /* Left-align instead of center */
+    padding-left: 15px;
+}
+
+/* Specific adjustments for interests section */
+#interests .section-content {
+    margin-left: 0;
+    text-align: left;
+    padding-left: 15px; /* Match the padding of the interest boxes */
 }
 
 /* Links */
@@ -222,7 +231,7 @@ a:hover {
     text-decoration: underline;
 }
 
-/* Company links special styling - ONLY for timeline */
+/* Company links special styling */
 .company-link {
     position: relative;
     color: var(--color-primary);
@@ -241,9 +250,18 @@ a:hover {
     text-decoration: none;
 }
 
-/* Remove arrow styling from general CSS */
-.company-link .link-arrow {
-    display: none;
+.link-arrow {
+    font-size: 0.7em;
+    position: relative;
+    top: -0.5em;
+    margin-left: 2px;
+    opacity: 0.7; /* Always visible but subtle */
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.company-link:hover .link-arrow {
+    opacity: 1;
+    transform: translateX(2px);
 }
 
 /* Lists */
@@ -328,14 +346,35 @@ details[open] .expand-icon {
     display: flex;
     justify-content: space-between;
     flex-wrap: wrap;
-    margin: 0 auto;
+    margin: 0;
     max-width: 1200px;
+    padding-left: 15px;
 }
 
-/* Contact section - no indentation */
+/* Contact section styling */
 #contact {
-    max-width: 100%;
     width: 100%;
+    text-align: center; /* Center the container itself */
+}
+
+#contact .section-content {
+    display: inline-block; /* This is the key change */
+    width: 800px;
+    max-width: 100%;
+    padding: 0;
+    margin: 0;
+    text-align: left; /* Left-align content inside */
+}
+
+#contact h2 {
+    text-align: left;
+    margin-left: 0;
+}
+
+#contact p {
+    text-align: left;
+    width: 100%;
+    max-width: 100%;
 }
 
 #contact form {
@@ -374,7 +413,18 @@ details[open] .expand-icon {
         margin: 10px;
     }
     
-    .section-content {
+    .section-content, #interests .section-content {
         max-width: 100%; /* Full width on mobile */
+        margin: 0 auto;
+        padding-left: 0;
+    }
+    
+    .interests {
+        padding-left: 0;
+    }
+    
+    #contact .section-content {
+        width: 90%;
+        padding: 0 15px;
     }
 }
