@@ -3,3 +3,6 @@
   
 [build.environment]
   NODE_ENV = "production"
+
+[build]
+  command = "CI=true npm run build"
