@@ -2,15 +2,13 @@ async function loadSectionContent() {
   const sections = [
     { id: 'about', url: 'sections/about.html' },
     { id: 'interests', url: 'sections/interests.html' },
-    { id: 'contact', url: 'sections/contact.html' }
+    { id: 'contact', url: 'sections/contact.html' },
   ];
 
-  const loadPromises = sections.map(section => 
-    loadSection(section.id, section.url)
-  );
+  const loadPromises = sections.map((section) => loadSection(section.id, section.url));
 
   await Promise.all(loadPromises);
-    
+
   // Check for responsive layout, control interest boxes
   adjustInterestsLayout();
   window.addEventListener('resize', adjustInterestsLayout);
@@ -20,13 +18,13 @@ async function loadSection(sectionId, url) {
   try {
     const response = await fetch(url);
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-        
+
     const data = await response.text();
     const container = document.getElementById(`${sectionId}-content`);
-        
+
     if (container) {
       container.innerHTML = data;
-            
+
       // Re-run reveal function for newly loaded content
       if (typeof reveal === 'function') {
         reveal();
@@ -51,10 +49,10 @@ function showErrorMessage(message) {
         text-align: center;
     `;
   errorDiv.textContent = message;
-    
+
   const main = document.querySelector('main');
   main.insertBefore(errorDiv, main.firstChild);
-    
+
   setTimeout(() => errorDiv.remove(), 5000);
 }
 
@@ -63,19 +61,19 @@ function adjustInterestsLayout() {
   // Only run if interests section exists
   const interestsSection = document.querySelector('#interests');
   if (!interestsSection) return;
-    
+
   const interestBoxes = document.querySelectorAll('.interest-box');
   const isMobile = window.innerWidth <= 768;
-    
+
   if (interestBoxes.length >= 2) {
     if (isMobile) {
       // Stack them on mobile
-      interestBoxes.forEach(box => {
+      interestBoxes.forEach((box) => {
         box.style.width = '100%';
       });
     } else {
       // Side by side on desktop
-      interestBoxes.forEach(box => {
+      interestBoxes.forEach((box) => {
         box.style.width = '48%';
       });
     }

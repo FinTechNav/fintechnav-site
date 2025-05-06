@@ -5,5 +5,5 @@ const timelineItems = [
   { ...globalPaymentsData, ...metadata.globalPayments },
   { ...abancoData, ...metadata.abanco },
   { ...goSoftwareData, ...metadata.goSoftware },
-  { ...unionCampData, ...metadata.unionCamp }
+  { ...unionCampData, ...metadata.unionCamp },
 ];
