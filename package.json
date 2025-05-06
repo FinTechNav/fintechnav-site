@@ -12,6 +12,8 @@
     "@eslint/js": "^8.57.0",
     "eslint": "^8.56.0",
     "globals": "^13.24.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^15.5.2",
     "prettier": "^3.1.0"
   },
   "scripts": {
@@ -20,6 +22,13 @@
     "lint:fix": "eslint js/ --fix",
     "format": "prettier --write 'js/**/*.js'",
     "check-format": "prettier --check 'js/**/*.js'",
-    "validate": "npm run lint && npm run check-format"
+    "validate": "npm run lint && npm run check-format",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "*.js": [
+      "eslint --fix",
+      "prettier --write"
+    ]
   }
 }
