@@ -4,13 +4,17 @@ const Timeline = () => {
       marginBottom: '80px'
     },
     h2: {
-      fontSize: '2.5rem',
-      fontWeight: '300',
+      fontFamily: "'Poiret One', cursive",
+      fontSize: '2.8rem',
+      fontWeight: '400',
       marginBottom: '30px',
-      color: '#f5f5f5'
+      color: '#f5f5f5',
+      letterSpacing: '0.03em'
     },
     p: {
-      lineHeight: '1.6',
+      fontFamily: "'Cormorant Garamond', serif",
+      lineHeight: '1.7', // Increased for better readability
+      fontSize: '1.1rem',
       color: '#e0e0e0',
       marginBottom: '40px'
     },
@@ -67,9 +71,12 @@ const Timeline = () => {
       position: 'relative'
     },
     h3: {
+      fontFamily: "'Poiret One', cursive",
       color: '#ffffff',
+      fontWeight: '400',
       marginTop: '0',
-      marginBottom: '8px'
+      marginBottom: '8px',
+      letterSpacing: '0.03em'
     },
     date: {
       color: '#c9a15f',
