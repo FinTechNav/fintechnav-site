@@ -5,7 +5,7 @@ const globalPaymentsData = {
     date: 'June 2007 - June 2013',
     role: 'Director of Product'
   },
-  description: 'After Abanco was acquired by a New York-based company, I declined their offer and instead joined Global Payments — where my mentor from Union Camp and GO Software was now working. Our mission was to build a payment gateway using the same technology we\'d used at Abanco. (That company would later go bankrupt.)',
+  description: 'After Abanco was acquired by Cynergy Data, I declined their offer and instead joined Global Payments — where my mentor from Union Camp and GO Software was now working. Our mission was to build a payment gateway from the ground up. Interestingly, we used the same technology stack we\'d used at Abanco. (As a side note, Cynergy Data would later go through bankruptcy protection in 2009.)',
   highlights: [
     'Transforming payment infrastructure through our Global Transport initiative',
     'Scaling our platform to process 62 million transactions annually ($8.2 billion in volume)',
