@@ -222,7 +222,7 @@ a:hover {
     text-decoration: underline;
 }
 
-/* Company links special styling */
+/* Company links special styling - ONLY for timeline */
 .company-link {
     position: relative;
     color: var(--color-primary);
@@ -241,18 +241,9 @@ a:hover {
     text-decoration: none;
 }
 
-.link-arrow {
-    font-size: 0.7em;
-    position: relative;
-    top: -0.5em;
-    margin-left: 2px;
-    opacity: 0.7; /* Always visible but subtle */
-    transition: opacity 0.3s ease, transform 0.3s ease;
-}
-
-.company-link:hover .link-arrow {
-    opacity: 1;
-    transform: translateX(2px);
+/* Remove arrow styling from general CSS */
+.company-link .link-arrow {
+    display: none;
 }
 
 /* Lists */
