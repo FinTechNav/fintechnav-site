@@ -149,9 +149,10 @@
         box-shadow: var(--box-shadow);
         width: 90%;
         max-width: 500px;
-        max-height: 90vh;
-        overflow-y: auto;
+        max-height: 85vh; /* Reduced from 90vh to ensure visibility */
         border: 1px solid var(--color-primary);
+        display: flex;
+        flex-direction: column;
       }
 
       .modal-header {
@@ -169,10 +170,18 @@
         color: var(--color-text-light);
       }
 
+      #paymentFormContainer {
+        display: flex;
+        flex-direction: column;
+        flex-grow: 1;
+      }
+
       .iframe-container {
         width: 100%;
-        height: 400px;
+        height: 100%;
+        min-height: 600px; /* Increased from 400px for taller form */
         border: none;
+        flex-grow: 1;
       }
 
       .btn {
@@ -243,6 +252,28 @@
       @keyframes spin {
         to {
           transform: rotate(360deg);
+        }
+      }
+
+      /* Responsive adjustments for better form visibility */
+      @media (max-height: 800px) {
+        .modal {
+          height: 80vh;
+          padding: 20px;
+        }
+
+        .iframe-container {
+          min-height: 520px;
+        }
+
+        .modal-header {
+          margin-bottom: 10px;
+        }
+      }
+
+      @media (max-height: 700px) {
+        .iframe-container {
+          min-height: 450px;
         }
       }
     </style>
@@ -358,7 +389,26 @@
           showAlert(apiKeyStatus, 'Configuration loaded from local storage.', 'success');
           loadSavedPaymentMethods();
         }
+
+        // Adjust iframe height based on window size
+        adjustIframeHeight();
+        window.addEventListener('resize', adjustIframeHeight);
       });
+
+      // Function to adjust iframe height based on window size
+      function adjustIframeHeight() {
+        const windowHeight = window.innerHeight;
+        const modal = document.querySelector('.modal');
+        const modalHeader = document.querySelector('.modal-header');
+
+        if (windowHeight < 700) {
+          paymentIframe.style.minHeight = '450px';
+        } else if (windowHeight < 800) {
+          paymentIframe.style.minHeight = '520px';
+        } else {
+          paymentIframe.style.minHeight = '600px';
+        }
+      }
 
       // Save configuration
       saveApiKeyBtn.addEventListener('click', () => {
@@ -390,6 +440,9 @@
 
         // Display the modal
         cardModal.style.display = 'flex';
+
+        // Adjust iframe height
+        adjustIframeHeight();
 
         // Call the API to create a payment session
         createCardNotPresentToken();
