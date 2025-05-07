@@ -4,79 +4,60 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Payment Complete</title>
+
+    <!-- Inter font -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
     <style>
       body {
-        font-family: Arial, sans-serif;
-        padding: 2rem;
-        background-color: #f9f9f9;
-        color: #333;
-      }
-      h1 {
-        color: #2a7ae2;
-      }
-      .status {
-        padding: 1rem;
-        border-radius: 8px;
-        font-size: 1.2rem;
-        margin-bottom: 1.5rem;
-      }
-      .success {
-        background-color: #e6f9f0;
-        border: 1px solid #27ae60;
-        color: #2e7d32;
-      }
-      .error {
-        background-color: #ffecec;
-        border: 1px solid #e53935;
-        color: #c62828;
-      }
-      .param-list {
-        padding: 1rem;
-        background-color: #fff;
-        border: 1px solid #ddd;
-        border-radius: 8px;
-      }
-      .param-list dt {
-        font-weight: bold;
-      }
-      .param-list dd {
-        margin: 0 0 1rem 0;
+        font-family: 'Inter', sans-serif;
       }
     </style>
   </head>
-  <body>
-    <h1>Payment Status</h1>
-    <div id="statusMessage" class="status"></div>
-    <dl class="param-list" id="paramList"></dl>
+  <body class="bg-gray-50 text-gray-800 min-h-screen p-8">
+    <div class="max-w-2xl mx-auto">
+      <h1 class="text-3xl font-semibold text-blue-600 mb-4">Payment Status</h1>
+      <div id="statusMessage" class="rounded-lg p-4 text-lg mb-6"></div>
+      <dl id="paramList" class="bg-white rounded-lg p-6 shadow"></dl>
+    </div>
 
     <script>
       const params = new URLSearchParams(window.location.search);
       const paramList = document.getElementById('paramList');
       const statusMessage = document.getElementById('statusMessage');
-
-      // Determine resultCode
       const resultCode = params.get('resultCode');
 
+      // Show status message
       if (!resultCode) {
-        statusMessage.className = 'status error';
         statusMessage.textContent = 'Missing resultCode — unable to determine payment status.';
+        statusMessage.className += ' bg-red-100 text-red-700 border border-red-300';
       } else if (resultCode === '0') {
-        statusMessage.className = 'status success';
-        statusMessage.textContent = 'Payment was successful!';
+        statusMessage.textContent = '✅ Payment was successful!';
+        statusMessage.className += ' bg-green-100 text-green-700 border border-green-300';
       } else {
-        statusMessage.className = 'status error';
-        statusMessage.textContent = `Payment failed. Error code: ${resultCode}`;
+        statusMessage.textContent = `❌ Payment failed. Error code: ${resultCode}`;
+        statusMessage.className += ' bg-red-100 text-red-700 border border-red-300';
       }
 
-      // List all query parameters
+      // Display parameters
       if ([...params].length === 0) {
         paramList.innerHTML = '<p>No payment details found in the URL.</p>';
       } else {
         params.forEach((value, key) => {
           const dt = document.createElement('dt');
+          dt.className = 'font-semibold text-gray-600 mt-2';
           dt.textContent = key;
+
           const dd = document.createElement('dd');
+          dd.className = 'mb-2 text-gray-800';
           dd.textContent = decodeURIComponent(value);
+
           paramList.appendChild(dt);
           paramList.appendChild(dd);
         });
