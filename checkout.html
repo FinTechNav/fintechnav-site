@@ -428,47 +428,119 @@
           if (!paymentMethodId) {
             console.log('No payment method ID provided, attempting to auto-detect...');
 
-            // First, get available payment methods
-            const paymentMethods = await fetchPaymentMethods(apiKey);
+            try {
+              // First, get available payment methods
+              const paymentMethods = await fetchPaymentMethods(apiKey);
 
-            // Find the first virtual payment method
-            const virtualPaymentMethod = paymentMethods.find(
-              (method) => method.paymentMethodId && method.paymentMethodId.type === 'virtual'
-            );
+              // Find the first virtual payment method
+              const virtualPaymentMethod = paymentMethods.find(
+                (method) => method.paymentMethodId && method.paymentMethodId.type === 'virtual'
+              );
 
-            if (!virtualPaymentMethod) {
+              if (!virtualPaymentMethod) {
+                showAlert(
+                  apiError,
+                  'No virtual payment methods available. Please enter a payment method ID manually.',
+                  'error'
+                );
+                spinner.style.display = 'none';
+                return;
+              }
+
+              paymentMethodId = virtualPaymentMethod.paymentMethodId.id;
+              console.log('Auto-detected payment method ID:', paymentMethodId);
+            } catch (error) {
+              console.error('Error fetching payment methods:', error);
               showAlert(
                 apiError,
-                'No virtual payment methods available. Please enter a payment method ID manually.',
+                'Failed to fetch payment methods. Please enter a payment method ID manually.',
                 'error'
               );
               spinner.style.display = 'none';
               return;
             }
-
-            paymentMethodId = virtualPaymentMethod.paymentMethodId.id;
-            console.log('Auto-detected payment method ID:', paymentMethodId);
           }
 
           console.log('Using payment method ID:', paymentMethodId);
+          console.log('Return URL:', RETURN_URL);
+
+          // Prepare the request data
+          const requestData = {
+            paymentMethodId: paymentMethodId,
+            referenceId: referenceId,
+            returnUrl: RETURN_URL,
+          };
+
+          console.log('Request payload:', JSON.stringify(requestData, null, 2));
 
           // Now create the token with the payment method ID
-          const response = await fetch(`${API_BASE_URL}/payment-methods/virtual`, {
+          const endpoint = `${API_BASE_URL}/payment-methods/virtual`;
+          console.log('Making request to:', endpoint);
+
+          const response = await fetch(endpoint, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
               'x-api-key': apiKey,
             },
-            body: JSON.stringify({
-              paymentMethodId: paymentMethodId,
-              referenceId: referenceId,
-              returnUrl: RETURN_URL,
-            }),
+            body: JSON.stringify(requestData),
           });
 
-          const data = await response.json();
+          console.log('Response status:', response.status);
 
-          if (response.ok && data.iframeUrl) {
+          // Check if response is ok before trying to parse JSON
+          if (!response.ok) {
+            const statusText = response.statusText || `Status code: ${response.status}`;
+            showAlert(
+              apiError,
+              `API request failed: ${statusText}. Check the console for details.`,
+              'error'
+            );
+            spinner.style.display = 'none';
+
+            // Try to get response text for better debugging
+            try {
+              const errorText = await response.text();
+              console.error('API error response:', errorText);
+            } catch (e) {
+              console.error('Could not read error response');
+            }
+
+            return;
+          }
+
+          // Handle empty response
+          const responseText = await response.text();
+          if (!responseText || responseText.trim() === '') {
+            console.error('Empty response received from API');
+            showAlert(
+              apiError,
+              'Empty response received from API. Check your API key and payment method ID.',
+              'error'
+            );
+            spinner.style.display = 'none';
+            return;
+          }
+
+          // Try to parse JSON response
+          let data;
+          try {
+            data = JSON.parse(responseText);
+          } catch (error) {
+            console.error('Error parsing JSON response:', error);
+            console.log('Raw response:', responseText);
+            showAlert(
+              apiError,
+              'Invalid JSON response from API. Check the console for details.',
+              'error'
+            );
+            spinner.style.display = 'none';
+            return;
+          }
+
+          console.log('API response data:', data);
+
+          if (data.iframeUrl) {
             // Update iframe source and display it
             paymentIframe.src = data.iframeUrl;
             paymentIframe.style.display = 'block';
@@ -487,7 +559,7 @@
             setupIframeMessageListener();
           } else {
             // Display error message
-            let errorMessage = 'Failed to create payment session.';
+            let errorMessage = 'Failed to create payment session. No iframe URL returned.';
             if (data.error && data.error.message) {
               errorMessage = data.error.message;
             }
@@ -496,7 +568,11 @@
           }
         } catch (error) {
           console.error('Error creating payment session:', error);
-          showAlert(apiError, 'Error connecting to payment API. Please try again.', 'error');
+          showAlert(
+            apiError,
+            'Error connecting to payment API. Check the console for details.',
+            'error'
+          );
           spinner.style.display = 'none';
         }
       }
@@ -504,7 +580,10 @@
       // Function to fetch available payment methods
       async function fetchPaymentMethods(apiKey) {
         try {
-          const response = await fetch(`${API_BASE_URL}/payment-methods`, {
+          const endpoint = `${API_BASE_URL}/payment-methods`;
+          console.log('Fetching payment methods from:', endpoint);
+
+          const response = await fetch(endpoint, {
             method: 'GET',
             headers: {
               'Content-Type': 'application/json',
@@ -512,13 +591,44 @@
             },
           });
 
+          console.log('Payment methods response status:', response.status);
+
           if (!response.ok) {
-            throw new Error('Failed to fetch payment methods');
+            const statusText = response.statusText || `Status code: ${response.status}`;
+            console.error(`Failed to fetch payment methods: ${statusText}`);
+
+            // Try to get response text for better debugging
+            try {
+              const errorText = await response.text();
+              console.error('Payment methods error response:', errorText);
+            } catch (e) {
+              console.error('Could not read payment methods error response');
+            }
+
+            throw new Error(`Failed to fetch payment methods: ${statusText}`);
           }
 
-          return await response.json();
+          // Handle empty response
+          const responseText = await response.text();
+          if (!responseText || responseText.trim() === '') {
+            console.error('Empty response received from payment methods API');
+            throw new Error('Empty response received from API');
+          }
+
+          // Try to parse JSON response
+          let data;
+          try {
+            data = JSON.parse(responseText);
+          } catch (error) {
+            console.error('Error parsing payment methods JSON response:', error);
+            console.log('Raw payment methods response:', responseText);
+            throw new Error('Invalid JSON response from payment methods API');
+          }
+
+          console.log('Payment methods data:', data);
+          return data;
         } catch (error) {
-          console.error('Error fetching payment methods:', error);
+          console.error('Error in fetchPaymentMethods:', error);
           throw error;
         }
       }
