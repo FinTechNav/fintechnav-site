@@ -143,45 +143,28 @@
       }
 
       .modal {
-        background-color: #3a3a3a;
-        padding: 30px;
-        border-radius: var(--border-radius);
-        box-shadow: var(--box-shadow);
+        background-color: transparent; /* Remove background */
+        border: none; /* Remove border */
+        padding: 0; /* Remove padding */
+        box-shadow: none; /* Remove shadow */
         width: 90%;
-        max-width: 500px;
-        max-height: 85vh; /* Reduced from 90vh to ensure visibility */
-        border: 1px solid var(--color-primary);
-        display: flex;
-        flex-direction: column;
-      }
-
-      .modal-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 20px;
-      }
-
-      .modal-close {
-        font-size: 1.5rem;
-        background: none;
-        border: none;
-        cursor: pointer;
-        color: var(--color-text-light);
+        max-width: 580px; /* Increased width to ensure full form visibility */
+        height: 950px; /* Fixed height to accommodate full form */
+        overflow: hidden; /* Hide scrollbars */
       }
 
       #paymentFormContainer {
         display: flex;
         flex-direction: column;
         flex-grow: 1;
+        height: 100%;
       }
 
       .iframe-container {
         width: 100%;
         height: 100%;
-        min-height: 600px; /* Increased from 400px for taller form */
         border: none;
-        flex-grow: 1;
+        overflow: hidden; /* Hide scrollbars */
       }
 
       .btn {
@@ -255,26 +238,9 @@
         }
       }
 
-      /* Responsive adjustments for better form visibility */
-      @media (max-height: 800px) {
-        .modal {
-          height: 80vh;
-          padding: 20px;
-        }
-
-        .iframe-container {
-          min-height: 520px;
-        }
-
-        .modal-header {
-          margin-bottom: 10px;
-        }
-      }
-
-      @media (max-height: 700px) {
-        .iframe-container {
-          min-height: 450px;
-        }
+      /* Hide modal header completely */
+      .modal-header {
+        display: none;
       }
     </style>
   </head>
@@ -339,10 +305,7 @@
 
     <div class="modal-overlay" id="cardModal">
       <div class="modal">
-        <div class="modal-header">
-          <h2>Add Payment Method</h2>
-          <button class="modal-close" id="closeModal">&times;</button>
-        </div>
+        <!-- Removed modal header -->
         <div id="paymentFormContainer">
           <div id="apiError" class="alert alert-error"></div>
           <div id="spinner" class="spinner"></div>
@@ -363,7 +326,6 @@
       const saveApiKeyBtn = document.getElementById('saveApiKey');
       const addNewCardBtn = document.getElementById('addNewCardBtn');
       const cardModal = document.getElementById('cardModal');
-      const closeModalBtn = document.getElementById('closeModal');
       const paymentIframe = document.getElementById('paymentIframe');
       const apiError = document.getElementById('apiError');
       const spinner = document.getElementById('spinner');
@@ -389,26 +351,7 @@
           showAlert(apiKeyStatus, 'Configuration loaded from local storage.', 'success');
           loadSavedPaymentMethods();
         }
-
-        // Adjust iframe height based on window size
-        adjustIframeHeight();
-        window.addEventListener('resize', adjustIframeHeight);
       });
-
-      // Function to adjust iframe height based on window size
-      function adjustIframeHeight() {
-        const windowHeight = window.innerHeight;
-        const modal = document.querySelector('.modal');
-        const modalHeader = document.querySelector('.modal-header');
-
-        if (windowHeight < 700) {
-          paymentIframe.style.minHeight = '450px';
-        } else if (windowHeight < 800) {
-          paymentIframe.style.minHeight = '520px';
-        } else {
-          paymentIframe.style.minHeight = '600px';
-        }
-      }
 
       // Save configuration
       saveApiKeyBtn.addEventListener('click', () => {
@@ -441,16 +384,8 @@
         // Display the modal
         cardModal.style.display = 'flex';
 
-        // Adjust iframe height
-        adjustIframeHeight();
-
         // Call the API to create a payment session
         createCardNotPresentToken();
-      });
-
-      // Close modal
-      closeModalBtn.addEventListener('click', () => {
-        cardModal.style.display = 'none';
       });
 
       // Click outside modal to close
@@ -459,6 +394,30 @@
           cardModal.style.display = 'none';
         }
       });
+
+      // New function to handle iframe loaded event
+      function handleIframeLoaded() {
+        try {
+          // Attempt to access iframe content to modify it
+          // Note: This may fail due to same-origin policy if the iframe is from a different domain
+          const iframe = document.getElementById('paymentIframe');
+          const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+
+          // If we can access it, we could modify its content
+          if (iframeDoc) {
+            // Remove any headers or borders inside the iframe
+            const style = document.createElement('style');
+            style.textContent = `
+              body { margin: 0; padding: 0; }
+              .header, .modal-header, .title { display: none !important; }
+              .container { border: none !important; box-shadow: none !important; }
+            `;
+            iframeDoc.head.appendChild(style);
+          }
+        } catch (e) {
+          console.log('Cannot access iframe content due to same-origin policy');
+        }
+      }
 
       // Function to create a card not present token
       async function createCardNotPresentToken() {
@@ -595,9 +554,13 @@
 
           if (data.iframeUrl) {
             // Update iframe source and display it
-            paymentIframe.src = data.iframeUrl;
-            paymentIframe.style.display = 'block';
+            const iframe = document.getElementById('paymentIframe');
+            iframe.src = data.iframeUrl;
+            iframe.style.display = 'block';
             spinner.style.display = 'none';
+
+            // Add load event listener to manipulate iframe content when it loads
+            iframe.addEventListener('load', handleIframeLoaded);
 
             // Store session data for later reference
             sessionStorage.setItem(
@@ -782,6 +745,14 @@
         alert(
           'This is a demo checkout. In a real implementation, you would submit the order with the selected payment method.'
         );
+      });
+
+      // Add a close button for the modal that works with the actual content
+      document.addEventListener('keydown', function (event) {
+        // Close modal on Escape key
+        if (event.key === 'Escape' && cardModal.style.display === 'flex') {
+          cardModal.style.display = 'none';
+        }
       });
     </script>
   </body>
