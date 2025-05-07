@@ -96,13 +96,15 @@
         border-top: 1px solid var(--color-border);
       }
 
-      .payment-method {
-        padding: 15px;
-        border: 1px solid var(--color-border);
-        border-radius: var(--border-radius);
-        display: flex;
-        align-items: center;
+      .form-group {
         margin-bottom: 15px;
+      }
+
+      .form-group label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: 500;
+        color: var(--color-text);
       }
 
       .payment-method input[type='radio'] {
@@ -249,13 +251,25 @@
     <div class="container">
       <div class="api-key-section">
         <h3>API Configuration</h3>
-        <input
-          type="text"
-          id="apiKey"
-          class="api-key-input"
-          placeholder="Paste your API key here"
-        />
-        <button id="saveApiKey" class="btn">Save API Key</button>
+        <div class="form-group">
+          <label for="apiKey">API Key:</label>
+          <input
+            type="text"
+            id="apiKey"
+            class="api-key-input"
+            placeholder="Paste your API key here"
+          />
+        </div>
+        <div class="form-group">
+          <label for="paymentMethodId">Payment Method ID (optional):</label>
+          <input
+            type="text"
+            id="paymentMethodId"
+            class="api-key-input"
+            placeholder="Enter payment method ID or leave blank for auto-detection"
+          />
+        </div>
+        <button id="saveApiKey" class="btn">Save Configuration</button>
         <div id="apiKeyStatus" class="alert"></div>
       </div>
 
@@ -313,6 +327,7 @@
 
       // DOM elements
       const apiKeyInput = document.getElementById('apiKey');
+      const paymentMethodIdInput = document.getElementById('paymentMethodId');
       const apiKeyStatus = document.getElementById('apiKeyStatus');
       const saveApiKeyBtn = document.getElementById('saveApiKey');
       const addNewCardBtn = document.getElementById('addNewCardBtn');
@@ -326,23 +341,38 @@
 
       // API endpoints
       const API_BASE_URL = 'https://beta-payment-api-http.dev.ms.fiska.tech';
+      // Hard-coded return URL
+      const RETURN_URL = 'https://fintechnav.com/payment-complete';
 
-      // Load saved API key if exists
+      // Load saved configuration if exists
       document.addEventListener('DOMContentLoaded', () => {
         const savedApiKey = localStorage.getItem(API_KEY_STORAGE);
         if (savedApiKey) {
           apiKeyInput.value = savedApiKey;
-          showAlert(apiKeyStatus, 'API key loaded from local storage.', 'success');
+
+          const savedPaymentMethodId = localStorage.getItem(PAYMENT_METHOD_ID_STORAGE);
+          if (savedPaymentMethodId) {
+            paymentMethodIdInput.value = savedPaymentMethodId;
+          }
+
+          showAlert(apiKeyStatus, 'Configuration loaded from local storage.', 'success');
           loadSavedPaymentMethods();
         }
       });
 
-      // Save API key
+      // Save configuration
       saveApiKeyBtn.addEventListener('click', () => {
         const apiKey = apiKeyInput.value.trim();
+        const paymentMethodId = paymentMethodIdInput.value.trim();
+
         if (apiKey) {
           localStorage.setItem(API_KEY_STORAGE, apiKey);
-          showAlert(apiKeyStatus, 'API key saved successfully!', 'success');
+
+          if (paymentMethodId) {
+            localStorage.setItem(PAYMENT_METHOD_ID_STORAGE, paymentMethodId);
+          }
+
+          showAlert(apiKeyStatus, 'Configuration saved successfully!', 'success');
           loadSavedPaymentMethods();
         } else {
           showAlert(apiKeyStatus, 'Please enter a valid API key.', 'error');
@@ -391,21 +421,36 @@
         const referenceId = `ref_${Date.now()}`;
 
         try {
-          // First, get available payment methods
-          const paymentMethods = await fetchPaymentMethods(apiKey);
+          // Check if the user has provided a payment method ID
+          let paymentMethodId = localStorage.getItem(PAYMENT_METHOD_ID_STORAGE);
 
-          // Find the first virtual payment method
-          const virtualPaymentMethod = paymentMethods.find(
-            (method) => method.paymentMethodId && method.paymentMethodId.type === 'virtual'
-          );
+          // If no payment method ID is stored, try to find one
+          if (!paymentMethodId) {
+            console.log('No payment method ID provided, attempting to auto-detect...');
 
-          if (!virtualPaymentMethod) {
-            showAlert(apiError, 'No virtual payment methods available.', 'error');
-            spinner.style.display = 'none';
-            return;
+            // First, get available payment methods
+            const paymentMethods = await fetchPaymentMethods(apiKey);
+
+            // Find the first virtual payment method
+            const virtualPaymentMethod = paymentMethods.find(
+              (method) => method.paymentMethodId && method.paymentMethodId.type === 'virtual'
+            );
+
+            if (!virtualPaymentMethod) {
+              showAlert(
+                apiError,
+                'No virtual payment methods available. Please enter a payment method ID manually.',
+                'error'
+              );
+              spinner.style.display = 'none';
+              return;
+            }
+
+            paymentMethodId = virtualPaymentMethod.paymentMethodId.id;
+            console.log('Auto-detected payment method ID:', paymentMethodId);
           }
 
-          const paymentMethodId = virtualPaymentMethod.paymentMethodId.id;
+          console.log('Using payment method ID:', paymentMethodId);
 
           // Now create the token with the payment method ID
           const response = await fetch(`${API_BASE_URL}/payment-methods/virtual`, {
@@ -417,7 +462,7 @@
             body: JSON.stringify({
               paymentMethodId: paymentMethodId,
               referenceId: referenceId,
-              returnUrl: window.location.href,
+              returnUrl: RETURN_URL,
             }),
           });
 
