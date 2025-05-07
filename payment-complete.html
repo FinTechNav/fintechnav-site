@@ -1,47 +1,44 @@
 <!doctype html>
-<html lang="en" class="h-full bg-gray-50">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Payment Complete - FintechNav</title>
-    <link
-      rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
-    />
-    <link rel="icon" type="image/png" href="/favicon.png" />
+    <title>Payment Complete</title>
+    <style>
+      body {
+        background-color: #f0f4f8;
+        font-family: sans-serif;
+        padding: 2rem;
+      }
+      h1 {
+        color: #333;
+      }
+      p {
+        margin: 0 0 1rem 0;
+      }
+    </style>
   </head>
-  <body class="h-full">
-    <main
-      class="min-h-screen flex flex-col items-center justify-center bg-white px-4 py-12 sm:px-6 lg:px-8"
-    >
-      <div class="max-w-md w-full text-center">
-        <h1 class="text-3xl font-extrabold text-gray-900 mb-4">Payment Status</h1>
-        <p id="payment-message" class="text-lg text-gray-600">Checking payment status...</p>
-        <a href="/" class="mt-6 inline-block text-indigo-600 hover:underline">Return to homepage</a>
-      </div>
-    </main>
+  <body>
+    <h1>Payment Status</h1>
+    <p id="status-text">Checking...</p>
 
     <script>
       function getQueryParams() {
         const params = new URLSearchParams(window.location.search);
         return {
           status: params.get('status'),
-          reference: params.get('reference'),
         };
       }
 
-      const { status, reference } = getQueryParams();
-      const messageEl = document.getElementById('payment-message');
+      const { status } = getQueryParams();
+      const statusText = document.getElementById('status-text');
 
       if (status === 'success') {
-        messageEl.textContent = 'Thank you! Your payment was successful.';
-        messageEl.classList.add('text-green-600');
-      } else if (status === 'cancel') {
-        messageEl.textContent = 'Your payment was canceled.';
-        messageEl.classList.add('text-yellow-600');
+        statusText.textContent = '✅ Payment successful!';
+      } else if (status === 'failure') {
+        statusText.textContent = '❌ Payment failed.';
       } else {
-        messageEl.textContent = 'Unable to verify payment status.';
-        messageEl.classList.add('text-red-600');
+        statusText.textContent = 'Unknown payment status.';
       }
     </script>
   </body>
