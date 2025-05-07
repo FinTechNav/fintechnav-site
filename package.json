@@ -17,7 +17,7 @@
     "prettier": "^3.1.0"
   },
   "scripts": {
-    "prepare": "husky",
+    "prepare": "node -e \"if(process.env.CI !== 'true') { try { require('husky'); } catch(e) { console.log('Husky not found, skipping'); } }\"",
     "build": "echo 'No build step necessary'",
     "lint": "eslint js/",
     "lint:fix": "eslint js/ --fix",
