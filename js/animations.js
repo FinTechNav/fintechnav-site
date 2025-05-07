@@ -150,5 +150,69 @@ window.reveal = function () {
   }
 };
 
+// Enhanced popup functionality for better mobile experience
+function initializeFooterInfo() {
+  const infoTrigger = document.querySelector('.info-trigger');
+  const infoPopup = document.querySelector('.info-popup');
+
+  if (!infoTrigger || !infoPopup) return;
+
+  // For touch devices - close popup when clicked outside
+  document.addEventListener('click', function (event) {
+    if (
+      infoPopup.classList.contains('active') &&
+      !infoPopup.contains(event.target) &&
+      event.target !== infoTrigger
+    ) {
+      infoPopup.classList.remove('active');
+    }
+  });
+
+  // For mobile - toggle popup on click
+  if ('ontouchstart' in window || navigator.maxTouchPoints) {
+    infoTrigger.addEventListener('click', function (e) {
+      e.preventDefault();
+      infoPopup.classList.toggle('active');
+    });
+
+    // Add active class for mobile
+    const originalCSS = document.createElement('style');
+    originalCSS.textContent = `
+      @media (hover: none) {
+        .info-popup {
+          opacity: 0;
+          visibility: hidden;
+        }
+        .info-popup.active {
+          opacity: 1;
+          visibility: visible;
+          transform: translateY(0);
+        }
+        @media screen and (max-width: 768px) {
+          .info-popup.active {
+            transform: translateX(-50%) translateY(0);
+          }
+        }
+      }
+    `;
+    document.head.appendChild(originalCSS);
+  }
+}
+
+// Add the function to your initialization
+document.addEventListener('DOMContentLoaded', function () {
+  initializeFooterInfo();
+});
+
+// Re-initialize when page content changes
+const observer = new MutationObserver(function () {
+  initializeFooterInfo();
+});
+
+observer.observe(document.body, {
+  childList: true,
+  subtree: true,
+});
+
 // Initialize animations on load
 document.addEventListener('DOMContentLoaded', initializeAnimations);
