@@ -155,9 +155,21 @@
         padding: 0; /* Remove padding */
         box-shadow: none; /* Remove shadow */
         width: 90%;
-        max-width: 580px; /* Increased width to ensure full form visibility */
-        height: 780px; /* Further increased height to ensure no scrollbar appears */
+        max-width: 620px; /* Increased width to ensure no horizontal scrollbar */
+        height: 800px; /* Further increased height */
         position: relative;
+      }
+
+      .modal:after {
+        content: '';
+        display: block;
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 20px; /* Cover the scrollbar area */
+        height: 100%;
+        background-color: #2d2e35; /* Match the iframe background */
+        z-index: 101; /* Above the iframe */
       }
 
       #paymentFormContainer {
@@ -166,29 +178,32 @@
         flex-grow: 1;
         height: 100%;
         position: relative;
+        overflow: hidden !important;
       }
 
       .iframe-container {
-        width: 100%;
+        width: calc(100% + 20px); /* Wider than container to hide scrollbar */
         height: 100%;
         border: none;
-        scrollbar-width: none; /* Firefox */
-        -ms-overflow-style: none; /* IE and Edge */
+        scrollbar-width: none !important; /* Firefox */
+        -ms-overflow-style: none !important; /* IE and Edge */
       }
 
       /* Hide scrollbar for Chrome, Safari and Opera */
       .iframe-container::-webkit-scrollbar {
-        display: none;
+        display: none !important;
+        width: 0 !important;
       }
 
       /* Remove right scrollbar from modal overlay */
       .modal-overlay {
-        scrollbar-width: none; /* Firefox */
-        -ms-overflow-style: none; /* IE and Edge */
+        scrollbar-width: none !important; /* Firefox */
+        -ms-overflow-style: none !important; /* IE and Edge */
       }
 
       .modal-overlay::-webkit-scrollbar {
-        display: none;
+        display: none !important;
+        width: 0 !important;
       }
 
       /* Close button */
@@ -616,11 +631,26 @@
 
             // When iframe loads, attempt to modify its content to remove scrollbars
             paymentIframe.onload = function () {
+              // Create an overlay div to hide the scrollbar
+              const scrollbarCover = document.createElement('div');
+              scrollbarCover.style.cssText = `
+                position: absolute;
+                top: 0;
+                right: 0;
+                width: 30px;
+                height: 100%;
+                background-color: #2d2e35;
+                z-index: 1000;
+                pointer-events: none;
+              `;
+              paymentFormContainer.appendChild(scrollbarCover);
+
               // Try direct content manipulation first
               try {
                 const iframeDoc =
                   paymentIframe.contentDocument || paymentIframe.contentWindow.document;
                 if (iframeDoc) {
+                  // Add style to iframe document
                   const style = document.createElement('style');
                   style.textContent = `
                     html, body {
@@ -676,6 +706,10 @@
               } catch (err) {
                 console.log('Could not send message to iframe:', err);
               }
+
+              // Shift iframe position to hide scrollbar if it exists
+              paymentIframe.style.marginRight = '-20px';
+              paymentIframe.style.paddingRight = '20px';
             };
 
             // Store session data for later reference
