@@ -50,6 +50,12 @@
         border-radius: var(--border-radius);
         background-color: #252525;
         border: 1px solid var(--color-border);
+        transition: filter 0.3s ease;
+      }
+
+      .container.blurred {
+        filter: blur(5px);
+        pointer-events: none; /* Prevent interaction with blurred content */
       }
 
       h1,
@@ -136,10 +142,11 @@
         left: 0;
         right: 0;
         bottom: 0;
-        background-color: rgba(0, 0, 0, 0.5);
+        background-color: rgba(0, 0, 0, 0.7); /* Darkened background for better focus */
         z-index: 100;
         justify-content: center;
         align-items: center;
+        backdrop-filter: blur(3px); /* Additional blur effect for background */
       }
 
       .modal {
@@ -149,8 +156,9 @@
         box-shadow: none; /* Remove shadow */
         width: 90%;
         max-width: 580px; /* Increased width to ensure full form visibility */
-        height: 950px; /* Fixed height to accommodate full form */
+        height: 720px; /* Reduced height for the smaller payment form */
         overflow: hidden; /* Hide scrollbars */
+        position: relative;
       }
 
       #paymentFormContainer {
@@ -158,6 +166,7 @@
         flex-direction: column;
         flex-grow: 1;
         height: 100%;
+        position: relative;
       }
 
       .iframe-container {
@@ -165,6 +174,30 @@
         height: 100%;
         border: none;
         overflow: hidden; /* Hide scrollbars */
+      }
+
+      /* Close button */
+      .modal-close-btn {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        width: 30px;
+        height: 30px;
+        background-color: rgba(201, 161, 95, 0.2);
+        color: var(--color-primary);
+        border: none;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        z-index: 101;
+        font-size: 20px;
+        transition: all 0.3s ease;
+      }
+
+      .modal-close-btn:hover {
+        background-color: rgba(201, 161, 95, 0.4);
       }
 
       .btn {
@@ -237,15 +270,10 @@
           transform: rotate(360deg);
         }
       }
-
-      /* Hide modal header completely */
-      .modal-header {
-        display: none;
-      }
     </style>
   </head>
   <body>
-    <div class="container">
+    <div class="container" id="mainContainer">
       <div class="api-key-section">
         <h3>API Configuration</h3>
         <div class="form-group">
@@ -305,7 +333,7 @@
 
     <div class="modal-overlay" id="cardModal">
       <div class="modal">
-        <!-- Removed modal header -->
+        <button class="modal-close-btn" id="closeModal">&times;</button>
         <div id="paymentFormContainer">
           <div id="apiError" class="alert alert-error"></div>
           <div id="spinner" class="spinner"></div>
@@ -326,11 +354,13 @@
       const saveApiKeyBtn = document.getElementById('saveApiKey');
       const addNewCardBtn = document.getElementById('addNewCardBtn');
       const cardModal = document.getElementById('cardModal');
+      const closeModalBtn = document.getElementById('closeModal');
       const paymentIframe = document.getElementById('paymentIframe');
       const apiError = document.getElementById('apiError');
       const spinner = document.getElementById('spinner');
       const savedCardsContainer = document.getElementById('savedCardsContainer');
       const paymentFormContainer = document.getElementById('paymentFormContainer');
+      const mainContainer = document.getElementById('mainContainer');
 
       // API endpoints
       const API_BASE_URL = 'https://beta-payment-api-http.dev.ms.fiska.tech/v1';
@@ -352,6 +382,15 @@
           loadSavedPaymentMethods();
         }
       });
+
+      // Function to toggle blur on main container
+      function toggleBlur(shouldBlur) {
+        if (shouldBlur) {
+          mainContainer.classList.add('blurred');
+        } else {
+          mainContainer.classList.remove('blurred');
+        }
+      }
 
       // Save configuration
       saveApiKeyBtn.addEventListener('click', () => {
@@ -384,40 +423,26 @@
         // Display the modal
         cardModal.style.display = 'flex';
 
+        // Apply blur to main container
+        toggleBlur(true);
+
         // Call the API to create a payment session
         createCardNotPresentToken();
       });
 
-      // Click outside modal to close
+      // Close modal
+      closeModalBtn.addEventListener('click', () => {
+        cardModal.style.display = 'none';
+        toggleBlur(false);
+      });
+
+      // Click outside modal to close (but not on the modal content)
       cardModal.addEventListener('click', (e) => {
         if (e.target === cardModal) {
           cardModal.style.display = 'none';
+          toggleBlur(false);
         }
       });
-
-      // New function to handle iframe loaded event
-      function handleIframeLoaded() {
-        try {
-          // Attempt to access iframe content to modify it
-          // Note: This may fail due to same-origin policy if the iframe is from a different domain
-          const iframe = document.getElementById('paymentIframe');
-          const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
-
-          // If we can access it, we could modify its content
-          if (iframeDoc) {
-            // Remove any headers or borders inside the iframe
-            const style = document.createElement('style');
-            style.textContent = `
-              body { margin: 0; padding: 0; }
-              .header, .modal-header, .title { display: none !important; }
-              .container { border: none !important; box-shadow: none !important; }
-            `;
-            iframeDoc.head.appendChild(style);
-          }
-        } catch (e) {
-          console.log('Cannot access iframe content due to same-origin policy');
-        }
-      }
 
       // Function to create a card not present token
       async function createCardNotPresentToken() {
@@ -554,13 +579,9 @@
 
           if (data.iframeUrl) {
             // Update iframe source and display it
-            const iframe = document.getElementById('paymentIframe');
-            iframe.src = data.iframeUrl;
-            iframe.style.display = 'block';
+            paymentIframe.src = data.iframeUrl;
+            paymentIframe.style.display = 'block';
             spinner.style.display = 'none';
-
-            // Add load event listener to manipulate iframe content when it loads
-            iframe.addEventListener('load', handleIframeLoaded);
 
             // Store session data for later reference
             sessionStorage.setItem(
@@ -678,6 +699,7 @@
               if (data.status === 'completed') {
                 // Payment was successful
                 cardModal.style.display = 'none';
+                toggleBlur(false);
 
                 // Add the new payment method to the list
                 const cardDetails = data.cardDetails || {
@@ -695,6 +717,7 @@
               } else if (data.status === 'canceled') {
                 // User canceled the payment
                 cardModal.style.display = 'none';
+                toggleBlur(false);
               }
             } catch (error) {
               console.error('Error processing postMessage:', error);
@@ -747,11 +770,12 @@
         );
       });
 
-      // Add a close button for the modal that works with the actual content
+      // Add escape key handler to close modal
       document.addEventListener('keydown', function (event) {
         // Close modal on Escape key
         if (event.key === 'Escape' && cardModal.style.display === 'flex') {
           cardModal.style.display = 'none';
+          toggleBlur(false);
         }
       });
     </script>
