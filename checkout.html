@@ -149,10 +149,44 @@
         backdrop-filter: blur(3px); /* Additional blur effect for background */
       }
 
+      /* Modal overlay styling */
+      .modal-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(0, 0, 0, 0.7); /* Darkened background for better focus */
+        z-index: 100;
+        justify-content: center;
+        align-items: center;
+        backdrop-filter: blur(3px); /* Additional blur effect for background */
+        scrollbar-width: none !important; /* Firefox */
+        -ms-overflow-style: none !important; /* IE and Edge */
+      }
+
+      /* Create a full-screen overlay to cover any borders */
+      .modal-overlay::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(26, 26, 26, 0.8); /* Site background with opacity */
+        z-index: -1;
+      }
+
+      .modal-overlay::-webkit-scrollbar {
+        display: none !important;
+        width: 0 !important;
+      }
+
       .modal {
-        background-color: transparent; /* Remove background */
-        border: none; /* Remove border */
-        padding: 0; /* Remove padding */
+        background-color: transparent !important; /* Remove background */
+        border: none !important; /* Remove border */
+        padding: 0 !important; /* Remove padding */
         box-shadow: none !important; /* Remove shadow */
         width: 100%;
         max-width: 620px; /* Increased width to ensure no horizontal scrollbar */
@@ -162,15 +196,49 @@
       }
 
       /* Extra background coverage to hide any borders */
-      .modal:before {
+      .modal::before {
         content: '';
         position: absolute;
-        top: -5px;
-        left: -5px;
-        right: -5px;
-        bottom: -5px;
+        top: -10px;
+        left: -10px;
+        right: -10px;
+        bottom: -10px;
         background-color: #1a1a1a; /* Match page background */
         z-index: -1;
+      }
+
+      /* Add specific side covers to mask blue borders */
+      .modal::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 20px; /* Width of the cover */
+        right: -20px; /* Position it outside the modal */
+        background-color: #1a1a1a; /* Match page background */
+        z-index: 150;
+      }
+
+      /* Add left side cover */
+      .side-cover-left {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 20px;
+        left: -20px;
+        background-color: #1a1a1a;
+        z-index: 150;
+      }
+
+      /* Add right side cover */
+      .side-cover-right {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 20px;
+        right: -20px;
+        background-color: #1a1a1a;
+        z-index: 150;
       }
 
       #paymentFormContainer {
@@ -197,19 +265,6 @@
 
       /* Hide scrollbar for Chrome, Safari and Opera */
       .iframe-container::-webkit-scrollbar {
-        display: none !important;
-        width: 0 !important;
-      }
-
-      /* Remove right scrollbar from modal overlay */
-      .modal-overlay {
-        scrollbar-width: none !important; /* Firefox */
-        -ms-overflow-style: none !important; /* IE and Edge */
-        background-color: rgba(0, 0, 0, 0.7); /* Darkened background for better focus */
-        backdrop-filter: blur(3px); /* Additional blur effect for background */
-      }
-
-      .modal-overlay::-webkit-scrollbar {
         display: none !important;
         width: 0 !important;
       }
@@ -371,7 +426,10 @@
 
     <div class="modal-overlay" id="cardModal">
       <div class="modal">
-        <!-- Removed close button -->
+        <!-- Side covers to hide any vertical borders -->
+        <div class="side-cover-left"></div>
+        <div class="side-cover-right"></div>
+
         <div id="paymentFormContainer">
           <div id="apiError" class="alert alert-error"></div>
           <div id="spinner" class="spinner"></div>
@@ -381,6 +439,7 @@
             style="display: none"
             frameborder="0"
             allowtransparency="true"
+            scrolling="no"
           ></iframe>
         </div>
       </div>
