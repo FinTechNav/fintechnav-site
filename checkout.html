@@ -154,7 +154,7 @@
         border: none; /* Remove border */
         padding: 0; /* Remove padding */
         box-shadow: none; /* Remove shadow */
-        width: 90%;
+        width: 100%;
         max-width: 620px; /* Increased width to ensure no horizontal scrollbar */
         height: 800px; /* Further increased height */
         position: relative;
@@ -184,9 +184,11 @@
       .iframe-container {
         width: calc(100% + 20px); /* Wider than container to hide scrollbar */
         height: 100%;
-        border: none;
+        border: none !important;
+        outline: none !important;
         scrollbar-width: none !important; /* Firefox */
         -ms-overflow-style: none !important; /* IE and Edge */
+        box-shadow: none !important;
       }
 
       /* Hide scrollbar for Chrome, Safari and Opera */
@@ -204,6 +206,33 @@
       .modal-overlay::-webkit-scrollbar {
         display: none !important;
         width: 0 !important;
+      }
+
+      /* Modal close button styling - improved visibility */
+      .modal-close-btn {
+        position: absolute;
+        top: 10px;
+        right: 30px; /* Moved further to the right */
+        width: 30px;
+        height: 30px;
+        background-color: rgba(255, 255, 255, 0.9); /* Bright background */
+        color: #2d2e35; /* Dark text color */
+        border: none;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        z-index: 1001; /* Above everything else */
+        font-size: 20px;
+        font-weight: bold;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3); /* Add shadow for better visibility */
+      }
+
+      .modal-close-btn:hover {
+        background-color: #ffffff;
+        transform: scale(1.1);
       }
 
       /* Close button */
@@ -367,7 +396,12 @@
         <div id="paymentFormContainer">
           <div id="apiError" class="alert alert-error"></div>
           <div id="spinner" class="spinner"></div>
-          <iframe id="paymentIframe" class="iframe-container" style="display: none"></iframe>
+          <iframe
+            id="paymentIframe"
+            class="iframe-container"
+            style="display: none"
+            frameborder="0"
+          ></iframe>
         </div>
       </div>
     </div>
