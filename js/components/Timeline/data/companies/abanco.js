@@ -14,5 +14,5 @@ const abancoData = {
     'Managed a direct report responsible for developer support and technical escalations',
   ],
   conclusion:
-    'This was also when I made my big move from Savannah to Atlanta - much easier to fly direct from Atlanta to Chicago than from Savannah! During my time there, Abanco was acquired by Cynergy Data, and I chose to move on to a new opportunity rather than continuing with the acquiring company.',
+    'This was my first hybrid position - I worked from home in Atlanta while flying to Chicago (where the company was headquartered) regularly, spending roughly half my time between the two locations. This is where I got comfortable with work from home and hybrid arrangements well before the pandemic forced this upon everyone. During my time there, Abanco was acquired by Cynergy Data, and I chose to move on to a new opportunity rather than continuing with the acquiring company.',
 };
