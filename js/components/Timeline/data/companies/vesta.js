@@ -1,6 +1,6 @@
 const vestaData = {
   company: {
-    name: 'Vesta Corporation',
+    name: 'Vesta',
     url: 'https://www.vesta.io/',
     date: 'August 2016 - April 2019',
     role: 'Head of Product',

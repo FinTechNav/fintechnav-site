@@ -1,6 +1,6 @@
 const abancoData = {
   company: {
-    name: 'Abanco International, LLC',
+    name: 'Abanco International',
     url: 'https://greensheet.com/breakingnews&article_id=6',
     date: 'May 2005 - June 2007',
     role: 'Product Manager',

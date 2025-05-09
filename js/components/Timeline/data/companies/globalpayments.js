@@ -1,6 +1,6 @@
 const globalPaymentsData = {
   company: {
-    name: 'Global Payments Inc.',
+    name: 'Global Payments',
     url: 'https://www.globalpayments.com/',
     date: 'June 2007 - June 2013',
     role: 'Director of Product',

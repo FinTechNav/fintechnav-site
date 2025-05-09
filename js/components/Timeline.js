@@ -1,3 +1,4 @@
+// Updated Timeline.js with bigger logos in the corner
 const Timeline = () => {
   const styles = {
     section: {
@@ -147,6 +148,23 @@ const Timeline = () => {
       opacity: '1',
       transform: 'translateX(1px)',
     },
+    // Logo styling - INCREASED SIZE
+    logoContainer: {
+      position: 'absolute',
+      top: '18px',
+      right: '18px',
+      width: '240px', // Increased from 100px
+      height: '72px', // Increased from 40px
+      display: 'flex',
+      justifyContent: 'flex-end',
+      alignItems: 'center',
+      zIndex: 5,
+    },
+    logo: {
+      maxWidth: '100%',
+      maxHeight: '100%',
+      objectFit: 'contain',
+    },
     // Mobile styles
     mobileTimeline: {
       position: 'relative',
@@ -174,6 +192,17 @@ const Timeline = () => {
     },
   };
 
+  // Map of company names to their logo paths - UPDATED FOR SHORTER NAMES
+  const companyLogos = {
+    Fiska: 'logos/fiska-logo.png',
+    Vesta: 'logos/vesta-logo.png',
+    Credorax: 'logos/credorax-logo.png',
+    'Global Payments': 'logos/global-payments-logo.png',
+    'Abanco International': 'logos/abanco-logo.png',
+    'GO Software': 'logos/go-software-logo.png',
+    'Union Camp': 'logos/union-camp-logo.png',
+  };
+
   // Add React Hooks for hover state and responsive behavior
   const [hoveredItem, setHoveredItem] = React.useState(null);
   const [isMobile, setIsMobile] = React.useState(false);
@@ -193,6 +222,27 @@ const Timeline = () => {
     // Cleanup event listener
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
+
+  // Logo component with error handling
+  const CompanyLogo = ({ companyName }) => {
+    const [logoError, setLogoError] = React.useState(false);
+    const logoPath = companyLogos[companyName];
+
+    if (!logoPath || logoError) {
+      return null;
+    }
+
+    return (
+      <div style={styles.logoContainer}>
+        <img
+          src={logoPath}
+          alt={`${companyName} logo`}
+          style={styles.logo}
+          onError={() => setLogoError(true)}
+        />
+      </div>
+    );
+  };
 
   return (
     <section className="section fade-in" style={styles.section}>
@@ -233,6 +283,9 @@ const Timeline = () => {
                     onMouseEnter={() => setHoveredItem(`left-${index}`)}
                     onMouseLeave={() => setHoveredItem(null)}
                   >
+                    {/* Company Logo */}
+                    <CompanyLogo companyName={item.company.name} />
+
                     <h3 style={styles.h3}>
                       <a
                         href={item.company.url}
@@ -290,6 +343,9 @@ const Timeline = () => {
                     onMouseEnter={() => setHoveredItem(`right-${index}`)}
                     onMouseLeave={() => setHoveredItem(null)}
                   >
+                    {/* Company Logo */}
+                    <CompanyLogo companyName={item.company.name} />
+
                     <h3 style={styles.h3}>
                       <a
                         href={item.company.url}
@@ -343,6 +399,9 @@ const Timeline = () => {
                 onMouseEnter={() => setHoveredItem(`mobile-${index}`)}
                 onMouseLeave={() => setHoveredItem(null)}
               >
+                {/* Company Logo */}
+                <CompanyLogo companyName={item.company.name} />
+
                 <h3 style={styles.h3}>
                   <a
                     href={item.company.url}

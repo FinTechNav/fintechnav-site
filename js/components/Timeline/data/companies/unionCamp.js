@@ -1,6 +1,6 @@
 const unionCampData = {
   company: {
-    name: 'Union Camp Corporation',
+    name: 'Union Camp',
     url: 'https://en.wikipedia.org/wiki/Union_Camp_Corporation',
     date: 'June 1994 - September 1999',
     role: 'IT Support Engineer',
