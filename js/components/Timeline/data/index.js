@@ -1,7 +1,7 @@
 const timelineItems = [
   { ...fiskaData, ...metadata.fiska },
   { ...vestaData, ...metadata.vesta },
-  { ...shift4Data, ...metadata.shift4 },
+  { ...credoraxData, ...metadata.credorax },
   { ...globalPaymentsData, ...metadata.globalPayments },
   { ...abancoData, ...metadata.abanco },
   { ...goSoftwareData, ...metadata.goSoftware },

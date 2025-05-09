@@ -7,7 +7,7 @@ const metadata = {
     side: 'right',
     zIndex: 6,
   },
-  shift4: {
+  credorax: {
     side: 'left',
     zIndex: 5,
   },
