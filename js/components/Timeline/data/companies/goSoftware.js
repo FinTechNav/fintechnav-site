@@ -1,6 +1,6 @@
 const goSoftwareData = {
   company: {
-    name: 'GO Software, Inc.',
+    name: 'GO Software',
     url: 'https://ir.svb.com/news-and-research/news/news-details/2005/VeriFone-Completes-Acquisition-of-GO-Software/default.aspx',
     date: 'September 1999 - May 2005',
     role: 'Multiple Roles',
