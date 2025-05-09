@@ -13,5 +13,5 @@ const vestaData = {
     'Streamlined release processes, eliminating those pesky maintenance windows',
   ],
   conclusion:
-    'I left Shift4 for Vesta because a former colleague from Abanco was running technology at Vesta and they needed transformational change. He knew I was the right person for the job.',
+    'I left Credorax for Vesta because a former colleague from Abanco was running technology at Vesta and they needed transformational change. He knew I was the right person for the job.',
 };
