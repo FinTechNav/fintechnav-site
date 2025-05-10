@@ -10,6 +10,6 @@ const globalPaymentsData = {
   highlights: [
     'Transforming payment infrastructure through our Global Transport initiative',
     'Scaling our platform to process 62 million transactions annually ($8.2 billion in volume)',
-    'Receiving the <a href="https://www.prnewswire.com/news-releases/global-payments-global-transport-named-best-processing-gateway-by-business-solutions-magazine-99865909.html" target="_blank" style="color: #c9a15f; text-decoration: none;">"Best Channel Product" award in 2010</a> and personal Circle of Excellence award twice',
+    'Receiving the <a href="https://www.prnewswire.com/news-releases/global-payments-global-transport-named-best-processing-gateway-by-business-solutions-magazine-99865909.html" target="_blank" style="color: #c9a15f; text-decoration: none;">Best Channel Product award in 2010</a> and personal Circle of Excellence award twice',
   ],
 };
