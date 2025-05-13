@@ -396,7 +396,7 @@
             type="text"
             id="paymentMethodId"
             class="api-key-input"
-            placeholder="Enter payment method ID or leave blank for auto-detection"
+            placeholder="Enter payment method ID or leave blank if you only have one payment method ID"
           />
         </div>
         <button id="saveApiKey" class="btn">Save Configuration</button>
@@ -590,41 +590,9 @@
           // Check if the user has provided a payment method ID
           let paymentMethodId = localStorage.getItem(PAYMENT_METHOD_ID_STORAGE);
 
-          // If no payment method ID is stored, try to find one
+          // If no payment method ID is stored, proceed without it
           if (!paymentMethodId) {
-            console.log('No payment method ID provided, attempting to auto-detect...');
-
-            try {
-              // First, get available payment methods
-              const paymentMethods = await fetchPaymentMethods(apiKey);
-
-              // Find the first virtual payment method
-              const virtualPaymentMethod = paymentMethods.find(
-                (method) => method.paymentMethodId && method.paymentMethodId.type === 'virtual'
-              );
-
-              if (!virtualPaymentMethod) {
-                showAlert(
-                  apiError,
-                  'No virtual payment methods available. Please enter a payment method ID manually.',
-                  'error'
-                );
-                spinner.style.display = 'none';
-                return;
-              }
-
-              paymentMethodId = virtualPaymentMethod.paymentMethodId.id;
-              console.log('Auto-detected payment method ID:', paymentMethodId);
-            } catch (error) {
-              console.error('Error fetching payment methods:', error);
-              showAlert(
-                apiError,
-                'Failed to fetch payment methods. Please enter a payment method ID manually.',
-                'error'
-              );
-              spinner.style.display = 'none';
-              return;
-            }
+            console.log('No payment method ID provided, proceeding without it');
           }
 
           console.log('Using payment method ID:', paymentMethodId);
@@ -632,10 +600,17 @@
 
           // Prepare the request data
           const requestData = {
-            paymentMethodId: paymentMethodId,
             referenceId: referenceId,
             returnUrl: RETURN_URL,
           };
+
+          // Only add paymentMethodId to the request if we have one
+          if (paymentMethodId) {
+            requestData.paymentMethodId = paymentMethodId;
+            console.log('Using payment method ID:', paymentMethodId);
+          } else {
+            console.log('Proceeding without a payment method ID');
+          }
 
           console.log('Request payload:', JSON.stringify(requestData, null, 2));
 
