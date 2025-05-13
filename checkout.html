@@ -358,6 +358,18 @@
         animation: spin 1s ease-in-out infinite;
       }
 
+      /* Escape key instruction */
+      .escape-instruction {
+        position: absolute;
+        bottom: 15px;
+        left: 0;
+        right: 0;
+        text-align: center;
+        color: var(--color-text-light);
+        font-size: 0.9rem;
+        z-index: 101;
+      }
+
       @keyframes spin {
         to {
           transform: rotate(360deg);
@@ -426,6 +438,9 @@
 
     <div class="modal-overlay" id="cardModal">
       <div class="modal">
+        <!-- Add a close button -->
+        <button class="modal-close-btn" id="closeModal">×</button>
+
         <!-- Side covers to hide any vertical borders -->
         <div class="side-cover-left"></div>
         <div class="side-cover-right"></div>
@@ -442,6 +457,9 @@
             scrolling="no"
           ></iframe>
         </div>
+
+        <!-- Add escape key instruction -->
+        <div class="escape-instruction">Press ESC to close</div>
       </div>
     </div>
 
@@ -533,7 +551,7 @@
         createCardNotPresentToken();
       });
 
-      // Close modal
+      // Close modal when close button is clicked
       closeModalBtn.addEventListener('click', () => {
         cardModal.style.display = 'none';
         toggleBlur(false);
@@ -547,7 +565,7 @@
         }
       });
 
-      // Add escape key functionality since we removed the close button
+      // Add escape key functionality
       document.addEventListener('keydown', function (event) {
         if (event.key === 'Escape' && cardModal.style.display === 'flex') {
           cardModal.style.display = 'none';
@@ -989,12 +1007,19 @@
         );
       });
 
-      // Add escape key handler to close modal
+      // Add visual feedback when Escape key is pressed
       document.addEventListener('keydown', function (event) {
-        // Close modal on Escape key
         if (event.key === 'Escape' && cardModal.style.display === 'flex') {
-          cardModal.style.display = 'none';
-          toggleBlur(false);
+          // Add visual feedback
+          document.querySelector('.escape-instruction').style.color = '#c9a15f';
+
+          // Reset after a short delay
+          setTimeout(() => {
+            cardModal.style.display = 'none';
+            toggleBlur(false);
+            // Reset color if the modal is opened again
+            document.querySelector('.escape-instruction').style.color = '';
+          }, 200);
         }
       });
     </script>
