@@ -227,8 +227,10 @@ const Timeline = () => {
   const CompanyLogo = ({ companyName }) => {
     const [logoError, setLogoError] = React.useState(false);
     const logoPath = companyLogos[companyName];
+    const isMobileView = window.innerWidth <= 950;
 
-    if (!logoPath || logoError) {
+    // Don't render logo at all on mobile
+    if (!logoPath || logoError || isMobileView) {
       return null;
     }
 
