@@ -1,0 +1,487 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Webhook Handler | FinTechNav</title>
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="icon" href="/favicon-192.png" sizes="192x192" />
+    <link rel="apple-touch-icon" href="/favicon-192.png" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=Poiret+One&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --color-primary: #c9a15f;
+        --color-primary-hover: #b89050;
+        --color-background: #1a1a1a;
+        --color-text: #e0e0e0;
+        --color-text-light: #a0a0a0;
+        --color-border: #3a3a3a;
+        --color-error: #ff6b6b;
+        --color-success: #6bff9e;
+        --font-family-heading: 'Poiret One', cursive;
+        --font-family-body: 'Cormorant Garamond', serif;
+        --border-radius: 6px;
+        --box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+      }
+
+      body {
+        font-family: var(--font-family-body);
+        line-height: 1.7;
+        color: var(--color-text);
+        background-color: var(--color-background);
+        margin: 0;
+        padding: 0;
+        min-height: 100vh;
+        font-size: 1.1rem;
+      }
+
+      .container {
+        width: 100%;
+        max-width: 800px;
+        margin: 40px auto;
+        padding: 30px;
+        box-shadow: var(--box-shadow);
+        border-radius: var(--border-radius);
+        background-color: #252525;
+        border: 1px solid var(--color-border);
+      }
+
+      h1,
+      h2,
+      h3 {
+        font-family: var(--font-family-heading);
+        color: var(--color-text);
+        margin-top: 0;
+        font-weight: 400;
+        letter-spacing: 0.03em;
+      }
+
+      h1 {
+        font-size: 2.5rem;
+        margin-bottom: 20px;
+        color: var(--color-primary);
+      }
+
+      h2 {
+        font-size: 1.8rem;
+        margin-top: 30px;
+        margin-bottom: 15px;
+        border-bottom: 1px solid var(--color-border);
+        padding-bottom: 10px;
+      }
+
+      .section {
+        margin-bottom: 30px;
+      }
+
+      .log-container {
+        background-color: #3a3a3a;
+        padding: 20px;
+        border-radius: var(--border-radius);
+        margin-bottom: 30px;
+        max-height: 400px;
+        overflow-y: auto;
+        font-family: monospace;
+        white-space: pre-wrap;
+      }
+
+      .log-entry {
+        margin-bottom: 15px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid var(--color-border);
+      }
+
+      .log-entry:last-child {
+        border-bottom: none;
+      }
+
+      .timestamp {
+        color: var(--color-primary);
+        font-weight: bold;
+        margin-right: 10px;
+      }
+
+      .webhook-type {
+        font-weight: bold;
+        color: var(--color-text-light);
+      }
+
+      .alert {
+        padding: 15px;
+        border-radius: var(--border-radius);
+        margin-bottom: 20px;
+      }
+
+      .alert-success {
+        background-color: rgba(107, 255, 158, 0.1);
+        border: 1px solid rgba(107, 255, 158, 0.3);
+        color: var(--color-success);
+      }
+
+      .alert-error {
+        background-color: rgba(255, 107, 107, 0.1);
+        border: 1px solid rgba(255, 107, 107, 0.3);
+        color: var(--color-error);
+      }
+
+      .status {
+        display: none;
+        margin-top: 20px;
+      }
+
+      .code-block {
+        background-color: #2a2a2a;
+        padding: 15px;
+        border-radius: var(--border-radius);
+        overflow-x: auto;
+        margin-bottom: 20px;
+      }
+
+      .code {
+        font-family: monospace;
+        font-size: 0.9rem;
+      }
+
+      .info {
+        background-color: rgba(201, 161, 95, 0.1);
+        border: 1px solid rgba(201, 161, 95, 0.3);
+        color: var(--color-primary);
+        padding: 15px;
+        border-radius: var(--border-radius);
+        margin-bottom: 20px;
+      }
+
+      .btn {
+        display: inline-block;
+        background-color: var(--color-primary);
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        border-radius: var(--border-radius);
+        font-size: 1rem;
+        font-weight: 500;
+        cursor: pointer;
+        text-decoration: none;
+        text-align: center;
+        transition: background-color 0.3s ease;
+      }
+
+      .btn:hover {
+        background-color: var(--color-primary-hover);
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 20px;
+      }
+
+      th,
+      td {
+        text-align: left;
+        padding: 12px;
+        border-bottom: 1px solid var(--color-border);
+      }
+
+      th {
+        background-color: rgba(201, 161, 95, 0.1);
+        color: var(--color-primary);
+      }
+
+      @media screen and (max-width: 768px) {
+        .container {
+          padding: 15px;
+          margin: 20px auto;
+        }
+
+        h1 {
+          font-size: 2rem;
+        }
+
+        .log-container {
+          max-height: 300px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Webhook Handler</h1>
+      <div class="info">
+        This endpoint is configured to receive webhook notifications from the Integrated Commerce
+        API. All incoming webhook data will be logged below and forwarded to your email address.
+      </div>
+
+      <div id="statusAlert" class="status"></div>
+
+      <h2>Recent Webhooks</h2>
+      <div id="webhookLog" class="log-container">
+        <div class="log-entry">No webhooks received yet.</div>
+      </div>
+
+      <h2>Configuration</h2>
+      <table>
+        <tr>
+          <th>Webhook URL</th>
+          <td id="webhookUrl">https://fintechnav.com/webhook-handler.html</td>
+        </tr>
+        <tr>
+          <th>Email Notifications</th>
+          <td>Enabled (sending to brad@fintechnav.com)</td>
+        </tr>
+        <tr>
+          <th>Verification Method</th>
+          <td>x-fsk-wh-chksm header validation</td>
+        </tr>
+      </table>
+
+      <h2>Documentation</h2>
+      <div class="section">
+        <p>
+          This webhook handler is configured to receive notifications from the Integrated Commerce
+          API. The following event types are supported:
+        </p>
+        <ul>
+          <li>
+            <strong>sale.completed</strong> - When a financial transaction is processed and
+            completed
+          </li>
+          <li><strong>auth.completed</strong> - When a transaction authorization is completed</li>
+          <li>
+            <strong>capture.completed</strong> - When a transaction capture for a previously
+            authorized transaction is completed
+          </li>
+          <li>
+            <strong>refund.completed</strong> - When a transaction void or refund for a previously
+            completed transaction is completed
+          </li>
+          <li>
+            <strong>token.created</strong> - When a card is tokenized and stored as a payment method
+          </li>
+          <li>
+            <strong>token.updated</strong> - When an expiration date for a previously tokenized card
+            is updated
+          </li>
+          <li>
+            <strong>token.removed</strong> - When a previously tokenized card is removed from the
+            system
+          </li>
+        </ul>
+      </div>
+
+      <h2>Test Webhook</h2>
+      <div class="section">
+        <p>
+          To test this webhook handler, send a POST request to the webhook URL with a JSON payload
+          and the appropriate x-fsk-wh-chksm header.
+        </p>
+        <div class="code-block">
+          <pre class="code">
+curl -X POST \
+  -H "Content-Type: application/json" \
+  -H "x-fsk-wh-chksm: CHECKSUM_VALUE" \
+  -d '{
+    "event": {
+      "id": "evt_01JS21X856RR8R69GV5F17XK9C",
+      "type": "sale.completed",
+      "timestamp": "2025-04-16T14:30:00Z"
+    },
+    "originalResponse": {
+      "id": "trx_01J2F0EKHC7HY2R93C8ENBD1FG",
+      "paymentMethod": {
+        "id": "pmt_trm_01JRZPTMTBN41PC3VPQNZ5T3HF",
+        "type": "physical",
+        "currency": "USD",
+        "description": "Main Store Terminal"
+      },
+      "referenceId": "ref_s192i49i",
+      "resultCode": 0,
+      "resultText": "Successful transaction request",
+      "requestedAmount": 1000,
+      "approvedAmount": 1000,
+      "balanceAmount": 0
+    }
+  }' \
+  https://fintechnav.com/webhook-handler.html</pre
+          >
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Configuration
+      const EMAIL_RECIPIENT = 'brad@fintechnav.com';
+      const MAX_LOG_ENTRIES = 50;
+
+      // Initialize the webhook log from localStorage if available
+      document.addEventListener('DOMContentLoaded', function () {
+        // Update webhook URL in the UI
+        document.getElementById('webhookUrl').textContent = window.location.href;
+
+        // Load stored webhooks
+        loadStoredWebhooks();
+
+        // Check if this is a POST request (webhook being received)
+        if (window.location.search.includes('webhook=true')) {
+          handleWebhook();
+        }
+      });
+
+      // Function to load stored webhooks from localStorage
+      function loadStoredWebhooks() {
+        const webhookLog = document.getElementById('webhookLog');
+        const storedWebhooks = JSON.parse(localStorage.getItem('webhookLog') || '[]');
+
+        if (storedWebhooks.length > 0) {
+          webhookLog.innerHTML = '';
+          storedWebhooks.forEach((webhook) => {
+            webhookLog.innerHTML += createLogEntryHTML(webhook);
+          });
+        }
+      }
+
+      // Function to create log entry HTML
+      function createLogEntryHTML(webhook) {
+        const timestamp = new Date(webhook.timestamp).toLocaleString();
+        const type = webhook.type || 'unknown';
+        const payload = JSON.stringify(webhook.payload, null, 2);
+
+        return `
+          <div class="log-entry">
+            <div>
+              <span class="timestamp">${timestamp}</span>
+              <span class="webhook-type">${type}</span>
+            </div>
+            <pre>${payload}</pre>
+          </div>
+        `;
+      }
+
+      // Function to handle incoming webhook
+      function handleWebhook() {
+        // Get the webhook data from the POST request
+        // In a real implementation, you would extract this from the request body
+        // For this demo, we'll simulate receiving a webhook
+
+        fetch('/api/webhook-handler', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            // This would normally come from the actual POST request
+            webhook: {
+              event: {
+                id: 'evt_' + Date.now().toString(36),
+                type: 'sale.completed',
+                timestamp: new Date().toISOString(),
+              },
+              originalResponse: {
+                id: 'trx_' + Math.random().toString(36).substring(2, 12),
+                paymentMethod: {
+                  id: 'pmt_trm_01JRZPTMTBN41PC3VPQNZ5T3HF',
+                  type: 'physical',
+                  currency: 'USD',
+                  description: 'Main Store Terminal',
+                },
+                referenceId: 'ref_' + Math.random().toString(36).substring(2, 12),
+                resultCode: 0,
+                resultText: 'Successful transaction request',
+                requestedAmount: 1000,
+                approvedAmount: 1000,
+                balanceAmount: 0,
+              },
+            },
+          }),
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            showStatus('success', 'Webhook received and processed successfully!');
+
+            // Add to the log
+            addWebhookToLog(data.webhook);
+
+            // Send email notification
+            sendEmailNotification(data.webhook);
+          })
+          .catch((error) => {
+            showStatus('error', 'Error processing webhook: ' + error.message);
+            console.error('Error:', error);
+          });
+      }
+
+      // Function to add webhook to log
+      function addWebhookToLog(webhook) {
+        const webhookLog = document.getElementById('webhookLog');
+
+        // Create a log entry
+        const logEntry = {
+          timestamp: new Date().toISOString(),
+          type: webhook.event?.type || 'unknown',
+          payload: webhook,
+        };
+
+        // Add to UI
+        if (webhookLog.innerHTML.includes('No webhooks received yet.')) {
+          webhookLog.innerHTML = '';
+        }
+
+        webhookLog.innerHTML = createLogEntryHTML(logEntry) + webhookLog.innerHTML;
+
+        // Save to localStorage
+        const storedWebhooks = JSON.parse(localStorage.getItem('webhookLog') || '[]');
+        storedWebhooks.unshift(logEntry);
+
+        // Limit the number of stored webhooks
+        if (storedWebhooks.length > MAX_LOG_ENTRIES) {
+          storedWebhooks.length = MAX_LOG_ENTRIES;
+        }
+
+        localStorage.setItem('webhookLog', JSON.stringify(storedWebhooks));
+      }
+
+      // Function to send email notification
+      function sendEmailNotification(webhook) {
+        fetch('/.netlify/functions/send-email', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            name: 'Webhook Notification',
+            email: 'webhook@fintechnav.com',
+            message: `New webhook received:\n\nType: ${webhook.event?.type || 'unknown'}\n\nPayload:\n${JSON.stringify(webhook, null, 2)}`,
+          }),
+        })
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error('Failed to send email notification');
+            }
+            return response.json();
+          })
+          .then((data) => {
+            console.log('Email notification sent:', data);
+          })
+          .catch((error) => {
+            console.error('Email notification error:', error);
+          });
+      }
+
+      // Function to show status message
+      function showStatus(type, message) {
+        const statusAlert = document.getElementById('statusAlert');
+        statusAlert.className = `status alert alert-${type}`;
+        statusAlert.textContent = message;
+        statusAlert.style.display = 'block';
+
+        // Hide after 5 seconds
+        setTimeout(() => {
+          statusAlert.style.display = 'none';
+        }, 5000);
+      }
+    </script>
+  </body>
+</html>
