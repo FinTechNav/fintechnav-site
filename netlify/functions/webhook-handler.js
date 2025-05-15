@@ -206,7 +206,7 @@ exports.handler = async (event) => {
 };
 
 /**
- * Verify the webhook signature using HMAC
+ * Verify the webhook signature using HMAC-SHA256 with base64 encoding
  * @param {string} payload - The raw JSON payload
  * @param {string} signature - The signature from the webhook header
  * @param {string} secret - The webhook secret
@@ -218,15 +218,36 @@ function verifySignature(payload, signature, secret) {
     const hmac = crypto.createHmac('sha256', secret);
     hmac.update(payload);
 
-    // Get the calculated signature as hex
-    const calculatedSignature = hmac.digest('hex');
+    // Get the calculated signature as base64
+    const calculatedSignature = hmac.digest('base64');
 
-    // Compare the calculated signature with the provided one
-    // Use a constant-time comparison to prevent timing attacks
-    return crypto.timingSafeEqual(
-      Buffer.from(calculatedSignature, 'hex'),
-      Buffer.from(signature, 'hex')
-    );
+    console.log('Calculated signature (base64):', calculatedSignature);
+    console.log('Received signature:', signature);
+
+    // Check if the signature appears to be hex-encoded
+    const isHexSignature = /^[0-9a-f]+$/i.test(signature);
+
+    if (isHexSignature) {
+      // If the provided signature is hex, convert our calculated signature to hex for comparison
+      const calculatedHexSignature = hmac.digest('hex');
+      const result = crypto.timingSafeEqual(
+        Buffer.from(calculatedHexSignature, 'hex'),
+        Buffer.from(signature, 'hex')
+      );
+      console.log('Comparing hex signatures, result:', result);
+      return result;
+    } else {
+      // If signature is not hex (assumed to be base64), compare directly
+      // First ensure both are buffers for comparison
+      try {
+        return crypto.timingSafeEqual(Buffer.from(calculatedSignature), Buffer.from(signature));
+      } catch (comparisonError) {
+        console.error('Error in signature comparison:', comparisonError);
+
+        // Fallback to basic string comparison if timingSafeEqual fails
+        return calculatedSignature === signature;
+      }
+    }
   } catch (error) {
     console.error('Error verifying signature:', error);
     return false;
@@ -234,7 +255,7 @@ function verifySignature(payload, signature, secret) {
 }
 
 /**
- * Verify the webhook checksum (alternative verification method)
+ * Verify the webhook checksum (alternative verification method with SHA256)
  * @param {string} payload - The raw JSON payload
  * @param {string} checksum - The checksum from the webhook header
  * @param {string} secret - The webhook secret
@@ -242,15 +263,6 @@ function verifySignature(payload, signature, secret) {
  */
 function verifyChecksum(payload, checksum, secret) {
   try {
-    // Create a different signature format for checksum
-    // This is a simplified version - in production, follow the exact algorithm
-    // specified by your webhook provider
-    const hmac = crypto.createHmac('sha1', secret);
-    hmac.update(payload);
-
-    // Get the calculated signature base64 encoded (common for checksums)
-    const calculatedChecksum = hmac.digest('base64');
-
     // For testing purposes, if the incoming checksum is "test-signature-1234567890",
     // allow it to pass (for test webhooks)
     if (checksum === 'test-signature-1234567890') {
@@ -258,8 +270,26 @@ function verifyChecksum(payload, checksum, secret) {
       return true;
     }
 
+    // Create HMAC using SHA-256 and the secret (upgraded from SHA1)
+    const hmac = crypto.createHmac('sha256', secret);
+    hmac.update(payload);
+
+    // Get the calculated signature base64 encoded
+    const calculatedChecksum = hmac.digest('base64');
+
+    console.log('Calculated checksum (base64):', calculatedChecksum);
+    console.log('Received checksum:', checksum);
+
     // Compare checksums - cannot use timingSafeEqual directly with base64 strings
-    return calculatedChecksum === checksum;
+    // Convert to buffers first
+    try {
+      return crypto.timingSafeEqual(Buffer.from(calculatedChecksum), Buffer.from(checksum));
+    } catch (comparisonError) {
+      console.error('Error in checksum comparison:', comparisonError);
+
+      // Fallback to basic string comparison if timingSafeEqual fails
+      return calculatedChecksum === checksum;
+    }
   } catch (error) {
     console.error('Error verifying checksum:', error);
     return false;
