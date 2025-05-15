@@ -173,6 +173,11 @@
         background-color: var(--color-primary-hover);
       }
 
+      .btn:disabled {
+        background-color: #6e5a36;
+        cursor: not-allowed;
+      }
+
       table {
         width: 100%;
         border-collapse: collapse;
@@ -207,6 +212,48 @@
         margin-right: 10px;
       }
 
+      .auto-refresh {
+        display: flex;
+        align-items: center;
+        margin-top: 20px;
+      }
+
+      .auto-refresh label {
+        margin-right: 10px;
+      }
+
+      .spinner {
+        display: inline-block;
+        width: 16px;
+        height: 16px;
+        border: 2px solid rgba(201, 161, 95, 0.3);
+        border-radius: 50%;
+        border-top-color: var(--color-primary);
+        animation: spin 1s linear infinite;
+        margin-left: 10px;
+        vertical-align: middle;
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      .refresh-button {
+        background: none;
+        border: none;
+        color: var(--color-primary);
+        cursor: pointer;
+        text-decoration: underline;
+        padding: 5px;
+        margin-left: 10px;
+      }
+
+      .refresh-button:hover {
+        color: var(--color-primary-hover);
+      }
+
       @media screen and (max-width: 768px) {
         .container {
           padding: 15px;
@@ -233,14 +280,17 @@
       <div class="info">
         This endpoint is configured to receive webhook notifications from the Integrated Commerce
         API. All incoming webhook data will be logged below and forwarded to your email address.
-        <br /><br />
-        <strong>Important:</strong> This page checks for new webhooks every 10 seconds. If you send
-        a webhook directly to the endpoint, refresh this page or wait for the auto-refresh.
       </div>
 
       <div id="statusAlert" class="status"></div>
 
       <h2>Recent Webhooks</h2>
+      <div class="auto-refresh">
+        <label for="autoRefreshToggle">Auto-refresh:</label>
+        <input type="checkbox" id="autoRefreshToggle" checked />
+        <span id="refreshStatus"> <span class="spinner"></span> Refreshing every 5 seconds </span>
+        <button id="manualRefresh" class="refresh-button">Refresh Now</button>
+      </div>
       <div id="webhookLog" class="log-container">
         <div class="log-entry">No webhooks received yet.</div>
       </div>
@@ -340,7 +390,12 @@ curl -X POST \
       const MAX_LOG_ENTRIES = 50;
       const WEBHOOK_ENDPOINT = '/.netlify/functions/webhook-handler';
       const TEST_WEBHOOK_ENDPOINT = '/.netlify/functions/webhook-test';
-      const REFRESH_INTERVAL = 10000; // 10 seconds
+      const WEBHOOK_STORAGE_ENDPOINT = '/.netlify/functions/webhook-storage';
+      const REFRESH_INTERVAL = 5000; // 5 seconds
+
+      // Variables for refresh control
+      let refreshIntervalId = null;
+      let isRefreshing = false;
 
       // Variable to store the timestamp of the most recent webhook
       let mostRecentTimestamp = null;
@@ -360,9 +415,54 @@ curl -X POST \
         // Set up clear webhooks button
         document.getElementById('clearWebhooks').addEventListener('click', clearWebhookHistory);
 
+        // Set up refresh toggle
+        document.getElementById('autoRefreshToggle').addEventListener('change', toggleAutoRefresh);
+
+        // Set up manual refresh button
+        document.getElementById('manualRefresh').addEventListener('click', function () {
+          fetchNewWebhooks(true); // true = show status even if no webhooks found
+        });
+
         // Start the auto-refresh for checking new webhooks
         startAutoRefresh();
       });
+
+      // Function to toggle auto-refresh
+      function toggleAutoRefresh() {
+        const autoRefreshToggle = document.getElementById('autoRefreshToggle');
+        const refreshStatus = document.getElementById('refreshStatus');
+
+        if (autoRefreshToggle.checked) {
+          // Start auto-refresh
+          startAutoRefresh();
+          refreshStatus.innerHTML = '<span class="spinner"></span> Refreshing every 5 seconds';
+        } else {
+          // Stop auto-refresh
+          stopAutoRefresh();
+          refreshStatus.textContent = 'Auto-refresh disabled';
+        }
+      }
+
+      // Function to start auto-refresh
+      function startAutoRefresh() {
+        if (refreshIntervalId) {
+          clearInterval(refreshIntervalId);
+        }
+
+        // Initial fetch
+        fetchNewWebhooks();
+
+        // Setup interval
+        refreshIntervalId = setInterval(fetchNewWebhooks, REFRESH_INTERVAL);
+      }
+
+      // Function to stop auto-refresh
+      function stopAutoRefresh() {
+        if (refreshIntervalId) {
+          clearInterval(refreshIntervalId);
+          refreshIntervalId = null;
+        }
+      }
 
       // Function to load stored webhooks from localStorage
       function loadStoredWebhooks() {
@@ -386,7 +486,19 @@ curl -X POST \
       function createLogEntryHTML(webhook) {
         const timestamp = new Date(webhook.timestamp).toLocaleString();
         const type = webhook.type || 'unknown';
-        const payload = JSON.stringify(webhook.payload, null, 2);
+
+        // Determine what to display as the payload
+        let payload;
+        if (webhook.payload) {
+          // If we have a regular payload object
+          payload = JSON.stringify(webhook.payload, null, 2);
+        } else if (webhook.data) {
+          // If we have a data object (from the storage)
+          payload = JSON.stringify(webhook.data, null, 2);
+        } else {
+          // Fallback
+          payload = JSON.stringify(webhook, null, 2);
+        }
 
         return `
           <div class="log-entry">
@@ -399,71 +511,83 @@ curl -X POST \
         `;
       }
 
-      // Function to start auto-refresh
-      function startAutoRefresh() {
-        // Initial check
-        checkForNewWebhooks();
+      // Function to fetch new webhooks
+      function fetchNewWebhooks(showStatusOnEmpty = false) {
+        // Prevent concurrent refreshes
+        if (isRefreshing) return;
 
-        // Setup interval for checking
-        setInterval(checkForNewWebhooks, REFRESH_INTERVAL);
-      }
-
-      // Function to check for new webhooks
-      function checkForNewWebhooks() {
+        isRefreshing = true;
         const lastCheckElement = document.getElementById('lastCheck');
         const currentTime = new Date();
         lastCheckElement.textContent = currentTime.toLocaleString();
 
-        // We could implement a direct check to an endpoint that returns recent webhooks
-        // For now, we'll just indicate that we're checking
+        // In a real implementation, this would fetch from the webhook storage endpoint
+        // For now, we'll check localStorage and also poll the storage endpoint
 
-        // This is where we would add an API call to retrieve new webhooks
-        // For example:
-        /*
-        fetch('/.netlify/functions/get-recent-webhooks')
-          .then(response => response.json())
-          .then(data => {
-            if (data.webhooks && data.webhooks.length > 0) {
-              processNewWebhooks(data.webhooks);
+        // First, check if we have a real shared webhook storage
+        fetch(WEBHOOK_STORAGE_ENDPOINT)
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error(`HTTP error: ${response.status}`);
+            }
+            return response.json();
+          })
+          .then((data) => {
+            // If we got webhook data from the storage endpoint
+            if (data && data.webhooks && data.webhooks.length > 0) {
+              processNewWebhooks(data.webhooks, showStatusOnEmpty);
+            } else if (showStatusOnEmpty) {
+              showStatus('info', 'No new webhooks found');
             }
           })
-          .catch(error => {
-            console.error('Error checking for new webhooks:', error);
+          .catch((error) => {
+            console.error('Error fetching webhooks:', error);
+
+            // Fallback to localStorage if server fetch fails
+            const storedWebhooks = JSON.parse(localStorage.getItem('webhookLog') || '[]');
+            processExistingWebhooks(storedWebhooks, showStatusOnEmpty);
+          })
+          .finally(() => {
+            isRefreshing = false;
           });
-        */
       }
 
-      // Function to process newly received webhooks
-      function processNewWebhooks(webhooks) {
-        if (!Array.isArray(webhooks) || webhooks.length === 0) return;
+      // Function to process webhooks from storage
+      function processNewWebhooks(webhooks, showStatusOnEmpty) {
+        if (!Array.isArray(webhooks) || webhooks.length === 0) {
+          if (showStatusOnEmpty) {
+            showStatus('info', 'No new webhooks found');
+          }
+          return;
+        }
 
         // Get stored webhooks
         const storedWebhooks = JSON.parse(localStorage.getItem('webhookLog') || '[]');
 
         // Track if we added any new webhooks
         let newWebhooksAdded = false;
+        let newWebhooksCount = 0;
 
         // Process each webhook
         webhooks.forEach((webhook) => {
-          const webhookTimestamp = new Date(webhook.timestamp).getTime();
+          // Create a webhook record with consistent format
+          const webhookRecord = {
+            timestamp: webhook.timestamp || new Date().toISOString(),
+            type: getWebhookType(webhook),
+            payload: webhook.data || webhook, // Store the whole webhook for display
+          };
 
-          // Only add if it's newer than our most recent timestamp
-          if (!mostRecentTimestamp || webhookTimestamp > mostRecentTimestamp) {
-            // Format for storage
-            const logEntry = {
-              timestamp: webhook.timestamp,
-              type: getWebhookType(webhook),
-              payload: webhook,
-            };
+          // Check if this webhook is already in our storage
+          // This is a simple check - in a real implementation, you'd use IDs
+          const exists = storedWebhooks.some(
+            (sw) => JSON.stringify(sw.payload) === JSON.stringify(webhookRecord.payload)
+          );
 
+          if (!exists) {
             // Add to the beginning of the array
-            storedWebhooks.unshift(logEntry);
+            storedWebhooks.unshift(webhookRecord);
             newWebhooksAdded = true;
-
-            // Update the most recent timestamp
-            if (webhookTimestamp > (mostRecentTimestamp || 0)) {
-              mostRecentTimestamp = webhookTimestamp;
-            }
+            newWebhooksCount++;
           }
         });
 
@@ -481,8 +605,20 @@ curl -X POST \
           updateWebhookLogUI(storedWebhooks);
 
           // Show notification
-          showStatus('success', 'New webhook(s) received!');
+          showStatus('success', `${newWebhooksCount} new webhook(s) received!`);
+        } else if (showStatusOnEmpty) {
+          showStatus('info', 'No new webhooks found');
         }
+      }
+
+      // Function to process existing webhooks (fallback)
+      function processExistingWebhooks(webhooks, showStatusOnEmpty) {
+        if (showStatusOnEmpty) {
+          showStatus('info', 'No new webhooks found (using local storage)');
+        }
+
+        // Update UI with existing webhooks
+        updateWebhookLogUI(webhooks);
       }
 
       // Function to extract webhook type
@@ -494,6 +630,14 @@ curl -X POST \
         // Check eventData.type (as in your example)
         else if (webhook.eventData && webhook.eventData.type) {
           return webhook.eventData.type;
+        }
+        // Check direct type property
+        else if (webhook.type) {
+          return webhook.type;
+        }
+        // Check in data if present
+        else if (webhook.data) {
+          return getWebhookType(webhook.data);
         }
         // Fallback
         return 'unknown';
@@ -547,15 +691,20 @@ curl -X POST \
             console.log('Test webhook sent:', data);
             showStatus('success', 'Test webhook sent successfully!');
 
-            // Add the webhook to our log if it's not already there
+            // Get the webhook from the response
             if (data.testPayload) {
+              // Create a log entry with consistent format
               const logEntry = {
                 timestamp: new Date().toISOString(),
                 type: data.testPayload.event?.type || 'unknown',
                 payload: data.testPayload,
               };
 
+              // Add to log and update UI
               addWebhookToLog(logEntry);
+
+              // Fetch new webhooks right away to check if the webhook was received
+              setTimeout(fetchNewWebhooks, 1000);
             }
           })
           .catch((error) => {

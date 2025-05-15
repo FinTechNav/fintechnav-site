@@ -84,8 +84,43 @@ exports.handler = async (event) => {
       webhook: webhookPayload,
     };
 
-    // Also write the webhook data to a database or static file
-    // for persistent storage (if we implement this later)
+    // SAVE THE WEBHOOK TO THE SPECIAL HOOK STORAGE
+    try {
+      // Create the full URL for the webhook storage function
+      let storageUrl = '';
+
+      // Determine the base URL
+      if (process.env.URL) {
+        // If running in Netlify production
+        storageUrl = `${process.env.URL}/.netlify/functions/webhook-storage`;
+      } else {
+        // If running locally or can't determine URL
+        const host = event.headers.host || 'localhost:8888';
+        const protocol = host.includes('localhost') ? 'http' : 'https';
+        storageUrl = `${protocol}://${host}/.netlify/functions/webhook-storage`;
+      }
+
+      // Store the webhook
+      const storagePayload = {
+        type: webhookEventType,
+        timestamp: timestampStr,
+        data: webhookPayload,
+      };
+
+      // Make a POST request to the storage function
+      await fetch(storageUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(storagePayload),
+      });
+
+      console.log('Webhook saved to storage');
+    } catch (storageError) {
+      console.error('Failed to save webhook to storage:', storageError);
+      // Continue processing even if storage fails
+    }
 
     // Respond with success
     return {
