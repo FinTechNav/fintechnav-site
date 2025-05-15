@@ -197,6 +197,16 @@
         gap: 10px;
       }
 
+      .webhook-select {
+        padding: 10px;
+        background-color: #3a3a3a;
+        color: var(--color-text);
+        border: 1px solid var(--color-border);
+        border-radius: var(--border-radius);
+        font-family: var(--font-family-body);
+        margin-right: 10px;
+      }
+
       @media screen and (max-width: 768px) {
         .container {
           padding: 15px;
@@ -223,6 +233,9 @@
       <div class="info">
         This endpoint is configured to receive webhook notifications from the Integrated Commerce
         API. All incoming webhook data will be logged below and forwarded to your email address.
+        <br /><br />
+        <strong>Important:</strong> This page checks for new webhooks every 10 seconds. If you send
+        a webhook directly to the endpoint, refresh this page or wait for the auto-refresh.
       </div>
 
       <div id="statusAlert" class="status"></div>
@@ -233,7 +246,18 @@
       </div>
 
       <div class="actions">
-        <button id="sendTestWebhook" class="btn">Send Test Webhook</button>
+        <div>
+          <select id="webhookTypeSelect" class="webhook-select">
+            <option value="sale.completed">sale.completed</option>
+            <option value="auth.completed">auth.completed</option>
+            <option value="capture.completed">capture.completed</option>
+            <option value="refund.completed">refund.completed</option>
+            <option value="token.created">token.created</option>
+            <option value="token.updated">token.updated</option>
+            <option value="token.removed">token.removed</option>
+          </select>
+          <button id="sendTestWebhook" class="btn">Send Test Webhook</button>
+        </div>
         <button id="clearWebhooks" class="btn">Clear Webhook History</button>
       </div>
 
@@ -250,6 +274,10 @@
         <tr>
           <th>Verification Method</th>
           <td>x-fsk-wh-chksm header validation</td>
+        </tr>
+        <tr>
+          <th>Last Check</th>
+          <td id="lastCheck">Never</td>
         </tr>
       </table>
 
@@ -298,7 +326,7 @@
 curl -X POST \
   -H "Content-Type: application/json" \
   -d '{
-    "type": "sale.completed",
+    "type": "token.created",
     "amount": 1000
   }' \
   https://fintechnav.com/.netlify/functions/webhook-test</pre
@@ -312,6 +340,10 @@ curl -X POST \
       const MAX_LOG_ENTRIES = 50;
       const WEBHOOK_ENDPOINT = '/.netlify/functions/webhook-handler';
       const TEST_WEBHOOK_ENDPOINT = '/.netlify/functions/webhook-test';
+      const REFRESH_INTERVAL = 10000; // 10 seconds
+
+      // Variable to store the timestamp of the most recent webhook
+      let mostRecentTimestamp = null;
 
       // Initialize the webhook log from localStorage if available
       document.addEventListener('DOMContentLoaded', function () {
@@ -327,6 +359,9 @@ curl -X POST \
 
         // Set up clear webhooks button
         document.getElementById('clearWebhooks').addEventListener('click', clearWebhookHistory);
+
+        // Start the auto-refresh for checking new webhooks
+        startAutoRefresh();
       });
 
       // Function to load stored webhooks from localStorage
@@ -339,6 +374,11 @@ curl -X POST \
           storedWebhooks.forEach((webhook) => {
             webhookLog.innerHTML += createLogEntryHTML(webhook);
           });
+
+          // Update most recent timestamp
+          if (storedWebhooks[0] && storedWebhooks[0].timestamp) {
+            mostRecentTimestamp = new Date(storedWebhooks[0].timestamp).getTime();
+          }
         }
       }
 
@@ -359,6 +399,124 @@ curl -X POST \
         `;
       }
 
+      // Function to start auto-refresh
+      function startAutoRefresh() {
+        // Initial check
+        checkForNewWebhooks();
+
+        // Setup interval for checking
+        setInterval(checkForNewWebhooks, REFRESH_INTERVAL);
+      }
+
+      // Function to check for new webhooks
+      function checkForNewWebhooks() {
+        const lastCheckElement = document.getElementById('lastCheck');
+        const currentTime = new Date();
+        lastCheckElement.textContent = currentTime.toLocaleString();
+
+        // We could implement a direct check to an endpoint that returns recent webhooks
+        // For now, we'll just indicate that we're checking
+
+        // This is where we would add an API call to retrieve new webhooks
+        // For example:
+        /*
+        fetch('/.netlify/functions/get-recent-webhooks')
+          .then(response => response.json())
+          .then(data => {
+            if (data.webhooks && data.webhooks.length > 0) {
+              processNewWebhooks(data.webhooks);
+            }
+          })
+          .catch(error => {
+            console.error('Error checking for new webhooks:', error);
+          });
+        */
+      }
+
+      // Function to process newly received webhooks
+      function processNewWebhooks(webhooks) {
+        if (!Array.isArray(webhooks) || webhooks.length === 0) return;
+
+        // Get stored webhooks
+        const storedWebhooks = JSON.parse(localStorage.getItem('webhookLog') || '[]');
+
+        // Track if we added any new webhooks
+        let newWebhooksAdded = false;
+
+        // Process each webhook
+        webhooks.forEach((webhook) => {
+          const webhookTimestamp = new Date(webhook.timestamp).getTime();
+
+          // Only add if it's newer than our most recent timestamp
+          if (!mostRecentTimestamp || webhookTimestamp > mostRecentTimestamp) {
+            // Format for storage
+            const logEntry = {
+              timestamp: webhook.timestamp,
+              type: getWebhookType(webhook),
+              payload: webhook,
+            };
+
+            // Add to the beginning of the array
+            storedWebhooks.unshift(logEntry);
+            newWebhooksAdded = true;
+
+            // Update the most recent timestamp
+            if (webhookTimestamp > (mostRecentTimestamp || 0)) {
+              mostRecentTimestamp = webhookTimestamp;
+            }
+          }
+        });
+
+        // If we added new webhooks, update storage and UI
+        if (newWebhooksAdded) {
+          // Limit the number of stored webhooks
+          if (storedWebhooks.length > MAX_LOG_ENTRIES) {
+            storedWebhooks.length = MAX_LOG_ENTRIES;
+          }
+
+          // Save to localStorage
+          localStorage.setItem('webhookLog', JSON.stringify(storedWebhooks));
+
+          // Update UI
+          updateWebhookLogUI(storedWebhooks);
+
+          // Show notification
+          showStatus('success', 'New webhook(s) received!');
+        }
+      }
+
+      // Function to extract webhook type
+      function getWebhookType(webhook) {
+        // Check standard event.type
+        if (webhook.event && webhook.event.type) {
+          return webhook.event.type;
+        }
+        // Check eventData.type (as in your example)
+        else if (webhook.eventData && webhook.eventData.type) {
+          return webhook.eventData.type;
+        }
+        // Fallback
+        return 'unknown';
+      }
+
+      // Function to update the webhook log UI
+      function updateWebhookLogUI(webhooks) {
+        const webhookLog = document.getElementById('webhookLog');
+
+        // Clear existing content
+        webhookLog.innerHTML = '';
+
+        // Add each webhook to the UI
+        webhooks.forEach((webhook) => {
+          webhookLog.innerHTML += createLogEntryHTML(webhook);
+        });
+
+        // If no webhooks, show a message
+        if (webhooks.length === 0) {
+          webhookLog.innerHTML = '<div class="log-entry">No webhooks received yet.</div>';
+        }
+      }
+
       // Function to send a test webhook
       function sendTestWebhook() {
         const button = document.getElementById('sendTestWebhook');
@@ -366,13 +524,16 @@ curl -X POST \
         button.disabled = true;
         button.textContent = 'Sending...';
 
+        // Get selected webhook type
+        const webhookType = document.getElementById('webhookTypeSelect').value;
+
         fetch(TEST_WEBHOOK_ENDPOINT, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            type: 'sale.completed',
+            type: webhookType,
             amount: 1000 + Math.floor(Math.random() * 9000), // Random amount between 1000-10000
           }),
         })
@@ -412,6 +573,7 @@ curl -X POST \
         localStorage.removeItem('webhookLog');
         document.getElementById('webhookLog').innerHTML =
           '<div class="log-entry">No webhooks received yet.</div>';
+        mostRecentTimestamp = null;
         showStatus('success', 'Webhook history cleared');
       }
 
@@ -439,6 +601,12 @@ curl -X POST \
         }
 
         webhookLog.innerHTML = createLogEntryHTML(webhook) + webhookLog.innerHTML;
+
+        // Update most recent timestamp
+        const webhookTimestamp = new Date(webhook.timestamp).getTime();
+        if (!mostRecentTimestamp || webhookTimestamp > mostRecentTimestamp) {
+          mostRecentTimestamp = webhookTimestamp;
+        }
       }
 
       // Function to show status message

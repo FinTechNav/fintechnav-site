@@ -30,25 +30,30 @@ exports.handler = async (event) => {
   try {
     // Parse the webhook payload
     const webhookPayload = JSON.parse(event.body);
-    const webhookEventType = webhookPayload.event?.type || 'unknown';
+
+    // Log the entire payload for debugging
+    console.log('Received webhook payload:', JSON.stringify(webhookPayload, null, 2));
+
+    // Extract event type - check multiple possible locations
+    let webhookEventType = 'unknown';
+
+    // Check in the standard event.type location
+    if (webhookPayload.event && webhookPayload.event.type) {
+      webhookEventType = webhookPayload.event.type;
+    }
+    // Also check in eventData.type location (as shown in your example)
+    else if (webhookPayload.eventData && webhookPayload.eventData.type) {
+      webhookEventType = webhookPayload.eventData.type;
+    }
+
+    console.log('Extracted webhook event type:', webhookEventType);
 
     // Log the webhook for debugging
     console.log('Webhook received:', {
       type: webhookEventType,
       headers: event.headers,
       checksumHeader: event.headers['x-fsk-wh-chksm'],
-      payload: webhookPayload,
     });
-
-    // In a production environment, you would validate the checksum
-    // For this example, we'll skip detailed validation and assume the webhook is valid
-    // const isValid = validateChecksum(webhookPayload, event.headers['x-fsk-wh-chksm']);
-    // if (!isValid) {
-    //   return {
-    //     statusCode: 401,
-    //     body: JSON.stringify({ error: 'Invalid checksum' })
-    //   };
-    // }
 
     // Set up SendGrid API key
     sendgrid.setApiKey(process.env.SENDGRID_API_KEY);
@@ -71,6 +76,17 @@ exports.handler = async (event) => {
 
     await sendgrid.send(msg);
 
+    // Create a standard response with the webhook data
+    const response = {
+      message: 'Webhook received and processed successfully',
+      type: webhookEventType,
+      timestamp: timestampStr,
+      webhook: webhookPayload,
+    };
+
+    // Also write the webhook data to a database or static file
+    // for persistent storage (if we implement this later)
+
     // Respond with success
     return {
       statusCode: 200,
@@ -78,12 +94,7 @@ exports.handler = async (event) => {
         'Access-Control-Allow-Origin': '*',
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        message: 'Webhook received and processed successfully',
-        type: webhookEventType,
-        timestamp: timestampStr,
-        webhook: webhookPayload, // Return the webhook payload for storage
-      }),
+      body: JSON.stringify(response),
     };
   } catch (error) {
     console.error('Error processing webhook:', error);
@@ -107,16 +118,26 @@ exports.handler = async (event) => {
  */
 function createEmailContent(webhookPayload, eventType, timestamp) {
   // Extract key transaction information when available
-  const transactionId = webhookPayload.originalResponse?.id || 'N/A';
-  const referenceId = webhookPayload.originalResponse?.referenceId || 'N/A';
-  const amount = webhookPayload.originalResponse?.approvedAmount
-    ? formatCurrency(webhookPayload.originalResponse.approvedAmount)
-    : 'N/A';
+  // First try the standard location for transaction ID
+  let transactionId = 'N/A';
+  let referenceId = 'N/A';
+  let amount = 'N/A';
+  let paymentMethodDesc = 'N/A';
 
-  const paymentMethodInfo = webhookPayload.originalResponse?.paymentMethod;
-  const paymentMethodDesc = paymentMethodInfo
-    ? `${paymentMethodInfo.description || paymentMethodInfo.type || 'Unknown'} (${paymentMethodInfo.id || 'No ID'})`
-    : 'N/A';
+  // Try to extract from different possible locations in the payload
+  if (webhookPayload.originalResponse) {
+    transactionId = webhookPayload.originalResponse.id || 'N/A';
+    referenceId = webhookPayload.originalResponse.referenceId || 'N/A';
+
+    if (webhookPayload.originalResponse.approvedAmount) {
+      amount = formatCurrency(webhookPayload.originalResponse.approvedAmount);
+    }
+
+    const paymentMethodInfo = webhookPayload.originalResponse.paymentMethod;
+    if (paymentMethodInfo) {
+      paymentMethodDesc = `${paymentMethodInfo.description || paymentMethodInfo.type || 'Unknown'} (${paymentMethodInfo.id || 'No ID'})`;
+    }
+  }
 
   // Create plain text email content
   const text = `
@@ -240,20 +261,4 @@ function formatCurrency(amountInCents, currencyCode = 'USD') {
     style: 'currency',
     currency: currencyCode,
   }).format(amount);
-}
-
-/**
- * Validate webhook checksum (implementation would depend on your shared secret)
- */
-function validateChecksum(webhookPayload, checksumHeader) {
-  // In a production environment, you would implement this validation
-  // based on the Integrated Commerce API documentation
-
-  // Example pseudo-code:
-  // 1. Extract required fields from the payload
-  // 2. Concatenate fields in the correct order with the shared secret
-  // 3. Compute SHA-256 hash and compare with the provided checksum
-
-  // For this example, we'll return true to bypass validation
-  return true;
 }
