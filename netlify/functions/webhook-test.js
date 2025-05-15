@@ -1,11 +1,25 @@
 // netlify/functions/webhook-test.js
 exports.handler = async (event) => {
-  // This is a simple test function that simulates a webhook being sent
-  // You can use this to test your webhook-handler.js without needing to send a real webhook
+  // Set CORS headers for preflight requests
+  if (event.httpMethod === 'OPTIONS') {
+    return {
+      statusCode: 204,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': 'Content-Type',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      },
+      body: '',
+    };
+  }
 
   if (event.httpMethod !== 'POST') {
     return {
       statusCode: 405,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Content-Type': 'application/json',
+      },
       body: JSON.stringify({ error: 'Method not allowed' }),
     };
   }
@@ -18,15 +32,24 @@ exports.handler = async (event) => {
       // Try to parse the body if provided
       const body = JSON.parse(event.body || '{}');
       const webhookType = body.type || 'sale.completed';
+      const amount = parseInt(body.amount, 10) || 1000;
 
-      testPayload = createTestWebhook(webhookType, body.amount);
+      testPayload = createTestWebhook(webhookType, amount);
     } catch (e) {
       // If parsing fails, create a default test webhook
       testPayload = createTestWebhook('sale.completed', 1000);
     }
 
     // Forward this test webhook to the real webhook handler
-    const webhookResponse = await fetch(process.env.URL + '/.netlify/functions/webhook-handler', {
+    const fullUrl = process.env.URL
+      ? `${process.env.URL}/.netlify/functions/webhook-handler`
+      : `${
+          event.headers.host.includes('localhost') ? 'http' : 'https'
+        }://${event.headers.host}/.netlify/functions/webhook-handler`;
+
+    console.log('Sending test webhook to:', fullUrl);
+
+    const webhookResponse = await fetch(fullUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -40,6 +63,7 @@ exports.handler = async (event) => {
     return {
       statusCode: 200,
       headers: {
+        'Access-Control-Allow-Origin': '*',
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
@@ -54,6 +78,7 @@ exports.handler = async (event) => {
     return {
       statusCode: 500,
       headers: {
+        'Access-Control-Allow-Origin': '*',
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({

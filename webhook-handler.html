@@ -191,6 +191,12 @@
         color: var(--color-primary);
       }
 
+      .actions {
+        margin-top: 20px;
+        display: flex;
+        gap: 10px;
+      }
+
       @media screen and (max-width: 768px) {
         .container {
           padding: 15px;
@@ -203,6 +209,10 @@
 
         .log-container {
           max-height: 300px;
+        }
+
+        .actions {
+          flex-direction: column;
         }
       }
     </style>
@@ -222,11 +232,16 @@
         <div class="log-entry">No webhooks received yet.</div>
       </div>
 
+      <div class="actions">
+        <button id="sendTestWebhook" class="btn">Send Test Webhook</button>
+        <button id="clearWebhooks" class="btn">Clear Webhook History</button>
+      </div>
+
       <h2>Configuration</h2>
       <table>
         <tr>
           <th>Webhook URL</th>
-          <td id="webhookUrl">https://fintechnav.com/webhook-handler.html</td>
+          <td id="webhookUrl">https://fintechnav.com/.netlify/functions/webhook-handler</td>
         </tr>
         <tr>
           <th>Email Notifications</th>
@@ -282,30 +297,11 @@
           <pre class="code">
 curl -X POST \
   -H "Content-Type: application/json" \
-  -H "x-fsk-wh-chksm: CHECKSUM_VALUE" \
   -d '{
-    "event": {
-      "id": "evt_01JS21X856RR8R69GV5F17XK9C",
-      "type": "sale.completed",
-      "timestamp": "2025-04-16T14:30:00Z"
-    },
-    "originalResponse": {
-      "id": "trx_01J2F0EKHC7HY2R93C8ENBD1FG",
-      "paymentMethod": {
-        "id": "pmt_trm_01JRZPTMTBN41PC3VPQNZ5T3HF",
-        "type": "physical",
-        "currency": "USD",
-        "description": "Main Store Terminal"
-      },
-      "referenceId": "ref_s192i49i",
-      "resultCode": 0,
-      "resultText": "Successful transaction request",
-      "requestedAmount": 1000,
-      "approvedAmount": 1000,
-      "balanceAmount": 0
-    }
+    "type": "sale.completed",
+    "amount": 1000
   }' \
-  https://fintechnav.com/webhook-handler.html</pre
+  https://fintechnav.com/.netlify/functions/webhook-test</pre
           >
         </div>
       </div>
@@ -313,21 +309,24 @@ curl -X POST \
 
     <script>
       // Configuration
-      const EMAIL_RECIPIENT = 'brad@fintechnav.com';
       const MAX_LOG_ENTRIES = 50;
+      const WEBHOOK_ENDPOINT = '/.netlify/functions/webhook-handler';
+      const TEST_WEBHOOK_ENDPOINT = '/.netlify/functions/webhook-test';
 
       // Initialize the webhook log from localStorage if available
       document.addEventListener('DOMContentLoaded', function () {
         // Update webhook URL in the UI
-        document.getElementById('webhookUrl').textContent = window.location.href;
+        document.getElementById('webhookUrl').textContent =
+          window.location.origin + WEBHOOK_ENDPOINT;
 
         // Load stored webhooks
         loadStoredWebhooks();
 
-        // Check if this is a POST request (webhook being received)
-        if (window.location.search.includes('webhook=true')) {
-          handleWebhook();
-        }
+        // Set up test webhook button
+        document.getElementById('sendTestWebhook').addEventListener('click', sendTestWebhook);
+
+        // Set up clear webhooks button
+        document.getElementById('clearWebhooks').addEventListener('click', clearWebhookHistory);
       });
 
       // Function to load stored webhooks from localStorage
@@ -360,114 +359,86 @@ curl -X POST \
         `;
       }
 
-      // Function to handle incoming webhook
-      function handleWebhook() {
-        // Get the webhook data from the POST request
-        // In a real implementation, you would extract this from the request body
-        // For this demo, we'll simulate receiving a webhook
+      // Function to send a test webhook
+      function sendTestWebhook() {
+        const button = document.getElementById('sendTestWebhook');
+        const originalText = button.textContent;
+        button.disabled = true;
+        button.textContent = 'Sending...';
 
-        fetch('/api/webhook-handler', {
+        fetch(TEST_WEBHOOK_ENDPOINT, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            // This would normally come from the actual POST request
-            webhook: {
-              event: {
-                id: 'evt_' + Date.now().toString(36),
-                type: 'sale.completed',
-                timestamp: new Date().toISOString(),
-              },
-              originalResponse: {
-                id: 'trx_' + Math.random().toString(36).substring(2, 12),
-                paymentMethod: {
-                  id: 'pmt_trm_01JRZPTMTBN41PC3VPQNZ5T3HF',
-                  type: 'physical',
-                  currency: 'USD',
-                  description: 'Main Store Terminal',
-                },
-                referenceId: 'ref_' + Math.random().toString(36).substring(2, 12),
-                resultCode: 0,
-                resultText: 'Successful transaction request',
-                requestedAmount: 1000,
-                approvedAmount: 1000,
-                balanceAmount: 0,
-              },
-            },
+            type: 'sale.completed',
+            amount: 1000 + Math.floor(Math.random() * 9000), // Random amount between 1000-10000
           }),
         })
-          .then((response) => response.json())
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error('Failed to send test webhook');
+            }
+            return response.json();
+          })
           .then((data) => {
-            showStatus('success', 'Webhook received and processed successfully!');
+            console.log('Test webhook sent:', data);
+            showStatus('success', 'Test webhook sent successfully!');
 
-            // Add to the log
-            addWebhookToLog(data.webhook);
+            // Add the webhook to our log if it's not already there
+            if (data.testPayload) {
+              const logEntry = {
+                timestamp: new Date().toISOString(),
+                type: data.testPayload.event?.type || 'unknown',
+                payload: data.testPayload,
+              };
 
-            // Send email notification
-            sendEmailNotification(data.webhook);
+              addWebhookToLog(logEntry);
+            }
           })
           .catch((error) => {
-            showStatus('error', 'Error processing webhook: ' + error.message);
-            console.error('Error:', error);
+            console.error('Error sending test webhook:', error);
+            showStatus('error', 'Failed to send test webhook: ' + error.message);
+          })
+          .finally(() => {
+            button.disabled = false;
+            button.textContent = originalText;
           });
+      }
+
+      // Function to clear webhook history
+      function clearWebhookHistory() {
+        localStorage.removeItem('webhookLog');
+        document.getElementById('webhookLog').innerHTML =
+          '<div class="log-entry">No webhooks received yet.</div>';
+        showStatus('success', 'Webhook history cleared');
       }
 
       // Function to add webhook to log
       function addWebhookToLog(webhook) {
         const webhookLog = document.getElementById('webhookLog');
 
-        // Create a log entry
-        const logEntry = {
-          timestamp: new Date().toISOString(),
-          type: webhook.event?.type || 'unknown',
-          payload: webhook,
-        };
-
-        // Add to UI
-        if (webhookLog.innerHTML.includes('No webhooks received yet.')) {
-          webhookLog.innerHTML = '';
-        }
-
-        webhookLog.innerHTML = createLogEntryHTML(logEntry) + webhookLog.innerHTML;
-
-        // Save to localStorage
+        // Get stored webhooks
         const storedWebhooks = JSON.parse(localStorage.getItem('webhookLog') || '[]');
-        storedWebhooks.unshift(logEntry);
+
+        // Add new webhook to the beginning of the array
+        storedWebhooks.unshift(webhook);
 
         // Limit the number of stored webhooks
         if (storedWebhooks.length > MAX_LOG_ENTRIES) {
           storedWebhooks.length = MAX_LOG_ENTRIES;
         }
 
+        // Save to localStorage
         localStorage.setItem('webhookLog', JSON.stringify(storedWebhooks));
-      }
 
-      // Function to send email notification
-      function sendEmailNotification(webhook) {
-        fetch('/.netlify/functions/send-email', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            name: 'Webhook Notification',
-            email: 'webhook@fintechnav.com',
-            message: `New webhook received:\n\nType: ${webhook.event?.type || 'unknown'}\n\nPayload:\n${JSON.stringify(webhook, null, 2)}`,
-          }),
-        })
-          .then((response) => {
-            if (!response.ok) {
-              throw new Error('Failed to send email notification');
-            }
-            return response.json();
-          })
-          .then((data) => {
-            console.log('Email notification sent:', data);
-          })
-          .catch((error) => {
-            console.error('Email notification error:', error);
-          });
+        // Update UI
+        if (webhookLog.innerHTML.includes('No webhooks received yet.')) {
+          webhookLog.innerHTML = '';
+        }
+
+        webhookLog.innerHTML = createLogEntryHTML(webhook) + webhookLog.innerHTML;
       }
 
       // Function to show status message
