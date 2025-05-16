@@ -1647,17 +1647,28 @@
         }, 5000);
       }
 
-      // Event listeners for checkout buttons
+      // Update the checkoutExistingBtn click handler to prompt for token ID
       checkoutExistingBtn.addEventListener('click', () => {
-        // Find selected payment method token
-        const selectedToken = document.querySelector('input[name="paymentMethod"]:checked');
+        // Prompt for token ID
+        const tokenId = prompt('Enter Payment Method ID (Token ID):', '');
 
-        if (selectedToken) {
-          processTokenSale(selectedToken.value);
-        } else {
-          alert('Please select a payment method or add a new card.');
+        // Validate input
+        if (tokenId === null) {
+          // User canceled the prompt
+          return;
         }
+
+        if (!tokenId.trim()) {
+          alert('Please enter a valid Payment Method ID');
+          return;
+        }
+
+        // Process the sale with the provided token
+        processTokenSale(tokenId.trim());
       });
+
+      // Update the button text to reflect the new functionality
+      checkoutExistingBtn.textContent = 'Complete Checkout with Token ID';
 
       checkoutNewBtn.addEventListener('click', () => {
         processVirtualSale();
