@@ -1243,15 +1243,19 @@
           checkoutExistingBtn.textContent = 'Processing...';
           checkoutExistingBtn.disabled = true;
 
+          // Calculate amountGoodsAndServices
+          const amountGoodsAndServices = amount - (tax + cashBack + tip);
+
           // Prepare request data
           const requestData = {
             referenceId: referenceId,
-            tokenId: tokenId,
+            paymentMethodId: tokenId, // Changed from tokenId to paymentMethodId
             amount: amount,
             amountBreakdown: {
               tax: tax,
               cashBack: cashBack,
               tip: tip,
+              amountGoodsAndServices: amountGoodsAndServices, // Added this field
             },
             invoiceNumber: invoiceNumber,
             orderNumber: orderNumber,
@@ -1327,7 +1331,6 @@
           checkoutExistingBtn.disabled = false;
         }
       }
-
       // Set up event listener for iframe postMessages
       function setupIframeMessageListener() {
         window.addEventListener('message', (event) => {
