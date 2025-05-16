@@ -873,6 +873,39 @@ curl -X POST \
         addWebhookToLog(testWebhook);
         return 'Test webhook added. Check the Recent Webhooks section.';
       };
+      // Global function to test duplicate webhook detection
+      window.testDuplicateWebhook = function () {
+        // Create an identical webhook payload twice
+        const testWebhook = {
+          timestamp: new Date().toISOString(),
+          type: 'test.duplicate',
+          payload: {
+            event: {
+              type: 'test.duplicate',
+              id: 'evt_test_dup_' + Date.now(),
+              timestamp: new Date().toISOString(),
+            },
+            originalResponse: {
+              id: 'trx_test_dup_' + Math.random().toString(36).substring(2, 10),
+              resultCode: '0',
+              resultText: 'Test duplicate webhook',
+              amount: 1000,
+            },
+          },
+          verified: true,
+        };
+
+        // Add first instance
+        addWebhookToLog(testWebhook);
+
+        // Wait 2 seconds and add the exact same webhook again to simulate a duplicate
+        setTimeout(() => {
+          addWebhookToLog(testWebhook);
+          return 'Second duplicate webhook added after delay.';
+        }, 2000);
+
+        return 'First test webhook added. Second duplicate will appear in 2 seconds.';
+      };
     </script>
   </body>
 </html>

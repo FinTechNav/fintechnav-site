@@ -16,6 +16,12 @@ exports.handler = async (event) => {
     };
   }
 
+  // ADD THIS CODE HERE - Request ID and initial logging
+  const requestId = `req_${Date.now()}_${Math.random().toString(36).substring(2, 10)}`;
+  console.log(`[${requestId}] Webhook handler started at ${new Date().toISOString()}`);
+  console.log(`[${requestId}] Headers:`, JSON.stringify(event.headers, null, 2));
+  console.log(`[${requestId}] First 100 chars of body:`, event.body.substring(0, 100));
+
   // Ensure this is a POST request
   if (event.httpMethod !== 'POST') {
     return {
@@ -31,6 +37,80 @@ exports.handler = async (event) => {
   try {
     // Parse the webhook payload
     const webhookPayload = JSON.parse(event.body);
+
+    // ADD THIS CODE HERE - Generate a webhook ID for deduplication
+    const webhookHash = crypto
+      .createHash('sha256')
+      .update(
+        JSON.stringify({
+          body: event.body,
+          headers: {
+            signature: event.headers['x-fsk-wh-signature'] || '',
+            checksum: event.headers['x-fsk-wh-chksm'] || '',
+          },
+        })
+      )
+      .digest('hex');
+
+    // Create a webhook ID that includes important info for debugging
+    const webhookId = `wh_${webhookHash.substring(0, 8)}_${Date.now()}`;
+    console.log(`[${webhookId}] Processing webhook`);
+    const receivedTimestamp = new Date().toISOString();
+
+    // Check if this is a duplicate within a short time window (30 seconds)
+    let isDuplicate = false;
+    try {
+      // Create URL for the webhook query function
+      let queryUrl = '';
+      if (process.env.URL) {
+        queryUrl = `${process.env.URL}/.netlify/functions/webhook-query`;
+      } else {
+        const host = event.headers.host || 'localhost:8888';
+        const protocol = host.includes('localhost') ? 'http' : 'https';
+        queryUrl = `${protocol}://${host}/.netlify/functions/webhook-query`;
+      }
+
+      // Query for recent webhooks
+      const response = await fetch(`${queryUrl}?hash=${webhookHash}`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+
+        // Check if we've seen this webhook recently
+        if (data.recentHashes && data.recentHashes.includes(webhookHash)) {
+          const timeSince = Date.now() - (data.hashTimestamps?.[webhookHash] || 0);
+          if (timeSince < 30000) {
+            // 30 seconds
+            console.log(`[${webhookId}] Duplicate webhook detected, received ${timeSince}ms ago`);
+            isDuplicate = true;
+          }
+        }
+      }
+    } catch (error) {
+      console.error(`[${webhookId}] Error checking for duplicates:`, error);
+      // Continue processing even if deduplication check fails
+    }
+
+    // If this is a duplicate, return early without processing
+    if (isDuplicate) {
+      return {
+        statusCode: 200,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: 'Duplicate webhook received and ignored',
+          status: 'duplicate',
+          webhookId: webhookId,
+        }),
+      };
+    }
+
+    // Original code continues here
 
     // Log the entire payload for debugging
     console.log('Received webhook payload:', JSON.stringify(webhookPayload, null, 2));
@@ -115,28 +195,56 @@ exports.handler = async (event) => {
       }
     }
 
-    // Set up SendGrid API key
-    sendgrid.setApiKey(process.env.SENDGRID_API_KEY);
-
     // Format email content
     const timestampStr = new Date().toISOString();
     const emailContent = createEmailContent(webhookPayload, webhookEventType, timestampStr);
 
-    // Send email notification
-    const msg = {
-      to: 'brad@fintechnav.com',
-      from: {
-        email: 'webhook@fintechnav.com',
-        name: 'FinTechNav Webhook',
-      },
-      subject: `Webhook Notification: ${webhookEventType}`,
-      text: emailContent.text,
-      html: emailContent.html,
-    };
+    // ADD THIS CODE HERE - Add processing details to email content
+    emailContent.text += `\n\nProcessing Details:\nWebhook ID: ${webhookId}\nReceived: ${receivedTimestamp}\nRequest ID: ${requestId}`;
+    emailContent.html = emailContent.html.replace(
+      '</body>',
+      `
+  <div style="margin-top: 30px; border-top: 1px solid #ddd; padding-top: 15px; color: #777; font-size: 12px;">
+    <p>Processing Details:<br>
+    Webhook ID: ${webhookId}<br>
+    Received: ${receivedTimestamp}<br>
+    Request ID: ${requestId}</p>
+  </div>
+</body>`
+    );
 
-    await sendgrid.send(msg);
+    // Set up SendGrid API key
+    sendgrid.setApiKey(process.env.SENDGRID_API_KEY);
 
-    await sendgrid.send(msg);
+    // ADD THIS CODE HERE - Add email cooldown logic
+    const EMAIL_COOLDOWN = 60000; // 60 seconds
+    const emailKey = `${webhookEventType}_${webhookHash}`;
+    // Use global variable for email tracking (works between function invocations for brief periods)
+    global.emailsSent = global.emailsSent || {};
+    const lastEmailTime = global.emailsSent[emailKey] || 0;
+    const now = Date.now();
+
+    // Send email notification only if we haven't sent one recently
+    if (now - lastEmailTime < EMAIL_COOLDOWN) {
+      console.log(
+        `[${webhookId}] Email for this webhook sent recently (${(now - lastEmailTime) / 1000}s ago), skipping`
+      );
+    } else {
+      const msg = {
+        to: 'brad@fintechnav.com',
+        from: {
+          email: 'webhook@fintechnav.com',
+          name: 'FinTechNav Webhook',
+        },
+        subject: `Webhook Notification: ${webhookEventType} [${webhookId}]`,
+        text: emailContent.text,
+        html: emailContent.html,
+      };
+
+      await sendgrid.send(msg);
+      global.emailsSent[emailKey] = now;
+      console.log(`[${webhookId}] Email sent and cooldown applied at ${new Date().toISOString()}`);
+    }
 
     // Also store the webhook in the query function for direct access
     try {
@@ -165,12 +273,14 @@ exports.handler = async (event) => {
           payload: webhookPayload,
           verified: isVerified,
           timestamp: new Date().toISOString(),
+          hash: webhookHash, // Add the webhook hash
+          webhookId: webhookId, // Add the webhook ID
         }),
       });
 
-      console.log('Webhook saved to query service');
+      console.log(`[${webhookId}] Webhook saved to query service`);
     } catch (queryError) {
-      console.error('Failed to save webhook to query service:', queryError);
+      console.error(`[${webhookId}] Failed to save webhook to query service:`, queryError);
       // Continue processing even if query save fails
     }
 

@@ -1,10 +1,13 @@
 // netlify/functions/webhook-query.js
 
-// This function allows the frontend to query for the most recent webhook
-// It complements the webhook-storage system for better visibility
+// This function allows the frontend to query for recent webhooks
+// It also helps with deduplication of incoming webhooks
 
-// Global storage for the most recent webhook
+// Storage for recent webhooks
 let lastWebhook = null;
+const recentHashes = [];
+const hashTimestamps = {};
+const MAX_RECENT_HASHES = 100;
 
 exports.handler = async (event) => {
   // Set CORS headers
@@ -24,11 +27,31 @@ exports.handler = async (event) => {
     };
   }
 
+  // Extract webhook hash from query for deduplication checks
+  const webhookHash = event.queryStringParameters?.hash;
+
   // Handle POST request (storing a webhook)
   if (event.httpMethod === 'POST') {
     try {
       // Store the webhook
       const webhookData = JSON.parse(event.body);
+
+      // Add hash if provided
+      if (webhookData.hash) {
+        // Store this hash in our recent hashes list
+        if (!recentHashes.includes(webhookData.hash)) {
+          recentHashes.unshift(webhookData.hash);
+
+          // Trim the list if it gets too long
+          if (recentHashes.length > MAX_RECENT_HASHES) {
+            recentHashes.length = MAX_RECENT_HASHES;
+          }
+        }
+
+        // Update timestamp for this hash
+        hashTimestamps[webhookData.hash] = Date.now();
+      }
+
       lastWebhook = {
         timestamp: new Date().toISOString(),
         data: webhookData,
@@ -41,6 +64,7 @@ exports.handler = async (event) => {
         body: JSON.stringify({
           message: 'Webhook stored for query',
           status: 'success',
+          hash: webhookData.hash,
         }),
       };
     } catch (error) {
@@ -56,14 +80,34 @@ exports.handler = async (event) => {
     }
   }
 
-  // Handle GET request (retrieving the most recent webhook)
+  // Handle GET request (retrieving webhook info)
   if (event.httpMethod === 'GET') {
+    // If a hash is provided, check if we've seen it recently
+    if (webhookHash) {
+      const hashExists = recentHashes.includes(webhookHash);
+      const hashTimestamp = hashTimestamps[webhookHash] || null;
+
+      return {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify({
+          hashExists: hashExists,
+          hashTimestamp: hashTimestamp,
+          recentHashes: recentHashes,
+          hashTimestamps: hashTimestamps,
+        }),
+      };
+    }
+
+    // Otherwise return the most recent webhook
     return {
       statusCode: 200,
       headers,
       body: JSON.stringify({
         hasWebhook: lastWebhook !== null,
         lastWebhook: lastWebhook,
+        recentHashes: recentHashes,
+        hashTimestamps: hashTimestamps,
         currentTime: new Date().toISOString(),
       }),
     };
