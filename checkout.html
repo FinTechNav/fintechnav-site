@@ -631,452 +631,452 @@
     </div>
 
     <script>
-            // Local storage keys
-            const API_KEY_STORAGE = 'fiska_api_key';
-            const PAYMENT_METHOD_ID_STORAGE = 'fiska_payment_method_id';
-            const AMOUNT_STORAGE = 'fiska_amount';
-            const AMOUNT_GOODS_SERVICES_STORAGE = 'fiska_amount_goods_services'; // Add this line
-            const TAX_STORAGE = 'fiska_tax';
-            const CASHBACK_STORAGE = 'fiska_cashback';
-            const TIP_STORAGE = 'fiska_tip';
-            const INVOICE_NUMBER_STORAGE = 'fiska_invoice_number';
-            const ORDER_NUMBER_STORAGE = 'fiska_order_number';
-            const REFERENCE_ID_STORAGE = 'fiska_reference_id';
-            const TOKEN_STORAGE = 'fiska_tokens';
+      // Local storage keys
+      const API_KEY_STORAGE = 'fiska_api_key';
+      const PAYMENT_METHOD_ID_STORAGE = 'fiska_payment_method_id';
+      const AMOUNT_STORAGE = 'fiska_amount';
+      const AMOUNT_GOODS_SERVICES_STORAGE = 'fiska_amount_goods_services'; // Add this line
+      const TAX_STORAGE = 'fiska_tax';
+      const CASHBACK_STORAGE = 'fiska_cashback';
+      const TIP_STORAGE = 'fiska_tip';
+      const INVOICE_NUMBER_STORAGE = 'fiska_invoice_number';
+      const ORDER_NUMBER_STORAGE = 'fiska_order_number';
+      const REFERENCE_ID_STORAGE = 'fiska_reference_id';
+      const TOKEN_STORAGE = 'fiska_tokens';
 
-            // DOM elements
-            const apiKeyInput = document.getElementById('apiKey');
-            const paymentMethodIdInput = document.getElementById('paymentMethodId');
-            const amountInput = document.getElementById('amount');
-            const amountGoodsAndServicesInput = document.getElementById('amountGoodsAndServices'); // Add this line
-            const taxInput = document.getElementById('tax');
-            const cashBackInput = document.getElementById('cashBack');
-            const tipInput = document.getElementById('tip');
-            const invoiceNumberInput = document.getElementById('invoiceNumber');
-            const orderNumberInput = document.getElementById('orderNumber');
-            const referenceIdInput = document.getElementById('referenceId');
-            const apiKeyStatus = document.getElementById('apiKeyStatus');
-            const saveApiKeyBtn = document.getElementById('saveApiKey');
-            const addNewCardBtn = document.getElementById('addNewCardBtn');
-            const cardModal = document.getElementById('cardModal');
-            const closeModalBtn = document.getElementById('closeModal');
-            const paymentIframe = document.getElementById('paymentIframe');
-            const apiError = document.getElementById('apiError');
-            const spinner = document.getElementById('spinner');
-            const savedCardsContainer = document.getElementById('savedCardsContainer');
-            const paymentFormContainer = document.getElementById('paymentFormContainer');
-            const mainContainer = document.getElementById('mainContainer');
-            const noTokensMessage = document.getElementById('noTokensMessage');
-            const checkoutExistingBtn = document.getElementById('checkoutExistingBtn');
-            const checkoutNewBtn = document.getElementById('checkoutNewBtn');
-            const toggleAdditionalFieldsBtn = document.getElementById('toggleAdditionalFields');
-            const additionalFieldsSection = document.getElementById('additionalFields');
+      // DOM elements
+      const apiKeyInput = document.getElementById('apiKey');
+      const paymentMethodIdInput = document.getElementById('paymentMethodId');
+      const amountInput = document.getElementById('amount');
+      const amountGoodsAndServicesInput = document.getElementById('amountGoodsAndServices'); // Add this line
+      const taxInput = document.getElementById('tax');
+      const cashBackInput = document.getElementById('cashBack');
+      const tipInput = document.getElementById('tip');
+      const invoiceNumberInput = document.getElementById('invoiceNumber');
+      const orderNumberInput = document.getElementById('orderNumber');
+      const referenceIdInput = document.getElementById('referenceId');
+      const apiKeyStatus = document.getElementById('apiKeyStatus');
+      const saveApiKeyBtn = document.getElementById('saveApiKey');
+      const addNewCardBtn = document.getElementById('addNewCardBtn');
+      const cardModal = document.getElementById('cardModal');
+      const closeModalBtn = document.getElementById('closeModal');
+      const paymentIframe = document.getElementById('paymentIframe');
+      const apiError = document.getElementById('apiError');
+      const spinner = document.getElementById('spinner');
+      const savedCardsContainer = document.getElementById('savedCardsContainer');
+      const paymentFormContainer = document.getElementById('paymentFormContainer');
+      const mainContainer = document.getElementById('mainContainer');
+      const noTokensMessage = document.getElementById('noTokensMessage');
+      const checkoutExistingBtn = document.getElementById('checkoutExistingBtn');
+      const checkoutNewBtn = document.getElementById('checkoutNewBtn');
+      const toggleAdditionalFieldsBtn = document.getElementById('toggleAdditionalFields');
+      const additionalFieldsSection = document.getElementById('additionalFields');
 
-            // API endpoints
-            const API_BASE_URL = 'https://beta-payment-api-http.dev.ms.fiska.tech/v1';
-            // Hard-coded return URL
-            const RETURN_URL = 'https://fintechnav.com/payment-complete';
+      // API endpoints
+      const API_BASE_URL = 'https://beta-payment-api-http.dev.ms.fiska.tech/v1';
+      // Hard-coded return URL
+      const RETURN_URL = 'https://fintechnav.com/payment-complete';
 
-            // Toggle additional fields
-            toggleAdditionalFieldsBtn.addEventListener('click', () => {
-              additionalFieldsSection.classList.toggle('active');
-              toggleAdditionalFieldsBtn.textContent = additionalFieldsSection.classList.contains('active')
-                ? 'Hide Additional Configuration Fields'
-                : 'Show Additional Configuration Fields';
-            });
+      // Toggle additional fields
+      toggleAdditionalFieldsBtn.addEventListener('click', () => {
+        additionalFieldsSection.classList.toggle('active');
+        toggleAdditionalFieldsBtn.textContent = additionalFieldsSection.classList.contains('active')
+          ? 'Hide Additional Configuration Fields'
+          : 'Show Additional Configuration Fields';
+      });
 
-            // Load saved configuration if exists
-            document.addEventListener('DOMContentLoaded', () => {
-              // Load API key and payment method ID
-              const savedApiKey = localStorage.getItem(API_KEY_STORAGE);
-              if (savedApiKey) {
-                apiKeyInput.value = savedApiKey;
+      // Load saved configuration if exists
+      document.addEventListener('DOMContentLoaded', () => {
+        // Load API key and payment method ID
+        const savedApiKey = localStorage.getItem(API_KEY_STORAGE);
+        if (savedApiKey) {
+          apiKeyInput.value = savedApiKey;
 
-                const savedPaymentMethodId = localStorage.getItem(PAYMENT_METHOD_ID_STORAGE);
-                if (savedPaymentMethodId) {
-                  paymentMethodIdInput.value = savedPaymentMethodId;
-                }
-              }
+          const savedPaymentMethodId = localStorage.getItem(PAYMENT_METHOD_ID_STORAGE);
+          if (savedPaymentMethodId) {
+            paymentMethodIdInput.value = savedPaymentMethodId;
+          }
+        }
 
-              // Load additional fields
-              const savedAmount = localStorage.getItem(AMOUNT_STORAGE);
-              if (savedAmount) amountInput.value = savedAmount;
+        // Load additional fields
+        const savedAmount = localStorage.getItem(AMOUNT_STORAGE);
+        if (savedAmount) amountInput.value = savedAmount;
 
-              // Load amount goods and services
-              const savedAmountGoodsServices = localStorage.getItem(AMOUNT_GOODS_SERVICES_STORAGE);
-              if (savedAmountGoodsServices) amountGoodsAndServicesInput.value = savedAmountGoodsServices;
+        // Load amount goods and services
+        const savedAmountGoodsServices = localStorage.getItem(AMOUNT_GOODS_SERVICES_STORAGE);
+        if (savedAmountGoodsServices) amountGoodsAndServicesInput.value = savedAmountGoodsServices;
 
-              const savedTax = localStorage.getItem(TAX_STORAGE);
-              if (savedTax) taxInput.value = savedTax;
+        const savedTax = localStorage.getItem(TAX_STORAGE);
+        if (savedTax) taxInput.value = savedTax;
 
-              const savedCashBack = localStorage.getItem(CASHBACK_STORAGE);
-              if (savedCashBack) cashBackInput.value = savedCashBack;
+        const savedCashBack = localStorage.getItem(CASHBACK_STORAGE);
+        if (savedCashBack) cashBackInput.value = savedCashBack;
 
-              const savedTip = localStorage.getItem(TIP_STORAGE);
-              if (savedTip) tipInput.value = savedTip;
+        const savedTip = localStorage.getItem(TIP_STORAGE);
+        if (savedTip) tipInput.value = savedTip;
 
-              const savedInvoiceNumber = localStorage.getItem(INVOICE_NUMBER_STORAGE);
-              if (savedInvoiceNumber) invoiceNumberInput.value = savedInvoiceNumber;
+        const savedInvoiceNumber = localStorage.getItem(INVOICE_NUMBER_STORAGE);
+        if (savedInvoiceNumber) invoiceNumberInput.value = savedInvoiceNumber;
 
-              const savedOrderNumber = localStorage.getItem(ORDER_NUMBER_STORAGE);
-              if (savedOrderNumber) orderNumberInput.value = savedOrderNumber;
+        const savedOrderNumber = localStorage.getItem(ORDER_NUMBER_STORAGE);
+        if (savedOrderNumber) orderNumberInput.value = savedOrderNumber;
 
-              const savedReferenceId = localStorage.getItem(REFERENCE_ID_STORAGE);
-              if (savedReferenceId) referenceIdInput.value = savedReferenceId;
+        const savedReferenceId = localStorage.getItem(REFERENCE_ID_STORAGE);
+        if (savedReferenceId) referenceIdInput.value = savedReferenceId;
 
-              // Show success message if configuration is loaded
-              if (savedApiKey) {
-                showAlert(apiKeyStatus, 'Configuration loaded from local storage.', 'success');
-              }
+        // Show success message if configuration is loaded
+        if (savedApiKey) {
+          showAlert(apiKeyStatus, 'Configuration loaded from local storage.', 'success');
+        }
 
-              // Load saved tokens and render them
-              loadSavedTokens();
+        // Load saved tokens and render them
+        loadSavedTokens();
 
-              // Set up webhook listening
-              setupWebhookListener();
-            });
+        // Set up webhook listening
+        setupWebhookListener();
+      });
 
-            // Function to toggle blur on main container
-            function toggleBlur(shouldBlur) {
-              if (shouldBlur) {
-                mainContainer.classList.add('blurred');
-              } else {
-                mainContainer.classList.remove('blurred');
-              }
-            }
+      // Function to toggle blur on main container
+      function toggleBlur(shouldBlur) {
+        if (shouldBlur) {
+          mainContainer.classList.add('blurred');
+        } else {
+          mainContainer.classList.remove('blurred');
+        }
+      }
 
-            // Save configuration
-            saveApiKeyBtn.addEventListener('click', () => {
-              const apiKey = apiKeyInput.value.trim();
-              const paymentMethodId = paymentMethodIdInput.value.trim();
-              const amount = amountInput.value.trim();
-              const amountGoodsAndServices = amountGoodsAndServicesInput.value.trim();
-              const tax = taxInput.value.trim();
-              const cashBack = cashBackInput.value.trim();
-              const tip = tipInput.value.trim();
-              const invoiceNumber = invoiceNumberInput.value.trim();
-              const orderNumber = orderNumberInput.value.trim();
-              const referenceId = referenceIdInput.value.trim();
+      // Save configuration
+      saveApiKeyBtn.addEventListener('click', () => {
+        const apiKey = apiKeyInput.value.trim();
+        const paymentMethodId = paymentMethodIdInput.value.trim();
+        const amount = amountInput.value.trim();
+        const amountGoodsAndServices = amountGoodsAndServicesInput.value.trim();
+        const tax = taxInput.value.trim();
+        const cashBack = cashBackInput.value.trim();
+        const tip = tipInput.value.trim();
+        const invoiceNumber = invoiceNumberInput.value.trim();
+        const orderNumber = orderNumberInput.value.trim();
+        const referenceId = referenceIdInput.value.trim();
 
-              if (apiKey) {
-                // Save required fields
-                localStorage.setItem(API_KEY_STORAGE, apiKey);
+        if (apiKey) {
+          // Save required fields
+          localStorage.setItem(API_KEY_STORAGE, apiKey);
 
-                // Save or remove optional fields based on if they have values
-                saveOrRemoveFromStorage(PAYMENT_METHOD_ID_STORAGE, paymentMethodId);
-                saveOrRemoveFromStorage(AMOUNT_STORAGE, amount);
-                saveOrRemoveFromStorage(AMOUNT_GOODS_SERVICES_STORAGE, amountGoodsAndServices);
-                saveOrRemoveFromStorage(TAX_STORAGE, tax);
-                saveOrRemoveFromStorage(CASHBACK_STORAGE, cashBack);
-                saveOrRemoveFromStorage(TIP_STORAGE, tip);
-                saveOrRemoveFromStorage(INVOICE_NUMBER_STORAGE, invoiceNumber);
-                saveOrRemoveFromStorage(ORDER_NUMBER_STORAGE, orderNumber);
-                saveOrRemoveFromStorage(REFERENCE_ID_STORAGE, referenceId);
+          // Save or remove optional fields based on if they have values
+          saveOrRemoveFromStorage(PAYMENT_METHOD_ID_STORAGE, paymentMethodId);
+          saveOrRemoveFromStorage(AMOUNT_STORAGE, amount);
+          saveOrRemoveFromStorage(AMOUNT_GOODS_SERVICES_STORAGE, amountGoodsAndServices);
+          saveOrRemoveFromStorage(TAX_STORAGE, tax);
+          saveOrRemoveFromStorage(CASHBACK_STORAGE, cashBack);
+          saveOrRemoveFromStorage(TIP_STORAGE, tip);
+          saveOrRemoveFromStorage(INVOICE_NUMBER_STORAGE, invoiceNumber);
+          saveOrRemoveFromStorage(ORDER_NUMBER_STORAGE, orderNumber);
+          saveOrRemoveFromStorage(REFERENCE_ID_STORAGE, referenceId);
 
-                showAlert(apiKeyStatus, 'Configuration saved successfully!', 'success');
-              } else {
-                showAlert(apiKeyStatus, 'Please enter a valid API key.', 'error');
-              }
-            });
-            // Test function to simulate a token webhook
-            function simulateTokenWebhook() {
-              // Create a sample token webhook payload
-              const sampleToken = {
-                id: 'pmt_tkn_' + Math.random().toString(36).substring(2, 12),
-                cardType: 'VISA',
-                maskedCardNumber: '************' + Math.floor(Math.random() * 9000 + 1000),
-                cardExpDate: '12' + (new Date().getFullYear() + 2).toString().substring(2),
-              };
-              // Test function to process a production webhook
-              function testProductionWebhook() {
-                const productionWebhook = {
-                  eventData: {
-                    type: 'token.created',
-                    timestamp: '2025-05-16T17:17:23.9401063Z',
-                    id: 'evt_01JVD1KH34N5ZRPGQDVN9BFB12',
-                  },
-                  originalResponse: {
-                    id: 'trx_01JVD1JK6G3Z8G3R2J3VP37ZE8',
-                    resultCode: 0,
-                    resultText: 'Card successfully tokenized',
-                    referenceId: '2346345763465',
-                    amount: 200,
-                    paymentMethod: {
-                      id: 'pmt_vrt_01JVAYEP1MC8DM1CJMD000BRAD',
-                      type: 'Virtual',
-                      currency: 'USD',
-                    },
-                    transactionResponse: {
-                      authCode: '0000',
-                      cardType: 'MasterCard',
-                      accountType: 'Credit',
-                      responseCode: 1,
-                      paymentMethod: {
-                        id: 'pmt_tkn_01JVD1KC3MVB15W6E0S5JTF1J0',
-                        type: 'Token',
-                        currency: 'USD',
-                        cardType: 'Mastercard',
-                        maskedCardNumber: '2****2815',
-                        cardExpDate: '1225',
-                      },
-                      hostResponseText: 'APPROVED',
-                    },
-                  },
-                };
-
-                console.log('Testing with production webhook data:', productionWebhook);
-
-                // First, try direct extraction
-                const paymentMethod =
-                  productionWebhook.originalResponse?.transactionResponse?.paymentMethod;
-                console.log('Direct extraction result:', paymentMethod);
-
-                // Then run through normal processing
-                processTokenEvent(productionWebhook);
-
-                return paymentMethod;
-              }
-              // Save the token directly
-              saveToken(sampleToken);
-
-              // Reload the token display
-              loadSavedTokens();
-
-              console.log('Simulated token saved:', sampleToken);
-              return sampleToken;
-            }
-
-            // Test function to process a production webhook
-            function testProductionWebhook() {
-              const productionWebhook = {
-                eventData: {
-                  type: 'token.created',
-                  timestamp: '2025-05-16T17:17:23.9401063Z',
-                  id: 'evt_01JVD1KH34N5ZRPGQDVN9BFB12',
+          showAlert(apiKeyStatus, 'Configuration saved successfully!', 'success');
+        } else {
+          showAlert(apiKeyStatus, 'Please enter a valid API key.', 'error');
+        }
+      });
+      // Test function to simulate a token webhook
+      function simulateTokenWebhook() {
+        // Create a sample token webhook payload
+        const sampleToken = {
+          id: 'pmt_tkn_' + Math.random().toString(36).substring(2, 12),
+          cardType: 'VISA',
+          maskedCardNumber: '************' + Math.floor(Math.random() * 9000 + 1000),
+          cardExpDate: '12' + (new Date().getFullYear() + 2).toString().substring(2),
+        };
+        // Test function to process a production webhook
+        function testProductionWebhook() {
+          const productionWebhook = {
+            eventData: {
+              type: 'token.created',
+              timestamp: '2025-05-16T17:17:23.9401063Z',
+              id: 'evt_01JVD1KH34N5ZRPGQDVN9BFB12',
+            },
+            originalResponse: {
+              id: 'trx_01JVD1JK6G3Z8G3R2J3VP37ZE8',
+              resultCode: 0,
+              resultText: 'Card successfully tokenized',
+              referenceId: '2346345763465',
+              amount: 200,
+              paymentMethod: {
+                id: 'pmt_vrt_01JVAYEP1MC8DM1CJMD000BRAD',
+                type: 'Virtual',
+                currency: 'USD',
+              },
+              transactionResponse: {
+                authCode: '0000',
+                cardType: 'MasterCard',
+                accountType: 'Credit',
+                responseCode: 1,
+                paymentMethod: {
+                  id: 'pmt_tkn_01JVD1KC3MVB15W6E0S5JTF1J0',
+                  type: 'Token',
+                  currency: 'USD',
+                  cardType: 'Mastercard',
+                  maskedCardNumber: '2****2815',
+                  cardExpDate: '1225',
                 },
-                originalResponse: {
-                  id: 'trx_01JVD1JK6G3Z8G3R2J3VP37ZE8',
-                  resultCode: 0,
-                  resultText: 'Card successfully tokenized',
-                  referenceId: '2346345763465',
-                  amount: 200,
-                  paymentMethod: {
-                    id: 'pmt_vrt_01JVAYEP1MC8DM1CJMD000BRAD',
-                    type: 'Virtual',
-                    currency: 'USD',
-                  },
-                  transactionResponse: {
-                    authCode: '0000',
-                    cardType: 'MasterCard',
-                    accountType: 'Credit',
-                    responseCode: 1,
-                    paymentMethod: {
-                      id: 'pmt_tkn_01JVD1KC3MVB15W6E0S5JTF1J0',
-                      type: 'Token',
-                      currency: 'USD',
-                      cardType: 'Mastercard',
-                      maskedCardNumber: '2****2815',
-                      cardExpDate: '1225',
-                    },
-                    hostResponseText: 'APPROVED',
-                  },
-                },
-              };
+                hostResponseText: 'APPROVED',
+              },
+            },
+          };
 
-              console.log('Testing with production webhook data:', productionWebhook);
+          console.log('Testing with production webhook data:', productionWebhook);
 
-              // First, try direct extraction
-              const paymentMethod =
-                productionWebhook.originalResponse?.transactionResponse?.paymentMethod;
-              console.log('Direct extraction result:', paymentMethod);
+          // First, try direct extraction
+          const paymentMethod =
+            productionWebhook.originalResponse?.transactionResponse?.paymentMethod;
+          console.log('Direct extraction result:', paymentMethod);
 
-              // Then run through normal processing
-              processTokenEvent(productionWebhook);
+          // Then run through normal processing
+          processTokenEvent(productionWebhook);
 
-              return paymentMethod;
+          return paymentMethod;
+        }
+        // Save the token directly
+        saveToken(sampleToken);
+
+        // Reload the token display
+        loadSavedTokens();
+
+        console.log('Simulated token saved:', sampleToken);
+        return sampleToken;
+      }
+
+      // Test function to process a production webhook
+      function testProductionWebhook() {
+        const productionWebhook = {
+          eventData: {
+            type: 'token.created',
+            timestamp: '2025-05-16T17:17:23.9401063Z',
+            id: 'evt_01JVD1KH34N5ZRPGQDVN9BFB12',
+          },
+          originalResponse: {
+            id: 'trx_01JVD1JK6G3Z8G3R2J3VP37ZE8',
+            resultCode: 0,
+            resultText: 'Card successfully tokenized',
+            referenceId: '2346345763465',
+            amount: 200,
+            paymentMethod: {
+              id: 'pmt_vrt_01JVAYEP1MC8DM1CJMD000BRAD',
+              type: 'Virtual',
+              currency: 'USD',
+            },
+            transactionResponse: {
+              authCode: '0000',
+              cardType: 'MasterCard',
+              accountType: 'Credit',
+              responseCode: 1,
+              paymentMethod: {
+                id: 'pmt_tkn_01JVD1KC3MVB15W6E0S5JTF1J0',
+                type: 'Token',
+                currency: 'USD',
+                cardType: 'Mastercard',
+                maskedCardNumber: '2****2815',
+                cardExpDate: '1225',
+              },
+              hostResponseText: 'APPROVED',
+            },
+          },
+        };
+
+        console.log('Testing with production webhook data:', productionWebhook);
+
+        // First, try direct extraction
+        const paymentMethod =
+          productionWebhook.originalResponse?.transactionResponse?.paymentMethod;
+        console.log('Direct extraction result:', paymentMethod);
+
+        // Then run through normal processing
+        processTokenEvent(productionWebhook);
+
+        return paymentMethod;
+      }
+      // Helper function to save or remove item from localStorage
+      function saveOrRemoveFromStorage(key, value) {
+        if (value) {
+          localStorage.setItem(key, value);
+        } else {
+          localStorage.removeItem(key);
+        }
+      }
+
+      // Open modal to add new card
+      addNewCardBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+
+        // Reset modal state
+        paymentIframe.style.display = 'none';
+        apiError.style.display = 'none';
+        spinner.style.display = 'block';
+
+        // Display the modal
+        cardModal.style.display = 'flex';
+
+        // Apply blur to main container
+        toggleBlur(true);
+
+        // Call the API to create a payment session
+        createCardNotPresentToken();
+      });
+
+      // Close modal when close button is clicked
+      closeModalBtn.addEventListener('click', () => {
+        cardModal.style.display = 'none';
+        toggleBlur(false);
+      });
+
+      // Click outside modal to close (but not on the modal content)
+      cardModal.addEventListener('click', (e) => {
+        if (e.target === cardModal) {
+          cardModal.style.display = 'none';
+          toggleBlur(false);
+        }
+      });
+
+      // Add escape key functionality
+      document.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape' && cardModal.style.display === 'flex') {
+          // Add visual feedback
+          document.querySelector('.escape-instruction').style.color = '#c9a15f';
+
+          // Reset after a short delay
+          setTimeout(() => {
+            cardModal.style.display = 'none';
+            toggleBlur(false);
+            // Reset color if the modal is opened again
+            document.querySelector('.escape-instruction').style.color = '';
+          }, 200);
+        }
+      });
+
+      // Function to create a card not present token
+      async function createCardNotPresentToken() {
+        const apiKey = localStorage.getItem(API_KEY_STORAGE);
+
+        // Always make sure to stop the spinner in case of errors
+        try {
+          if (!apiKey) {
+            showAlert(apiError, 'API key is missing. Please enter and save your API key.', 'error');
+            spinner.style.display = 'none';
+            return;
+          }
+
+          // Generate a reference ID using current timestamp
+          const referenceId = localStorage.getItem(REFERENCE_ID_STORAGE) || `ref_${Date.now()}`;
+
+          // Check if the user has provided a payment method ID
+          let paymentMethodId = localStorage.getItem(PAYMENT_METHOD_ID_STORAGE);
+
+          console.log('Return URL:', RETURN_URL);
+
+          // Prepare the request data
+          const requestData = {
+            referenceId: referenceId,
+            returnUrl: RETURN_URL,
+          };
+
+          // Only add paymentMethodId to the request if we have one
+          if (paymentMethodId) {
+            requestData.paymentMethodId = paymentMethodId;
+            console.log('Using payment method ID:', paymentMethodId);
+          } else {
+            console.log('Proceeding without a payment method ID');
+          }
+
+          console.log('Request payload:', JSON.stringify(requestData, null, 2));
+
+          // Now create the token
+          const endpoint = `${API_BASE_URL}/payment-methods/virtual`;
+          console.log('Making request to:', endpoint);
+
+          let response;
+          try {
+            response = await fetch(endpoint, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'x-api-key': apiKey,
+              },
+              body: JSON.stringify(requestData),
+            });
+          } catch (fetchError) {
+            console.error('Network error during fetch:', fetchError);
+            showAlert(apiError, `Network error: ${fetchError.message}`, 'error');
+            spinner.style.display = 'none';
+            return;
+          }
+
+          console.log('Response status:', response.status);
+
+          // Get response text regardless of status
+          let responseText = '';
+          try {
+            responseText = await response.text();
+            console.log('Raw response:', responseText);
+          } catch (e) {
+            console.error('Could not read response body:', e);
+            showAlert(apiError, 'Error reading API response', 'error');
+            spinner.style.display = 'none';
+            return;
+          }
+
+          // Try to parse as JSON if possible
+          let data;
+          try {
+            if (responseText && responseText.trim() !== '') {
+              data = JSON.parse(responseText);
+            } else {
+              showAlert(apiError, 'Empty response from API', 'error');
+              spinner.style.display = 'none';
+              return;
             }
-            // Helper function to save or remove item from localStorage
-            function saveOrRemoveFromStorage(key, value) {
-              if (value) {
-                localStorage.setItem(key, value);
-              } else {
-                localStorage.removeItem(key);
-              }
+          } catch (error) {
+            console.error('Error parsing JSON response:', error);
+            showAlert(
+              apiError,
+              `Invalid JSON response: ${responseText.substring(0, 100)}...`,
+              'error'
+            );
+            spinner.style.display = 'none';
+            return;
+          }
+
+          // Check if response was successful
+          if (!response.ok) {
+            let errorMessage = 'API request failed';
+
+            if (data && data.error && data.error.message) {
+              errorMessage = data.error.message;
+            } else if (data && data.message) {
+              errorMessage = data.message;
+            } else {
+              errorMessage = `Error ${response.status}: ${response.statusText}`;
             }
 
-            // Open modal to add new card
-            addNewCardBtn.addEventListener('click', (e) => {
-              e.preventDefault();
+            console.error('API error:', errorMessage);
+            showAlert(apiError, errorMessage, 'error');
+            spinner.style.display = 'none';
+            return;
+          }
 
-              // Reset modal state
-              paymentIframe.style.display = 'none';
-              apiError.style.display = 'none';
-              spinner.style.display = 'block';
+          // Handle successful response with missing data
+          if (!data) {
+            showAlert(apiError, 'Empty response from API', 'error');
+            spinner.style.display = 'none';
+            return;
+          }
 
-              // Display the modal
-              cardModal.style.display = 'flex';
+          console.log('API response data:', data);
 
-              // Apply blur to main container
-              toggleBlur(true);
-
-              // Call the API to create a payment session
-              createCardNotPresentToken();
-            });
-
-            // Close modal when close button is clicked
-            closeModalBtn.addEventListener('click', () => {
-              cardModal.style.display = 'none';
-              toggleBlur(false);
-            });
-
-            // Click outside modal to close (but not on the modal content)
-            cardModal.addEventListener('click', (e) => {
-              if (e.target === cardModal) {
-                cardModal.style.display = 'none';
-                toggleBlur(false);
-              }
-            });
-
-            // Add escape key functionality
-            document.addEventListener('keydown', function (event) {
-              if (event.key === 'Escape' && cardModal.style.display === 'flex') {
-                // Add visual feedback
-                document.querySelector('.escape-instruction').style.color = '#c9a15f';
-
-                // Reset after a short delay
-                setTimeout(() => {
-                  cardModal.style.display = 'none';
-                  toggleBlur(false);
-                  // Reset color if the modal is opened again
-                  document.querySelector('.escape-instruction').style.color = '';
-                }, 200);
-              }
-            });
-
-            // Function to create a card not present token
-            async function createCardNotPresentToken() {
-              const apiKey = localStorage.getItem(API_KEY_STORAGE);
-
-              // Always make sure to stop the spinner in case of errors
-              try {
-                if (!apiKey) {
-                  showAlert(apiError, 'API key is missing. Please enter and save your API key.', 'error');
-                  spinner.style.display = 'none';
-                  return;
-                }
-
-                // Generate a reference ID using current timestamp
-                const referenceId = localStorage.getItem(REFERENCE_ID_STORAGE) || `ref_${Date.now()}`;
-
-                // Check if the user has provided a payment method ID
-                let paymentMethodId = localStorage.getItem(PAYMENT_METHOD_ID_STORAGE);
-
-                console.log('Return URL:', RETURN_URL);
-
-                // Prepare the request data
-                const requestData = {
-                  referenceId: referenceId,
-                  returnUrl: RETURN_URL,
-                };
-
-                // Only add paymentMethodId to the request if we have one
-                if (paymentMethodId) {
-                  requestData.paymentMethodId = paymentMethodId;
-                  console.log('Using payment method ID:', paymentMethodId);
-                } else {
-                  console.log('Proceeding without a payment method ID');
-                }
-
-                console.log('Request payload:', JSON.stringify(requestData, null, 2));
-
-                // Now create the token
-                const endpoint = `${API_BASE_URL}/payment-methods/virtual`;
-                console.log('Making request to:', endpoint);
-
-                let response;
-                try {
-                  response = await fetch(endpoint, {
-                    method: 'POST',
-                    headers: {
-                      'Content-Type': 'application/json',
-                      'x-api-key': apiKey,
-                    },
-                    body: JSON.stringify(requestData),
-                  });
-                } catch (fetchError) {
-                  console.error('Network error during fetch:', fetchError);
-                  showAlert(apiError, `Network error: ${fetchError.message}`, 'error');
-                  spinner.style.display = 'none';
-                  return;
-                }
-
-                console.log('Response status:', response.status);
-
-                // Get response text regardless of status
-                let responseText = '';
-                try {
-                  responseText = await response.text();
-                  console.log('Raw response:', responseText);
-                } catch (e) {
-                  console.error('Could not read response body:', e);
-                  showAlert(apiError, 'Error reading API response', 'error');
-                  spinner.style.display = 'none';
-                  return;
-                }
-
-                // Try to parse as JSON if possible
-                let data;
-                try {
-                  if (responseText && responseText.trim() !== '') {
-                    data = JSON.parse(responseText);
-                  } else {
-                    showAlert(apiError, 'Empty response from API', 'error');
-                    spinner.style.display = 'none';
-                    return;
-                  }
-                } catch (error) {
-                  console.error('Error parsing JSON response:', error);
-                  showAlert(
-                    apiError,
-                    `Invalid JSON response: ${responseText.substring(0, 100)}...`,
-                    'error'
-                  );
-                  spinner.style.display = 'none';
-                  return;
-                }
-
-                // Check if response was successful
-                if (!response.ok) {
-                  let errorMessage = 'API request failed';
-
-                  if (data && data.error && data.error.message) {
-                    errorMessage = data.error.message;
-                  } else if (data && data.message) {
-                    errorMessage = data.message;
-                  } else {
-                    errorMessage = `Error ${response.status}: ${response.statusText}`;
-                  }
-
-                  console.error('API error:', errorMessage);
-                  showAlert(apiError, errorMessage, 'error');
-                  spinner.style.display = 'none';
-                  return;
-                }
-
-                // Handle successful response with missing data
-                if (!data) {
-                  showAlert(apiError, 'Empty response from API', 'error');
-                  spinner.style.display = 'none';
-                  return;
-                }
-
-                console.log('API response data:', data);
-
-                // Process the iframe URL if available
-                if (data.iframeUrl) {
-                  // Create and add stylesheet to the document to ensure iframe content has no scrollbars
-                  const style = document.createElement('style');
-                  style.textContent = `
+          // Process the iframe URL if available
+          if (data.iframeUrl) {
+            // Create and add stylesheet to the document to ensure iframe content has no scrollbars
+            const style = document.createElement('style');
+            style.textContent = `
           iframe.iframe-container {
             overflow: hidden !important;
             scrollbar-width: none !important;
@@ -1088,149 +1088,168 @@
             height: 0 !important;
           }
         `;
-                  document.head.appendChild(style);
+            document.head.appendChild(style);
 
-                  // Update iframe source and display it
-                  paymentIframe.src = data.iframeUrl;
-                  paymentIframe.style.display = 'block';
-                  spinner.style.display = 'none'; // Hide spinner when iframe is shown
-                } else {
-                  // Handle missing iframe URL
-                  let errorMsg = 'Failed to create payment session. No iframe URL returned.';
-                  if (data.error && data.error.message) {
-                    errorMsg = data.error.message;
-                  } else if (data.message) {
-                    errorMsg = data.message;
-                  }
-                  showAlert(apiError, errorMsg, 'error');
-                  spinner.style.display = 'none';
-                }
-              } catch (error) {
-                // Catch-all error handler to ensure spinner is always hidden
-                console.error('Unhandled error in payment processing:', error);
-                showAlert(apiError, `Unexpected error: ${error.message}`, 'error');
-                spinner.style.display = 'none';
-              }
+            // Update iframe source and display it
+            paymentIframe.src = data.iframeUrl;
+            paymentIframe.style.display = 'block';
+            spinner.style.display = 'none'; // Hide spinner when iframe is shown
+          } else {
+            // Handle missing iframe URL
+            let errorMsg = 'Failed to create payment session. No iframe URL returned.';
+            if (data.error && data.error.message) {
+              errorMsg = data.error.message;
+            } else if (data.message) {
+              errorMsg = data.message;
+            }
+            showAlert(apiError, errorMsg, 'error');
+            spinner.style.display = 'none';
+          }
+        } catch (error) {
+          // Catch-all error handler to ensure spinner is always hidden
+          console.error('Unhandled error in payment processing:', error);
+          showAlert(apiError, `Unexpected error: ${error.message}`, 'error');
+          spinner.style.display = 'none';
+        }
+      }
+
+      // Process a virtual (Card Not Present) sale
+      async function processVirtualSale() {
+        const apiKey = localStorage.getItem(API_KEY_STORAGE);
+
+        if (!apiKey) {
+          alert('API key is missing. Please enter and save your API key.');
+          return;
+        }
+
+        // Generate a reference ID using current timestamp or use saved one
+        const referenceId = localStorage.getItem(REFERENCE_ID_STORAGE) || `ref_${Date.now()}`;
+
+        // Get payment method ID if available
+        const paymentMethodId = localStorage.getItem(PAYMENT_METHOD_ID_STORAGE);
+
+        // Get other configuration values
+        const amount = parseInt(localStorage.getItem(AMOUNT_STORAGE) || '7273');
+        const tax = parseInt(localStorage.getItem(TAX_STORAGE) || '0');
+        const cashBack = parseInt(localStorage.getItem(CASHBACK_STORAGE) || '0');
+        const tip = parseInt(localStorage.getItem(TIP_STORAGE) || '0');
+        const invoiceNumber = localStorage.getItem(INVOICE_NUMBER_STORAGE) || `inv_${Date.now()}`;
+        const orderNumber = localStorage.getItem(ORDER_NUMBER_STORAGE) || `ord_${Date.now()}`;
+
+        // Reset modal state
+        paymentIframe.style.display = 'none';
+        apiError.style.display = 'none';
+        spinner.style.display = 'block';
+
+        // Display the modal for processing payment
+        cardModal.style.display = 'flex';
+        toggleBlur(true);
+
+        try {
+          // Prepare request data
+          const requestData = {
+            referenceId: referenceId,
+            returnUrl: RETURN_URL,
+            amount: amount,
+            amountBreakdown: {
+              tax: tax,
+              cashBack: cashBack,
+              tip: tip,
+            },
+            invoiceNumber: invoiceNumber,
+            orderNumber: orderNumber,
+          };
+
+          // Add payment method ID if available
+          if (paymentMethodId) {
+            requestData.paymentMethodId = paymentMethodId;
+          }
+
+          console.log('Virtual sale request:', JSON.stringify(requestData, null, 2));
+
+          // Make the API request
+          const endpoint = `${API_BASE_URL}/transactions/virtual-sale`;
+
+          const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-api-key': apiKey,
+            },
+            body: JSON.stringify(requestData),
+          });
+
+          // Parse the response
+          const responseText = await response.text();
+          let data;
+
+          try {
+            if (responseText && responseText.trim() !== '') {
+              data = JSON.parse(responseText);
+            } else {
+              throw new Error('Empty response');
+            }
+          } catch (error) {
+            console.error('Error parsing response:', error);
+            showAlert(apiError, 'Invalid response format', 'error');
+            spinner.style.display = 'none';
+            return;
+          }
+
+          // Handle error response
+          if (!response.ok) {
+            let errorMessage = 'Payment processing failed';
+
+            if (data && data.error && data.error.message) {
+              errorMessage = data.error.message;
+            } else if (data && data.message) {
+              errorMessage = data.message;
+            } else {
+              errorMessage = `Error ${response.status}: ${response.statusText}`;
             }
 
-            // Process a virtual (Card Not Present) sale
-            async function processVirtualSale() {
-              const apiKey = localStorage.getItem(API_KEY_STORAGE);
+            console.error('API error:', errorMessage);
+            showAlert(apiError, errorMessage, 'error');
+            spinner.style.display = 'none';
+            return;
+          }
 
-              if (!apiKey) {
-                alert('API key is missing. Please enter and save your API key.');
-                return;
-              }
+          // Handle iframe URL if available
+          if (data.iframeUrl) {
+            // Update iframe source and display it
+            paymentIframe.src = data.iframeUrl;
+            paymentIframe.style.display = 'block';
+            spinner.style.display = 'none';
+          } else {
+            // Handle missing iframe URL
+            showAlert(apiError, 'No payment iframe URL returned', 'error');
+            spinner.style.display = 'none';
+          }
+        } catch (error) {
+          console.error('Error processing virtual sale:', error);
+          showAlert(apiError, `Payment processing error: ${error.message}`, 'error');
+          spinner.style.display = 'none';
+        }
+      }
+      // Fix for the checkout.html file:
+      // 1. Delete or comment out the problematic code block starting around line 1361
+      // This is the block of code that begins with:
+      //
+      // const apiKey = localStorage.getItem(API_KEY_STORAGE);
+      //
+      // if (!apiKey) {
+      //   alert('API key is missing. Please enter and save your API key.');
+      //   return;  <-- This is the illegal return statement
+      // }
+      //
+      // ... and continues through multiple lines until a closing brace.
+      //
+      // This code appears to be a duplicate implementation of the processTokenSale function's
+      // body, but it's not wrapped in a function declaration, which is causing the error.
+      // Simply remove this entire block or comment it out.
 
-              // Generate a reference ID using current timestamp or use saved one
-              const referenceId = localStorage.getItem(REFERENCE_ID_STORAGE) || `ref_${Date.now()}`;
-
-              // Get payment method ID if available
-              const paymentMethodId = localStorage.getItem(PAYMENT_METHOD_ID_STORAGE);
-
-              // Get other configuration values
-              const amount = parseInt(localStorage.getItem(AMOUNT_STORAGE) || '7273');
-              const tax = parseInt(localStorage.getItem(TAX_STORAGE) || '0');
-              const cashBack = parseInt(localStorage.getItem(CASHBACK_STORAGE) || '0');
-              const tip = parseInt(localStorage.getItem(TIP_STORAGE) || '0');
-              const invoiceNumber = localStorage.getItem(INVOICE_NUMBER_STORAGE) || `inv_${Date.now()}`;
-              const orderNumber = localStorage.getItem(ORDER_NUMBER_STORAGE) || `ord_${Date.now()}`;
-
-              // Reset modal state
-              paymentIframe.style.display = 'none';
-              apiError.style.display = 'none';
-              spinner.style.display = 'block';
-
-              // Display the modal for processing payment
-              cardModal.style.display = 'flex';
-              toggleBlur(true);
-
-              try {
-                // Prepare request data
-                const requestData = {
-                  referenceId: referenceId,
-                  returnUrl: RETURN_URL,
-                  amount: amount,
-                  amountBreakdown: {
-                    tax: tax,
-                    cashBack: cashBack,
-                    tip: tip,
-                  },
-                  invoiceNumber: invoiceNumber,
-                  orderNumber: orderNumber,
-                };
-
-                // Add payment method ID if available
-                if (paymentMethodId) {
-                  requestData.paymentMethodId = paymentMethodId;
-                }
-
-                console.log('Virtual sale request:', JSON.stringify(requestData, null, 2));
-
-                // Make the API request
-                const endpoint = `${API_BASE_URL}/transactions/virtual-sale`;
-
-                const response = await fetch(endpoint, {
-                  method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json',
-                    'x-api-key': apiKey,
-                  },
-                  body: JSON.stringify(requestData),
-                });
-
-                // Parse the response
-                const responseText = await response.text();
-                let data;
-
-                try {
-                  if (responseText && responseText.trim() !== '') {
-                    data = JSON.parse(responseText);
-                  } else {
-                    throw new Error('Empty response');
-                  }
-                } catch (error) {
-                  console.error('Error parsing response:', error);
-                  showAlert(apiError, 'Invalid response format', 'error');
-                  spinner.style.display = 'none';
-                  return;
-                }
-
-                // Handle error response
-                if (!response.ok) {
-                  let errorMessage = 'Payment processing failed';
-
-                  if (data && data.error && data.error.message) {
-                    errorMessage = data.error.message;
-                  } else if (data && data.message) {
-                    errorMessage = data.message;
-                  } else {
-                    errorMessage = `Error ${response.status}: ${response.statusText}`;
-                  }
-
-                  console.error('API error:', errorMessage);
-                  showAlert(apiError, errorMessage, 'error');
-                  spinner.style.display = 'none';
-                  return;
-                }
-
-                // Handle iframe URL if available
-                if (data.iframeUrl) {
-                  // Update iframe source and display it
-                  paymentIframe.src = data.iframeUrl;
-                  paymentIframe.style.display = 'block';
-                  spinner.style.display = 'none';
-                } else {
-                  // Handle missing iframe URL
-                  showAlert(apiError, 'No payment iframe URL returned', 'error');
-                  spinner.style.display = 'none';
-                }
-              } catch (error) {
-                console.error('Error processing virtual sale:', error);
-                showAlert(apiError, `Payment processing error: ${error.message}`, 'error');
-                spinner.style.display = 'none';
-              }
-            }
+      // To fix, keep your processTokenSale function and remove the duplicate code block that follows it.
+      // Your processTokenSale function should look like this:
 
       // Process a token sale using stored token
       async function processTokenSale(tokenId) {
@@ -1256,7 +1275,9 @@
         const orderNumber = localStorage.getItem(ORDER_NUMBER_STORAGE) || `ord_${Date.now()}`;
 
         // Get or calculate amount goods and services
-        let amountGoodsAndServices = parseInt(localStorage.getItem(AMOUNT_GOODS_SERVICES_STORAGE) || '0');
+        let amountGoodsAndServices = parseInt(
+          localStorage.getItem(AMOUNT_GOODS_SERVICES_STORAGE) || '0'
+        );
 
         // If amount goods and services isn't explicitly set, calculate it from the total amount
         if (!amountGoodsAndServices) {
@@ -1278,10 +1299,10 @@
               tax: tax,
               cashBack: cashBack,
               tip: tip,
-              amountGoodsAndServices: amountGoodsAndServices // Using the explicit or calculated value
+              amountGoodsAndServices: amountGoodsAndServices, // Using the explicit or calculated value
             },
             invoiceNumber: invoiceNumber,
-            orderNumber: orderNumber
+            orderNumber: orderNumber,
           };
 
           console.log('Token sale request:', JSON.stringify(requestData, null, 2));
@@ -1354,405 +1375,291 @@
           checkoutExistingBtn.disabled = false;
         }
       }
-              const apiKey = localStorage.getItem(API_KEY_STORAGE);
 
-              if (!apiKey) {
-                alert('API key is missing. Please enter and save your API key.');
-                return;
-              }
+      // Set up event listener for iframe postMessages
+      function setupIframeMessageListener() {
+        window.addEventListener('message', (event) => {
+          // Verify origin for security
+          if (
+            event.origin.includes('fiska.tech') ||
+            event.origin.includes('integratedcommerce.io')
+          ) {
+            try {
+              const data = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
 
-              if (!tokenId) {
-                alert('Please select a payment method first.');
-                return;
-              }
-
-              // Get configuration values
-              const referenceId = localStorage.getItem(REFERENCE_ID_STORAGE) || `ref_${Date.now()}`;
-              const amount = parseInt(localStorage.getItem(AMOUNT_STORAGE) || '7273');
-              const tax = parseInt(localStorage.getItem(TAX_STORAGE) || '0');
-              const cashBack = parseInt(localStorage.getItem(CASHBACK_STORAGE) || '0');
-              const tip = parseInt(localStorage.getItem(TIP_STORAGE) || '0');
-              const invoiceNumber = localStorage.getItem(INVOICE_NUMBER_STORAGE) || `inv_${Date.now()}`;
-              const orderNumber = localStorage.getItem(ORDER_NUMBER_STORAGE) || `ord_${Date.now()}`;
-
-              try {
-                // Show loading state
-                const originalButtonText = checkoutExistingBtn.textContent;
-                checkoutExistingBtn.textContent = 'Processing...';
-                checkoutExistingBtn.disabled = true;
-
-                // Calculate amountGoodsAndServices
-                const amountGoodsAndServices = amount - (tax + cashBack + tip);
-
-                // Prepare request data
-                const requestData = {
-                  referenceId: referenceId,
-                  paymentMethodId: tokenId, // Changed from tokenId to paymentMethodId
-                  amount: amount,
-                  amountBreakdown: {
-                    tax: tax,
-                    cashBack: cashBack,
-                    tip: tip,
-                    amountGoodsAndServices: amountGoodsAndServices, // Added this field
-                  },
-                  invoiceNumber: invoiceNumber,
-                  orderNumber: orderNumber,
-                };
-
-                console.log('Token sale request:', JSON.stringify(requestData, null, 2));
-
-                // Make the API request
-                const endpoint = `${API_BASE_URL}/transactions/token-sale`;
-
-                const response = await fetch(endpoint, {
-                  method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json',
-                    'x-api-key': apiKey,
-                  },
-                  body: JSON.stringify(requestData),
-                });
-
-                // Parse the response
-                const responseText = await response.text();
-                let data;
-
-                try {
-                  if (responseText && responseText.trim() !== '') {
-                    data = JSON.parse(responseText);
-                  } else {
-                    throw new Error('Empty response');
-                  }
-                } catch (error) {
-                  console.error('Error parsing response:', error);
-                  alert('Error: Invalid response format');
-                  checkoutExistingBtn.textContent = originalButtonText;
-                  checkoutExistingBtn.disabled = false;
-                  return;
+              // Handle resize events from the iframe
+              if (data.action === 'resize') {
+                // If iframe sends a resize message, adjust modal height
+                if (data.height) {
+                  const modal = document.querySelector('.modal');
+                  modal.style.height = `${data.height}px`;
                 }
+              }
 
-                // Handle error response
-                if (!response.ok) {
-                  let errorMessage = 'Payment processing failed';
+              if (data.status === 'completed') {
+                // Payment was successful
+                cardModal.style.display = 'none';
+                toggleBlur(false);
 
-                  if (data && data.error && data.error.message) {
-                    errorMessage = data.error.message;
-                  } else if (data && data.message) {
-                    errorMessage = data.message;
-                  } else {
-                    errorMessage = `Error ${response.status}: ${response.statusText}`;
+                // Handle payment transaction completion
+                if (data.transactionId) {
+                  // Redirect to payment complete page with result
+                  const params = new URLSearchParams();
+                  params.append('resultCode', '0');
+                  params.append('transactionId', data.transactionId);
+
+                  if (data.amount) {
+                    params.append('amount', data.amount.toString());
                   }
 
-                  console.error('API error:', errorMessage);
-                  alert(`Error: ${errorMessage}`);
-                  checkoutExistingBtn.textContent = originalButtonText;
-                  checkoutExistingBtn.disabled = false;
-                  return;
+                  window.location.href = `${RETURN_URL}?${params.toString()}`;
+                } else {
+                  // Just a token creation, not a payment
+                  const cardDetails = data.cardDetails || {};
+
+                  // Show success message
+                  alert('Payment method added successfully!');
                 }
-
-                // Handle successful response
-                console.log('Payment successful:', data);
-
-                // Redirect to payment complete page with transaction details
-                const params = new URLSearchParams();
-                params.append('resultCode', data.resultCode || '0');
-                params.append('transactionId', data.id || 'unknown');
-                params.append('amount', amount.toString());
-
-                window.location.href = `${RETURN_URL}?${params.toString()}`;
-              } catch (error) {
-                console.error('Error processing token sale:', error);
-                alert(`Payment processing error: ${error.message}`);
-
-                // Reset button state
-                checkoutExistingBtn.textContent = 'Complete Checkout with Selected Payment Method';
-                checkoutExistingBtn.disabled = false;
+              } else if (data.status === 'error') {
+                // Payment failed
+                showAlert(apiError, data.message || 'Payment failed. Please try again.', 'error');
+              } else if (data.status === 'canceled') {
+                // User canceled the payment
+                cardModal.style.display = 'none';
+                toggleBlur(false);
               }
-
-            // Set up event listener for iframe postMessages
-            function setupIframeMessageListener() {
-              window.addEventListener('message', (event) => {
-                // Verify origin for security
-                if (
-                  event.origin.includes('fiska.tech') ||
-                  event.origin.includes('integratedcommerce.io')
-                ) {
-                  try {
-                    const data = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
-
-                    // Handle resize events from the iframe
-                    if (data.action === 'resize') {
-                      // If iframe sends a resize message, adjust modal height
-                      if (data.height) {
-                        const modal = document.querySelector('.modal');
-                        modal.style.height = `${data.height}px`;
-                      }
-                    }
-
-                    if (data.status === 'completed') {
-                      // Payment was successful
-                      cardModal.style.display = 'none';
-                      toggleBlur(false);
-
-                      // Handle payment transaction completion
-                      if (data.transactionId) {
-                        // Redirect to payment complete page with result
-                        const params = new URLSearchParams();
-                        params.append('resultCode', '0');
-                        params.append('transactionId', data.transactionId);
-
-                        if (data.amount) {
-                          params.append('amount', data.amount.toString());
-                        }
-
-                        window.location.href = `${RETURN_URL}?${params.toString()}`;
-                      } else {
-                        // Just a token creation, not a payment
-                        const cardDetails = data.cardDetails || {};
-
-                        // Show success message
-                        alert('Payment method added successfully!');
-                      }
-                    } else if (data.status === 'error') {
-                      // Payment failed
-                      showAlert(apiError, data.message || 'Payment failed. Please try again.', 'error');
-                    } else if (data.status === 'canceled') {
-                      // User canceled the payment
-                      cardModal.style.display = 'none';
-                      toggleBlur(false);
-                    }
-                  } catch (error) {
-                    console.error('Error processing postMessage:', error);
-                  }
-                }
-              });
+            } catch (error) {
+              console.error('Error processing postMessage:', error);
             }
+          }
+        });
+      }
 
-            // Setup iframe message listener on load
-            setupIframeMessageListener();
+      // Setup iframe message listener on load
+      setupIframeMessageListener();
 
-            // Set up webhook listener to capture token events
-            function setupWebhookListener() {
-              // Check for token.created events in localStorage periodically
-              // In a real implementation, this would use websockets or server-sent events
-              setInterval(checkForNewTokens, 5000);
+      // Set up webhook listener to capture token events
+      function setupWebhookListener() {
+        // Check for token.created events in localStorage periodically
+        // In a real implementation, this would use websockets or server-sent events
+        setInterval(checkForNewTokens, 5000);
 
-              // Initial check
-              checkForNewTokens();
+        // Initial check
+        checkForNewTokens();
+      }
+
+      // Check local storage for webhooks with token.created events
+      function checkForNewTokens() {
+        const storedWebhooks = JSON.parse(localStorage.getItem('webhookLog') || '[]');
+        console.log('Checking for new tokens among', storedWebhooks.length, 'webhooks');
+
+        // Find token.created events
+        for (const webhook of storedWebhooks) {
+          // Try to determine if this is a token event
+          let isTokenEvent = false;
+          let webhookType = '';
+
+          // Check webhook.type
+          if (webhook.type === 'token.created') {
+            isTokenEvent = true;
+            webhookType = webhook.type;
+          }
+          // Check webhook.event.type
+          else if (webhook.event && webhook.event.type === 'token.created') {
+            isTokenEvent = true;
+            webhookType = webhook.event.type;
+          }
+          // Check webhook.payload.event.type
+          else if (
+            webhook.payload &&
+            webhook.payload.event &&
+            webhook.payload.event.type === 'token.created'
+          ) {
+            isTokenEvent = true;
+            webhookType = webhook.payload.event.type;
+          }
+          // Check webhook.data.event.type
+          else if (
+            webhook.data &&
+            webhook.data.event &&
+            webhook.data.event.type === 'token.created'
+          ) {
+            isTokenEvent = true;
+            webhookType = webhook.data.event.type;
+          }
+
+          if (isTokenEvent) {
+            console.log('Found token event:', webhookType);
+            processTokenEvent(webhook);
+          }
+        }
+      }
+
+      // Process a token event and extract the token information
+      function processTokenEvent(event) {
+        try {
+          console.log('Processing token event:', event);
+
+          // Extract token information - field structure might vary
+          let paymentMethod = null;
+
+          // Build a list of places to look for the payment method
+          const possiblePaths = [
+            // Direct paths (array format)
+            event.originalResponse?.transactionResponses?.[0]?.paymentMethod,
+            event.payload?.originalResponse?.transactionResponses?.[0]?.paymentMethod,
+            event.data?.originalResponse?.transactionResponses?.[0]?.paymentMethod,
+
+            // Singular format
+            event.originalResponse?.transactionResponse?.paymentMethod,
+            event.payload?.originalResponse?.transactionResponse?.paymentMethod,
+            event.data?.originalResponse?.transactionResponse?.paymentMethod,
+
+            // Additional paths
+            event.tokenInfo,
+            event.payload?.tokenInfo,
+            event.data?.tokenInfo,
+          ];
+
+          // Log detailed path information for debugging
+          console.log('Checking possible paths for token:', {
+            'event.originalResponse?.transactionResponse?.paymentMethod':
+              event.originalResponse?.transactionResponse?.paymentMethod,
+            'event.data?.originalResponse?.transactionResponse?.paymentMethod':
+              event.data?.originalResponse?.transactionResponse?.paymentMethod,
+          });
+
+          // Try each path
+          for (const path of possiblePaths) {
+            if (path && path.id) {
+              paymentMethod = path;
+              break;
             }
+          }
 
-            // Check local storage for webhooks with token.created events
-            function checkForNewTokens() {
-              const storedWebhooks = JSON.parse(localStorage.getItem('webhookLog') || '[]');
-              console.log('Checking for new tokens among', storedWebhooks.length, 'webhooks');
+          // If still not found, do a deep search
+          if (!paymentMethod) {
+            console.log('Payment method not found in common paths, doing deep search');
+            paymentMethod = findPaymentMethod(event);
+          }
 
-              // Find token.created events
-              for (const webhook of storedWebhooks) {
-                // Try to determine if this is a token event
-                let isTokenEvent = false;
-                let webhookType = '';
+          if (!paymentMethod || !paymentMethod.id) {
+            console.warn('Could not extract payment method from event:', event);
+            return;
+          }
 
-                // Check webhook.type
-                if (webhook.type === 'token.created') {
-                  isTokenEvent = true;
-                  webhookType = webhook.type;
-                }
-                // Check webhook.event.type
-                else if (webhook.event && webhook.event.type === 'token.created') {
-                  isTokenEvent = true;
-                  webhookType = webhook.event.type;
-                }
-                // Check webhook.payload.event.type
-                else if (
-                  webhook.payload &&
-                  webhook.payload.event &&
-                  webhook.payload.event.type === 'token.created'
-                ) {
-                  isTokenEvent = true;
-                  webhookType = webhook.payload.event.type;
-                }
-                // Check webhook.data.event.type
-                else if (
-                  webhook.data &&
-                  webhook.data.event &&
-                  webhook.data.event.type === 'token.created'
-                ) {
-                  isTokenEvent = true;
-                  webhookType = webhook.data.event.type;
-                }
+          console.log('Found payment method:', paymentMethod);
 
-                if (isTokenEvent) {
-                  console.log('Found token event:', webhookType);
-                  processTokenEvent(webhook);
-                }
-              }
-            }
+          // Create token object
+          const token = {
+            id: paymentMethod.id,
+            cardType: paymentMethod.cardType || 'Card',
+            maskedCardNumber: paymentMethod.maskedCardNumber || '************0000',
+            cardExpDate: paymentMethod.cardExpDate || '0000',
+            timestamp: new Date().toISOString(),
+          };
 
-            // Process a token event and extract the token information
-            function processTokenEvent(event) {
-              try {
-                console.log('Processing token event:', event);
+          // Save token to storage
+          saveToken(token);
 
-                // Extract token information - field structure might vary
-                let paymentMethod = null;
+          // Update UI
+          loadSavedTokens();
 
-                // Build a list of places to look for the payment method
-                const possiblePaths = [
-                  // Direct paths (array format)
-                  event.originalResponse?.transactionResponses?.[0]?.paymentMethod,
-                  event.payload?.originalResponse?.transactionResponses?.[0]?.paymentMethod,
-                  event.data?.originalResponse?.transactionResponses?.[0]?.paymentMethod,
+          console.log('Token saved:', token);
+        } catch (error) {
+          console.error('Error processing token event:', error);
+        }
+      }
 
-                  // Singular format
-                  event.originalResponse?.transactionResponse?.paymentMethod,
-                  event.payload?.originalResponse?.transactionResponse?.paymentMethod,
-                  event.data?.originalResponse?.transactionResponse?.paymentMethod,
+      // Add this deep search function to find the payment method in any nested structure
+      function findPaymentMethod(obj, depth = 0) {
+        // Prevent infinite recursion
+        if (depth > 10) return null;
 
-                  // Additional paths
-                  event.tokenInfo,
-                  event.payload?.tokenInfo,
-                  event.data?.tokenInfo,
-                ];
+        // If not an object or null, return
+        if (!obj || typeof obj !== 'object') return null;
 
-                // Log detailed path information for debugging
-                console.log('Checking possible paths for token:', {
-                  'event.originalResponse?.transactionResponse?.paymentMethod':
-                    event.originalResponse?.transactionResponse?.paymentMethod,
-                  'event.data?.originalResponse?.transactionResponse?.paymentMethod':
-                    event.data?.originalResponse?.transactionResponse?.paymentMethod,
-                });
+        // Check if this object has the required properties to be a payment method
+        if (obj.id && (obj.type === 'token' || obj.maskedCardNumber)) {
+          return obj;
+        }
 
-                // Try each path
-                for (const path of possiblePaths) {
-                  if (path && path.id) {
-                    paymentMethod = path;
-                    break;
-                  }
-                }
+        // Search in arrays
+        if (Array.isArray(obj)) {
+          for (const item of obj) {
+            const result = findPaymentMethod(item, depth + 1);
+            if (result) return result;
+          }
+          return null;
+        }
 
-                // If still not found, do a deep search
-                if (!paymentMethod) {
-                  console.log('Payment method not found in common paths, doing deep search');
-                  paymentMethod = findPaymentMethod(event);
-                }
+        // Search in object properties
+        for (const key of Object.keys(obj)) {
+          // Skip some common properties that are unlikely to contain payment methods
+          if (key === 'type' || key === 'timestamp') continue;
 
-                if (!paymentMethod || !paymentMethod.id) {
-                  console.warn('Could not extract payment method from event:', event);
-                  return;
-                }
+          const result = findPaymentMethod(obj[key], depth + 1);
+          if (result) return result;
+        }
 
-                console.log('Found payment method:', paymentMethod);
+        return null;
+      }
+      // Save a token to local storage
+      function saveToken(token) {
+        // Get existing tokens
+        const tokens = JSON.parse(localStorage.getItem(TOKEN_STORAGE) || '[]');
 
-                // Create token object
-                const token = {
-                  id: paymentMethod.id,
-                  cardType: paymentMethod.cardType || 'Card',
-                  maskedCardNumber: paymentMethod.maskedCardNumber || '************0000',
-                  cardExpDate: paymentMethod.cardExpDate || '0000',
-                  timestamp: new Date().toISOString(),
-                };
+        // Check if token already exists
+        const existingTokenIndex = tokens.findIndex((t) => t.id === token.id);
 
-                // Save token to storage
-                saveToken(token);
+        if (existingTokenIndex !== -1) {
+          // Update existing token
+          tokens[existingTokenIndex] = token;
+        } else {
+          // Add new token
+          tokens.unshift(token);
 
-                // Update UI
-                loadSavedTokens();
+          // Keep only the last 3 tokens
+          if (tokens.length > 3) {
+            tokens.length = 3;
+          }
+        }
 
-                console.log('Token saved:', token);
-              } catch (error) {
-                console.error('Error processing token event:', error);
-              }
-            }
+        // Save back to storage
+        localStorage.setItem(TOKEN_STORAGE, JSON.stringify(tokens));
+      }
 
-            // Add this deep search function to find the payment method in any nested structure
-            function findPaymentMethod(obj, depth = 0) {
-              // Prevent infinite recursion
-              if (depth > 10) return null;
+      // Load saved tokens from local storage
+      function loadSavedTokens() {
+        const tokens = JSON.parse(localStorage.getItem(TOKEN_STORAGE) || '[]');
 
-              // If not an object or null, return
-              if (!obj || typeof obj !== 'object') return null;
+        // Clear container
+        savedCardsContainer.innerHTML = '';
 
-              // Check if this object has the required properties to be a payment method
-              if (obj.id && (obj.type === 'token' || obj.maskedCardNumber)) {
-                return obj;
-              }
-
-              // Search in arrays
-              if (Array.isArray(obj)) {
-                for (const item of obj) {
-                  const result = findPaymentMethod(item, depth + 1);
-                  if (result) return result;
-                }
-                return null;
-              }
-
-              // Search in object properties
-              for (const key of Object.keys(obj)) {
-                // Skip some common properties that are unlikely to contain payment methods
-                if (key === 'type' || key === 'timestamp') continue;
-
-                const result = findPaymentMethod(obj[key], depth + 1);
-                if (result) return result;
-              }
-
-              return null;
-            }
-            // Save a token to local storage
-            function saveToken(token) {
-              // Get existing tokens
-              const tokens = JSON.parse(localStorage.getItem(TOKEN_STORAGE) || '[]');
-
-              // Check if token already exists
-              const existingTokenIndex = tokens.findIndex((t) => t.id === token.id);
-
-              if (existingTokenIndex !== -1) {
-                // Update existing token
-                tokens[existingTokenIndex] = token;
-              } else {
-                // Add new token
-                tokens.unshift(token);
-
-                // Keep only the last 3 tokens
-                if (tokens.length > 3) {
-                  tokens.length = 3;
-                }
-              }
-
-              // Save back to storage
-              localStorage.setItem(TOKEN_STORAGE, JSON.stringify(tokens));
-            }
-
-            // Load saved tokens from local storage
-            function loadSavedTokens() {
-              const tokens = JSON.parse(localStorage.getItem(TOKEN_STORAGE) || '[]');
-
-              // Clear container
-              savedCardsContainer.innerHTML = '';
-
-              if (tokens.length === 0) {
-                // Show no tokens message
-                savedCardsContainer.innerHTML = `
+        if (tokens.length === 0) {
+          // Show no tokens message
+          savedCardsContainer.innerHTML = `
       <div class="no-tokens-message" id="noTokensMessage">
         No saved payment methods available. You can add a new card or use stored tokens from webhooks.
       </div>
       `;
-                return;
-              }
+          return;
+        }
 
-              // Display each token
-              tokens.forEach((token, index) => {
-                // Format expiration date if needed (MMYY format)
-                let expMonth = '';
-                let expYear = '';
+        // Display each token
+        tokens.forEach((token, index) => {
+          // Format expiration date if needed (MMYY format)
+          let expMonth = '';
+          let expYear = '';
 
-                if (token.cardExpDate && token.cardExpDate.length === 4) {
-                  expMonth = token.cardExpDate.substring(0, 2);
-                  expYear = token.cardExpDate.substring(2);
-                }
+          if (token.cardExpDate && token.cardExpDate.length === 4) {
+            expMonth = token.cardExpDate.substring(0, 2);
+            expYear = token.cardExpDate.substring(2);
+          }
 
-                const cardElement = document.createElement('div');
-                cardElement.className = 'payment-method';
-                cardElement.innerHTML = `
+          const cardElement = document.createElement('div');
+          cardElement.className = 'payment-method';
+          cardElement.innerHTML = `
       <input type="radio" name="paymentMethod" id="token${index}" value="${token.id}" ${index === 0 ? 'checked' : ''}>
       <div class="payment-method-info">
         <div>${token.cardType || 'Card'} ${token.maskedCardNumber || '************0000'}</div>
@@ -1761,100 +1668,100 @@
       </div>
       `;
 
-                savedCardsContainer.appendChild(cardElement);
-              });
+          savedCardsContainer.appendChild(cardElement);
+        });
 
-              // Add enhanced logging
-              console.log(
-                'Current tokens in storage:',
-                JSON.parse(localStorage.getItem(TOKEN_STORAGE) || '[]')
-              );
-            }
+        // Add enhanced logging
+        console.log(
+          'Current tokens in storage:',
+          JSON.parse(localStorage.getItem(TOKEN_STORAGE) || '[]')
+        );
+      }
 
-            // Helper function to show alerts
-            function showAlert(element, message, type) {
-              element.textContent = message;
-              element.style.display = 'block';
+      // Helper function to show alerts
+      function showAlert(element, message, type) {
+        element.textContent = message;
+        element.style.display = 'block';
 
-              if (type === 'error') {
-                element.className = 'alert alert-error';
-              } else {
-                element.className = 'alert alert-success';
-              }
+        if (type === 'error') {
+          element.className = 'alert alert-error';
+        } else {
+          element.className = 'alert alert-success';
+        }
 
-              // Auto-hide after 5 seconds
-              setTimeout(() => {
-                element.style.display = 'none';
-              }, 5000);
-            }
+        // Auto-hide after 5 seconds
+        setTimeout(() => {
+          element.style.display = 'none';
+        }, 5000);
+      }
 
-            // Update the checkoutExistingBtn click handler to prompt for token ID
-            checkoutExistingBtn.addEventListener('click', () => {
-              // Prompt for token ID
-              const tokenId = prompt('Enter Payment Method ID (Token ID):', '');
+      // Update the checkoutExistingBtn click handler to prompt for token ID
+      checkoutExistingBtn.addEventListener('click', () => {
+        // Prompt for token ID
+        const tokenId = prompt('Enter Payment Method ID (Token ID):', '');
 
-              // Validate input
-              if (tokenId === null) {
-                // User canceled the prompt
-                return;
-              }
+        // Validate input
+        if (tokenId === null) {
+          // User canceled the prompt
+          return;
+        }
 
-              if (!tokenId.trim()) {
-                alert('Please enter a valid Payment Method ID');
-                return;
-              }
+        if (!tokenId.trim()) {
+          alert('Please enter a valid Payment Method ID');
+          return;
+        }
 
-              // Process the sale with the provided token
-              processTokenSale(tokenId.trim());
-            });
+        // Process the sale with the provided token
+        processTokenSale(tokenId.trim());
+      });
 
-            // Update the button text to reflect the new functionality
-            checkoutExistingBtn.textContent = 'Complete Checkout with Token ID';
+      // Update the button text to reflect the new functionality
+      checkoutExistingBtn.textContent = 'Complete Checkout with Token ID';
 
-            checkoutNewBtn.addEventListener('click', () => {
-              processVirtualSale();
-            });
-            // Event listeners for token refresh and simulation
-            document.getElementById('refreshTokensBtn').addEventListener('click', (e) => {
-              e.preventDefault();
-              checkForNewTokens();
-              loadSavedTokens();
-            });
+      checkoutNewBtn.addEventListener('click', () => {
+        processVirtualSale();
+      });
+      // Event listeners for token refresh and simulation
+      document.getElementById('refreshTokensBtn').addEventListener('click', (e) => {
+        e.preventDefault();
+        checkForNewTokens();
+        loadSavedTokens();
+      });
 
-            document.getElementById('simulateTokenBtn').addEventListener('click', (e) => {
-              e.preventDefault();
-              simulateTokenWebhook();
-            });
+      document.getElementById('simulateTokenBtn').addEventListener('click', (e) => {
+        e.preventDefault();
+        simulateTokenWebhook();
+      });
 
-            // Add this new event listener
-            document.getElementById('simulateProductionBtn').addEventListener('click', (e) => {
-              e.preventDefault();
-              testProductionWebhook();
-            });
+      // Add this new event listener
+      document.getElementById('simulateProductionBtn').addEventListener('click', (e) => {
+        e.preventDefault();
+        testProductionWebhook();
+      });
 
-            // Test webhook processing - simulates receiving a token.created webhook
-            // This function is just for testing purposes
-            window.processTestWebhook = function (type = 'token.created') {
-              const webhook = {
-                type: type,
-                event: { type: type },
-                originalResponse: {
-                  transactionResponses: [
-                    {
-                      paymentMethod: {
-                        id: 'pmt_tkn_' + Math.random().toString(36).substring(2, 12),
-                        cardType: 'VISA',
-                        maskedCardNumber: '************' + Math.floor(Math.random() * 9000 + 1000),
-                        cardExpDate: '12' + (new Date().getFullYear() + 2).toString().substring(2),
-                      },
-                    },
-                  ],
+      // Test webhook processing - simulates receiving a token.created webhook
+      // This function is just for testing purposes
+      window.processTestWebhook = function (type = 'token.created') {
+        const webhook = {
+          type: type,
+          event: { type: type },
+          originalResponse: {
+            transactionResponses: [
+              {
+                paymentMethod: {
+                  id: 'pmt_tkn_' + Math.random().toString(36).substring(2, 12),
+                  cardType: 'VISA',
+                  maskedCardNumber: '************' + Math.floor(Math.random() * 9000 + 1000),
+                  cardExpDate: '12' + (new Date().getFullYear() + 2).toString().substring(2),
                 },
-              };
+              },
+            ],
+          },
+        };
 
-              processTokenEvent(webhook);
-              return webhook;
-            };
+        processTokenEvent(webhook);
+        return webhook;
+      };
     </script>
   </body>
 </html>
