@@ -136,6 +136,48 @@ exports.handler = async (event) => {
 
     await sendgrid.send(msg);
 
+    await sendgrid.send(msg);
+
+    // Also store the webhook in the query function for direct access
+    try {
+      // Create the full URL for the webhook query function
+      let queryUrl = '';
+
+      // Determine the base URL
+      if (process.env.URL) {
+        // If running in Netlify production
+        queryUrl = `${process.env.URL}/.netlify/functions/webhook-query`;
+      } else {
+        // If running locally or can't determine URL
+        const host = event.headers.host || 'localhost:8888';
+        const protocol = host.includes('localhost') ? 'http' : 'https';
+        queryUrl = `${protocol}://${host}/.netlify/functions/webhook-query`;
+      }
+
+      // Store the webhook for query access
+      await fetch(queryUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          type: webhookEventType,
+          payload: webhookPayload,
+          verified: isVerified,
+          timestamp: new Date().toISOString(),
+        }),
+      });
+
+      console.log('Webhook saved to query service');
+    } catch (queryError) {
+      console.error('Failed to save webhook to query service:', queryError);
+      // Continue processing even if query save fails
+    }
+
+    // SAVE TO WEBHOOK LOG
+    // In a real application this would go to a database
+    // For demo purposes, we're storing in a way that the frontend can access
+
     // Create a standard response with the webhook data
     const response = {
       message: 'Webhook received and processed successfully',
@@ -212,7 +254,23 @@ exports.handler = async (event) => {
         console.error('Error extracting token information:', tokenError);
       }
     }
+    // Add this code to directly add the webhook to the response for client-side storage
+    try {
+      // Create a direct storage payload for the client
+      const directStoragePayload = {
+        timestamp: timestampStr,
+        type: webhookEventType,
+        payload: webhookPayload,
+        verified: isVerified,
+      };
 
+      // Add to the response so the client can store it directly
+      response.directStorage = directStoragePayload;
+
+      console.log('Added directStorage to response for client-side storage');
+    } catch (directStorageError) {
+      console.error('Error adding direct storage data:', directStorageError);
+    }
     // Respond with success
     return {
       statusCode: 200,

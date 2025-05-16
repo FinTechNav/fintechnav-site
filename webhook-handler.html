@@ -452,8 +452,18 @@ curl -X POST \
         // Initial fetch
         fetchNewWebhooks();
 
+        // Also try direct check
+        checkDirectWebhooks();
+
         // Setup interval
-        refreshIntervalId = setInterval(fetchNewWebhooks, REFRESH_INTERVAL);
+        refreshIntervalId = setInterval(() => {
+          fetchNewWebhooks();
+          // Occasionally also try direct check (less frequently)
+          if (Math.random() < 0.3) {
+            // 30% chance each refresh
+            checkDirectWebhooks();
+          }
+        }, REFRESH_INTERVAL);
       }
 
       // Function to stop auto-refresh
@@ -480,6 +490,44 @@ curl -X POST \
             mostRecentTimestamp = new Date(storedWebhooks[0].timestamp).getTime();
           }
         }
+      }
+
+      // Function to directly query the webhook-handler endpoint for recent events
+      // This is a fallback method to get webhooks directly from recent API calls
+      async function checkDirectWebhooks() {
+        try {
+          // Make a dummy request to the webhook handler to see if it returns any recent webhooks
+          const response = await fetch('/.netlify/functions/webhook-handler', {
+            method: 'OPTIONS', // Use OPTIONS to avoid triggering actual webhook processing
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+
+            // Check if the response contains any direct storage data
+            if (data && data.directStorage) {
+              console.log('Found webhook in direct API response:', data.directStorage);
+
+              // Process and store this webhook
+              const webhook = {
+                timestamp: data.directStorage.timestamp,
+                type: data.directStorage.type,
+                payload: data.directStorage.payload,
+                verified: data.directStorage.verified,
+              };
+
+              addWebhookToLog(webhook);
+              return true;
+            }
+          }
+        } catch (error) {
+          console.warn('Error checking for direct webhooks:', error);
+        }
+
+        return false;
       }
 
       // Function to create log entry HTML
@@ -521,8 +569,7 @@ curl -X POST \
         const currentTime = new Date();
         lastCheckElement.textContent = currentTime.toLocaleString();
 
-        // In a real implementation, this would fetch from the webhook storage endpoint
-        // For now, we'll check localStorage and also poll the storage endpoint
+        // Check both sources: webhook storage endpoint and direct API calls
 
         // First, check if we have a real shared webhook storage
         fetch(WEBHOOK_STORAGE_ENDPOINT)
@@ -535,23 +582,29 @@ curl -X POST \
           .then((data) => {
             // If we got webhook data from the storage endpoint
             if (data && data.webhooks && data.webhooks.length > 0) {
+              console.log('Found webhooks in storage endpoint:', data.webhooks.length);
               processNewWebhooks(data.webhooks, showStatusOnEmpty);
             } else if (showStatusOnEmpty) {
-              showStatus('info', 'No new webhooks found');
+              console.log('No webhooks found in storage endpoint');
             }
           })
           .catch((error) => {
-            console.error('Error fetching webhooks:', error);
-
-            // Fallback to localStorage if server fetch fails
-            const storedWebhooks = JSON.parse(localStorage.getItem('webhookLog') || '[]');
-            processExistingWebhooks(storedWebhooks, showStatusOnEmpty);
+            console.warn('Error fetching from webhook storage endpoint:', error);
           })
           .finally(() => {
+            // Also check localStorage regardless of server endpoint results
+            const storedWebhooks = JSON.parse(localStorage.getItem('webhookLog') || '[]');
+
+            if (storedWebhooks.length > 0) {
+              console.log('Found webhooks in localStorage:', storedWebhooks.length);
+              processExistingWebhooks(storedWebhooks, showStatusOnEmpty);
+            } else if (showStatusOnEmpty) {
+              showStatus('info', 'No webhooks found in local storage');
+            }
+
             isRefreshing = false;
           });
       }
-
       // Function to process webhooks from storage
       function processNewWebhooks(webhooks, showStatusOnEmpty) {
         if (!Array.isArray(webhooks) || webhooks.length === 0) {
@@ -728,10 +781,29 @@ curl -X POST \
 
       // Function to add webhook to log
       function addWebhookToLog(webhook) {
+        // Skip if the webhook is missing critical data
+        if (!webhook || (!webhook.type && !webhook.payload)) {
+          console.warn('Attempted to add invalid webhook to log:', webhook);
+          return;
+        }
+
         const webhookLog = document.getElementById('webhookLog');
 
         // Get stored webhooks
         const storedWebhooks = JSON.parse(localStorage.getItem('webhookLog') || '[]');
+
+        // Check if this webhook already exists by comparing stringified payload
+        const webhookJson = JSON.stringify(webhook.payload);
+        const exists = storedWebhooks.some((existing) => {
+          return JSON.stringify(existing.payload) === webhookJson;
+        });
+
+        if (exists) {
+          console.log('Webhook already exists in localStorage, skipping');
+          return;
+        }
+
+        console.log('Adding new webhook to log:', webhook);
 
         // Add new webhook to the beginning of the array
         storedWebhooks.unshift(webhook);
@@ -756,8 +828,10 @@ curl -X POST \
         if (!mostRecentTimestamp || webhookTimestamp > mostRecentTimestamp) {
           mostRecentTimestamp = webhookTimestamp;
         }
-      }
 
+        // Show status message
+        showStatus('success', 'New webhook received!');
+      }
       // Function to show status message
       function showStatus(type, message) {
         const statusAlert = document.getElementById('statusAlert');
@@ -770,6 +844,35 @@ curl -X POST \
           statusAlert.style.display = 'none';
         }, 5000);
       }
+      // Global function to test webhook handling directly from browser console
+      window.testWebhook = function (type = 'sale.completed') {
+        const testWebhook = {
+          timestamp: new Date().toISOString(),
+          type: type,
+          payload: {
+            event: {
+              type: type,
+              id: 'evt_test_' + Date.now(),
+              timestamp: new Date().toISOString(),
+            },
+            originalResponse: {
+              id: 'trx_test_' + Math.random().toString(36).substring(2, 10),
+              resultCode: '0',
+              resultText: 'Test webhook created via console',
+              amount: Math.floor(Math.random() * 10000),
+              paymentMethod: {
+                id: 'pmt_test_' + Math.random().toString(36).substring(2, 10),
+                type: 'card',
+                description: 'Test Card',
+              },
+            },
+          },
+          verified: true,
+        };
+
+        addWebhookToLog(testWebhook);
+        return 'Test webhook added. Check the Recent Webhooks section.';
+      };
     </script>
   </body>
 </html>
