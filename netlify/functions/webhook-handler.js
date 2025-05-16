@@ -46,6 +46,10 @@ exports.handler = async (event) => {
     else if (webhookPayload.eventData && webhookPayload.eventData.type) {
       webhookEventType = webhookPayload.eventData.type;
     }
+    // Also check direct type property
+    else if (webhookPayload.type) {
+      webhookEventType = webhookPayload.type;
+    }
 
     console.log('Extracted webhook event type:', webhookEventType);
 
@@ -140,7 +144,10 @@ exports.handler = async (event) => {
       webhook: webhookPayload,
     };
 
-    // SAVE THE WEBHOOK TO THE SPECIAL HOOK STORAGE
+    // SAVE TO WEBHOOK LOG
+    // In a real application this would go to a database
+    // For demo purposes, we're storing in a way that the frontend can access
+
     try {
       // Create the full URL for the webhook storage function
       let storageUrl = '';
@@ -177,6 +184,37 @@ exports.handler = async (event) => {
     } catch (storageError) {
       console.error('Failed to save webhook to storage:', storageError);
       // Continue processing even if storage fails
+    }
+
+    // Save token information to localStorage if this is a token.created event
+    if (webhookEventType === 'token.created') {
+      try {
+        // Extract token information
+        let paymentMethod = null;
+
+        // Try different possible locations for the payment method information
+        if (
+          webhookPayload.originalResponse &&
+          webhookPayload.originalResponse.transactionResponses
+        ) {
+          const response = webhookPayload.originalResponse.transactionResponses[0];
+          paymentMethod = response && response.paymentMethod;
+        }
+
+        if (paymentMethod && paymentMethod.id) {
+          console.log('Found token information:', paymentMethod);
+
+          // Add this information to the response
+          response.tokenInfo = {
+            id: paymentMethod.id,
+            maskedCardNumber: paymentMethod.maskedCardNumber || '************0000',
+            cardExpDate: paymentMethod.cardExpDate || '0000',
+            cardType: paymentMethod.cardType || 'Card',
+          };
+        }
+      } catch (tokenError) {
+        console.error('Error extracting token information:', tokenError);
+      }
     }
 
     // Respond with success

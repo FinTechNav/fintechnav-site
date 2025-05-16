@@ -78,6 +78,12 @@
         color: var(--color-error-text);
       }
 
+      .waiting {
+        background-color: rgba(241, 196, 15, 0.2);
+        border: 1px solid rgba(241, 196, 15, 0.4);
+        color: #f1c40f;
+      }
+
       .param-list {
         padding: 20px;
         background-color: var(--color-background-secondary);
@@ -97,6 +103,84 @@
         margin: 0 0 20px 0;
         padding-left: 15px;
         border-left: 2px solid rgba(201, 161, 95, 0.3);
+      }
+
+      .button-container {
+        margin-top: 30px;
+      }
+
+      .button {
+        display: inline-block;
+        background-color: var(--color-primary);
+        color: white;
+        padding: 12px 25px;
+        border: none;
+        border-radius: var(--border-radius);
+        font-size: 1rem;
+        font-weight: 500;
+        cursor: pointer;
+        text-decoration: none;
+        text-align: center;
+        transition: background-color 0.3s ease;
+        margin-right: 10px;
+        margin-bottom: 10px;
+        font-family: var(--font-family-body);
+      }
+
+      .button:hover {
+        background-color: #b89050;
+      }
+
+      .receipt-section {
+        margin-top: 40px;
+        border-top: 1px solid rgba(201, 161, 95, 0.3);
+        padding-top: 20px;
+      }
+
+      .receipt-header {
+        text-align: center;
+        margin-bottom: 30px;
+      }
+
+      .receipt-details {
+        background-color: var(--color-background-secondary);
+        border-radius: var(--border-radius);
+        padding: 20px;
+        margin-bottom: 30px;
+      }
+
+      .receipt-item {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 10px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid rgba(201, 161, 95, 0.1);
+      }
+
+      .receipt-total {
+        display: flex;
+        justify-content: space-between;
+        font-weight: 600;
+        font-size: 1.2rem;
+        margin-top: 20px;
+        padding-top: 10px;
+        border-top: 1px solid rgba(201, 161, 95, 0.3);
+      }
+
+      .receipt-details table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      .receipt-details th,
+      .receipt-details td {
+        padding: 8px;
+        text-align: left;
+        border-bottom: 1px solid rgba(201, 161, 95, 0.1);
+      }
+
+      .receipt-details th {
+        color: var(--color-primary);
       }
 
       /* Responsive design */
@@ -120,26 +204,145 @@
     <div class="container">
       <h1>Payment Status</h1>
       <div id="statusMessage" class="status"></div>
+
+      <div class="receipt-section" id="receiptSection" style="display: none">
+        <div class="receipt-header">
+          <h2>Payment Receipt</h2>
+          <p>Thank you for your order!</p>
+        </div>
+
+        <div class="receipt-details">
+          <div class="receipt-item">
+            <span>2022 Alderpoint Vineyard Pinot Noir (750ml)</span>
+            <span>$45.00</span>
+          </div>
+          <div class="receipt-item">
+            <span>Shipping (UPS Ground)</span>
+            <span>$27.73</span>
+          </div>
+          <div class="receipt-item">
+            <span>Tax</span>
+            <span id="taxAmount">$0.00</span>
+          </div>
+          <div class="receipt-total">
+            <span>Total</span>
+            <span id="totalAmount">$72.73</span>
+          </div>
+        </div>
+
+        <div class="receipt-details">
+          <h3>Transaction Details</h3>
+          <table>
+            <tr>
+              <th>Transaction ID</th>
+              <td id="transactionId">-</td>
+            </tr>
+            <tr>
+              <th>Order Number</th>
+              <td id="orderNumber">-</td>
+            </tr>
+            <tr>
+              <th>Date/Time</th>
+              <td id="transactionDate">-</td>
+            </tr>
+            <tr>
+              <th>Payment Method</th>
+              <td id="paymentMethod">Credit Card</td>
+            </tr>
+          </table>
+        </div>
+      </div>
+
       <dl class="param-list" id="paramList"></dl>
+
+      <div class="button-container">
+        <a href="/checkout.html" class="button">Return to Checkout</a>
+        <button id="printReceiptBtn" class="button" style="display: none">Print Receipt</button>
+      </div>
     </div>
 
     <script>
       const params = new URLSearchParams(window.location.search);
       const paramList = document.getElementById('paramList');
       const statusMessage = document.getElementById('statusMessage');
+      const receiptSection = document.getElementById('receiptSection');
+      const printReceiptBtn = document.getElementById('printReceiptBtn');
+      const transactionIdElem = document.getElementById('transactionId');
+      const orderNumberElem = document.getElementById('orderNumber');
+      const transactionDateElem = document.getElementById('transactionDate');
+      const totalAmountElem = document.getElementById('totalAmount');
+      const taxAmountElem = document.getElementById('taxAmount');
 
       // Determine resultCode
       const resultCode = params.get('resultCode');
+      const transactionId = params.get('transactionId');
+      const amount = params.get('amount');
 
       if (!resultCode) {
-        statusMessage.className = 'status error';
-        statusMessage.textContent = 'Missing resultCode — unable to determine payment status.';
+        statusMessage.className = 'status waiting';
+        statusMessage.textContent = 'Waiting for payment confirmation...';
+
+        // If we don't have a result yet, we can check for it after a short delay
+        setTimeout(checkPaymentStatus, 2000);
       } else if (resultCode === '0') {
+        handleSuccessfulPayment();
+      } else {
+        handleFailedPayment();
+      }
+
+      // Function to handle successful payment
+      function handleSuccessfulPayment() {
         statusMessage.className = 'status success';
         statusMessage.textContent = 'Payment was successful!';
-      } else {
+
+        // Show receipt section
+        receiptSection.style.display = 'block';
+        printReceiptBtn.style.display = 'inline-block';
+
+        // Update receipt details
+        if (transactionId) {
+          transactionIdElem.textContent = transactionId;
+        }
+
+        // Set order number (or generate one)
+        const orderNum = params.get('orderNumber') || `ORD${Math.floor(Math.random() * 10000)}`;
+        orderNumberElem.textContent = orderNum;
+
+        // Set transaction date to current time
+        transactionDateElem.textContent = new Date().toLocaleString();
+
+        // Update amount if provided
+        if (amount) {
+          const amountInDollars = (parseInt(amount) / 100).toFixed(2);
+          totalAmountElem.textContent = `$${amountInDollars}`;
+
+          // Calculate tax (assuming 5% for demo)
+          const tax = (parseFloat(amountInDollars) * 0.05).toFixed(2);
+          taxAmountElem.textContent = `$${tax}`;
+        }
+      }
+
+      // Function to handle failed payment
+      function handleFailedPayment() {
         statusMessage.className = 'status error';
         statusMessage.textContent = `Payment failed. Error code: ${resultCode}`;
+      }
+
+      // Function to check payment status (if not immediately available)
+      function checkPaymentStatus() {
+        // In a real implementation, this would call an API to check the status
+        // For demo purposes, we'll just check if new URL parameters have been added
+
+        const currentParams = new URLSearchParams(window.location.search);
+        const currentResultCode = currentParams.get('resultCode');
+
+        if (currentResultCode) {
+          // Refresh the page to show the updated status
+          window.location.reload();
+        } else {
+          // Still waiting, check again in a few seconds
+          setTimeout(checkPaymentStatus, 3000);
+        }
       }
 
       // List all query parameters
@@ -155,6 +358,11 @@
           paramList.appendChild(dd);
         });
       }
+
+      // Set up print receipt button
+      printReceiptBtn.addEventListener('click', () => {
+        window.print();
+      });
     </script>
   </body>
 </html>

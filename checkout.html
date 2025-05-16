@@ -44,7 +44,7 @@
       .container {
         width: 100%;
         max-width: 800px;
-        margin: 0 auto;
+        margin: 40px auto;
         padding: 30px;
         box-shadow: var(--box-shadow);
         border-radius: var(--border-radius);
@@ -113,6 +113,20 @@
         color: var(--color-text);
       }
 
+      .payment-method {
+        display: flex;
+        align-items: center;
+        margin-bottom: 15px;
+        padding: 10px;
+        background-color: #3a3a3a;
+        border-radius: var(--border-radius);
+        transition: background-color 0.3s ease;
+      }
+
+      .payment-method:hover {
+        background-color: #444;
+      }
+
       .payment-method input[type='radio'] {
         margin-right: 15px;
       }
@@ -147,26 +161,10 @@
         justify-content: center;
         align-items: center;
         backdrop-filter: blur(3px); /* Additional blur effect for background */
-      }
-
-      /* Modal overlay styling */
-      .modal-overlay {
-        display: none;
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background-color: rgba(0, 0, 0, 0.7); /* Darkened background for better focus */
-        z-index: 100;
-        justify-content: center;
-        align-items: center;
-        backdrop-filter: blur(3px); /* Additional blur effect for background */
         scrollbar-width: none !important; /* Firefox */
         -ms-overflow-style: none !important; /* IE and Edge */
       }
 
-      /* Create a full-screen overlay to cover any borders */
       .modal-overlay::before {
         content: '';
         position: absolute;
@@ -312,6 +310,8 @@
         text-decoration: none;
         text-align: center;
         transition: background-color 0.3s ease;
+        margin-right: 10px;
+        margin-bottom: 10px;
       }
 
       .btn:hover {
@@ -332,6 +332,9 @@
         border: 1px solid var(--color-border);
         border-radius: var(--border-radius);
         margin-bottom: 10px;
+        background-color: #2a2a2a;
+        color: var(--color-text);
+        font-family: var(--font-family-body);
       }
 
       .alert {
@@ -342,14 +345,14 @@
       }
 
       .alert-error {
-        background-color: #ffebee;
-        border: 1px solid #ffcdd2;
+        background-color: rgba(255, 107, 107, 0.2);
+        border: 1px solid rgba(255, 107, 107, 0.4);
         color: var(--color-error);
       }
 
       .alert-success {
-        background-color: #e8f5e9;
-        border: 1px solid #c8e6c9;
+        background-color: rgba(107, 255, 158, 0.2);
+        border: 1px solid rgba(107, 255, 158, 0.4);
         color: var(--color-success);
       }
 
@@ -358,7 +361,7 @@
         width: 40px;
         height: 40px;
         margin: 20px auto;
-        border: 4px solid rgba(0, 0, 0, 0.1);
+        border: 4px solid rgba(201, 161, 95, 0.1);
         border-radius: 50%;
         border-top-color: var(--color-primary);
         animation: spin 1s ease-in-out infinite;
@@ -374,6 +377,67 @@
         color: var(--color-text-light);
         font-size: 0.9rem;
         z-index: 101;
+      }
+
+      /* Token cards section */
+      .token-card {
+        background-color: #3a3a3a;
+        border-radius: var(--border-radius);
+        padding: 15px;
+        margin-bottom: 10px;
+        border-left: 3px solid var(--color-primary);
+        transition: all 0.3s ease;
+      }
+
+      .token-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+      }
+
+      .no-tokens-message {
+        padding: 15px;
+        background-color: rgba(201, 161, 95, 0.1);
+        border-radius: var(--border-radius);
+        text-align: center;
+        color: var(--color-text-light);
+      }
+
+      .button-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      .divider {
+        height: 1px;
+        background-color: var(--color-border);
+        margin: 20px 0;
+      }
+
+      .expanded-section {
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.3s ease;
+      }
+
+      .expanded-section.active {
+        max-height: 1000px;
+      }
+
+      .toggle-button {
+        background: none;
+        border: none;
+        color: var(--color-primary);
+        cursor: pointer;
+        font-family: var(--font-family-body);
+        font-size: 1rem;
+        text-decoration: underline;
+        padding: 0;
+        margin-bottom: 10px;
+      }
+
+      .toggle-button:hover {
+        color: var(--color-primary-hover);
       }
 
       @keyframes spin {
@@ -405,6 +469,75 @@
             placeholder="Enter payment method ID or leave blank if you only have one payment method ID"
           />
         </div>
+
+        <!-- Toggle for additional fields -->
+        <button type="button" id="toggleAdditionalFields" class="toggle-button">
+          Show Additional Configuration Fields
+        </button>
+
+        <!-- Additional API configuration fields (expandable) -->
+        <div id="additionalFields" class="expanded-section">
+          <div class="form-group">
+            <label for="amount">Amount (in cents):</label>
+            <input
+              type="text"
+              id="amount"
+              class="api-key-input"
+              placeholder="e.g., 7273 for $72.73"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="tax">Tax Amount (in cents):</label>
+            <input type="text" id="tax" class="api-key-input" placeholder="e.g., 500 for $5.00" />
+          </div>
+
+          <div class="form-group">
+            <label for="cashBack">Cash Back Amount (in cents):</label>
+            <input
+              type="text"
+              id="cashBack"
+              class="api-key-input"
+              placeholder="e.g., 0 for $0.00"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="tip">Tip Amount (in cents):</label>
+            <input type="text" id="tip" class="api-key-input" placeholder="e.g., 1000 for $10.00" />
+          </div>
+
+          <div class="form-group">
+            <label for="invoiceNumber">Invoice Number:</label>
+            <input
+              type="text"
+              id="invoiceNumber"
+              class="api-key-input"
+              placeholder="e.g., INV-12345"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="orderNumber">Order Number:</label>
+            <input
+              type="text"
+              id="orderNumber"
+              class="api-key-input"
+              placeholder="e.g., ORD-12345"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="referenceId">Reference ID:</label>
+            <input
+              type="text"
+              id="referenceId"
+              class="api-key-input"
+              placeholder="e.g., REF-12345"
+            />
+          </div>
+        </div>
+
         <button id="saveApiKey" class="btn">Save Configuration</button>
         <div id="apiKeyStatus" class="alert"></div>
       </div>
@@ -433,13 +566,20 @@
         <h2>Payment Method</h2>
         <div id="savedCardsContainer">
           <!-- Saved cards will be displayed here -->
+          <div class="no-tokens-message" id="noTokensMessage">
+            No saved payment methods available. You can add a new card or use stored tokens from
+            webhooks.
+          </div>
         </div>
         <a href="#" class="add-new-card" id="addNewCardBtn">+ ADD NEW CARD</a>
       </div>
 
-      <button class="btn" id="checkoutBtn" style="width: 100%; margin-top: 20px">
-        Complete Checkout
-      </button>
+      <div class="button-container">
+        <button class="btn" id="checkoutExistingBtn">
+          Complete Checkout with Selected Payment Method
+        </button>
+        <button class="btn" id="checkoutNewBtn">Complete Checkout with a New Card</button>
+      </div>
     </div>
 
     <div class="modal-overlay" id="cardModal">
@@ -463,6 +603,9 @@
             scrolling="no"
           ></iframe>
         </div>
+
+        <!-- Escape key instruction -->
+        <div class="escape-instruction">Press ESC to close</div>
       </div>
     </div>
 
@@ -470,10 +613,25 @@
       // Local storage keys
       const API_KEY_STORAGE = 'fiska_api_key';
       const PAYMENT_METHOD_ID_STORAGE = 'fiska_payment_method_id';
+      const AMOUNT_STORAGE = 'fiska_amount';
+      const TAX_STORAGE = 'fiska_tax';
+      const CASHBACK_STORAGE = 'fiska_cashback';
+      const TIP_STORAGE = 'fiska_tip';
+      const INVOICE_NUMBER_STORAGE = 'fiska_invoice_number';
+      const ORDER_NUMBER_STORAGE = 'fiska_order_number';
+      const REFERENCE_ID_STORAGE = 'fiska_reference_id';
+      const TOKEN_STORAGE = 'fiska_tokens';
 
       // DOM elements
       const apiKeyInput = document.getElementById('apiKey');
       const paymentMethodIdInput = document.getElementById('paymentMethodId');
+      const amountInput = document.getElementById('amount');
+      const taxInput = document.getElementById('tax');
+      const cashBackInput = document.getElementById('cashBack');
+      const tipInput = document.getElementById('tip');
+      const invoiceNumberInput = document.getElementById('invoiceNumber');
+      const orderNumberInput = document.getElementById('orderNumber');
+      const referenceIdInput = document.getElementById('referenceId');
       const apiKeyStatus = document.getElementById('apiKeyStatus');
       const saveApiKeyBtn = document.getElementById('saveApiKey');
       const addNewCardBtn = document.getElementById('addNewCardBtn');
@@ -485,14 +643,28 @@
       const savedCardsContainer = document.getElementById('savedCardsContainer');
       const paymentFormContainer = document.getElementById('paymentFormContainer');
       const mainContainer = document.getElementById('mainContainer');
+      const noTokensMessage = document.getElementById('noTokensMessage');
+      const checkoutExistingBtn = document.getElementById('checkoutExistingBtn');
+      const checkoutNewBtn = document.getElementById('checkoutNewBtn');
+      const toggleAdditionalFieldsBtn = document.getElementById('toggleAdditionalFields');
+      const additionalFieldsSection = document.getElementById('additionalFields');
 
       // API endpoints
       const API_BASE_URL = 'https://beta-payment-api-http.dev.ms.fiska.tech/v1';
       // Hard-coded return URL
       const RETURN_URL = 'https://fintechnav.com/payment-complete';
 
+      // Toggle additional fields
+      toggleAdditionalFieldsBtn.addEventListener('click', () => {
+        additionalFieldsSection.classList.toggle('active');
+        toggleAdditionalFieldsBtn.textContent = additionalFieldsSection.classList.contains('active')
+          ? 'Hide Additional Configuration Fields'
+          : 'Show Additional Configuration Fields';
+      });
+
       // Load saved configuration if exists
       document.addEventListener('DOMContentLoaded', () => {
+        // Load API key and payment method ID
         const savedApiKey = localStorage.getItem(API_KEY_STORAGE);
         if (savedApiKey) {
           apiKeyInput.value = savedApiKey;
@@ -501,10 +673,40 @@
           if (savedPaymentMethodId) {
             paymentMethodIdInput.value = savedPaymentMethodId;
           }
-
-          showAlert(apiKeyStatus, 'Configuration loaded from local storage.', 'success');
-          loadSavedPaymentMethods();
         }
+
+        // Load additional fields
+        const savedAmount = localStorage.getItem(AMOUNT_STORAGE);
+        if (savedAmount) amountInput.value = savedAmount;
+
+        const savedTax = localStorage.getItem(TAX_STORAGE);
+        if (savedTax) taxInput.value = savedTax;
+
+        const savedCashBack = localStorage.getItem(CASHBACK_STORAGE);
+        if (savedCashBack) cashBackInput.value = savedCashBack;
+
+        const savedTip = localStorage.getItem(TIP_STORAGE);
+        if (savedTip) tipInput.value = savedTip;
+
+        const savedInvoiceNumber = localStorage.getItem(INVOICE_NUMBER_STORAGE);
+        if (savedInvoiceNumber) invoiceNumberInput.value = savedInvoiceNumber;
+
+        const savedOrderNumber = localStorage.getItem(ORDER_NUMBER_STORAGE);
+        if (savedOrderNumber) orderNumberInput.value = savedOrderNumber;
+
+        const savedReferenceId = localStorage.getItem(REFERENCE_ID_STORAGE);
+        if (savedReferenceId) referenceIdInput.value = savedReferenceId;
+
+        // Show success message if configuration is loaded
+        if (savedApiKey) {
+          showAlert(apiKeyStatus, 'Configuration loaded from local storage.', 'success');
+        }
+
+        // Load saved tokens and render them
+        loadSavedTokens();
+
+        // Set up webhook listening
+        setupWebhookListener();
       });
 
       // Function to toggle blur on main container
@@ -520,23 +722,42 @@
       saveApiKeyBtn.addEventListener('click', () => {
         const apiKey = apiKeyInput.value.trim();
         const paymentMethodId = paymentMethodIdInput.value.trim();
+        const amount = amountInput.value.trim();
+        const tax = taxInput.value.trim();
+        const cashBack = cashBackInput.value.trim();
+        const tip = tipInput.value.trim();
+        const invoiceNumber = invoiceNumberInput.value.trim();
+        const orderNumber = orderNumberInput.value.trim();
+        const referenceId = referenceIdInput.value.trim();
 
         if (apiKey) {
+          // Save required fields
           localStorage.setItem(API_KEY_STORAGE, apiKey);
 
-          if (paymentMethodId) {
-            localStorage.setItem(PAYMENT_METHOD_ID_STORAGE, paymentMethodId);
-          } else {
-            // Remove the payment method ID from storage if the field is empty
-            localStorage.removeItem(PAYMENT_METHOD_ID_STORAGE);
-          }
+          // Save or remove optional fields based on if they have values
+          saveOrRemoveFromStorage(PAYMENT_METHOD_ID_STORAGE, paymentMethodId);
+          saveOrRemoveFromStorage(AMOUNT_STORAGE, amount);
+          saveOrRemoveFromStorage(TAX_STORAGE, tax);
+          saveOrRemoveFromStorage(CASHBACK_STORAGE, cashBack);
+          saveOrRemoveFromStorage(TIP_STORAGE, tip);
+          saveOrRemoveFromStorage(INVOICE_NUMBER_STORAGE, invoiceNumber);
+          saveOrRemoveFromStorage(ORDER_NUMBER_STORAGE, orderNumber);
+          saveOrRemoveFromStorage(REFERENCE_ID_STORAGE, referenceId);
 
           showAlert(apiKeyStatus, 'Configuration saved successfully!', 'success');
-          loadSavedPaymentMethods();
         } else {
           showAlert(apiKeyStatus, 'Please enter a valid API key.', 'error');
         }
       });
+
+      // Helper function to save or remove item from localStorage
+      function saveOrRemoveFromStorage(key, value) {
+        if (value) {
+          localStorage.setItem(key, value);
+        } else {
+          localStorage.removeItem(key);
+        }
+      }
 
       // Open modal to add new card
       addNewCardBtn.addEventListener('click', (e) => {
@@ -574,15 +795,20 @@
       // Add escape key functionality
       document.addEventListener('keydown', function (event) {
         if (event.key === 'Escape' && cardModal.style.display === 'flex') {
-          // Simply close the modal
-          cardModal.style.display = 'none';
-          toggleBlur(false);
+          // Add visual feedback
+          document.querySelector('.escape-instruction').style.color = '#c9a15f';
+
+          // Reset after a short delay
+          setTimeout(() => {
+            cardModal.style.display = 'none';
+            toggleBlur(false);
+            // Reset color if the modal is opened again
+            document.querySelector('.escape-instruction').style.color = '';
+          }, 200);
         }
       });
 
       // Function to create a card not present token
-      // Modify your createCardNotPresentToken function to ensure the spinner is always hidden
-
       async function createCardNotPresentToken() {
         const apiKey = localStorage.getItem(API_KEY_STORAGE);
 
@@ -595,15 +821,10 @@
           }
 
           // Generate a reference ID using current timestamp
-          const referenceId = `ref_${Date.now()}`;
+          const referenceId = localStorage.getItem(REFERENCE_ID_STORAGE) || `ref_${Date.now()}`;
 
           // Check if the user has provided a payment method ID
           let paymentMethodId = localStorage.getItem(PAYMENT_METHOD_ID_STORAGE);
-
-          // If no payment method ID is stored, proceed without it
-          if (!paymentMethodId) {
-            console.log('No payment method ID provided, proceeding without it');
-          }
 
           console.log('Return URL:', RETURN_URL);
 
@@ -708,31 +929,26 @@
 
           // Process the iframe URL if available
           if (data.iframeUrl) {
-            // Code to process iframe URL remains the same
-            // ...
-
             // Create and add stylesheet to the document to ensure iframe content has no scrollbars
             const style = document.createElement('style');
             style.textContent = `
-        iframe.iframe-container {
-          overflow: hidden !important;
-          scrollbar-width: none !important;
-          -ms-overflow-style: none !important;
-        }
-        iframe.iframe-container::-webkit-scrollbar {
-          display: none !important;
-          width: 0 !important;
-          height: 0 !important;
-        }
-      `;
+    iframe.iframe-container {
+      overflow: hidden !important;
+      scrollbar-width: none !important;
+      -ms-overflow-style: none !important;
+    }
+    iframe.iframe-container::-webkit-scrollbar {
+      display: none !important;
+      width: 0 !important;
+      height: 0 !important;
+    }
+  `;
             document.head.appendChild(style);
 
             // Update iframe source and display it
             paymentIframe.src = data.iframeUrl;
             paymentIframe.style.display = 'block';
             spinner.style.display = 'none'; // Hide spinner when iframe is shown
-
-            // Rest of the iframe handling code...
           } else {
             // Handle missing iframe URL
             let errorMsg = 'Failed to create payment session. No iframe URL returned.';
@@ -751,84 +967,238 @@
           spinner.style.display = 'none';
         }
       }
-      // Function to fetch available payment methods
-      async function fetchPaymentMethods(apiKey) {
+
+      // Process a virtual (Card Not Present) sale
+      async function processVirtualSale() {
+        const apiKey = localStorage.getItem(API_KEY_STORAGE);
+
+        if (!apiKey) {
+          alert('API key is missing. Please enter and save your API key.');
+          return;
+        }
+
+        // Generate a reference ID using current timestamp or use saved one
+        const referenceId = localStorage.getItem(REFERENCE_ID_STORAGE) || `ref_${Date.now()}`;
+
+        // Get payment method ID if available
+        const paymentMethodId = localStorage.getItem(PAYMENT_METHOD_ID_STORAGE);
+
+        // Get other configuration values
+        const amount = parseInt(localStorage.getItem(AMOUNT_STORAGE) || '7273');
+        const tax = parseInt(localStorage.getItem(TAX_STORAGE) || '0');
+        const cashBack = parseInt(localStorage.getItem(CASHBACK_STORAGE) || '0');
+        const tip = parseInt(localStorage.getItem(TIP_STORAGE) || '0');
+        const invoiceNumber = localStorage.getItem(INVOICE_NUMBER_STORAGE) || `inv_${Date.now()}`;
+        const orderNumber = localStorage.getItem(ORDER_NUMBER_STORAGE) || `ord_${Date.now()}`;
+
+        // Reset modal state
+        paymentIframe.style.display = 'none';
+        apiError.style.display = 'none';
+        spinner.style.display = 'block';
+
+        // Display the modal for processing payment
+        cardModal.style.display = 'flex';
+        toggleBlur(true);
+
         try {
-          const endpoint = `${API_BASE_URL}/payment-methods`;
-          console.log('Fetching payment methods from:', endpoint);
+          // Prepare request data
+          const requestData = {
+            referenceId: referenceId,
+            returnUrl: RETURN_URL,
+            amount: amount,
+            amountBreakdown: {
+              tax: tax,
+              cashBack: cashBack,
+              tip: tip,
+            },
+            invoiceNumber: invoiceNumber,
+            orderNumber: orderNumber,
+          };
+
+          // Add payment method ID if available
+          if (paymentMethodId) {
+            requestData.paymentMethodId = paymentMethodId;
+          }
+
+          console.log('Virtual sale request:', JSON.stringify(requestData, null, 2));
+
+          // Make the API request
+          const endpoint = `${API_BASE_URL}/transactions/virtual-sale`;
 
           const response = await fetch(endpoint, {
-            method: 'GET',
+            method: 'POST',
             headers: {
               'Content-Type': 'application/json',
               'x-api-key': apiKey,
             },
+            body: JSON.stringify(requestData),
           });
 
-          console.log('Payment methods response status:', response.status);
-
-          // Get response text regardless of status
-          let responseText = '';
-          try {
-            responseText = await response.text();
-            console.log('Raw payment methods response:', responseText);
-          } catch (e) {
-            console.error('Could not read response body:', e);
-          }
-
-          // Try to parse the response
+          // Parse the response
+          const responseText = await response.text();
           let data;
+
           try {
-            if (responseText) {
+            if (responseText && responseText.trim() !== '') {
               data = JSON.parse(responseText);
+            } else {
+              throw new Error('Empty response');
             }
           } catch (error) {
-            console.error('Error parsing payment methods JSON response:', error);
-            throw new Error(responseText || 'Invalid response format');
+            console.error('Error parsing response:', error);
+            showAlert(apiError, 'Invalid response format', 'error');
+            spinner.style.display = 'none';
+            return;
           }
 
-          // Handle unsuccessful response
+          // Handle error response
           if (!response.ok) {
-            let errorMessage = 'Failed to fetch payment methods';
+            let errorMessage = 'Payment processing failed';
 
             if (data && data.error && data.error.message) {
               errorMessage = data.error.message;
             } else if (data && data.message) {
               errorMessage = data.message;
-            } else if (responseText) {
-              errorMessage = responseText;
             } else {
               errorMessage = `Error ${response.status}: ${response.statusText}`;
             }
 
-            console.error(errorMessage);
-            throw new Error(errorMessage);
+            console.error('API error:', errorMessage);
+            showAlert(apiError, errorMessage, 'error');
+            spinner.style.display = 'none';
+            return;
           }
 
-          if (!data) {
-            throw new Error('Empty response received from API');
+          // Handle iframe URL if available
+          if (data.iframeUrl) {
+            // Update iframe source and display it
+            paymentIframe.src = data.iframeUrl;
+            paymentIframe.style.display = 'block';
+            spinner.style.display = 'none';
+          } else {
+            // Handle missing iframe URL
+            showAlert(apiError, 'No payment iframe URL returned', 'error');
+            spinner.style.display = 'none';
           }
-
-          console.log('Payment methods data:', data);
-          return data;
         } catch (error) {
-          console.error('Error in fetchPaymentMethods:', error);
-          throw error; // Re-throw to be handled by the caller
+          console.error('Error processing virtual sale:', error);
+          showAlert(apiError, `Payment processing error: ${error.message}`, 'error');
+          spinner.style.display = 'none';
         }
       }
-      // Load saved payment methods from localStorage
-      function loadSavedPaymentMethods() {
-        // For demo, we'll add a mock saved card
-        // In a real implementation, you would fetch this from your backend
-        savedCardsContainer.innerHTML = `
-                <div class="payment-method">
-                    <input type="radio" name="paymentMethod" id="savedCard1" checked>
-                    <div class="payment-method-info">
-                        <div>Visa •••• 5678</div>
-                        <div style="color: var(--color-text-light);">Expires 09/2026</div>
-                    </div>
-                </div>
-            `;
+
+      // Process a token sale using stored token
+      async function processTokenSale(tokenId) {
+        const apiKey = localStorage.getItem(API_KEY_STORAGE);
+
+        if (!apiKey) {
+          alert('API key is missing. Please enter and save your API key.');
+          return;
+        }
+
+        if (!tokenId) {
+          alert('Please select a payment method first.');
+          return;
+        }
+
+        // Get configuration values
+        const referenceId = localStorage.getItem(REFERENCE_ID_STORAGE) || `ref_${Date.now()}`;
+        const amount = parseInt(localStorage.getItem(AMOUNT_STORAGE) || '7273');
+        const tax = parseInt(localStorage.getItem(TAX_STORAGE) || '0');
+        const cashBack = parseInt(localStorage.getItem(CASHBACK_STORAGE) || '0');
+        const tip = parseInt(localStorage.getItem(TIP_STORAGE) || '0');
+        const invoiceNumber = localStorage.getItem(INVOICE_NUMBER_STORAGE) || `inv_${Date.now()}`;
+        const orderNumber = localStorage.getItem(ORDER_NUMBER_STORAGE) || `ord_${Date.now()}`;
+
+        try {
+          // Show loading state
+          const originalButtonText = checkoutExistingBtn.textContent;
+          checkoutExistingBtn.textContent = 'Processing...';
+          checkoutExistingBtn.disabled = true;
+
+          // Prepare request data
+          const requestData = {
+            referenceId: referenceId,
+            tokenId: tokenId,
+            amount: amount,
+            amountBreakdown: {
+              tax: tax,
+              cashBack: cashBack,
+              tip: tip,
+            },
+            invoiceNumber: invoiceNumber,
+            orderNumber: orderNumber,
+          };
+
+          console.log('Token sale request:', JSON.stringify(requestData, null, 2));
+
+          // Make the API request
+          const endpoint = `${API_BASE_URL}/transactions/token-sale`;
+
+          const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-api-key': apiKey,
+            },
+            body: JSON.stringify(requestData),
+          });
+
+          // Parse the response
+          const responseText = await response.text();
+          let data;
+
+          try {
+            if (responseText && responseText.trim() !== '') {
+              data = JSON.parse(responseText);
+            } else {
+              throw new Error('Empty response');
+            }
+          } catch (error) {
+            console.error('Error parsing response:', error);
+            alert('Error: Invalid response format');
+            checkoutExistingBtn.textContent = originalButtonText;
+            checkoutExistingBtn.disabled = false;
+            return;
+          }
+
+          // Handle error response
+          if (!response.ok) {
+            let errorMessage = 'Payment processing failed';
+
+            if (data && data.error && data.error.message) {
+              errorMessage = data.error.message;
+            } else if (data && data.message) {
+              errorMessage = data.message;
+            } else {
+              errorMessage = `Error ${response.status}: ${response.statusText}`;
+            }
+
+            console.error('API error:', errorMessage);
+            alert(`Error: ${errorMessage}`);
+            checkoutExistingBtn.textContent = originalButtonText;
+            checkoutExistingBtn.disabled = false;
+            return;
+          }
+
+          // Handle successful response
+          console.log('Payment successful:', data);
+
+          // Redirect to payment complete page with transaction details
+          const params = new URLSearchParams();
+          params.append('resultCode', data.resultCode || '0');
+          params.append('transactionId', data.id || 'unknown');
+          params.append('amount', amount.toString());
+
+          window.location.href = `${RETURN_URL}?${params.toString()}`;
+        } catch (error) {
+          console.error('Error processing token sale:', error);
+          alert(`Payment processing error: ${error.message}`);
+
+          // Reset button state
+          checkoutExistingBtn.textContent = 'Complete Checkout with Selected Payment Method';
+          checkoutExistingBtn.disabled = false;
+        }
       }
 
       // Set up event listener for iframe postMessages
@@ -856,16 +1226,25 @@
                 cardModal.style.display = 'none';
                 toggleBlur(false);
 
-                // Add the new payment method to the list
-                const cardDetails = data.cardDetails || {
-                  last4: '4242',
-                  expMonth: '12',
-                  expYear: '28',
-                };
-                addNewPaymentMethod(cardDetails);
+                // Handle payment transaction completion
+                if (data.transactionId) {
+                  // Redirect to payment complete page with result
+                  const params = new URLSearchParams();
+                  params.append('resultCode', '0');
+                  params.append('transactionId', data.transactionId);
 
-                // Show success message
-                alert('Payment method added successfully!');
+                  if (data.amount) {
+                    params.append('amount', data.amount.toString());
+                  }
+
+                  window.location.href = `${RETURN_URL}?${params.toString()}`;
+                } else {
+                  // Just a token creation, not a payment
+                  const cardDetails = data.cardDetails || {};
+
+                  // Show success message
+                  alert('Payment method added successfully!');
+                }
               } else if (data.status === 'error') {
                 // Payment failed
                 showAlert(apiError, data.message || 'Payment failed. Please try again.', 'error');
@@ -881,24 +1260,154 @@
         });
       }
 
-      // Add a new payment method to the UI
-      function addNewPaymentMethod(cardDetails) {
-        const cardType = cardDetails.brand || 'Card';
-        const last4 = cardDetails.last4 || '****';
-        const expMonth = cardDetails.expMonth || '12';
-        const expYear = cardDetails.expYear || '25';
+      // Setup iframe message listener on load
+      setupIframeMessageListener();
 
-        const cardElement = document.createElement('div');
-        cardElement.className = 'payment-method';
-        cardElement.innerHTML = `
-                <input type="radio" name="paymentMethod" id="newCard" checked>
-                <div class="payment-method-info">
-                    <div>${cardType} •••• ${last4}</div>
-                    <div style="color: var(--color-text-light);">Expires ${expMonth}/${expYear}</div>
-                </div>
-            `;
+      // Set up webhook listener to capture token events
+      function setupWebhookListener() {
+        // Check for token.created events in localStorage periodically
+        // In a real implementation, this would use websockets or server-sent events
+        setInterval(checkForNewTokens, 5000);
 
-        savedCardsContainer.prepend(cardElement);
+        // Initial check
+        checkForNewTokens();
+      }
+
+      // Check local storage for webhooks with token.created events
+      function checkForNewTokens() {
+        const storedWebhooks = JSON.parse(localStorage.getItem('webhookLog') || '[]');
+
+        // Find token.created events
+        const tokenEvents = storedWebhooks.filter((webhook) => {
+          // Check for token events in webhook.type or webhook.event.type
+          const type = webhook.type || (webhook.event && webhook.event.type);
+          return type === 'token.created';
+        });
+
+        if (tokenEvents.length > 0) {
+          // Process each token event
+          tokenEvents.forEach((event) => {
+            processTokenEvent(event);
+          });
+        }
+      }
+
+      // Process a token event and extract the token information
+      function processTokenEvent(event) {
+        try {
+          // Extract token information - field structure might vary
+          let paymentMethod;
+
+          // Try different possible locations for the payment method information
+          if (event.originalResponse && event.originalResponse.transactionResponses) {
+            const response = event.originalResponse.transactionResponses[0];
+            paymentMethod = response && response.paymentMethod;
+          } else if (
+            event.payload &&
+            event.payload.originalResponse &&
+            event.payload.originalResponse.transactionResponses
+          ) {
+            const response = event.payload.originalResponse.transactionResponses[0];
+            paymentMethod = response && response.paymentMethod;
+          } else if (event.payload && event.payload.event) {
+            // Try to find it in the event data structure
+            const data = event.payload;
+            if (data.originalResponse && data.originalResponse.transactionResponses) {
+              const response = data.originalResponse.transactionResponses[0];
+              paymentMethod = response && response.paymentMethod;
+            }
+          }
+
+          if (!paymentMethod || !paymentMethod.id) {
+            console.warn('Could not extract payment method from event:', event);
+            return;
+          }
+
+          // Create token object
+          const token = {
+            id: paymentMethod.id,
+            cardType: paymentMethod.cardType || 'Card',
+            maskedCardNumber: paymentMethod.maskedCardNumber || '************0000',
+            cardExpDate: paymentMethod.cardExpDate || '0000',
+            timestamp: new Date().toISOString(),
+          };
+
+          // Save token to storage
+          saveToken(token);
+
+          // Update UI
+          loadSavedTokens();
+        } catch (error) {
+          console.error('Error processing token event:', error);
+        }
+      }
+
+      // Save a token to local storage
+      function saveToken(token) {
+        // Get existing tokens
+        const tokens = JSON.parse(localStorage.getItem(TOKEN_STORAGE) || '[]');
+
+        // Check if token already exists
+        const existingTokenIndex = tokens.findIndex((t) => t.id === token.id);
+
+        if (existingTokenIndex !== -1) {
+          // Update existing token
+          tokens[existingTokenIndex] = token;
+        } else {
+          // Add new token
+          tokens.unshift(token);
+
+          // Keep only the last 3 tokens
+          if (tokens.length > 3) {
+            tokens.length = 3;
+          }
+        }
+
+        // Save back to storage
+        localStorage.setItem(TOKEN_STORAGE, JSON.stringify(tokens));
+      }
+
+      // Load saved tokens from local storage
+      function loadSavedTokens() {
+        const tokens = JSON.parse(localStorage.getItem(TOKEN_STORAGE) || '[]');
+
+        // Clear container
+        savedCardsContainer.innerHTML = '';
+
+        if (tokens.length === 0) {
+          // Show no tokens message
+          savedCardsContainer.innerHTML = `
+  <div class="no-tokens-message" id="noTokensMessage">
+    No saved payment methods available. You can add a new card or use stored tokens from webhooks.
+  </div>
+`;
+          return;
+        }
+
+        // Display each token
+        tokens.forEach((token, index) => {
+          // Format expiration date if needed (MMYY format)
+          let expMonth = '';
+          let expYear = '';
+
+          if (token.cardExpDate && token.cardExpDate.length === 4) {
+            expMonth = token.cardExpDate.substring(0, 2);
+            expYear = token.cardExpDate.substring(2);
+          }
+
+          const cardElement = document.createElement('div');
+          cardElement.className = 'payment-method';
+          cardElement.innerHTML = `
+  <input type="radio" name="paymentMethod" id="token${index}" value="${token.id}" ${index === 0 ? 'checked' : ''}>
+  <div class="payment-method-info">
+    <div>${token.cardType || 'Card'} ${token.maskedCardNumber || '************0000'}</div>
+    <div style="color: var(--color-text-light);">Expires ${expMonth || '00'}/${expYear || '00'}</div>
+    <div style="color: var(--color-text-light); font-size: 0.85rem;">Token ID: ${token.id}</div>
+  </div>
+`;
+
+          savedCardsContainer.appendChild(cardElement);
+        });
       }
 
       // Helper function to show alerts
@@ -918,28 +1427,45 @@
         }, 5000);
       }
 
-      // Checkout button functionality (just for demo)
-      document.getElementById('checkoutBtn').addEventListener('click', () => {
-        alert(
-          'This is a demo checkout. In a real implementation, you would submit the order with the selected payment method.'
-        );
-      });
+      // Event listeners for checkout buttons
+      checkoutExistingBtn.addEventListener('click', () => {
+        // Find selected payment method token
+        const selectedToken = document.querySelector('input[name="paymentMethod"]:checked');
 
-      // Add visual feedback when Escape key is pressed
-      document.addEventListener('keydown', function (event) {
-        if (event.key === 'Escape' && cardModal.style.display === 'flex') {
-          // Add visual feedback
-          document.querySelector('.escape-instruction').style.color = '#c9a15f';
-
-          // Reset after a short delay
-          setTimeout(() => {
-            cardModal.style.display = 'none';
-            toggleBlur(false);
-            // Reset color if the modal is opened again
-            document.querySelector('.escape-instruction').style.color = '';
-          }, 200);
+        if (selectedToken) {
+          processTokenSale(selectedToken.value);
+        } else {
+          alert('Please select a payment method or add a new card.');
         }
       });
+
+      checkoutNewBtn.addEventListener('click', () => {
+        processVirtualSale();
+      });
+
+      // Test webhook processing - simulates receiving a token.created webhook
+      // This function is just for testing purposes
+      window.processTestWebhook = function (type = 'token.created') {
+        const webhook = {
+          type: type,
+          event: { type: type },
+          originalResponse: {
+            transactionResponses: [
+              {
+                paymentMethod: {
+                  id: 'pmt_tkn_' + Math.random().toString(36).substring(2, 12),
+                  cardType: 'VISA',
+                  maskedCardNumber: '************' + Math.floor(Math.random() * 9000 + 1000),
+                  cardExpDate: '12' + (new Date().getFullYear() + 2).toString().substring(2),
+                },
+              },
+            ],
+          },
+        };
+
+        processTokenEvent(webhook);
+        return webhook;
+      };
     </script>
   </body>
 </html>
