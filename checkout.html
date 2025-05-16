@@ -827,6 +827,56 @@
         console.log('Simulated token saved:', sampleToken);
         return sampleToken;
       }
+
+      // Test function to process a production webhook
+      function testProductionWebhook() {
+        const productionWebhook = {
+          eventData: {
+            type: 'token.created',
+            timestamp: '2025-05-16T17:17:23.9401063Z',
+            id: 'evt_01JVD1KH34N5ZRPGQDVN9BFB12',
+          },
+          originalResponse: {
+            id: 'trx_01JVD1JK6G3Z8G3R2J3VP37ZE8',
+            resultCode: 0,
+            resultText: 'Card successfully tokenized',
+            referenceId: '2346345763465',
+            amount: 200,
+            paymentMethod: {
+              id: 'pmt_vrt_01JVAYEP1MC8DM1CJMD000BRAD',
+              type: 'Virtual',
+              currency: 'USD',
+            },
+            transactionResponse: {
+              authCode: '0000',
+              cardType: 'MasterCard',
+              accountType: 'Credit',
+              responseCode: 1,
+              paymentMethod: {
+                id: 'pmt_tkn_01JVD1KC3MVB15W6E0S5JTF1J0',
+                type: 'Token',
+                currency: 'USD',
+                cardType: 'Mastercard',
+                maskedCardNumber: '2****2815',
+                cardExpDate: '1225',
+              },
+              hostResponseText: 'APPROVED',
+            },
+          },
+        };
+
+        console.log('Testing with production webhook data:', productionWebhook);
+
+        // First, try direct extraction
+        const paymentMethod =
+          productionWebhook.originalResponse?.transactionResponse?.paymentMethod;
+        console.log('Direct extraction result:', paymentMethod);
+
+        // Then run through normal processing
+        processTokenEvent(productionWebhook);
+
+        return paymentMethod;
+      }
       // Helper function to save or remove item from localStorage
       function saveOrRemoveFromStorage(key, value) {
         if (value) {
