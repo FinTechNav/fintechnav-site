@@ -1231,27 +1231,8 @@
           spinner.style.display = 'none';
         }
       }
-      // Fix for the checkout.html file:
-      // 1. Delete or comment out the problematic code block starting around line 1361
-      // This is the block of code that begins with:
-      //
-      // const apiKey = localStorage.getItem(API_KEY_STORAGE);
-      //
-      // if (!apiKey) {
-      //   alert('API key is missing. Please enter and save your API key.');
-      //   return;  <-- This is the illegal return statement
-      // }
-      //
-      // ... and continues through multiple lines until a closing brace.
-      //
-      // This code appears to be a duplicate implementation of the processTokenSale function's
-      // body, but it's not wrapped in a function declaration, which is causing the error.
-      // Simply remove this entire block or comment it out.
 
-      // To fix, keep your processTokenSale function and remove the duplicate code block that follows it.
-      // Your processTokenSale function should look like this:
-
-      // Process a token sale using stored token
+      // Complete updated processTokenSale function with enhanced debugging and error handling
       async function processTokenSale(tokenId) {
         const apiKey = localStorage.getItem(API_KEY_STORAGE);
 
@@ -1309,29 +1290,46 @@
 
           // Make the API request
           const endpoint = `${API_BASE_URL}/transactions/token-sale`;
+          const headers = {
+            'Content-Type': 'application/json',
+            'x-api-key': apiKey,
+          };
+          const body = JSON.stringify(requestData);
+
+          // Log request details for debugging
+          console.group('API Request Details');
+          console.log('Endpoint:', endpoint);
+          console.log('Method: POST');
+          console.log('Headers:', headers);
+          console.log('Request Body:', body);
+          try {
+            console.log('Request Body (parsed):', JSON.parse(body));
+          } catch (e) {
+            console.log('Could not parse request body as JSON');
+          }
+          console.groupEnd();
 
           const response = await fetch(endpoint, {
             method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'x-api-key': apiKey,
-            },
-            body: JSON.stringify(requestData),
+            headers: headers,
+            body: body,
           });
 
           // Parse the response
           const responseText = await response.text();
-          let data;
+          console.log('Raw API Response:', responseText);
 
+          let data;
           try {
             if (responseText && responseText.trim() !== '') {
               data = JSON.parse(responseText);
+              console.log('Parsed API Response:', data);
             } else {
               throw new Error('Empty response');
             }
           } catch (error) {
             console.error('Error parsing response:', error);
-            alert('Error: Invalid response format');
+            alert(`Error: Invalid response format\n\nRaw response: ${responseText}`);
             checkoutExistingBtn.textContent = originalButtonText;
             checkoutExistingBtn.disabled = false;
             return;
@@ -1339,18 +1337,25 @@
 
           // Handle error response
           if (!response.ok) {
-            let errorMessage = 'Payment processing failed';
+            console.error('API Error Response Status:', response.status);
+            console.error('API Error Raw Response:', responseText);
 
-            if (data && data.error && data.error.message) {
-              errorMessage = data.error.message;
-            } else if (data && data.message) {
-              errorMessage = data.message;
-            } else {
-              errorMessage = `Error ${response.status}: ${response.statusText}`;
+            try {
+              // Try to format the JSON response for display
+              const formattedJson = JSON.stringify(data, null, 2);
+              console.error('API Error Formatted JSON:', formattedJson);
+
+              // Show the complete error response in an alert
+              alert(
+                `Error: API returned an error.\n\nStatus: ${response.status}\n\nRaw Response:\n${responseText}\n\nFormatted JSON:\n${formattedJson}`
+              );
+            } catch (e) {
+              // If JSON formatting fails, show the raw response
+              alert(
+                `Error: API returned an error.\n\nStatus: ${response.status}\n\nRaw Response:\n${responseText}`
+              );
             }
 
-            console.error('API error:', errorMessage);
-            alert(`Error: ${errorMessage}`);
             checkoutExistingBtn.textContent = originalButtonText;
             checkoutExistingBtn.disabled = false;
             return;
@@ -1368,7 +1373,7 @@
           window.location.href = `${RETURN_URL}?${params.toString()}`;
         } catch (error) {
           console.error('Error processing token sale:', error);
-          alert(`Payment processing error: ${error.message}`);
+          alert(`Payment processing error: ${error.message}\n\nStack trace: ${error.stack}`);
 
           // Reset button state
           checkoutExistingBtn.textContent = 'Complete Checkout with Selected Payment Method';
