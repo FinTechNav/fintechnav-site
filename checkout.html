@@ -579,6 +579,9 @@
           <a href="#" class="add-new-card" id="simulateTokenBtn" style="margin-left: 15px"
             >+ Simulate Token</a
           >
+          <a href="#" class="add-new-card" id="simulateProductionBtn" style="margin-left: 15px"
+            >🔄 Test Production Format</a
+          >
         </div>
       </div>
 
@@ -766,7 +769,55 @@
           maskedCardNumber: '************' + Math.floor(Math.random() * 9000 + 1000),
           cardExpDate: '12' + (new Date().getFullYear() + 2).toString().substring(2),
         };
+        // Test function to process a production webhook
+        function testProductionWebhook() {
+          const productionWebhook = {
+            eventData: {
+              type: 'token.created',
+              timestamp: '2025-05-16T17:17:23.9401063Z',
+              id: 'evt_01JVD1KH34N5ZRPGQDVN9BFB12',
+            },
+            originalResponse: {
+              id: 'trx_01JVD1JK6G3Z8G3R2J3VP37ZE8',
+              resultCode: 0,
+              resultText: 'Card successfully tokenized',
+              referenceId: '2346345763465',
+              amount: 200,
+              paymentMethod: {
+                id: 'pmt_vrt_01JVAYEP1MC8DM1CJMD000BRAD',
+                type: 'Virtual',
+                currency: 'USD',
+              },
+              transactionResponse: {
+                authCode: '0000',
+                cardType: 'MasterCard',
+                accountType: 'Credit',
+                responseCode: 1,
+                paymentMethod: {
+                  id: 'pmt_tkn_01JVD1KC3MVB15W6E0S5JTF1J0',
+                  type: 'Token',
+                  currency: 'USD',
+                  cardType: 'Mastercard',
+                  maskedCardNumber: '2****2815',
+                  cardExpDate: '1225',
+                },
+                hostResponseText: 'APPROVED',
+              },
+            },
+          };
 
+          console.log('Testing with production webhook data:', productionWebhook);
+
+          // First, try direct extraction
+          const paymentMethod =
+            productionWebhook.originalResponse?.transactionResponse?.paymentMethod;
+          console.log('Direct extraction result:', paymentMethod);
+
+          // Then run through normal processing
+          processTokenEvent(productionWebhook);
+
+          return paymentMethod;
+        }
         // Save the token directly
         saveToken(sampleToken);
 
@@ -1356,16 +1407,29 @@
 
           // Build a list of places to look for the payment method
           const possiblePaths = [
-            // Direct paths
+            // Direct paths (array format)
             event.originalResponse?.transactionResponses?.[0]?.paymentMethod,
             event.payload?.originalResponse?.transactionResponses?.[0]?.paymentMethod,
             event.data?.originalResponse?.transactionResponses?.[0]?.paymentMethod,
+
+            // Singular format
+            event.originalResponse?.transactionResponse?.paymentMethod,
+            event.payload?.originalResponse?.transactionResponse?.paymentMethod,
+            event.data?.originalResponse?.transactionResponse?.paymentMethod,
 
             // Additional paths
             event.tokenInfo,
             event.payload?.tokenInfo,
             event.data?.tokenInfo,
           ];
+
+          // Log detailed path information for debugging
+          console.log('Checking possible paths for token:', {
+            'event.originalResponse?.transactionResponse?.paymentMethod':
+              event.originalResponse?.transactionResponse?.paymentMethod,
+            'event.data?.originalResponse?.transactionResponse?.paymentMethod':
+              event.data?.originalResponse?.transactionResponse?.paymentMethod,
+          });
 
           // Try each path
           for (const path of possiblePaths) {
@@ -1408,6 +1472,7 @@
           console.error('Error processing token event:', error);
         }
       }
+
       // Add this deep search function to find the payment method in any nested structure
       function findPaymentMethod(obj, depth = 0) {
         // Prevent infinite recursion
@@ -1476,9 +1541,9 @@
         if (tokens.length === 0) {
           // Show no tokens message
           savedCardsContainer.innerHTML = `
-  <div class="no-tokens-message" id="noTokensMessage">
-    No saved payment methods available. You can add a new card or use stored tokens from webhooks.
-  </div>
+<div class="no-tokens-message" id="noTokensMessage">
+  No saved payment methods available. You can add a new card or use stored tokens from webhooks.
+</div>
 `;
           return;
         }
@@ -1497,16 +1562,22 @@
           const cardElement = document.createElement('div');
           cardElement.className = 'payment-method';
           cardElement.innerHTML = `
-  <input type="radio" name="paymentMethod" id="token${index}" value="${token.id}" ${index === 0 ? 'checked' : ''}>
-  <div class="payment-method-info">
-    <div>${token.cardType || 'Card'} ${token.maskedCardNumber || '************0000'}</div>
-    <div style="color: var(--color-text-light);">Expires ${expMonth || '00'}/${expYear || '00'}</div>
-    <div style="color: var(--color-text-light); font-size: 0.85rem;">Token ID: ${token.id}</div>
-  </div>
+<input type="radio" name="paymentMethod" id="token${index}" value="${token.id}" ${index === 0 ? 'checked' : ''}>
+<div class="payment-method-info">
+  <div>${token.cardType || 'Card'} ${token.maskedCardNumber || '************0000'}</div>
+  <div style="color: var(--color-text-light);">Expires ${expMonth || '00'}/${expYear || '00'}</div>
+  <div style="color: var(--color-text-light); font-size: 0.85rem;">Token ID: ${token.id}</div>
+</div>
 `;
 
           savedCardsContainer.appendChild(cardElement);
         });
+
+        // Add enhanced logging
+        console.log(
+          'Current tokens in storage:',
+          JSON.parse(localStorage.getItem(TOKEN_STORAGE) || '[]')
+        );
       }
 
       // Helper function to show alerts
@@ -1551,6 +1622,12 @@
       document.getElementById('simulateTokenBtn').addEventListener('click', (e) => {
         e.preventDefault();
         simulateTokenWebhook();
+      });
+
+      // Add this new event listener
+      document.getElementById('simulateProductionBtn').addEventListener('click', (e) => {
+        e.preventDefault();
+        testProductionWebhook();
       });
 
       // Test webhook processing - simulates receiving a token.created webhook

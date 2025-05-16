@@ -337,7 +337,7 @@ function verifyChecksum(payload, checksum, secret) {
 function extractTokenInfo(payload) {
   // Try different possible locations for payment method information
 
-  // Standard location in transaction responses
+  // Standard location in transaction responses - array format
   if (
     payload.originalResponse &&
     payload.originalResponse.transactionResponses &&
@@ -345,6 +345,15 @@ function extractTokenInfo(payload) {
     payload.originalResponse.transactionResponses[0].paymentMethod
   ) {
     return payload.originalResponse.transactionResponses[0].paymentMethod;
+  }
+
+  // Check for singular transactionResponse format
+  if (
+    payload.originalResponse &&
+    payload.originalResponse.transactionResponse &&
+    payload.originalResponse.transactionResponse.paymentMethod
+  ) {
+    return payload.originalResponse.transactionResponse.paymentMethod;
   }
 
   // Look in direct response data
