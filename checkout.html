@@ -572,6 +572,14 @@
           </div>
         </div>
         <a href="#" class="add-new-card" id="addNewCardBtn">+ ADD NEW CARD</a>
+        <div style="margin-top: 10px">
+          <a href="#" class="add-new-card" id="refreshTokensBtn" style="margin-left: 15px"
+            >↻ Refresh Payment Methods</a
+          >
+          <a href="#" class="add-new-card" id="simulateTokenBtn" style="margin-left: 15px"
+            >+ Simulate Token</a
+          >
+        </div>
       </div>
 
       <div class="button-container">
@@ -749,7 +757,25 @@
           showAlert(apiKeyStatus, 'Please enter a valid API key.', 'error');
         }
       });
+      // Test function to simulate a token webhook
+      function simulateTokenWebhook() {
+        // Create a sample token webhook payload
+        const sampleToken = {
+          id: 'pmt_tkn_' + Math.random().toString(36).substring(2, 12),
+          cardType: 'VISA',
+          maskedCardNumber: '************' + Math.floor(Math.random() * 9000 + 1000),
+          cardExpDate: '12' + (new Date().getFullYear() + 2).toString().substring(2),
+        };
 
+        // Save the token directly
+        saveToken(sampleToken);
+
+        // Reload the token display
+        loadSavedTokens();
+
+        console.log('Simulated token saved:', sampleToken);
+        return sampleToken;
+      }
       // Helper function to save or remove item from localStorage
       function saveOrRemoveFromStorage(key, value) {
         if (value) {
@@ -1276,52 +1302,91 @@
       // Check local storage for webhooks with token.created events
       function checkForNewTokens() {
         const storedWebhooks = JSON.parse(localStorage.getItem('webhookLog') || '[]');
+        console.log('Checking for new tokens among', storedWebhooks.length, 'webhooks');
 
         // Find token.created events
-        const tokenEvents = storedWebhooks.filter((webhook) => {
-          // Check for token events in webhook.type or webhook.event.type
-          const type = webhook.type || (webhook.event && webhook.event.type);
-          return type === 'token.created';
-        });
+        for (const webhook of storedWebhooks) {
+          // Try to determine if this is a token event
+          let isTokenEvent = false;
+          let webhookType = '';
 
-        if (tokenEvents.length > 0) {
-          // Process each token event
-          tokenEvents.forEach((event) => {
-            processTokenEvent(event);
-          });
+          // Check webhook.type
+          if (webhook.type === 'token.created') {
+            isTokenEvent = true;
+            webhookType = webhook.type;
+          }
+          // Check webhook.event.type
+          else if (webhook.event && webhook.event.type === 'token.created') {
+            isTokenEvent = true;
+            webhookType = webhook.event.type;
+          }
+          // Check webhook.payload.event.type
+          else if (
+            webhook.payload &&
+            webhook.payload.event &&
+            webhook.payload.event.type === 'token.created'
+          ) {
+            isTokenEvent = true;
+            webhookType = webhook.payload.event.type;
+          }
+          // Check webhook.data.event.type
+          else if (
+            webhook.data &&
+            webhook.data.event &&
+            webhook.data.event.type === 'token.created'
+          ) {
+            isTokenEvent = true;
+            webhookType = webhook.data.event.type;
+          }
+
+          if (isTokenEvent) {
+            console.log('Found token event:', webhookType);
+            processTokenEvent(webhook);
+          }
         }
       }
 
       // Process a token event and extract the token information
       function processTokenEvent(event) {
         try {
-          // Extract token information - field structure might vary
-          let paymentMethod;
+          console.log('Processing token event:', event);
 
-          // Try different possible locations for the payment method information
-          if (event.originalResponse && event.originalResponse.transactionResponses) {
-            const response = event.originalResponse.transactionResponses[0];
-            paymentMethod = response && response.paymentMethod;
-          } else if (
-            event.payload &&
-            event.payload.originalResponse &&
-            event.payload.originalResponse.transactionResponses
-          ) {
-            const response = event.payload.originalResponse.transactionResponses[0];
-            paymentMethod = response && response.paymentMethod;
-          } else if (event.payload && event.payload.event) {
-            // Try to find it in the event data structure
-            const data = event.payload;
-            if (data.originalResponse && data.originalResponse.transactionResponses) {
-              const response = data.originalResponse.transactionResponses[0];
-              paymentMethod = response && response.paymentMethod;
+          // Extract token information - field structure might vary
+          let paymentMethod = null;
+
+          // Build a list of places to look for the payment method
+          const possiblePaths = [
+            // Direct paths
+            event.originalResponse?.transactionResponses?.[0]?.paymentMethod,
+            event.payload?.originalResponse?.transactionResponses?.[0]?.paymentMethod,
+            event.data?.originalResponse?.transactionResponses?.[0]?.paymentMethod,
+
+            // Additional paths
+            event.tokenInfo,
+            event.payload?.tokenInfo,
+            event.data?.tokenInfo,
+          ];
+
+          // Try each path
+          for (const path of possiblePaths) {
+            if (path && path.id) {
+              paymentMethod = path;
+              break;
             }
+          }
+
+          // If still not found, do a deep search
+          if (!paymentMethod) {
+            console.log('Payment method not found in common paths, doing deep search');
+            paymentMethod = findPaymentMethod(event);
           }
 
           if (!paymentMethod || !paymentMethod.id) {
             console.warn('Could not extract payment method from event:', event);
             return;
           }
+
+          console.log('Found payment method:', paymentMethod);
 
           // Create token object
           const token = {
@@ -1337,11 +1402,45 @@
 
           // Update UI
           loadSavedTokens();
+
+          console.log('Token saved:', token);
         } catch (error) {
           console.error('Error processing token event:', error);
         }
       }
+      // Add this deep search function to find the payment method in any nested structure
+      function findPaymentMethod(obj, depth = 0) {
+        // Prevent infinite recursion
+        if (depth > 10) return null;
 
+        // If not an object or null, return
+        if (!obj || typeof obj !== 'object') return null;
+
+        // Check if this object has the required properties to be a payment method
+        if (obj.id && (obj.type === 'token' || obj.maskedCardNumber)) {
+          return obj;
+        }
+
+        // Search in arrays
+        if (Array.isArray(obj)) {
+          for (const item of obj) {
+            const result = findPaymentMethod(item, depth + 1);
+            if (result) return result;
+          }
+          return null;
+        }
+
+        // Search in object properties
+        for (const key of Object.keys(obj)) {
+          // Skip some common properties that are unlikely to contain payment methods
+          if (key === 'type' || key === 'timestamp') continue;
+
+          const result = findPaymentMethod(obj[key], depth + 1);
+          if (result) return result;
+        }
+
+        return null;
+      }
       // Save a token to local storage
       function saveToken(token) {
         // Get existing tokens
@@ -1441,6 +1540,17 @@
 
       checkoutNewBtn.addEventListener('click', () => {
         processVirtualSale();
+      });
+      // Event listeners for token refresh and simulation
+      document.getElementById('refreshTokensBtn').addEventListener('click', (e) => {
+        e.preventDefault();
+        checkForNewTokens();
+        loadSavedTokens();
+      });
+
+      document.getElementById('simulateTokenBtn').addEventListener('click', (e) => {
+        e.preventDefault();
+        simulateTokenWebhook();
       });
 
       // Test webhook processing - simulates receiving a token.created webhook

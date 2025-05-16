@@ -189,17 +189,8 @@ exports.handler = async (event) => {
     // Save token information to localStorage if this is a token.created event
     if (webhookEventType === 'token.created') {
       try {
-        // Extract token information
-        let paymentMethod = null;
-
-        // Try different possible locations for the payment method information
-        if (
-          webhookPayload.originalResponse &&
-          webhookPayload.originalResponse.transactionResponses
-        ) {
-          const response = webhookPayload.originalResponse.transactionResponses[0];
-          paymentMethod = response && response.paymentMethod;
-        }
+        // Extract token information using the new function
+        const paymentMethod = extractTokenInfo(webhookPayload);
 
         if (paymentMethod && paymentMethod.id) {
           console.log('Found token information:', paymentMethod);
@@ -211,6 +202,11 @@ exports.handler = async (event) => {
             cardExpDate: paymentMethod.cardExpDate || '0000',
             cardType: paymentMethod.cardType || 'Card',
           };
+
+          // Log the complete response with token info
+          console.log('Response with token info:', response);
+        } else {
+          console.warn('No payment method information found in the token.created event');
         }
       } catch (tokenError) {
         console.error('Error extracting token information:', tokenError);
@@ -333,7 +329,71 @@ function verifyChecksum(payload, checksum, secret) {
     return false;
   }
 }
+/**
+ * Extract token information from various webhook formats
+ * @param {object} payload - The webhook payload
+ * @returns {object|null} - The token information, or null if not found
+ */
+function extractTokenInfo(payload) {
+  // Try different possible locations for payment method information
 
+  // Standard location in transaction responses
+  if (
+    payload.originalResponse &&
+    payload.originalResponse.transactionResponses &&
+    payload.originalResponse.transactionResponses[0] &&
+    payload.originalResponse.transactionResponses[0].paymentMethod
+  ) {
+    return payload.originalResponse.transactionResponses[0].paymentMethod;
+  }
+
+  // Look in direct response data
+  if (payload.originalResponse && payload.originalResponse.paymentMethod) {
+    return payload.originalResponse.paymentMethod;
+  }
+
+  // Recursively search the entire payload
+  return findPaymentMethodInObject(payload);
+}
+
+/**
+ * Recursively search for payment method information in an object
+ * @param {object} obj - The object to search
+ * @param {number} depth - Current recursion depth
+ * @returns {object|null} - The payment method object, or null if not found
+ */
+function findPaymentMethodInObject(obj, depth = 0) {
+  // Prevent infinite recursion
+  if (depth > 10) return null;
+
+  // If not an object or null, return
+  if (!obj || typeof obj !== 'object') return null;
+
+  // Check if this object has the required properties to be a payment method
+  if (obj.id && (obj.type === 'token' || obj.maskedCardNumber)) {
+    return obj;
+  }
+
+  // Search in arrays
+  if (Array.isArray(obj)) {
+    for (const item of obj) {
+      const result = findPaymentMethodInObject(item, depth + 1);
+      if (result) return result;
+    }
+    return null;
+  }
+
+  // Search in object properties
+  for (const key of Object.keys(obj)) {
+    // Skip some common properties that are unlikely to contain payment methods
+    if (key === 'type' || key === 'timestamp') continue;
+
+    const result = findPaymentMethodInObject(obj[key], depth + 1);
+    if (result) return result;
+  }
+
+  return null;
+}
 /**
  * Create formatted email content from webhook payload
  */
