@@ -1137,6 +1137,16 @@
         const invoiceNumber = localStorage.getItem(INVOICE_NUMBER_STORAGE) || `inv_${Date.now()}`;
         const orderNumber = localStorage.getItem(ORDER_NUMBER_STORAGE) || `ord_${Date.now()}`;
 
+        // Get or calculate amount goods and services - ADDED THIS SECTION
+        let amountGoodsAndServices = parseInt(
+          localStorage.getItem(AMOUNT_GOODS_SERVICES_STORAGE) || '0'
+        );
+
+        // If amount goods and services isn't explicitly set, calculate it from the total amount
+        if (!amountGoodsAndServices) {
+          amountGoodsAndServices = amount - (tax + cashBack + tip);
+        }
+
         // Reset modal state
         paymentIframe.style.display = 'none';
         apiError.style.display = 'none';
@@ -1156,6 +1166,7 @@
               tax: tax,
               cashBack: cashBack,
               tip: tip,
+              amountGoodsAndServices: amountGoodsAndServices, // ADDED THIS LINE
             },
             invoiceNumber: invoiceNumber,
             orderNumber: orderNumber,
