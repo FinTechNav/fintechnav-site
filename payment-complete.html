@@ -12,7 +12,6 @@
       href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&family=Poiret+One&display=swap"
       rel="stylesheet"
     />
-
     <style>
       /* CSS Variables */
       :root {
@@ -90,6 +89,8 @@
         border: 1px solid rgba(201, 161, 95, 0.2);
         border-radius: var(--border-radius);
         margin-bottom: 20px;
+        max-height: 60vh; /* Limit height to viewport percentage */
+        overflow-y: auto; /* Add scrolling for overflow */
       }
 
       .param-list dt {
@@ -97,12 +98,16 @@
         color: var(--color-primary);
         margin-bottom: 5px;
         font-family: var(--font-family-body);
+        word-break: break-all; /* Allow word breaking for long values */
       }
 
       .param-list dd {
         margin: 0 0 20px 0;
         padding-left: 15px;
         border-left: 2px solid rgba(201, 161, 95, 0.3);
+        word-break: break-all; /* Allow word breaking for long values */
+        font-size: 0.95rem; /* Slightly smaller text for values */
+        line-height: 1.5; /* Better line height for readability */
       }
 
       .button-container {
@@ -144,6 +149,10 @@
         .status {
           padding: 15px;
           font-size: 1.1rem;
+        }
+
+        .param-list {
+          max-height: 70vh; /* Larger scroll area on mobile */
         }
       }
     </style>
