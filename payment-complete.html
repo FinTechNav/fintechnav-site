@@ -192,11 +192,16 @@
       if ([...params].length === 0) {
         paramList.innerHTML = '<p>No payment details found in the URL.</p>';
       } else {
-        params.forEach((value, key) => {
+        // Sort parameters alphabetically for better organization
+        const sortedParams = [...params].sort((a, b) => a[0].localeCompare(b[0]));
+
+        sortedParams.forEach(([key, value]) => {
           const dt = document.createElement('dt');
           dt.textContent = key;
+
           const dd = document.createElement('dd');
           dd.textContent = decodeURIComponent(value);
+
           paramList.appendChild(dt);
           paramList.appendChild(dd);
         });
