@@ -683,6 +683,33 @@
     </div>
 
     <script>
+      // Helper function to extract detailed error message from API response
+      function extractErrorMessage(data) {
+        let errorMessage = 'API request failed';
+
+        // Check for errorDetails array with message
+        if (
+          data &&
+          data.errorDetails &&
+          Array.isArray(data.errorDetails) &&
+          data.errorDetails.length > 0
+        ) {
+          // Use the first errorDetails message if available
+          if (data.errorDetails[0].message) {
+            errorMessage = data.errorDetails[0].message;
+          }
+        }
+        // Fall back to top-level error message
+        else if (data && data.error && data.error.message) {
+          errorMessage = data.error.message;
+        }
+        // Fall back to top-level message
+        else if (data && data.message) {
+          errorMessage = data.message;
+        }
+
+        return errorMessage;
+      }
       // Local storage keys
       const API_KEY_STORAGE = 'fiska_api_key';
       const PAYMENT_METHOD_ID_STORAGE = 'fiska_payment_method_id';
@@ -1130,19 +1157,17 @@
             return;
           }
 
-          // Check if response was successful
+          // Handle error response
           if (!response.ok) {
-            let errorMessage = 'API request failed';
+            let errorMessage = extractErrorMessage(data);
 
-            if (data && data.error && data.error.message) {
-              errorMessage = data.error.message;
-            } else if (data && data.message) {
-              errorMessage = data.message;
-            } else {
+            // If no specific message was found, use status-based message
+            if (errorMessage === 'API request failed') {
               errorMessage = `Error ${response.status}: ${response.statusText}`;
             }
 
             console.error('API error:', errorMessage);
+            console.error('Full response data:', data);
             showAlert(apiError, errorMessage, 'error');
             spinner.style.display = 'none';
             return;
@@ -1294,17 +1319,15 @@
 
           // Handle error response
           if (!response.ok) {
-            let errorMessage = 'Payment processing failed';
+            let errorMessage = extractErrorMessage(data);
 
-            if (data && data.error && data.error.message) {
-              errorMessage = data.error.message;
-            } else if (data && data.message) {
-              errorMessage = data.message;
-            } else {
+            // If no specific message was found, use status-based message
+            if (errorMessage === 'API request failed') {
               errorMessage = `Error ${response.status}: ${response.statusText}`;
             }
 
             console.error('API error:', errorMessage);
+            console.error('Full response data:', data);
             showAlert(apiError, errorMessage, 'error');
             spinner.style.display = 'none';
             return;
