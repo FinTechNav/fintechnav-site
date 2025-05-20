@@ -113,6 +113,43 @@
         color: var(--color-text);
       }
 
+      .environment-selection {
+        margin-bottom: 20px;
+        padding: 15px;
+        background-color: #2a2a2a;
+        border-radius: var(--border-radius);
+        border: 1px solid var(--color-border);
+      }
+
+      .environment-selection label {
+        font-weight: 600;
+        color: var(--color-primary);
+        margin-bottom: 10px;
+        display: block;
+      }
+
+      .radio-group {
+        display: flex;
+        gap: 20px;
+        align-items: center;
+      }
+
+      .radio-option {
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+      }
+
+      .radio-option input[type='radio'] {
+        margin-right: 8px;
+      }
+
+      .radio-option label {
+        margin: 0;
+        font-weight: normal;
+        color: var(--color-text);
+        cursor: pointer;
+      }
       .payment-method {
         display: flex;
         align-items: center;
@@ -470,6 +507,21 @@
           />
         </div>
 
+        <!-- Add this section right after the paymentMethodId form-group -->
+        <div class="environment-selection">
+          <label>Environment:</label>
+          <div class="radio-group">
+            <div class="radio-option">
+              <input type="radio" id="envDev" name="environment" value="dev" checked />
+              <label for="envDev">Development</label>
+            </div>
+            <div class="radio-option">
+              <input type="radio" id="envProd" name="environment" value="prod" />
+              <label for="envProd">Production</label>
+            </div>
+          </div>
+        </div>
+
         <!-- Toggle for additional fields -->
         <button type="button" id="toggleAdditionalFields" class="toggle-button">
           Show Additional Configuration Fields
@@ -634,8 +686,9 @@
       // Local storage keys
       const API_KEY_STORAGE = 'fiska_api_key';
       const PAYMENT_METHOD_ID_STORAGE = 'fiska_payment_method_id';
+      const ENVIRONMENT_STORAGE = 'fiska_environment'; // ADD THIS LINE
       const AMOUNT_STORAGE = 'fiska_amount';
-      const AMOUNT_GOODS_SERVICES_STORAGE = 'fiska_amount_goods_services'; // Add this line
+      const AMOUNT_GOODS_SERVICES_STORAGE = 'fiska_amount_goods_services';
       const TAX_STORAGE = 'fiska_tax';
       const CASHBACK_STORAGE = 'fiska_cashback';
       const TIP_STORAGE = 'fiska_tip';
@@ -647,6 +700,8 @@
       // DOM elements
       const apiKeyInput = document.getElementById('apiKey');
       const paymentMethodIdInput = document.getElementById('paymentMethodId');
+      const envDevRadio = document.getElementById('envDev'); // ADD THIS LINE
+      const envProdRadio = document.getElementById('envProd'); // ADD THIS LINE
       const amountInput = document.getElementById('amount');
       const amountGoodsAndServicesInput = document.getElementById('amountGoodsAndServices'); // Add this line
       const taxInput = document.getElementById('tax');
@@ -672,9 +727,15 @@
       const toggleAdditionalFieldsBtn = document.getElementById('toggleAdditionalFields');
       const additionalFieldsSection = document.getElementById('additionalFields');
 
-      // API endpoints
-      const API_BASE_URL = 'https://beta-payment-api-http.dev.ms.fiska.tech/v1';
-      // prod const API_BASE_URL = 'https://payment-api-http.prod.ms.fiska.tech/v1';
+      // API endpoints - REPLACE THE EXISTING API_BASE_URL CONSTANT
+      function getApiBaseUrl() {
+        const environment = localStorage.getItem(ENVIRONMENT_STORAGE) || 'dev';
+        if (environment === 'prod') {
+          return 'https://payment-api-http.prod.ms.fiska.tech/v1';
+        } else {
+          return 'https://beta-payment-api-http.dev.ms.fiska.tech/v1';
+        }
+      }
       // Hard-coded return URL
       const RETURN_URL = 'https://fintechnav.com/payment-complete';
 
@@ -698,6 +759,27 @@
             paymentMethodIdInput.value = savedPaymentMethodId;
           }
         }
+
+        // Load environment selection - ADD THIS SECTION
+        const savedEnvironment = localStorage.getItem(ENVIRONMENT_STORAGE) || 'dev';
+        if (savedEnvironment === 'prod') {
+          envProdRadio.checked = true;
+        } else {
+          envDevRadio.checked = true;
+        }
+
+        // Set up environment change listeners - ADD THIS SECTION
+        envDevRadio.addEventListener('change', function () {
+          if (this.checked) {
+            localStorage.setItem(ENVIRONMENT_STORAGE, 'dev');
+          }
+        });
+
+        envProdRadio.addEventListener('change', function () {
+          if (this.checked) {
+            localStorage.setItem(ENVIRONMENT_STORAGE, 'prod');
+          }
+        });
 
         // Load additional fields
         const savedAmount = localStorage.getItem(AMOUNT_STORAGE);
@@ -750,6 +832,7 @@
       saveApiKeyBtn.addEventListener('click', () => {
         const apiKey = apiKeyInput.value.trim();
         const paymentMethodId = paymentMethodIdInput.value.trim();
+        const environment = envProdRadio.checked ? 'prod' : 'dev'; // ADD THIS LINE
         const amount = amountInput.value.trim();
         const amountGoodsAndServices = amountGoodsAndServicesInput.value.trim();
         const tax = taxInput.value.trim();
@@ -762,6 +845,7 @@
         if (apiKey) {
           // Save required fields
           localStorage.setItem(API_KEY_STORAGE, apiKey);
+          localStorage.setItem(ENVIRONMENT_STORAGE, environment); // ADD THIS LINE
 
           // Save or remove optional fields based on if they have values
           saveOrRemoveFromStorage(PAYMENT_METHOD_ID_STORAGE, paymentMethodId);
@@ -991,7 +1075,7 @@
           console.log('Request payload:', JSON.stringify(requestData, null, 2));
 
           // Now create the token
-          const endpoint = `${API_BASE_URL}/payment-methods/virtual`;
+          const endpoint = `${getApiBaseUrl()}/payment-methods/virtual`;
           console.log('Making request to:', endpoint);
 
           let response;
@@ -1180,7 +1264,7 @@
           console.log('Virtual sale request:', JSON.stringify(requestData, null, 2));
 
           // Make the API request
-          const endpoint = `${API_BASE_URL}/transactions/virtual-sale`;
+          const endpoint = `${getApiBaseUrl()}/transactions/virtual-sale`;
 
           const response = await fetch(endpoint, {
             method: 'POST',
@@ -1301,7 +1385,7 @@
           console.log('Token sale request:', JSON.stringify(requestData, null, 2));
 
           // Make the API request
-          const endpoint = `${API_BASE_URL}/transactions/token-sale`;
+          const endpoint = `${getApiBaseUrl()}/transactions/token-sale`;
           const headers = {
             'Content-Type': 'application/json',
             'x-api-key': apiKey,
