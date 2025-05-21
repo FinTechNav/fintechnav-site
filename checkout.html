@@ -461,7 +461,49 @@
       .toggle-button:hover {
         color: var(--color-primary-hover);
       }
+      .form-row {
+        display: flex;
+        gap: 15px;
+        margin-bottom: 15px;
+      }
 
+      .form-row .form-group {
+        flex: 1;
+        margin-bottom: 0;
+      }
+
+      .half-width .api-key-input {
+        width: calc(50% - 7.5px);
+      }
+
+      .additional-fields-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+      }
+
+      .additional-fields-grid .form-group {
+        margin-bottom: 15px;
+      }
+
+      @media screen and (max-width: 768px) {
+        .form-row {
+          flex-direction: column;
+          gap: 0;
+        }
+
+        .form-row .form-group {
+          margin-bottom: 15px;
+        }
+
+        .half-width .api-key-input {
+          width: 100%;
+        }
+
+        .additional-fields-grid {
+          grid-template-columns: 1fr;
+        }
+      }
       @keyframes spin {
         to {
           transform: rotate(360deg);
@@ -472,27 +514,49 @@
   <body>
     <div class="container" id="mainContainer">
       <div class="api-key-section">
-        <h3>API Configuration</h3>
-        <div class="form-group">
-          <label for="apiKey">API Key:</label>
-          <input
-            type="text"
-            id="apiKey"
-            class="api-key-input"
-            placeholder="Paste your API key here"
-          />
-        </div>
-        <div class="form-group">
-          <label for="paymentMethodId">Payment Method ID (optional):</label>
-          <input
-            type="text"
-            id="paymentMethodId"
-            class="api-key-input"
-            placeholder="Enter payment method ID or leave blank if you only have one payment method ID"
-          />
+        <h3>Configuration</h3>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="apiKey">API Key:</label>
+            <input
+              type="text"
+              id="apiKey"
+              class="api-key-input"
+              placeholder="Paste your API key here"
+            />
+          </div>
+          <div class="form-group">
+            <label for="amount">Amount (in cents):</label>
+            <input
+              type="text"
+              id="amount"
+              class="api-key-input"
+              placeholder="e.g., 7273 for $72.73"
+            />
+          </div>
         </div>
 
-        <!-- Add this section right after the paymentMethodId form-group -->
+        <div class="form-row">
+          <div class="form-group">
+            <label for="paymentMethodId">Payment Method ID (optional):</label>
+            <input
+              type="text"
+              id="paymentMethodId"
+              class="api-key-input"
+              placeholder="Enter payment method ID or leave blank if you only have one payment method ID"
+            />
+          </div>
+          <div class="form-group">
+            <label for="referenceId">Reference ID:</label>
+            <input
+              type="text"
+              id="referenceId"
+              class="api-key-input"
+              placeholder="e.g., REF-12345"
+            />
+          </div>
+        </div>
+
         <div class="environment-selection">
           <label>Environment:</label>
           <div class="radio-group">
@@ -514,74 +578,61 @@
 
         <!-- Additional API configuration fields (expandable) -->
         <div id="additionalFields" class="expanded-section">
-          <div class="form-group">
-            <label for="amount">Amount (in cents):</label>
-            <input
-              type="text"
-              id="amount"
-              class="api-key-input"
-              placeholder="e.g., 7273 for $72.73"
-            />
-          </div>
+          <div class="additional-fields-grid">
+            <div class="form-group">
+              <label for="amountGoodsAndServices">Amount Goods and Services (in cents):</label>
+              <input
+                type="text"
+                id="amountGoodsAndServices"
+                class="api-key-input"
+                placeholder="e.g., 6773 for $67.73"
+              />
+            </div>
 
-          <div class="form-group">
-            <label for="amountGoodsAndServices">Amount Goods and Services (in cents):</label>
-            <input
-              type="text"
-              id="amountGoodsAndServices"
-              class="api-key-input"
-              placeholder="e.g., 6773 for $67.73"
-            />
-          </div>
+            <div class="form-group">
+              <label for="tax">Tax Amount (in cents):</label>
+              <input type="text" id="tax" class="api-key-input" placeholder="e.g., 500 for $5.00" />
+            </div>
 
-          <div class="form-group">
-            <label for="tax">Tax Amount (in cents):</label>
-            <input type="text" id="tax" class="api-key-input" placeholder="e.g., 500 for $5.00" />
-          </div>
+            <div class="form-group">
+              <label for="cashBack">Cash Back Amount (in cents):</label>
+              <input
+                type="text"
+                id="cashBack"
+                class="api-key-input"
+                placeholder="e.g., 0 for $0.00"
+              />
+            </div>
 
-          <div class="form-group">
-            <label for="cashBack">Cash Back Amount (in cents):</label>
-            <input
-              type="text"
-              id="cashBack"
-              class="api-key-input"
-              placeholder="e.g., 0 for $0.00"
-            />
-          </div>
+            <div class="form-group">
+              <label for="tip">Tip Amount (in cents):</label>
+              <input
+                type="text"
+                id="tip"
+                class="api-key-input"
+                placeholder="e.g., 1000 for $10.00"
+              />
+            </div>
 
-          <div class="form-group">
-            <label for="tip">Tip Amount (in cents):</label>
-            <input type="text" id="tip" class="api-key-input" placeholder="e.g., 1000 for $10.00" />
-          </div>
+            <div class="form-group">
+              <label for="invoiceNumber">Invoice Number:</label>
+              <input
+                type="text"
+                id="invoiceNumber"
+                class="api-key-input"
+                placeholder="e.g., INV-12345"
+              />
+            </div>
 
-          <div class="form-group">
-            <label for="invoiceNumber">Invoice Number:</label>
-            <input
-              type="text"
-              id="invoiceNumber"
-              class="api-key-input"
-              placeholder="e.g., INV-12345"
-            />
-          </div>
-
-          <div class="form-group">
-            <label for="orderNumber">Order Number:</label>
-            <input
-              type="text"
-              id="orderNumber"
-              class="api-key-input"
-              placeholder="e.g., ORD-12345"
-            />
-          </div>
-
-          <div class="form-group">
-            <label for="referenceId">Reference ID:</label>
-            <input
-              type="text"
-              id="referenceId"
-              class="api-key-input"
-              placeholder="e.g., REF-12345"
-            />
+            <div class="form-group">
+              <label for="orderNumber">Order Number:</label>
+              <input
+                type="text"
+                id="orderNumber"
+                class="api-key-input"
+                placeholder="e.g., ORD-12345"
+              />
+            </div>
           </div>
         </div>
 
