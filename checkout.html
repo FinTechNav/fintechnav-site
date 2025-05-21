@@ -416,21 +416,6 @@
         z-index: 101;
       }
 
-      /* Token cards section */
-      .token-card {
-        background-color: #3a3a3a;
-        border-radius: var(--border-radius);
-        padding: 15px;
-        margin-bottom: 10px;
-        border-left: 3px solid var(--color-primary);
-        transition: all 0.3s ease;
-      }
-
-      .token-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-      }
-
       .no-tokens-message {
         padding: 15px;
         background-color: rgba(201, 161, 95, 0.1);
@@ -627,24 +612,24 @@
       <div class="section payment-section">
         <h2>Payment Method</h2>
         <div id="savedCardsContainer">
-          <!-- Saved cards will be displayed here -->
-          <div class="no-tokens-message" id="noTokensMessage">
-            No saved payment methods available. You can add a new card or use stored tokens from
-            webhooks.
+          <div class="payment-method">
+            <input
+              type="radio"
+              name="paymentMethod"
+              id="token0"
+              value="pmt_tkn_sample123"
+              checked
+            />
+            <div class="payment-method-info">
+              <div>Visa ****1234</div>
+              <div style="color: var(--color-text-light)">Expires 12/25</div>
+              <div style="color: var(--color-text-light); font-size: 0.85rem">
+                Token ID: pmt_tkn_sample123
+              </div>
+            </div>
           </div>
         </div>
         <a href="#" class="add-new-card" id="addNewCardBtn">+ ADD NEW CARD</a>
-        <div style="margin-top: 10px">
-          <a href="#" class="add-new-card" id="refreshTokensBtn" style="margin-left: 15px"
-            >↻ Refresh Payment Methods</a
-          >
-          <a href="#" class="add-new-card" id="simulateTokenBtn" style="margin-left: 15px"
-            >+ Simulate Token</a
-          >
-          <a href="#" class="add-new-card" id="simulateProductionBtn" style="margin-left: 15px"
-            >🔄 Test Production Format</a
-          >
-        </div>
       </div>
 
       <div class="button-container">
@@ -722,7 +707,6 @@
       const INVOICE_NUMBER_STORAGE = 'fiska_invoice_number';
       const ORDER_NUMBER_STORAGE = 'fiska_order_number';
       const REFERENCE_ID_STORAGE = 'fiska_reference_id';
-      const TOKEN_STORAGE = 'fiska_tokens';
 
       // DOM elements
       const apiKeyInput = document.getElementById('apiKey');
@@ -838,12 +822,6 @@
         if (savedApiKey) {
           showAlert(apiKeyStatus, 'Configuration loaded from local storage.', 'success');
         }
-
-        // Load saved tokens and render them
-        loadSavedTokens();
-
-        // Set up webhook listening
-        setupWebhookListener();
       });
 
       // Function to toggle blur on main container
@@ -890,123 +868,7 @@
           showAlert(apiKeyStatus, 'Please enter a valid API key.', 'error');
         }
       });
-      // Test function to simulate a token webhook
-      function simulateTokenWebhook() {
-        // Create a sample token webhook payload
-        const sampleToken = {
-          id: 'pmt_tkn_' + Math.random().toString(36).substring(2, 12),
-          cardType: 'VISA',
-          maskedCardNumber: '************' + Math.floor(Math.random() * 9000 + 1000),
-          cardExpDate: '12' + (new Date().getFullYear() + 2).toString().substring(2),
-        };
-        // Test function to process a production webhook
-        function testProductionWebhook() {
-          const productionWebhook = {
-            eventData: {
-              type: 'token.created',
-              timestamp: '2025-05-16T17:17:23.9401063Z',
-              id: 'evt_01JVD1KH34N5ZRPGQDVN9BFB12',
-            },
-            originalResponse: {
-              id: 'trx_01JVD1JK6G3Z8G3R2J3VP37ZE8',
-              resultCode: 0,
-              resultText: 'Card successfully tokenized',
-              referenceId: '2346345763465',
-              amount: 200,
-              paymentMethod: {
-                id: 'pmt_vrt_01JVAYEP1MC8DM1CJMD000BRAD',
-                type: 'Virtual',
-                currency: 'USD',
-              },
-              transactionResponse: {
-                authCode: '0000',
-                cardType: 'MasterCard',
-                accountType: 'Credit',
-                responseCode: 1,
-                paymentMethod: {
-                  id: 'pmt_tkn_01JVD1KC3MVB15W6E0S5JTF1J0',
-                  type: 'Token',
-                  currency: 'USD',
-                  cardType: 'Mastercard',
-                  maskedCardNumber: '2****2815',
-                  cardExpDate: '1225',
-                },
-                hostResponseText: 'APPROVED',
-              },
-            },
-          };
 
-          console.log('Testing with production webhook data:', productionWebhook);
-
-          // First, try direct extraction
-          const paymentMethod =
-            productionWebhook.originalResponse?.transactionResponse?.paymentMethod;
-          console.log('Direct extraction result:', paymentMethod);
-
-          // Then run through normal processing
-          processTokenEvent(productionWebhook);
-
-          return paymentMethod;
-        }
-        // Save the token directly
-        saveToken(sampleToken);
-
-        // Reload the token display
-        loadSavedTokens();
-
-        console.log('Simulated token saved:', sampleToken);
-        return sampleToken;
-      }
-
-      // Test function to process a production webhook
-      function testProductionWebhook() {
-        const productionWebhook = {
-          eventData: {
-            type: 'token.created',
-            timestamp: '2025-05-16T17:17:23.9401063Z',
-            id: 'evt_01JVD1KH34N5ZRPGQDVN9BFB12',
-          },
-          originalResponse: {
-            id: 'trx_01JVD1JK6G3Z8G3R2J3VP37ZE8',
-            resultCode: 0,
-            resultText: 'Card successfully tokenized',
-            referenceId: '2346345763465',
-            amount: 200,
-            paymentMethod: {
-              id: 'pmt_vrt_01JVAYEP1MC8DM1CJMD000BRAD',
-              type: 'Virtual',
-              currency: 'USD',
-            },
-            transactionResponse: {
-              authCode: '0000',
-              cardType: 'MasterCard',
-              accountType: 'Credit',
-              responseCode: 1,
-              paymentMethod: {
-                id: 'pmt_tkn_01JVD1KC3MVB15W6E0S5JTF1J0',
-                type: 'Token',
-                currency: 'USD',
-                cardType: 'Mastercard',
-                maskedCardNumber: '2****2815',
-                cardExpDate: '1225',
-              },
-              hostResponseText: 'APPROVED',
-            },
-          },
-        };
-
-        console.log('Testing with production webhook data:', productionWebhook);
-
-        // First, try direct extraction
-        const paymentMethod =
-          productionWebhook.originalResponse?.transactionResponse?.paymentMethod;
-        console.log('Direct extraction result:', paymentMethod);
-
-        // Then run through normal processing
-        processTokenEvent(productionWebhook);
-
-        return paymentMethod;
-      }
       // Helper function to save or remove item from localStorage
       function saveOrRemoveFromStorage(key, value) {
         if (value) {
@@ -1562,246 +1424,6 @@
       // Setup iframe message listener on load
       setupIframeMessageListener();
 
-      // Set up webhook listener to capture token events
-      function setupWebhookListener() {
-        // Check for token.created events in localStorage periodically
-        // In a real implementation, this would use websockets or server-sent events
-        setInterval(checkForNewTokens, 5000);
-
-        // Initial check
-        checkForNewTokens();
-      }
-
-      // Check local storage for webhooks with token.created events
-      function checkForNewTokens() {
-        const storedWebhooks = JSON.parse(localStorage.getItem('webhookLog') || '[]');
-        console.log('Checking for new tokens among', storedWebhooks.length, 'webhooks');
-
-        // Find token.created events
-        for (const webhook of storedWebhooks) {
-          // Try to determine if this is a token event
-          let isTokenEvent = false;
-          let webhookType = '';
-
-          // Check webhook.type
-          if (webhook.type === 'token.created') {
-            isTokenEvent = true;
-            webhookType = webhook.type;
-          }
-          // Check webhook.event.type
-          else if (webhook.event && webhook.event.type === 'token.created') {
-            isTokenEvent = true;
-            webhookType = webhook.event.type;
-          }
-          // Check webhook.payload.event.type
-          else if (
-            webhook.payload &&
-            webhook.payload.event &&
-            webhook.payload.event.type === 'token.created'
-          ) {
-            isTokenEvent = true;
-            webhookType = webhook.payload.event.type;
-          }
-          // Check webhook.data.event.type
-          else if (
-            webhook.data &&
-            webhook.data.event &&
-            webhook.data.event.type === 'token.created'
-          ) {
-            isTokenEvent = true;
-            webhookType = webhook.data.event.type;
-          }
-
-          if (isTokenEvent) {
-            console.log('Found token event:', webhookType);
-            processTokenEvent(webhook);
-          }
-        }
-      }
-
-      // Process a token event and extract the token information
-      function processTokenEvent(event) {
-        try {
-          console.log('Processing token event:', event);
-
-          // Extract token information - field structure might vary
-          let paymentMethod = null;
-
-          // Build a list of places to look for the payment method
-          const possiblePaths = [
-            // Direct paths (array format)
-            event.originalResponse?.transactionResponses?.[0]?.paymentMethod,
-            event.payload?.originalResponse?.transactionResponses?.[0]?.paymentMethod,
-            event.data?.originalResponse?.transactionResponses?.[0]?.paymentMethod,
-
-            // Singular format
-            event.originalResponse?.transactionResponse?.paymentMethod,
-            event.payload?.originalResponse?.transactionResponse?.paymentMethod,
-            event.data?.originalResponse?.transactionResponse?.paymentMethod,
-
-            // Additional paths
-            event.tokenInfo,
-            event.payload?.tokenInfo,
-            event.data?.tokenInfo,
-          ];
-
-          // Log detailed path information for debugging
-          console.log('Checking possible paths for token:', {
-            'event.originalResponse?.transactionResponse?.paymentMethod':
-              event.originalResponse?.transactionResponse?.paymentMethod,
-            'event.data?.originalResponse?.transactionResponse?.paymentMethod':
-              event.data?.originalResponse?.transactionResponse?.paymentMethod,
-          });
-
-          // Try each path
-          for (const path of possiblePaths) {
-            if (path && path.id) {
-              paymentMethod = path;
-              break;
-            }
-          }
-
-          // If still not found, do a deep search
-          if (!paymentMethod) {
-            console.log('Payment method not found in common paths, doing deep search');
-            paymentMethod = findPaymentMethod(event);
-          }
-
-          if (!paymentMethod || !paymentMethod.id) {
-            console.warn('Could not extract payment method from event:', event);
-            return;
-          }
-
-          console.log('Found payment method:', paymentMethod);
-
-          // Create token object
-          const token = {
-            id: paymentMethod.id,
-            cardType: paymentMethod.cardType || 'Card',
-            maskedCardNumber: paymentMethod.maskedCardNumber || '************0000',
-            cardExpDate: paymentMethod.cardExpDate || '0000',
-            timestamp: new Date().toISOString(),
-          };
-
-          // Save token to storage
-          saveToken(token);
-
-          // Update UI
-          loadSavedTokens();
-
-          console.log('Token saved:', token);
-        } catch (error) {
-          console.error('Error processing token event:', error);
-        }
-      }
-
-      // Add this deep search function to find the payment method in any nested structure
-      function findPaymentMethod(obj, depth = 0) {
-        // Prevent infinite recursion
-        if (depth > 10) return null;
-
-        // If not an object or null, return
-        if (!obj || typeof obj !== 'object') return null;
-
-        // Check if this object has the required properties to be a payment method
-        if (obj.id && (obj.type === 'token' || obj.maskedCardNumber)) {
-          return obj;
-        }
-
-        // Search in arrays
-        if (Array.isArray(obj)) {
-          for (const item of obj) {
-            const result = findPaymentMethod(item, depth + 1);
-            if (result) return result;
-          }
-          return null;
-        }
-
-        // Search in object properties
-        for (const key of Object.keys(obj)) {
-          // Skip some common properties that are unlikely to contain payment methods
-          if (key === 'type' || key === 'timestamp') continue;
-
-          const result = findPaymentMethod(obj[key], depth + 1);
-          if (result) return result;
-        }
-
-        return null;
-      }
-      // Save a token to local storage
-      function saveToken(token) {
-        // Get existing tokens
-        const tokens = JSON.parse(localStorage.getItem(TOKEN_STORAGE) || '[]');
-
-        // Check if token already exists
-        const existingTokenIndex = tokens.findIndex((t) => t.id === token.id);
-
-        if (existingTokenIndex !== -1) {
-          // Update existing token
-          tokens[existingTokenIndex] = token;
-        } else {
-          // Add new token
-          tokens.unshift(token);
-
-          // Keep only the last 3 tokens
-          if (tokens.length > 3) {
-            tokens.length = 3;
-          }
-        }
-
-        // Save back to storage
-        localStorage.setItem(TOKEN_STORAGE, JSON.stringify(tokens));
-      }
-
-      // Load saved tokens from local storage
-      function loadSavedTokens() {
-        const tokens = JSON.parse(localStorage.getItem(TOKEN_STORAGE) || '[]');
-
-        // Clear container
-        savedCardsContainer.innerHTML = '';
-
-        if (tokens.length === 0) {
-          // Show no tokens message
-          savedCardsContainer.innerHTML = `
-      <div class="no-tokens-message" id="noTokensMessage">
-        No saved payment methods available. You can add a new card or use stored tokens from webhooks.
-      </div>
-      `;
-          return;
-        }
-
-        // Display each token
-        tokens.forEach((token, index) => {
-          // Format expiration date if needed (MMYY format)
-          let expMonth = '';
-          let expYear = '';
-
-          if (token.cardExpDate && token.cardExpDate.length === 4) {
-            expMonth = token.cardExpDate.substring(0, 2);
-            expYear = token.cardExpDate.substring(2);
-          }
-
-          const cardElement = document.createElement('div');
-          cardElement.className = 'payment-method';
-          cardElement.innerHTML = `
-      <input type="radio" name="paymentMethod" id="token${index}" value="${token.id}" ${index === 0 ? 'checked' : ''}>
-      <div class="payment-method-info">
-        <div>${token.cardType || 'Card'} ${token.maskedCardNumber || '************0000'}</div>
-        <div style="color: var(--color-text-light);">Expires ${expMonth || '00'}/${expYear || '00'}</div>
-        <div style="color: var(--color-text-light); font-size: 0.85rem;">Token ID: ${token.id}</div>
-      </div>
-      `;
-
-          savedCardsContainer.appendChild(cardElement);
-        });
-
-        // Add enhanced logging
-        console.log(
-          'Current tokens in storage:',
-          JSON.parse(localStorage.getItem(TOKEN_STORAGE) || '[]')
-        );
-      }
-
       // Helper function to show alerts
       function showAlert(element, message, type) {
         element.textContent = message;
@@ -1845,47 +1467,6 @@
       checkoutNewBtn.addEventListener('click', () => {
         processVirtualSale();
       });
-      // Event listeners for token refresh and simulation
-      document.getElementById('refreshTokensBtn').addEventListener('click', (e) => {
-        e.preventDefault();
-        checkForNewTokens();
-        loadSavedTokens();
-      });
-
-      document.getElementById('simulateTokenBtn').addEventListener('click', (e) => {
-        e.preventDefault();
-        simulateTokenWebhook();
-      });
-
-      // Add this new event listener
-      document.getElementById('simulateProductionBtn').addEventListener('click', (e) => {
-        e.preventDefault();
-        testProductionWebhook();
-      });
-
-      // Test webhook processing - simulates receiving a token.created webhook
-      // This function is just for testing purposes
-      window.processTestWebhook = function (type = 'token.created') {
-        const webhook = {
-          type: type,
-          event: { type: type },
-          originalResponse: {
-            transactionResponses: [
-              {
-                paymentMethod: {
-                  id: 'pmt_tkn_' + Math.random().toString(36).substring(2, 12),
-                  cardType: 'VISA',
-                  maskedCardNumber: '************' + Math.floor(Math.random() * 9000 + 1000),
-                  cardExpDate: '12' + (new Date().getFullYear() + 2).toString().substring(2),
-                },
-              },
-            ],
-          },
-        };
-
-        processTokenEvent(webhook);
-        return webhook;
-      };
     </script>
   </body>
 </html>
