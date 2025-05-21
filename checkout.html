@@ -622,6 +622,55 @@
           gap: 10px;
         }
       }
+      /* Improved error display */
+      .alert {
+        padding: 15px;
+        border-radius: var(--border-radius);
+        margin-bottom: 15px;
+        display: none;
+        max-height: none; /* Remove height restrictions */
+        overflow: visible; /* Allow content to be fully visible */
+      }
+
+      .alert-error {
+        background-color: rgba(255, 107, 107, 0.2);
+        border: 1px solid rgba(255, 107, 107, 0.4);
+        color: var(--color-error);
+        white-space: pre-wrap; /* Preserve formatting and allow wrapping */
+        word-break: break-word; /* Allow long words to break */
+        font-family: monospace; /* Use monospace for better JSON readability */
+        font-size: 0.9rem;
+        line-height: 1.4;
+        user-select: text; /* Allow text selection for copying */
+        cursor: text; /* Show text cursor */
+        min-height: 100px; /* Ensure minimum height */
+        max-width: 100%;
+        box-sizing: border-box;
+      }
+
+      .alert-success {
+        background-color: rgba(107, 255, 158, 0.2);
+        border: 1px solid rgba(107, 255, 158, 0.4);
+        color: var(--color-success);
+      }
+
+      /* Modal error display */
+      #apiError {
+        max-height: 300px; /* Increased from default */
+        overflow-y: auto; /* Allow scrolling if needed */
+        background-color: rgba(255, 107, 107, 0.15);
+        border: 2px solid rgba(255, 107, 107, 0.5);
+        padding: 20px;
+        margin: 20px 0;
+        border-radius: var(--border-radius);
+        font-family: monospace;
+        font-size: 0.85rem;
+        line-height: 1.5;
+        white-space: pre-wrap;
+        word-break: break-word;
+        user-select: text;
+        cursor: text;
+      }
       @keyframes spin {
         to {
           transform: rotate(360deg);
@@ -1492,21 +1541,22 @@
             console.error('API Error Response Status:', response.status);
             console.error('API Error Raw Response:', responseText);
 
+            let errorMessage = `Error: API returned an error.\n\nStatus: ${response.status}\n\nRaw Response:\n${responseText}`;
+
             try {
               // Try to format the JSON response for display
               const formattedJson = JSON.stringify(data, null, 2);
               console.error('API Error Formatted JSON:', formattedJson);
-
-              // Show the complete error response in an alert
-              alert(
-                `Error: API returned an error.\n\nStatus: ${response.status}\n\nRaw Response:\n${responseText}\n\nFormatted JSON:\n${formattedJson}`
-              );
+              errorMessage += `\n\nFormatted JSON:\n${formattedJson}`;
             } catch (e) {
-              // If JSON formatting fails, show the raw response
-              alert(
-                `Error: API returned an error.\n\nStatus: ${response.status}\n\nRaw Response:\n${responseText}`
-              );
+              // JSON formatting failed, raw response is already included
             }
+
+            // Show in a modal-style alert that can be copied
+            showAlert(apiKeyStatus, errorMessage, 'error');
+
+            // Scroll to the error message
+            apiKeyStatus.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
             checkoutExistingBtn.textContent = originalButtonText;
             checkoutExistingBtn.disabled = false;
@@ -1597,7 +1647,24 @@
 
       // Helper function to show alerts
       function showAlert(element, message, type) {
-        element.textContent = message;
+        // Format the message for better readability
+        let formattedMessage = message;
+
+        // If it looks like JSON, try to format it nicely
+        if (message.includes('{') && message.includes('}')) {
+          try {
+            const jsonStart = message.indexOf('{');
+            const beforeJson = message.substring(0, jsonStart);
+            const jsonPart = message.substring(jsonStart);
+            const parsed = JSON.parse(jsonPart);
+            formattedMessage = beforeJson + '\n\n' + JSON.stringify(parsed, null, 2);
+          } catch (e) {
+            // If JSON parsing fails, just use the original message
+            formattedMessage = message;
+          }
+        }
+
+        element.textContent = formattedMessage;
         element.style.display = 'block';
 
         if (type === 'error') {
@@ -1606,10 +1673,12 @@
           element.className = 'alert alert-success';
         }
 
-        // Auto-hide after 5 seconds
-        setTimeout(() => {
-          element.style.display = 'none';
-        }, 5000);
+        // Don't auto-hide error messages so users can copy them
+        if (type !== 'error') {
+          setTimeout(() => {
+            element.style.display = 'none';
+          }, 5000);
+        }
       }
 
       // Update the checkoutExistingBtn click handler to prompt for token ID
