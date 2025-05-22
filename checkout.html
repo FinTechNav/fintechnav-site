@@ -893,14 +893,19 @@
       }
 
       .results-text {
-        font-family: monospace;
-        font-size: 0.9rem;
-        line-height: 1.4;
+        font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+        font-size: 0.85rem;
+        line-height: 1.6;
         white-space: pre-wrap;
         word-break: break-all;
         user-select: text;
         cursor: text;
         color: var(--color-text);
+        background-color: #1e1e1e;
+        padding: 15px;
+        border-radius: var(--border-radius);
+        border: 1px solid var(--color-border);
+        overflow-x: auto;
       }
 
       @media screen and (max-width: 768px) {
@@ -2345,8 +2350,18 @@
 
           const responseText = await response.text();
 
-          // Display the raw response
-          resultsText.textContent = responseText;
+          // Try to parse and format the JSON response
+          let formattedText;
+          try {
+            const jsonData = JSON.parse(responseText);
+            formattedText = JSON.stringify(jsonData, null, 2);
+          } catch (parseError) {
+            // If JSON parsing fails, show the raw response
+            formattedText = responseText;
+          }
+
+          // Display the formatted response
+          resultsText.textContent = formattedText;
           resultsContainer.classList.add('show');
 
           button.textContent = originalText;
@@ -2360,7 +2375,6 @@
           button.disabled = false;
         }
       }
-
       // Get Transactions function
       async function getTransactions() {
         const apiKey = localStorage.getItem(API_KEY_STORAGE);
@@ -2402,8 +2416,18 @@
 
           const responseText = await response.text();
 
-          // Display the raw response
-          resultsText.textContent = responseText;
+          // Try to parse and format the JSON response
+          let formattedText;
+          try {
+            const jsonData = JSON.parse(responseText);
+            formattedText = JSON.stringify(jsonData, null, 2);
+          } catch (parseError) {
+            // If JSON parsing fails, show the raw response
+            formattedText = responseText;
+          }
+
+          // Display the formatted response
+          resultsText.textContent = formattedText;
           resultsContainer.classList.add('show');
 
           button.textContent = originalText;
