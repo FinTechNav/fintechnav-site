@@ -676,187 +676,383 @@
           transform: rotate(360deg);
         }
       }
+
+      /* Tab styles */
+      .tab-container {
+        margin-bottom: 20px;
+      }
+
+      .tab-nav {
+        display: flex;
+        border-bottom: 2px solid var(--color-border);
+        margin-bottom: 20px;
+      }
+
+      .tab-button {
+        background: none;
+        border: none;
+        padding: 12px 24px;
+        font-family: var(--font-family-body);
+        font-size: 1.1rem;
+        color: var(--color-text-light);
+        cursor: pointer;
+        border-bottom: 2px solid transparent;
+        transition: all 0.3s ease;
+      }
+
+      .tab-button.active {
+        color: var(--color-primary);
+        border-bottom-color: var(--color-primary);
+      }
+
+      .tab-button:hover {
+        color: var(--color-primary);
+      }
+
+      .tab-content {
+        display: none;
+      }
+
+      .tab-content.active {
+        display: block;
+      }
+
+      /* Reports section styles */
+      .reports-section {
+        margin-bottom: 30px;
+        padding: 20px;
+        background-color: var(--color-background-secondary);
+        border-radius: var(--border-radius);
+        border: 1px solid var(--color-border);
+      }
+
+      .reports-section h3 {
+        margin-top: 0;
+        color: var(--color-primary);
+        border-bottom: 1px solid var(--color-border);
+        padding-bottom: 10px;
+      }
+
+      .filter-grid {
+        display: grid;
+        grid-template-columns: 1fr 2fr 1fr;
+        gap: 15px;
+        margin-bottom: 15px;
+        align-items: end;
+      }
+
+      .filter-input {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid var(--color-border);
+        border-radius: var(--border-radius);
+        background-color: #2a2a2a;
+        color: var(--color-text);
+        font-family: var(--font-family-body);
+      }
+
+      .results-container {
+        margin-top: 20px;
+        padding: 15px;
+        background-color: #2a2a2a;
+        border-radius: var(--border-radius);
+        max-height: 400px;
+        overflow-y: auto;
+        display: none;
+      }
+
+      .results-container.show {
+        display: block;
+      }
+
+      .results-text {
+        font-family: monospace;
+        font-size: 0.9rem;
+        line-height: 1.4;
+        white-space: pre-wrap;
+        word-break: break-all;
+        user-select: text;
+        cursor: text;
+        color: var(--color-text);
+      }
+
+      @media screen and (max-width: 768px) {
+        .filter-grid {
+          grid-template-columns: 1fr;
+          gap: 10px;
+        }
+
+        .tab-button {
+          padding: 10px 16px;
+          font-size: 1rem;
+        }
+      }
     </style>
   </head>
   <body>
     <div class="container" id="mainContainer">
-      <div class="api-key-section">
-        <div class="config-header-row">
-          <h3>Configuration</h3>
-          <div class="environment-inline">
-            <label>Environment:</label>
-            <div class="radio-group">
-              <div class="radio-option">
-                <input type="radio" id="envDev" name="environment" value="dev" checked />
-                <label for="envDev">Development</label>
-              </div>
-              <div class="radio-option">
-                <input type="radio" id="envProd" name="environment" value="prod" />
-                <label for="envProd">Production</label>
-              </div>
-            </div>
-          </div>
+      <!-- Tab Navigation -->
+      <div class="tab-container">
+        <div class="tab-nav">
+          <button class="tab-button active" data-tab="payments">Payments</button>
+          <button class="tab-button" data-tab="reports">Reports</button>
         </div>
 
-        <div class="form-row">
-          <div class="form-group">
-            <label for="apiKey">API Key:</label>
-            <input
-              type="text"
-              id="apiKey"
-              class="api-key-input"
-              placeholder="Paste your API key here"
-            />
-          </div>
-          <div class="form-group">
-            <label for="amount">Amount (in cents):</label>
-            <input
-              type="text"
-              id="amount"
-              class="api-key-input"
-              placeholder="e.g., 7273 for $72.73"
-            />
-          </div>
-        </div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label for="paymentMethodId">Payment Method ID (optional):</label>
-            <input
-              type="text"
-              id="paymentMethodId"
-              class="api-key-input"
-              placeholder="Enter payment method ID or leave blank if you only have one payment method ID"
-            />
-          </div>
-          <div class="form-group">
-            <label for="referenceId">Reference ID:</label>
-            <input
-              type="text"
-              id="referenceId"
-              class="api-key-input"
-              placeholder="e.g., REF-12345"
-            />
-          </div>
-        </div>
-
-        <!-- Toggle for additional fields -->
-        <button type="button" id="toggleAdditionalFields" class="toggle-button">
-          Show Additional Configuration Fields
-        </button>
-
-        <!-- Additional API configuration fields (expandable) -->
-        <div id="additionalFields" class="expanded-section">
-          <div class="additional-fields-grid">
-            <div class="form-group">
-              <label for="amountGoodsAndServices">Amount Goods and Services (in cents):</label>
-              <input
-                type="text"
-                id="amountGoodsAndServices"
-                class="api-key-input"
-                placeholder="e.g., 6773 for $67.73"
-              />
-            </div>
-
-            <div class="form-group">
-              <label for="tax">Tax Amount (in cents):</label>
-              <input type="text" id="tax" class="api-key-input" placeholder="e.g., 500 for $5.00" />
-            </div>
-
-            <div class="form-group">
-              <label for="cashBack">Cash Back Amount (in cents):</label>
-              <input
-                type="text"
-                id="cashBack"
-                class="api-key-input"
-                placeholder="e.g., 0 for $0.00"
-              />
-            </div>
-
-            <div class="form-group">
-              <label for="tip">Tip Amount (in cents):</label>
-              <input
-                type="text"
-                id="tip"
-                class="api-key-input"
-                placeholder="e.g., 1000 for $10.00"
-              />
-            </div>
-
-            <div class="form-group">
-              <label for="invoiceNumber">Invoice Number:</label>
-              <input
-                type="text"
-                id="invoiceNumber"
-                class="api-key-input"
-                placeholder="e.g., INV-12345"
-              />
-            </div>
-
-            <div class="form-group">
-              <label for="orderNumber">Order Number:</label>
-              <input
-                type="text"
-                id="orderNumber"
-                class="api-key-input"
-                placeholder="e.g., ORD-12345"
-              />
-            </div>
-          </div>
-        </div>
-
-        <button id="saveApiKey" class="btn">Save Configuration</button>
-        <div id="apiKeyStatus" class="alert"></div>
-      </div>
-
-      <div class="section order-summary">
-        <h2>Order Summary</h2>
-        <div class="order-item">
-          <span>2022 Alderpoint Vineyard Pinot Noir (750ml)</span>
-          <span>$45.00</span>
-        </div>
-        <div class="order-item">
-          <span>Shipping (UPS Ground)</span>
-          <span>$27.73</span>
-        </div>
-        <div class="order-item">
-          <span>Tax</span>
-          <span>$0.00</span>
-        </div>
-        <div class="order-total">
-          <span>Total</span>
-          <span>$72.73</span>
-        </div>
-      </div>
-
-      <div class="section payment-section">
-        <h2>Payment Method</h2>
-        <div id="savedCardsContainer">
-          <div class="payment-method">
-            <input
-              type="radio"
-              name="paymentMethod"
-              id="token0"
-              value="pmt_tkn_sample123"
-              checked
-            />
-            <div class="payment-method-info">
-              <div>Visa ****1234</div>
-              <div style="color: var(--color-text-light)">Expires 12/25</div>
-              <div style="color: var(--color-text-light); font-size: 0.85rem">
-                Token ID: pmt_tkn_sample123
+        <!-- Payments Tab -->
+        <div class="tab-content active" id="payments-tab">
+          <div class="api-key-section">
+            <div class="config-header-row">
+              <h3>Configuration</h3>
+              <div class="environment-inline">
+                <label>Environment:</label>
+                <div class="radio-group">
+                  <div class="radio-option">
+                    <input type="radio" id="envDev" name="environment" value="dev" checked />
+                    <label for="envDev">Development</label>
+                  </div>
+                  <div class="radio-option">
+                    <input type="radio" id="envProd" name="environment" value="prod" />
+                    <label for="envProd">Production</label>
+                  </div>
+                </div>
               </div>
             </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="apiKey">API Key:</label>
+                <input
+                  type="text"
+                  id="apiKey"
+                  class="api-key-input"
+                  placeholder="Paste your API key here"
+                />
+              </div>
+              <div class="form-group">
+                <label for="amount">Amount (in cents):</label>
+                <input
+                  type="text"
+                  id="amount"
+                  class="api-key-input"
+                  placeholder="e.g., 7273 for $72.73"
+                />
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="paymentMethodId">Payment Method ID (optional):</label>
+                <input
+                  type="text"
+                  id="paymentMethodId"
+                  class="api-key-input"
+                  placeholder="Enter payment method ID or leave blank if you only have one payment method ID"
+                />
+              </div>
+              <div class="form-group">
+                <label for="referenceId">Reference ID:</label>
+                <input
+                  type="text"
+                  id="referenceId"
+                  class="api-key-input"
+                  placeholder="e.g., REF-12345"
+                />
+              </div>
+            </div>
+
+            <!-- Toggle for additional fields -->
+            <button type="button" id="toggleAdditionalFields" class="toggle-button">
+              Show Additional Configuration Fields
+            </button>
+
+            <!-- Additional API configuration fields (expandable) -->
+            <div id="additionalFields" class="expanded-section">
+              <div class="additional-fields-grid">
+                <div class="form-group">
+                  <label for="amountGoodsAndServices">Amount Goods and Services (in cents):</label>
+                  <input
+                    type="text"
+                    id="amountGoodsAndServices"
+                    class="api-key-input"
+                    placeholder="e.g., 6773 for $67.73"
+                  />
+                </div>
+
+                <div class="form-group">
+                  <label for="tax">Tax Amount (in cents):</label>
+                  <input
+                    type="text"
+                    id="tax"
+                    class="api-key-input"
+                    placeholder="e.g., 500 for $5.00"
+                  />
+                </div>
+
+                <div class="form-group">
+                  <label for="cashBack">Cash Back Amount (in cents):</label>
+                  <input
+                    type="text"
+                    id="cashBack"
+                    class="api-key-input"
+                    placeholder="e.g., 0 for $0.00"
+                  />
+                </div>
+
+                <div class="form-group">
+                  <label for="tip">Tip Amount (in cents):</label>
+                  <input
+                    type="text"
+                    id="tip"
+                    class="api-key-input"
+                    placeholder="e.g., 1000 for $10.00"
+                  />
+                </div>
+
+                <div class="form-group">
+                  <label for="invoiceNumber">Invoice Number:</label>
+                  <input
+                    type="text"
+                    id="invoiceNumber"
+                    class="api-key-input"
+                    placeholder="e.g., INV-12345"
+                  />
+                </div>
+
+                <div class="form-group">
+                  <label for="orderNumber">Order Number:</label>
+                  <input
+                    type="text"
+                    id="orderNumber"
+                    class="api-key-input"
+                    placeholder="e.g., ORD-12345"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <button id="saveApiKey" class="btn">Save Configuration</button>
+            <div id="apiKeyStatus" class="alert"></div>
+          </div>
+
+          <div class="section order-summary">
+            <h2>Order Summary</h2>
+            <div class="order-item">
+              <span>2022 Alderpoint Vineyard Pinot Noir (750ml)</span>
+              <span>$45.00</span>
+            </div>
+            <div class="order-item">
+              <span>Shipping (UPS Ground)</span>
+              <span>$27.73</span>
+            </div>
+            <div class="order-item">
+              <span>Tax</span>
+              <span>$0.00</span>
+            </div>
+            <div class="order-total">
+              <span>Total</span>
+              <span>$72.73</span>
+            </div>
+          </div>
+
+          <div class="section payment-section">
+            <h2>Payment Method</h2>
+            <div id="savedCardsContainer">
+              <div class="payment-method">
+                <input
+                  type="radio"
+                  name="paymentMethod"
+                  id="token0"
+                  value="pmt_tkn_sample123"
+                  checked
+                />
+                <div class="payment-method-info">
+                  <div>Visa ****1234</div>
+                  <div style="color: var(--color-text-light)">Expires 12/25</div>
+                  <div style="color: var(--color-text-light); font-size: 0.85rem">
+                    Token ID: pmt_tkn_sample123
+                  </div>
+                </div>
+              </div>
+            </div>
+            <a href="#" class="add-new-card" id="addNewCardBtn">+ ADD NEW CARD</a>
+          </div>
+
+          <div class="button-container">
+            <button class="btn" id="checkoutExistingBtn">Complete Checkout with Token ID</button>
+            <button class="btn" id="checkoutNewBtn">Complete Checkout with a New Card</button>
           </div>
         </div>
-        <a href="#" class="add-new-card" id="addNewCardBtn">+ ADD NEW CARD</a>
-      </div>
 
-      <div class="button-container">
-        <button class="btn" id="checkoutExistingBtn">
-          Complete Checkout with Selected Payment Method
-        </button>
-        <button class="btn" id="checkoutNewBtn">Complete Checkout with a New Card</button>
+        <!-- Reports Tab -->
+        <div class="tab-content" id="reports-tab">
+          <!-- Payment Methods Report -->
+          <div class="reports-section">
+            <h3>Get Payment Methods</h3>
+            <div class="filter-grid">
+              <div class="form-group">
+                <label for="pmSortColumn">Sort Column:</label>
+                <select id="pmSortColumn" class="filter-input">
+                  <option value="">None</option>
+                  <option value="id">ID</option>
+                  <option value="paymentMethodType">Payment Method Type</option>
+                  <option value="currency">Currency</option>
+                  <option value="description">Description</option>
+                  <option value="ownerId">Owner ID</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="pmFilters">Filter Criteria:</label>
+                <input
+                  type="text"
+                  id="pmFilters"
+                  class="filter-input"
+                  placeholder="e.g., paymentMethodType==virtual or id==pmt_123"
+                />
+              </div>
+              <div class="form-group">
+                <button id="getPaymentMethods" class="btn">Get Payment Methods</button>
+              </div>
+            </div>
+            <div id="pmResults" class="results-container">
+              <div class="results-text" id="pmResultsText"></div>
+            </div>
+          </div>
+
+          <!-- Transactions Report -->
+          <div class="reports-section">
+            <h3>Get Transactions</h3>
+            <div class="filter-grid">
+              <div class="form-group">
+                <label for="txnSortColumn">Sort Column:</label>
+                <select id="txnSortColumn" class="filter-input">
+                  <option value="">None</option>
+                  <option value="id">ID</option>
+                  <option value="timestamp">Timestamp</option>
+                  <option value="referenceId">Reference ID</option>
+                  <option value="orderNumber">Order Number</option>
+                  <option value="invoiceNumber">Invoice Number</option>
+                  <option value="type">Type</option>
+                  <option value="amount">Amount</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="txnFilters">Filter Criteria:</label>
+                <input
+                  type="text"
+                  id="txnFilters"
+                  class="filter-input"
+                  placeholder="e.g., amount>430,amount<450,timestamp>2025-05-22T01:00:00"
+                />
+              </div>
+              <div class="form-group">
+                <button id="getTransactions" class="btn">Get Transactions</button>
+              </div>
+            </div>
+            <div id="txnResults" class="results-container">
+              <div class="results-text" id="txnResultsText"></div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -1705,6 +1901,143 @@
       checkoutNewBtn.addEventListener('click', () => {
         processVirtualSale();
       });
+      // Tab functionality
+      document.addEventListener('DOMContentLoaded', () => {
+        const tabButtons = document.querySelectorAll('.tab-button');
+        const tabContents = document.querySelectorAll('.tab-content');
+
+        tabButtons.forEach((button) => {
+          button.addEventListener('click', () => {
+            const tabId = button.getAttribute('data-tab');
+
+            // Remove active class from all buttons and contents
+            tabButtons.forEach((btn) => btn.classList.remove('active'));
+            tabContents.forEach((content) => content.classList.remove('active'));
+
+            // Add active class to clicked button and corresponding content
+            button.classList.add('active');
+            document.getElementById(`${tabId}-tab`).classList.add('active');
+          });
+        });
+
+        // Reports functionality
+        document.getElementById('getPaymentMethods').addEventListener('click', getPaymentMethods);
+        document.getElementById('getTransactions').addEventListener('click', getTransactions);
+      });
+
+      // Get Payment Methods function
+      async function getPaymentMethods() {
+        const apiKey = localStorage.getItem(API_KEY_STORAGE);
+        const sortColumn = document.getElementById('pmSortColumn').value;
+        const filters = document.getElementById('pmFilters').value.trim();
+        const resultsContainer = document.getElementById('pmResults');
+        const resultsText = document.getElementById('pmResultsText');
+
+        if (!apiKey) {
+          alert('API key is missing. Please configure it in the Payments tab first.');
+          return;
+        }
+
+        // Build query parameters
+        const params = new URLSearchParams();
+        if (sortColumn) {
+          params.append('sorts', sortColumn);
+        }
+        if (filters) {
+          params.append('filters', filters);
+        }
+
+        const queryString = params.toString();
+        const url = `${getApiBaseUrl()}/payment-methods${queryString ? '?' + queryString : ''}`;
+
+        try {
+          const button = document.getElementById('getPaymentMethods');
+          const originalText = button.textContent;
+          button.textContent = 'Loading...';
+          button.disabled = true;
+
+          const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-api-key': apiKey,
+            },
+          });
+
+          const responseText = await response.text();
+
+          // Display the raw response
+          resultsText.textContent = responseText;
+          resultsContainer.classList.add('show');
+
+          button.textContent = originalText;
+          button.disabled = false;
+        } catch (error) {
+          resultsText.textContent = `Error: ${error.message}`;
+          resultsContainer.classList.add('show');
+
+          const button = document.getElementById('getPaymentMethods');
+          button.textContent = 'Get Payment Methods';
+          button.disabled = false;
+        }
+      }
+
+      // Get Transactions function
+      async function getTransactions() {
+        const apiKey = localStorage.getItem(API_KEY_STORAGE);
+        const sortColumn = document.getElementById('txnSortColumn').value;
+        const filters = document.getElementById('txnFilters').value.trim();
+        const resultsContainer = document.getElementById('txnResults');
+        const resultsText = document.getElementById('txnResultsText');
+
+        if (!apiKey) {
+          alert('API key is missing. Please configure it in the Payments tab first.');
+          return;
+        }
+
+        // Build query parameters
+        const params = new URLSearchParams();
+        if (sortColumn) {
+          params.append('sorts', sortColumn);
+        }
+        if (filters) {
+          params.append('filters', filters);
+        }
+
+        const queryString = params.toString();
+        const url = `${getApiBaseUrl()}/transactions${queryString ? '?' + queryString : ''}`;
+
+        try {
+          const button = document.getElementById('getTransactions');
+          const originalText = button.textContent;
+          button.textContent = 'Loading...';
+          button.disabled = true;
+
+          const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-api-key': apiKey,
+            },
+          });
+
+          const responseText = await response.text();
+
+          // Display the raw response
+          resultsText.textContent = responseText;
+          resultsContainer.classList.add('show');
+
+          button.textContent = originalText;
+          button.disabled = false;
+        } catch (error) {
+          resultsText.textContent = `Error: ${error.message}`;
+          resultsContainer.classList.add('show');
+
+          const button = document.getElementById('getTransactions');
+          button.textContent = 'Get Transactions';
+          button.disabled = false;
+        }
+      }
     </script>
   </body>
 </html>
