@@ -1328,15 +1328,10 @@
         const invoiceNumber = localStorage.getItem(INVOICE_NUMBER_STORAGE) || `inv_${Date.now()}`;
         const orderNumber = localStorage.getItem(ORDER_NUMBER_STORAGE) || `ord_${Date.now()}`;
 
-        // Get or calculate amount goods and services - ADDED THIS SECTION
+        // Get breakdown values (don't auto-calculate)
         let amountGoodsAndServices = parseInt(
           localStorage.getItem(AMOUNT_GOODS_SERVICES_STORAGE) || '0'
         );
-
-        // If amount goods and services isn't explicitly set, calculate it from the total amount
-        if (!amountGoodsAndServices) {
-          amountGoodsAndServices = amount - (tax + cashBack + tip);
-        }
 
         // Reset modal state
         paymentIframe.style.display = 'none';
@@ -1353,15 +1348,19 @@
             referenceId: referenceId,
             returnUrl: RETURN_URL,
             amount: amount,
-            amountBreakdown: {
-              tax: tax,
-              cashBack: cashBack,
-              tip: tip,
-              amountGoodsAndServices: amountGoodsAndServices, // ADDED THIS LINE
-            },
             invoiceNumber: invoiceNumber,
             orderNumber: orderNumber,
           };
+
+          // Only add amountBreakdown if at least one field has a value
+          if (amountGoodsAndServices > 0 || tax > 0 || cashBack > 0 || tip > 0) {
+            requestData.amountBreakdown = {
+              tax: tax,
+              cashBack: cashBack,
+              tip: tip,
+              amountGoodsAndServices: amountGoodsAndServices,
+            };
+          }
 
           // Add payment method ID if available
           if (paymentMethodId) {
@@ -1456,15 +1455,10 @@
         const invoiceNumber = localStorage.getItem(INVOICE_NUMBER_STORAGE) || `inv_${Date.now()}`;
         const orderNumber = localStorage.getItem(ORDER_NUMBER_STORAGE) || `ord_${Date.now()}`;
 
-        // Get or calculate amount goods and services
+        // Get breakdown values (don't auto-calculate)
         let amountGoodsAndServices = parseInt(
           localStorage.getItem(AMOUNT_GOODS_SERVICES_STORAGE) || '0'
         );
-
-        // If amount goods and services isn't explicitly set, calculate it from the total amount
-        if (!amountGoodsAndServices) {
-          amountGoodsAndServices = amount - (tax + cashBack + tip);
-        }
 
         try {
           // Show loading state
@@ -1477,15 +1471,19 @@
             referenceId: referenceId,
             paymentMethodId: tokenId, // Using paymentMethodId instead of tokenId
             amount: amount,
-            amountBreakdown: {
-              tax: tax,
-              cashBack: cashBack,
-              tip: tip,
-              amountGoodsAndServices: amountGoodsAndServices, // Using the explicit or calculated value
-            },
             invoiceNumber: invoiceNumber,
             orderNumber: orderNumber,
           };
+
+          // Only add amountBreakdown if at least one field has a value
+          if (amountGoodsAndServices > 0 || tax > 0 || cashBack > 0 || tip > 0) {
+            requestData.amountBreakdown = {
+              tax: tax,
+              cashBack: cashBack,
+              tip: tip,
+              amountGoodsAndServices: amountGoodsAndServices,
+            };
+          }
 
           console.log('Token sale request:', JSON.stringify(requestData, null, 2));
 
