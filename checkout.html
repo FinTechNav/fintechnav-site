@@ -2258,7 +2258,6 @@
 
         return filters.join(',');
       }
-
       // Build filter string for transactions
       function buildTransactionFilters() {
         const filters = [];
@@ -2372,120 +2371,6 @@
 
         if (!apiKey) {
           alert('API key is missing. Please configure it at the top of the page first.');
-          return;
-        }
-
-        // Build query parameters
-        const params = new URLSearchParams();
-        if (sortColumn) {
-          params.append('sorts', sortColumn);
-        }
-        if (filters) {
-          params.append('filters', filters);
-        }
-
-        const queryString = params.toString();
-        const url = `${getApiBaseUrl()}/transactions${queryString ? '?' + queryString : ''}`;
-
-        try {
-          const button = document.getElementById('getTransactions');
-          const originalText = button.textContent;
-          button.textContent = 'Loading...';
-          button.disabled = true;
-
-          const response = await fetch(url, {
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/json',
-              'x-api-key': apiKey,
-            },
-          });
-
-          const responseText = await response.text();
-
-          // Display the raw response
-          resultsText.textContent = responseText;
-          resultsContainer.classList.add('show');
-
-          button.textContent = originalText;
-          button.disabled = false;
-        } catch (error) {
-          resultsText.textContent = `Error: ${error.message}`;
-          resultsContainer.classList.add('show');
-
-          const button = document.getElementById('getTransactions');
-          button.textContent = 'Get Transactions';
-          button.disabled = false;
-        }
-      }
-
-      // Get Payment Methods function
-      async function getPaymentMethods() {
-        const apiKey = localStorage.getItem(API_KEY_STORAGE);
-        const sortColumn = document.getElementById('pmSortColumn').value;
-        const filters = document.getElementById('pmFilters').value.trim();
-        const resultsContainer = document.getElementById('pmResults');
-        const resultsText = document.getElementById('pmResultsText');
-
-        if (!apiKey) {
-          alert('API key is missing. Please configure it in the Payments tab first.');
-          return;
-        }
-
-        // Build query parameters
-        const params = new URLSearchParams();
-        if (sortColumn) {
-          params.append('sorts', sortColumn);
-        }
-        if (filters) {
-          params.append('filters', filters);
-        }
-
-        const queryString = params.toString();
-        const url = `${getApiBaseUrl()}/payment-methods${queryString ? '?' + queryString : ''}`;
-
-        try {
-          const button = document.getElementById('getPaymentMethods');
-          const originalText = button.textContent;
-          button.textContent = 'Loading...';
-          button.disabled = true;
-
-          const response = await fetch(url, {
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/json',
-              'x-api-key': apiKey,
-            },
-          });
-
-          const responseText = await response.text();
-
-          // Display the raw response
-          resultsText.textContent = responseText;
-          resultsContainer.classList.add('show');
-
-          button.textContent = originalText;
-          button.disabled = false;
-        } catch (error) {
-          resultsText.textContent = `Error: ${error.message}`;
-          resultsContainer.classList.add('show');
-
-          const button = document.getElementById('getPaymentMethods');
-          button.textContent = 'Get Payment Methods';
-          button.disabled = false;
-        }
-      }
-
-      // Get Transactions function
-      async function getTransactions() {
-        const apiKey = localStorage.getItem(API_KEY_STORAGE);
-        const sortColumn = document.getElementById('txnSortColumn').value;
-        const filters = document.getElementById('txnFilters').value.trim();
-        const resultsContainer = document.getElementById('txnResults');
-        const resultsText = document.getElementById('txnResultsText');
-
-        if (!apiKey) {
-          alert('API key is missing. Please configure it in the Payments tab first.');
           return;
         }
 
