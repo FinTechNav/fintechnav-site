@@ -1382,21 +1382,21 @@
       const ORDER_NUMBER_STORAGE = 'fiska_order_number';
       const REFERENCE_ID_STORAGE = 'fiska_reference_id';
 
-      // DOM elements
-      const apiKeyInput = document.getElementById('apiKey');
+      // DOM elements - Updated to match actual HTML structure
+      const globalApiKeyInput = document.getElementById('globalApiKey');
       const paymentMethodIdInput = document.getElementById('paymentMethodId');
-      const envDevRadio = document.getElementById('envDev'); // ADD THIS LINE
-      const envProdRadio = document.getElementById('envProd'); // ADD THIS LINE
+      const globalEnvDevRadio = document.getElementById('globalEnvDev');
+      const globalEnvProdRadio = document.getElementById('globalEnvProd');
       const amountInput = document.getElementById('amount');
-      const amountGoodsAndServicesInput = document.getElementById('amountGoodsAndServices'); // Add this line
+      const amountGoodsAndServicesInput = document.getElementById('amountGoodsAndServices');
       const taxInput = document.getElementById('tax');
       const cashBackInput = document.getElementById('cashBack');
       const tipInput = document.getElementById('tip');
       const invoiceNumberInput = document.getElementById('invoiceNumber');
       const orderNumberInput = document.getElementById('orderNumber');
       const referenceIdInput = document.getElementById('referenceId');
-      const apiKeyStatus = document.getElementById('apiKeyStatus');
-      const saveApiKeyBtn = document.getElementById('saveApiKey');
+      const globalConfigStatus = document.getElementById('globalConfigStatus');
+      const saveGlobalConfigBtn = document.getElementById('saveGlobalConfig');
       const addNewCardBtn = document.getElementById('addNewCardBtn');
       const cardModal = document.getElementById('cardModal');
       const closeModalBtn = document.getElementById('closeModal');
@@ -1436,65 +1436,69 @@
       document.addEventListener('DOMContentLoaded', () => {
         // Load API key and payment method ID
         const savedApiKey = localStorage.getItem(API_KEY_STORAGE);
-        if (savedApiKey) {
-          apiKeyInput.value = savedApiKey;
+        if (savedApiKey && globalApiKeyInput) {
+          globalApiKeyInput.value = savedApiKey;
 
           const savedPaymentMethodId = localStorage.getItem(PAYMENT_METHOD_ID_STORAGE);
-          if (savedPaymentMethodId) {
+          if (savedPaymentMethodId && paymentMethodIdInput) {
             paymentMethodIdInput.value = savedPaymentMethodId;
           }
         }
 
-        // Load environment selection - ADD THIS SECTION
+        // Load environment selection
         const savedEnvironment = localStorage.getItem(ENVIRONMENT_STORAGE) || 'dev';
-        if (savedEnvironment === 'prod') {
-          envProdRadio.checked = true;
-        } else {
-          envDevRadio.checked = true;
+        if (savedEnvironment === 'prod' && globalEnvProdRadio) {
+          globalEnvProdRadio.checked = true;
+        } else if (globalEnvDevRadio) {
+          globalEnvDevRadio.checked = true;
         }
 
-        // Set up environment change listeners - ADD THIS SECTION
-        envDevRadio.addEventListener('change', function () {
-          if (this.checked) {
-            localStorage.setItem(ENVIRONMENT_STORAGE, 'dev');
-          }
-        });
+        // Set up environment change listeners
+        if (globalEnvDevRadio) {
+          globalEnvDevRadio.addEventListener('change', function () {
+            if (this.checked) {
+              localStorage.setItem(ENVIRONMENT_STORAGE, 'dev');
+            }
+          });
+        }
 
-        envProdRadio.addEventListener('change', function () {
-          if (this.checked) {
-            localStorage.setItem(ENVIRONMENT_STORAGE, 'prod');
-          }
-        });
+        if (globalEnvProdRadio) {
+          globalEnvProdRadio.addEventListener('change', function () {
+            if (this.checked) {
+              localStorage.setItem(ENVIRONMENT_STORAGE, 'prod');
+            }
+          });
+        }
 
-        // Load additional fields
+        // Load additional fields (keep existing code for these)
         const savedAmount = localStorage.getItem(AMOUNT_STORAGE);
-        if (savedAmount) amountInput.value = savedAmount;
+        if (savedAmount && amountInput) amountInput.value = savedAmount;
 
-        // Load amount goods and services
         const savedAmountGoodsServices = localStorage.getItem(AMOUNT_GOODS_SERVICES_STORAGE);
-        if (savedAmountGoodsServices) amountGoodsAndServicesInput.value = savedAmountGoodsServices;
+        if (savedAmountGoodsServices && amountGoodsAndServicesInput)
+          amountGoodsAndServicesInput.value = savedAmountGoodsServices;
 
         const savedTax = localStorage.getItem(TAX_STORAGE);
-        if (savedTax) taxInput.value = savedTax;
+        if (savedTax && taxInput) taxInput.value = savedTax;
 
         const savedCashBack = localStorage.getItem(CASHBACK_STORAGE);
-        if (savedCashBack) cashBackInput.value = savedCashBack;
+        if (savedCashBack && cashBackInput) cashBackInput.value = savedCashBack;
 
         const savedTip = localStorage.getItem(TIP_STORAGE);
-        if (savedTip) tipInput.value = savedTip;
+        if (savedTip && tipInput) tipInput.value = savedTip;
 
         const savedInvoiceNumber = localStorage.getItem(INVOICE_NUMBER_STORAGE);
-        if (savedInvoiceNumber) invoiceNumberInput.value = savedInvoiceNumber;
+        if (savedInvoiceNumber && invoiceNumberInput) invoiceNumberInput.value = savedInvoiceNumber;
 
         const savedOrderNumber = localStorage.getItem(ORDER_NUMBER_STORAGE);
-        if (savedOrderNumber) orderNumberInput.value = savedOrderNumber;
+        if (savedOrderNumber && orderNumberInput) orderNumberInput.value = savedOrderNumber;
 
         const savedReferenceId = localStorage.getItem(REFERENCE_ID_STORAGE);
-        if (savedReferenceId) referenceIdInput.value = savedReferenceId;
+        if (savedReferenceId && referenceIdInput) referenceIdInput.value = savedReferenceId;
 
         // Show success message if configuration is loaded
-        if (savedApiKey) {
-          showAlert(apiKeyStatus, 'Configuration loaded from local storage.', 'success');
+        if (savedApiKey && globalConfigStatus) {
+          showAlert(globalConfigStatus, 'Configuration loaded from local storage.', 'success');
         }
       });
 
@@ -1506,42 +1510,6 @@
           mainContainer.classList.remove('blurred');
         }
       }
-
-      // Save configuration
-      saveApiKeyBtn.addEventListener('click', () => {
-        const apiKey = apiKeyInput.value.trim();
-        const paymentMethodId = paymentMethodIdInput.value.trim();
-        const environment = envProdRadio.checked ? 'prod' : 'dev'; // ADD THIS LINE
-        const amount = amountInput.value.trim();
-        const amountGoodsAndServices = amountGoodsAndServicesInput.value.trim();
-        const tax = taxInput.value.trim();
-        const cashBack = cashBackInput.value.trim();
-        const tip = tipInput.value.trim();
-        const invoiceNumber = invoiceNumberInput.value.trim();
-        const orderNumber = orderNumberInput.value.trim();
-        const referenceId = referenceIdInput.value.trim();
-
-        if (apiKey) {
-          // Save required fields
-          localStorage.setItem(API_KEY_STORAGE, apiKey);
-          localStorage.setItem(ENVIRONMENT_STORAGE, environment); // ADD THIS LINE
-
-          // Save or remove optional fields based on if they have values
-          saveOrRemoveFromStorage(PAYMENT_METHOD_ID_STORAGE, paymentMethodId);
-          saveOrRemoveFromStorage(AMOUNT_STORAGE, amount);
-          saveOrRemoveFromStorage(AMOUNT_GOODS_SERVICES_STORAGE, amountGoodsAndServices);
-          saveOrRemoveFromStorage(TAX_STORAGE, tax);
-          saveOrRemoveFromStorage(CASHBACK_STORAGE, cashBack);
-          saveOrRemoveFromStorage(TIP_STORAGE, tip);
-          saveOrRemoveFromStorage(INVOICE_NUMBER_STORAGE, invoiceNumber);
-          saveOrRemoveFromStorage(ORDER_NUMBER_STORAGE, orderNumber);
-          saveOrRemoveFromStorage(REFERENCE_ID_STORAGE, referenceId);
-
-          showAlert(apiKeyStatus, 'Configuration saved successfully!', 'success');
-        } else {
-          showAlert(apiKeyStatus, 'Please enter a valid API key.', 'error');
-        }
-      });
 
       // Helper function to save or remove item from localStorage
       function saveOrRemoveFromStorage(key, value) {
