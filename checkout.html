@@ -1270,7 +1270,11 @@
 
               <div class="filter-group">
                 <label for="txnType">Type:</label>
-                <input type="text" id="txnType" class="filter-input" placeholder="e.g., Sale" />
+                <select id="txnType" class="filter-input">
+                  <option value="">N/A</option>
+                  <option value="Auth">Auth</option>
+                  <option value="Sale">Sale</option>
+                </select>
               </div>
 
               <div class="filter-group">
@@ -2291,8 +2295,8 @@
         const invoiceNumber = document.getElementById('txnInvoiceNumber').value.trim();
         if (invoiceNumber) filters.push(`invoiceNumber==${invoiceNumber}`);
 
-        const type = document.getElementById('txnType').value.trim();
-        if (type) filters.push(`type==${type}`);
+        const type = document.getElementById('txnType').value;
+        if (type && type !== '') filters.push(`type==${type}`);
 
         // Amount handling
         const amountType = document.querySelector('input[name="amountType"]:checked').value;
