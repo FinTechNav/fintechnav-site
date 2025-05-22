@@ -907,7 +907,41 @@
         border: 1px solid var(--color-border);
         overflow-x: auto;
       }
+      .search-type-selector {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
 
+      .search-type-radios {
+        display: flex;
+        gap: 15px;
+        margin-bottom: 5px;
+      }
+
+      .search-type-radios label {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        cursor: pointer;
+        font-size: 0.85rem;
+        color: var(--color-text-light);
+      }
+
+      .datetime-exact-options {
+        display: flex;
+        gap: 15px;
+        margin-bottom: 8px;
+      }
+
+      .datetime-exact-options label {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        cursor: pointer;
+        font-size: 0.85rem;
+        color: var(--color-text-light);
+      }
       @media screen and (max-width: 768px) {
         .filter-grid {
           grid-template-columns: 1fr;
@@ -1214,7 +1248,15 @@
 
               <div class="filter-group">
                 <label for="txnId">ID:</label>
-                <input type="text" id="txnId" class="filter-input" placeholder="e.g., trx_123" />
+                <div class="search-type-selector">
+                  <div class="search-type-radios">
+                    <label
+                      ><input type="radio" name="txnIdType" value="equals" checked /> Equals</label
+                    >
+                    <label><input type="radio" name="txnIdType" value="contains" /> Contains</label>
+                  </div>
+                  <input type="text" id="txnId" class="filter-input" placeholder="e.g., trx_123" />
+                </div>
               </div>
 
               <div class="filter-group">
@@ -1228,7 +1270,23 @@
                     <label><input type="radio" name="timestampType" value="range" /> Range</label>
                   </div>
                   <div class="datetime-inputs">
+                    <div class="datetime-exact-options">
+                      <label
+                        ><input type="radio" name="timestampExactType" value="datetime" checked />
+                        Date & Time</label
+                      >
+                      <label
+                        ><input type="radio" name="timestampExactType" value="date" /> Date
+                        Only</label
+                      >
+                    </div>
                     <input type="datetime-local" id="txnTimestampExact" class="filter-input" />
+                    <input
+                      type="date"
+                      id="txnTimestampDateOnly"
+                      class="filter-input"
+                      style="display: none"
+                    />
                     <div class="datetime-range" style="display: none">
                       <input type="datetime-local" id="txnTimestampFrom" class="filter-input" />
                       <span class="range-separator">to</span>
@@ -1240,32 +1298,68 @@
 
               <div class="filter-group">
                 <label for="txnReferenceId">Reference ID:</label>
-                <input
-                  type="text"
-                  id="txnReferenceId"
-                  class="filter-input"
-                  placeholder="e.g., ref_123"
-                />
+                <div class="search-type-selector">
+                  <div class="search-type-radios">
+                    <label
+                      ><input type="radio" name="txnReferenceIdType" value="equals" checked />
+                      Equals</label
+                    >
+                    <label
+                      ><input type="radio" name="txnReferenceIdType" value="contains" />
+                      Contains</label
+                    >
+                  </div>
+                  <input
+                    type="text"
+                    id="txnReferenceId"
+                    class="filter-input"
+                    placeholder="e.g., ref_123"
+                  />
+                </div>
               </div>
 
               <div class="filter-group">
                 <label for="txnOrderNumber">Order Number:</label>
-                <input
-                  type="text"
-                  id="txnOrderNumber"
-                  class="filter-input"
-                  placeholder="e.g., order_123"
-                />
+                <div class="search-type-selector">
+                  <div class="search-type-radios">
+                    <label
+                      ><input type="radio" name="txnOrderNumberType" value="equals" checked />
+                      Equals</label
+                    >
+                    <label
+                      ><input type="radio" name="txnOrderNumberType" value="contains" />
+                      Contains</label
+                    >
+                  </div>
+                  <input
+                    type="text"
+                    id="txnOrderNumber"
+                    class="filter-input"
+                    placeholder="e.g., order_123"
+                  />
+                </div>
               </div>
 
               <div class="filter-group">
                 <label for="txnInvoiceNumber">Invoice Number:</label>
-                <input
-                  type="text"
-                  id="txnInvoiceNumber"
-                  class="filter-input"
-                  placeholder="e.g., inv_123"
-                />
+                <div class="search-type-selector">
+                  <div class="search-type-radios">
+                    <label
+                      ><input type="radio" name="txnInvoiceNumberType" value="equals" checked />
+                      Equals</label
+                    >
+                    <label
+                      ><input type="radio" name="txnInvoiceNumberType" value="contains" />
+                      Contains</label
+                    >
+                  </div>
+                  <input
+                    type="text"
+                    id="txnInvoiceNumber"
+                    class="filter-input"
+                    placeholder="e.g., inv_123"
+                  />
+                </div>
               </div>
 
               <div class="filter-group">
@@ -2142,6 +2236,14 @@
         const tabButtons = document.querySelectorAll('.tab-button');
         const tabContents = document.querySelectorAll('.tab-content');
 
+        const timestampExactRadios = document.querySelectorAll('input[name="timestampExactType"]');
+        timestampExactRadios.forEach((radio) => {
+          radio.addEventListener('change', toggleTimestampExactInputs);
+        });
+
+        // Set max date/time to current date/time
+        setMaxDateTime();
+
         // Tab switching
         tabButtons.forEach((button) => {
           button.addEventListener('click', () => {
@@ -2251,7 +2353,11 @@
         const filters = [];
 
         const id = document.getElementById('pmId').value.trim();
-        if (id) filters.push(`id==${id}`);
+        if (id) {
+          const idType = document.querySelector('input[name="pmIdType"]:checked').value;
+          const operator = idType === 'equals' ? '==' : '@=';
+          filters.push(`id${operator}${id}`);
+        }
 
         const type = document.getElementById('pmType').value;
         if (type) filters.push(`paymentMethodType==${type}`);
@@ -2267,33 +2373,74 @@
 
         return filters.join(',');
       }
+
       // Build filter string for transactions
       function buildTransactionFilters() {
         const filters = [];
 
         const id = document.getElementById('txnId').value.trim();
-        if (id) filters.push(`id==${id}`);
+        if (id) {
+          const idType = document.querySelector('input[name="txnIdType"]:checked').value;
+          const operator = idType === 'equals' ? '==' : '@=';
+          filters.push(`id${operator}${id}`);
+        }
 
         // Timestamp handling
         const timestampType = document.querySelector('input[name="timestampType"]:checked').value;
         if (timestampType === 'exact') {
-          const timestamp = document.getElementById('txnTimestampExact').value;
-          if (timestamp) filters.push(`timestamp==${timestamp}`);
+          const exactType = document.querySelector(
+            'input[name="timestampExactType"]:checked'
+          ).value;
+
+          if (exactType === 'datetime') {
+            const timestamp = document.getElementById('txnTimestampExact').value;
+            if (timestamp) filters.push(`timestamp==${timestamp}`);
+          } else {
+            const dateOnly = document.getElementById('txnTimestampDateOnly').value;
+            if (dateOnly) {
+              // Convert date to range: start of day to start of next day
+              const startOfDay = `${dateOnly}T00:00:00`;
+              const nextDay = new Date(dateOnly + 'T00:00:00');
+              nextDay.setDate(nextDay.getDate() + 1);
+              const endOfDay = nextDay.toISOString().split('T')[0] + 'T00:00:00';
+
+              filters.push(`timestamp>=${startOfDay}`);
+              filters.push(`timestamp<${endOfDay}`);
+            }
+          }
         } else {
           const timestampFrom = document.getElementById('txnTimestampFrom').value;
           const timestampTo = document.getElementById('txnTimestampTo').value;
-          if (timestampFrom) filters.push(`timestamp>${timestampFrom}`);
-          if (timestampTo) filters.push(`timestamp<${timestampTo}`);
+          if (timestampFrom) filters.push(`timestamp>=${timestampFrom}`);
+          if (timestampTo) filters.push(`timestamp<=${timestampTo}`);
         }
 
         const referenceId = document.getElementById('txnReferenceId').value.trim();
-        if (referenceId) filters.push(`referenceId==${referenceId}`);
+        if (referenceId) {
+          const refIdType = document.querySelector(
+            'input[name="txnReferenceIdType"]:checked'
+          ).value;
+          const operator = refIdType === 'equals' ? '==' : '@=';
+          filters.push(`referenceId${operator}${referenceId}`);
+        }
 
         const orderNumber = document.getElementById('txnOrderNumber').value.trim();
-        if (orderNumber) filters.push(`orderNumber==${orderNumber}`);
+        if (orderNumber) {
+          const orderType = document.querySelector(
+            'input[name="txnOrderNumberType"]:checked'
+          ).value;
+          const operator = orderType === 'equals' ? '==' : '@=';
+          filters.push(`orderNumber${operator}${orderNumber}`);
+        }
 
         const invoiceNumber = document.getElementById('txnInvoiceNumber').value.trim();
-        if (invoiceNumber) filters.push(`invoiceNumber==${invoiceNumber}`);
+        if (invoiceNumber) {
+          const invoiceType = document.querySelector(
+            'input[name="txnInvoiceNumberType"]:checked'
+          ).value;
+          const operator = invoiceType === 'equals' ? '==' : '@=';
+          filters.push(`invoiceNumber${operator}${invoiceNumber}`);
+        }
 
         const type = document.getElementById('txnType').value;
         if (type && type !== '') filters.push(`type==${type}`);
@@ -2306,13 +2453,12 @@
         } else {
           const amountFrom = document.getElementById('txnAmountFrom').value;
           const amountTo = document.getElementById('txnAmountTo').value;
-          if (amountFrom) filters.push(`amount>${amountFrom}`);
-          if (amountTo) filters.push(`amount<${amountTo}`);
+          if (amountFrom) filters.push(`amount>=${amountFrom}`);
+          if (amountTo) filters.push(`amount<=${amountTo}`);
         }
 
         return filters.join(',');
       }
-
       // Get Payment Methods function
       async function getPaymentMethods() {
         const apiKey = localStorage.getItem(API_KEY_STORAGE);
@@ -2443,6 +2589,40 @@
           const button = document.getElementById('getTransactions');
           button.textContent = 'Get Transactions';
           button.disabled = false;
+        }
+      }
+      // Toggle between datetime and date-only inputs
+      function toggleTimestampExactInputs() {
+        const datetimeInput = document.getElementById('txnTimestampExact');
+        const dateOnlyInput = document.getElementById('txnTimestampDateOnly');
+        const isDateTime =
+          document.querySelector('input[name="timestampExactType"]:checked').value === 'datetime';
+
+        if (isDateTime) {
+          datetimeInput.style.display = 'block';
+          dateOnlyInput.style.display = 'none';
+        } else {
+          datetimeInput.style.display = 'none';
+          dateOnlyInput.style.display = 'block';
+        }
+      }
+
+      // Set maximum date/time to current date/time
+      function setMaxDateTime() {
+        const now = new Date();
+        const maxDateTime = now.toISOString().slice(0, 16); // Format: YYYY-MM-DDTHH:MM
+        const maxDate = now.toISOString().slice(0, 10); // Format: YYYY-MM-DD
+
+        // Set max for all datetime-local inputs
+        const datetimeInputs = document.querySelectorAll('input[type="datetime-local"]');
+        datetimeInputs.forEach((input) => {
+          input.max = maxDateTime;
+        });
+
+        // Set max for date input
+        const dateInput = document.getElementById('txnTimestampDateOnly');
+        if (dateInput) {
+          dateInput.max = maxDate;
         }
       }
     </script>
