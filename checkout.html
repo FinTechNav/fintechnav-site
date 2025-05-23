@@ -1214,14 +1214,13 @@
             <h3>Get Payment Methods</h3>
             <div class="filter-grid">
               <div class="filter-group">
-                <label for="pmSortColumn">Sort Column:</label>
-                <select id="pmSortColumn" class="filter-input">
-                  <option value="">None</option>
-                  <option value="id">ID</option>
-                  <option value="paymentMethodType">Payment Method Type</option>
-                  <option value="currency">Currency</option>
-                  <option value="description">Description</option>
-                  <option value="ownerId">Owner ID</option>
+                <label for="txnType">Type:</label>
+                <select id="txnType" class="filter-input">
+                  <option value="">N/A</option>
+                  <option value="Auth">Auth</option>
+                  <option value="Sale">Sale</option>
+                  <option value="Capture">Capture</option>
+                  <option value="Refund">Refund</option>
                 </select>
               </div>
 
@@ -2877,9 +2876,10 @@
         const startOfDayUTC = startOfDay.toISOString();
         const endOfDayUTC = endOfDay.toISOString();
 
-        // Build the filters
+        // Build the filters with explicit descending sort
         const filters = `timestamp>=${startOfDayUTC},timestamp<${endOfDayUTC},type==Auth,amount>=1`;
-        const url = `${getApiBaseUrl()}/transactions?filters=${encodeURIComponent(filters)}`;
+        const sorts = '-timestamp'; // Negative sign for descending order
+        const url = `${getApiBaseUrl()}/transactions?filters=${encodeURIComponent(filters)}&sorts=${sorts}`;
 
         try {
           // Show loading state
@@ -3325,9 +3325,10 @@
         const startOfDayUTC = startOfDay.toISOString();
         const endOfDayUTC = endOfDay.toISOString();
 
-        // Build the filters for both Sale and Capture types
+        // Build the filters for both Sale and Capture types with sorting
         const filters = `timestamp>=${startOfDayUTC},timestamp<${endOfDayUTC},type==Sale,type==Capture,amount>=1`;
-        const url = `${getApiBaseUrl()}/transactions?filters=${encodeURIComponent(filters)}`;
+        const sorts = '-timestamp'; // Descending order (most recent first)
+        const url = `${getApiBaseUrl()}/transactions?filters=${encodeURIComponent(filters)}&sorts=${sorts}`;
 
         try {
           // Show loading state
