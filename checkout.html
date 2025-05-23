@@ -2803,6 +2803,7 @@
         captureBtn.disabled = true;
         captureBtn.style.opacity = '0.5';
         captureBtn.style.cursor = 'not-allowed';
+
         if (!apiKey) {
           showAlert(
             errorDiv,
@@ -3010,10 +3011,38 @@
           return;
         }
 
+        // Ask user to choose between referenceId or transactionId
+        const useReferenceId = confirm(
+          `Choose which field to use for originalReferenceId:\n\n` +
+            `Click OK to use Auth's referenceId: ${selectedTransaction.referenceId || 'N/A'}\n` +
+            `Click Cancel to use Auth's transactionId: ${selectedTransaction.id || 'N/A'}`
+        );
+
         // Build request data
         const requestData = {
-          referenceId: selectedTransaction.referenceId || selectedTransaction.id,
+          referenceId: localStorage.getItem(REFERENCE_ID_STORAGE) || `ref_${Date.now()}`, // Use form's referenceId
         };
+
+        // Add originalReferenceId based on user choice
+        if (useReferenceId) {
+          if (selectedTransaction.referenceId) {
+            requestData.originalReferenceId = selectedTransaction.referenceId;
+          } else {
+            alert(
+              'Selected transaction does not have a referenceId. Please try again and choose transactionId.'
+            );
+            return;
+          }
+        } else {
+          if (selectedTransaction.id) {
+            requestData.originalReferenceId = selectedTransaction.id;
+          } else {
+            alert(
+              'Selected transaction does not have a transactionId. Please try again and choose referenceId.'
+            );
+            return;
+          }
+        }
 
         // Add amount if provided
         if (captureAmountStr.trim() !== '') {
@@ -3025,12 +3054,15 @@
           requestData.amount = captureAmount;
         }
 
-        // Add optional fields if they exist in the selected transaction
-        if (selectedTransaction.invoiceNumber) {
-          requestData.invoiceNumber = selectedTransaction.invoiceNumber;
+        // Add optional fields from the form (not from selected transaction)
+        const invoiceNumber = localStorage.getItem(INVOICE_NUMBER_STORAGE);
+        const orderNumber = localStorage.getItem(ORDER_NUMBER_STORAGE);
+
+        if (invoiceNumber) {
+          requestData.invoiceNumber = invoiceNumber;
         }
-        if (selectedTransaction.orderNumber) {
-          requestData.orderNumber = selectedTransaction.orderNumber;
+        if (orderNumber) {
+          requestData.orderNumber = orderNumber;
         }
 
         try {
@@ -3067,10 +3099,14 @@
             throw new Error(errorMessage);
           }
 
-          // Success
-          alert(
-            `Capture successful!\nTransaction ID: ${data.id || 'Unknown'}\nResult: ${data.resultText || 'Success'}`
-          );
+          // Success - show detailed response
+          const successMessage =
+            `Capture successful!\n` +
+            `Transaction ID: ${data.id || 'Unknown'}\n` +
+            `Result: ${data.resultText || 'Success'}\n` +
+            `Used originalReferenceId: ${requestData.originalReferenceId}`;
+
+          alert(successMessage);
 
           // Refresh the auth transactions list
           getAuthTransactions();
