@@ -2359,14 +2359,17 @@
           } else {
             const dateOnly = document.getElementById('txnTimestampDateOnly').value;
             if (dateOnly) {
-              // Convert date to range: start of day to start of next day
-              const startOfDay = `${dateOnly}T00:00:00`;
-              const nextDay = new Date(dateOnly + 'T00:00:00');
+              // Convert local date to UTC range for proper timezone handling
+              const localDate = new Date(dateOnly + 'T00:00:00');
+              const nextDay = new Date(localDate);
               nextDay.setDate(nextDay.getDate() + 1);
-              const endOfDay = nextDay.toISOString().split('T')[0] + 'T00:00:00';
 
-              filters.push(`timestamp>=${startOfDay}`);
-              filters.push(`timestamp<${endOfDay}`);
+              // Convert to UTC ISO strings
+              const startOfDayUTC = localDate.toISOString();
+              const endOfDayUTC = nextDay.toISOString();
+
+              filters.push(`timestamp>=${startOfDayUTC}`);
+              filters.push(`timestamp<${endOfDayUTC}`);
             }
           }
         } else {
