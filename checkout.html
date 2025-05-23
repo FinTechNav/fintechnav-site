@@ -3049,6 +3049,7 @@
           createCardNotPresentToken();
         });
       }
+
       // Process capture transaction
       async function processCapture() {
         if (!selectedTransaction) {
@@ -3075,7 +3076,7 @@
 
         // Ask user to choose between referenceId or transactionId
         const useReferenceId = confirm(
-          `Choose which field to use for originalReferenceId:\n\n` +
+          `Choose which field to use:\n\n` +
             `Click OK to use Auth's referenceId: ${selectedTransaction.referenceId || 'N/A'}\n` +
             `Click Cancel to use Auth's transactionId: ${selectedTransaction.id || 'N/A'}`
         );
@@ -3085,7 +3086,7 @@
           referenceId: localStorage.getItem(REFERENCE_ID_STORAGE) || `ref_${Date.now()}`, // Use form's referenceId
         };
 
-        // Add originalReferenceId based on user choice
+        // Add originalReferenceId OR originalTransactionId based on user choice
         if (useReferenceId) {
           if (selectedTransaction.referenceId) {
             requestData.originalReferenceId = selectedTransaction.referenceId;
@@ -3097,7 +3098,7 @@
           }
         } else {
           if (selectedTransaction.id) {
-            requestData.originalReferenceId = selectedTransaction.id;
+            requestData.originalTransactionId = selectedTransaction.id;
           } else {
             alert(
               'Selected transaction does not have a transactionId. Please try again and choose referenceId.'
@@ -3162,11 +3163,16 @@
           }
 
           // Success - show detailed response
+          const usedField = useReferenceId ? 'originalReferenceId' : 'originalTransactionId';
+          const usedValue = useReferenceId
+            ? requestData.originalReferenceId
+            : requestData.originalTransactionId;
+
           const successMessage =
             `Capture successful!\n` +
             `Transaction ID: ${data.id || 'Unknown'}\n` +
             `Result: ${data.resultText || 'Success'}\n` +
-            `Used originalReferenceId: ${requestData.originalReferenceId}`;
+            `Used ${usedField}: ${usedValue}`;
 
           alert(successMessage);
 
@@ -3178,18 +3184,18 @@
         } finally {
           // Reset button state
           captureBtn.textContent = 'Capture';
-          // Keep button enabled if we still have a selected transaction
-          if (selectedTransaction) {
-            captureBtn.disabled = false;
-            captureBtn.style.opacity = '1';
-            captureBtn.style.cursor = 'pointer';
-          } else {
-            captureBtn.disabled = true;
-            captureBtn.style.opacity = '0.5';
-            captureBtn.style.cursor = 'not-allowed';
-          }
+          captureBtn.disabled = true;
+          captureBtn.style.opacity = '0.5';
+          captureBtn.style.cursor = 'not-allowed';
+
+          // Clear selection
+          selectedTransaction = null;
+          document.querySelectorAll('#authTransactionsTable tbody tr').forEach((row) => {
+            row.classList.remove('selected');
+          });
         }
       }
+
       // Process token auth transaction
       async function processTokenAuth(tokenId) {
         const apiKey = localStorage.getItem(API_KEY_STORAGE);
@@ -3481,7 +3487,7 @@
 
         // Ask user to choose between referenceId or transactionId
         const useReferenceId = confirm(
-          `Choose which field to use for originalReferenceId:\n\n` +
+          `Choose which field to use:\n\n` +
             `Click OK to use transaction's referenceId: ${selectedSaleCaptureTransaction.referenceId || 'N/A'}\n` +
             `Click Cancel to use transaction's transactionId: ${selectedSaleCaptureTransaction.id || 'N/A'}`
         );
@@ -3491,7 +3497,7 @@
           referenceId: localStorage.getItem(REFERENCE_ID_STORAGE) || `ref_${Date.now()}`,
         };
 
-        // Add originalReferenceId based on user choice
+        // Add originalReferenceId OR originalTransactionId based on user choice
         if (useReferenceId) {
           if (selectedSaleCaptureTransaction.referenceId) {
             requestData.originalReferenceId = selectedSaleCaptureTransaction.referenceId;
@@ -3503,7 +3509,7 @@
           }
         } else {
           if (selectedSaleCaptureTransaction.id) {
-            requestData.originalReferenceId = selectedSaleCaptureTransaction.id;
+            requestData.originalTransactionId = selectedSaleCaptureTransaction.id;
           } else {
             alert(
               'Selected transaction does not have a transactionId. Please try again and choose referenceId.'
@@ -3568,11 +3574,16 @@
           }
 
           // Success
+          const usedField = useReferenceId ? 'originalReferenceId' : 'originalTransactionId';
+          const usedValue = useReferenceId
+            ? requestData.originalReferenceId
+            : requestData.originalTransactionId;
+
           const successMessage =
             `Refund successful!\n` +
             `Transaction ID: ${data.id || 'Unknown'}\n` +
             `Result: ${data.resultText || 'Success'}\n` +
-            `Used originalReferenceId: ${requestData.originalReferenceId}`;
+            `Used ${usedField}: ${usedValue}`;
 
           alert(successMessage);
 
