@@ -2281,12 +2281,7 @@
       // Update the button text to reflect the new functionality
       checkoutExistingBtn.textContent = 'Token Sale';
 
-      checkoutNewBtn.addEventListener('click', () => {
-        processVirtualSale();
-      });
-
       // Auth button event listener
-      const authBtn = document.getElementById('authBtn');
       authBtn.addEventListener('click', () => {
         processVirtualAuth();
       });
