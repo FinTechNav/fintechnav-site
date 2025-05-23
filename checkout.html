@@ -1148,11 +1148,12 @@
           </div>
 
           <div class="button-container">
-            <button class="btn" id="addNewCardBtn">Add New Card</button>
             <button class="btn" id="checkoutExistingBtn">Token Sale</button>
             <button class="btn" id="checkoutNewBtn">Sale</button>
+            <button class="btn" id="tokenAuthBtn">Token Auth</button>
             <button class="btn" id="authBtn">Auth</button>
-            <button class="btn" id="getAuthTransactionsBtn">Get Auth Transactions</button>
+            <button class="btn" id="getAuthTransactionsBtn">Get Auth Trx</button>
+            <button class="btn" id="getSaleCaptureTransactionsBtn">Get Sale/Capture Trx</button>
           </div>
 
           <div id="authTransactionsContainer" class="transaction-table-container">
@@ -1175,6 +1176,30 @@
                   <!-- Headers will be populated dynamically -->
                 </thead>
                 <tbody id="authTransactionsBody">
+                  <!-- Rows will be populated dynamically -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div id="saleCaptureTransactionsContainer" class="transaction-table-container">
+            <div style="display: flex; justify-content: space-between; align-items: center">
+              <h3>Sale/Capture Transactions</h3>
+              <button id="refundBtn" class="btn" disabled style="opacity: 0.5; cursor: not-allowed">
+                Refund
+              </button>
+            </div>
+            <div id="saleCaptureTransactionsLoading" class="spinner" style="display: none"></div>
+            <div
+              id="saleCaptureTransactionsError"
+              class="alert alert-error"
+              style="display: none"
+            ></div>
+            <div class="transaction-table-scroll">
+              <table class="transaction-table" id="saleCaptureTransactionsTable">
+                <thead id="saleCaptureTransactionsHeader">
+                  <!-- Headers will be populated dynamically -->
+                </thead>
+                <tbody id="saleCaptureTransactionsBody">
                   <!-- Rows will be populated dynamically -->
                 </tbody>
               </table>
@@ -1537,6 +1562,12 @@
       const getAuthTransactionsBtn = document.getElementById('getAuthTransactionsBtn');
       const captureBtn = document.getElementById('captureBtn');
       let selectedTransaction = null;
+      const tokenAuthBtn = document.getElementById('tokenAuthBtn');
+      const getSaleCaptureTransactionsBtn = document.getElementById(
+        'getSaleCaptureTransactionsBtn'
+      );
+      const refundBtn = document.getElementById('refundBtn');
+      let selectedSaleCaptureTransaction = null;
 
       // API endpoints - REPLACE THE EXISTING API_BASE_URL CONSTANT
       function getApiBaseUrl() {
@@ -2369,6 +2400,29 @@
         processVirtualAuth();
       });
 
+      // Token Auth button event listener
+      if (tokenAuthBtn) {
+        tokenAuthBtn.addEventListener('click', () => {
+          const tokenId = prompt('Enter Payment Method ID (Token ID):', '');
+          if (tokenId === null) return;
+          if (!tokenId.trim()) {
+            alert('Please enter a valid Payment Method ID');
+            return;
+          }
+          processTokenAuth(tokenId.trim());
+        });
+      }
+
+      // Get Sale/Capture Transactions button event listener
+      if (getSaleCaptureTransactionsBtn) {
+        getSaleCaptureTransactionsBtn.addEventListener('click', getSaleCaptureTransactions);
+      }
+
+      // Refund button event listener
+      if (refundBtn) {
+        refundBtn.addEventListener('click', processRefund);
+      }
+
       // Tab functionality and global config brad
       document.addEventListener('DOMContentLoaded', () => {
         const tabButtons = document.querySelectorAll('.tab-button');
@@ -3126,6 +3180,410 @@
             captureBtn.style.opacity = '0.5';
             captureBtn.style.cursor = 'not-allowed';
           }
+        }
+      }
+      // Process token auth transaction
+      async function processTokenAuth(tokenId) {
+        const apiKey = localStorage.getItem(API_KEY_STORAGE);
+
+        if (!apiKey) {
+          alert('API key is missing. Please enter and save your API key.');
+          return;
+        }
+
+        if (!tokenId) {
+          alert('Please select a payment method first.');
+          return;
+        }
+
+        // Get configuration values
+        const referenceId = localStorage.getItem(REFERENCE_ID_STORAGE) || `ref_${Date.now()}`;
+        const amount = parseInt(localStorage.getItem(AMOUNT_STORAGE) || '7273');
+        const tax = parseInt(localStorage.getItem(TAX_STORAGE) || '0');
+        const cashBack = parseInt(localStorage.getItem(CASHBACK_STORAGE) || '0');
+        const tip = parseInt(localStorage.getItem(TIP_STORAGE) || '0');
+        const invoiceNumber = localStorage.getItem(INVOICE_NUMBER_STORAGE) || `inv_${Date.now()}`;
+        const orderNumber = localStorage.getItem(ORDER_NUMBER_STORAGE) || `ord_${Date.now()}`;
+
+        // Get breakdown values
+        let amountGoodsAndServices = parseInt(
+          localStorage.getItem(AMOUNT_GOODS_SERVICES_STORAGE) || '0'
+        );
+
+        try {
+          // Show loading state
+          const originalButtonText = tokenAuthBtn.textContent;
+          tokenAuthBtn.textContent = 'Processing...';
+          tokenAuthBtn.disabled = true;
+
+          // Prepare request data
+          const requestData = {
+            referenceId: referenceId,
+            paymentMethodId: tokenId,
+            amount: amount,
+            invoiceNumber: invoiceNumber,
+            orderNumber: orderNumber,
+          };
+
+          // Only add amountBreakdown if at least one field has a value
+          if (amountGoodsAndServices > 0 || tax > 0 || cashBack > 0 || tip > 0) {
+            requestData.amountBreakdown = {
+              tax: tax,
+              cashBack: cashBack,
+              tip: tip,
+              amountGoodsAndServices: amountGoodsAndServices,
+            };
+          }
+
+          console.log('Token auth request:', JSON.stringify(requestData, null, 2));
+
+          // Make the API request
+          const endpoint = `${getApiBaseUrl()}/transactions/token-auth`;
+          const headers = {
+            'Content-Type': 'application/json',
+            'x-api-key': apiKey,
+          };
+          const body = JSON.stringify(requestData);
+
+          console.log('Token Auth API Request:', { endpoint, headers, body });
+
+          const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: headers,
+            body: body,
+          });
+
+          const responseText = await response.text();
+          console.log('Token Auth API Response:', responseText);
+
+          let data;
+          try {
+            if (responseText && responseText.trim() !== '') {
+              data = JSON.parse(responseText);
+            } else {
+              throw new Error('Empty response');
+            }
+          } catch (error) {
+            console.error('Error parsing response:', error);
+            alert(`Error: Invalid response format\n\nRaw response: ${responseText}`);
+            return;
+          }
+
+          // Handle error response
+          if (!response.ok) {
+            let errorMessage = `Error: API returned an error.\n\nStatus: ${response.status}\n\nRaw Response:\n${responseText}`;
+            alert(errorMessage);
+            return;
+          }
+
+          // Handle successful response
+          console.log('Token Auth successful:', data);
+          alert(
+            `Token Auth successful!\nTransaction ID: ${data.id || 'Unknown'}\nResult: ${data.resultText || 'Success'}`
+          );
+        } catch (error) {
+          console.error('Error processing token auth:', error);
+          alert(`Token Auth processing error: ${error.message}`);
+        } finally {
+          // Reset button state
+          tokenAuthBtn.textContent = 'Token Auth';
+          tokenAuthBtn.disabled = false;
+        }
+      }
+      // Get Sale/Capture Transactions function
+      async function getSaleCaptureTransactions() {
+        const apiKey = localStorage.getItem(API_KEY_STORAGE);
+        const container = document.getElementById('saleCaptureTransactionsContainer');
+        const loading = document.getElementById('saleCaptureTransactionsLoading');
+        const errorDiv = document.getElementById('saleCaptureTransactionsError');
+        const tableHeader = document.getElementById('saleCaptureTransactionsHeader');
+        const tableBody = document.getElementById('saleCaptureTransactionsBody');
+        const button = document.getElementById('getSaleCaptureTransactionsBtn');
+
+        if (!apiKey) {
+          showAlert(
+            errorDiv,
+            'API key is missing. Please configure it at the top of the page first.',
+            'error'
+          );
+          container.classList.add('show');
+          return;
+        }
+
+        // Reset selection state
+        selectedSaleCaptureTransaction = null;
+        refundBtn.disabled = true;
+        refundBtn.style.opacity = '0.5';
+        refundBtn.style.cursor = 'not-allowed';
+
+        // Generate today's date range in UTC
+        const today = new Date();
+        const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+        const endOfDay = new Date(startOfDay);
+        endOfDay.setDate(endOfDay.getDate() + 1);
+
+        const startOfDayUTC = startOfDay.toISOString();
+        const endOfDayUTC = endOfDay.toISOString();
+
+        // Build the filters for both Sale and Capture types
+        const filters = `timestamp>=${startOfDayUTC},timestamp<${endOfDayUTC},type==Sale,type==Capture,amount>=1`;
+        const url = `${getApiBaseUrl()}/transactions?filters=${encodeURIComponent(filters)}`;
+
+        try {
+          // Show loading state
+          const originalText = button.textContent;
+          button.textContent = 'Loading...';
+          button.disabled = true;
+          loading.style.display = 'block';
+          errorDiv.style.display = 'none';
+          container.classList.add('show');
+
+          const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-api-key': apiKey,
+            },
+          });
+
+          const responseText = await response.text();
+
+          // Parse the response
+          let data;
+          try {
+            data = JSON.parse(responseText);
+          } catch (parseError) {
+            throw new Error(`Invalid JSON response: ${responseText}`);
+          }
+
+          if (!response.ok) {
+            throw new Error(`API Error ${response.status}: ${data.message || responseText}`);
+          }
+
+          // Check if we have transactions
+          if (!data.items || !Array.isArray(data.items) || data.items.length === 0) {
+            showAlert(errorDiv, 'No Sale/Capture transactions found for today.', 'error');
+            loading.style.display = 'none';
+            button.textContent = originalText;
+            button.disabled = false;
+            return;
+          }
+
+          // Generate table headers from the first transaction with custom order
+          const firstTransaction = data.items[0];
+          const allHeaders = Object.keys(firstTransaction);
+
+          // Define custom column order - timestamp first, amount second, then rest alphabetically
+          const priorityHeaders = ['timestamp', 'amount'];
+          const remainingHeaders = allHeaders
+            .filter((header) => !priorityHeaders.includes(header))
+            .sort();
+
+          const headers = [...priorityHeaders, ...remainingHeaders];
+
+          // Create header row
+          tableHeader.innerHTML = '';
+          const headerRow = document.createElement('tr');
+          headers.forEach((header) => {
+            const th = document.createElement('th');
+            th.textContent = header;
+            headerRow.appendChild(th);
+          });
+          tableHeader.appendChild(headerRow);
+
+          // Create data rows with click handlers
+          tableBody.innerHTML = '';
+          data.items.forEach((transaction, index) => {
+            const row = document.createElement('tr');
+            row.setAttribute('data-transaction-index', index);
+
+            // Add click handler for row selection
+            row.addEventListener('click', function () {
+              // Remove selection from other rows
+              document.querySelectorAll('#saleCaptureTransactionsTable tbody tr').forEach((r) => {
+                r.classList.remove('selected');
+              });
+
+              // Select this row
+              this.classList.add('selected');
+
+              // Store selected transaction data
+              selectedSaleCaptureTransaction = transaction;
+
+              // Enable refund button
+              refundBtn.disabled = false;
+              refundBtn.style.opacity = '1';
+              refundBtn.style.cursor = 'pointer';
+            });
+
+            headers.forEach((header) => {
+              const td = document.createElement('td');
+              const value = transaction[header];
+
+              // Format the value for display
+              if (value === null || value === undefined) {
+                td.textContent = '';
+              } else if (typeof value === 'object') {
+                td.textContent = JSON.stringify(value);
+              } else {
+                td.textContent = String(value);
+              }
+
+              row.appendChild(td);
+            });
+            tableBody.appendChild(row);
+          });
+
+          // Hide loading, restore button
+          loading.style.display = 'none';
+          button.textContent = originalText;
+          button.disabled = false;
+        } catch (error) {
+          console.error('Error fetching Sale/Capture transactions:', error);
+          showAlert(errorDiv, `Error: ${error.message}`, 'error');
+          loading.style.display = 'none';
+          button.textContent = 'Get Sale/Capture Trx';
+          button.disabled = false;
+        }
+      }
+      // Process refund transaction
+      async function processRefund() {
+        if (!selectedSaleCaptureTransaction) {
+          alert('Please select a transaction first.');
+          return;
+        }
+
+        const apiKey = localStorage.getItem(API_KEY_STORAGE);
+        if (!apiKey) {
+          alert('API key is missing. Please configure it at the top of the page first.');
+          return;
+        }
+
+        // Show popup with original amount and request refund amount
+        const originalAmount = selectedSaleCaptureTransaction.amount || 'Unknown';
+        const refundAmountStr = prompt(
+          `Original Transaction Amount: ${originalAmount} cents\n\nEnter refund amount in cents (leave blank to refund full amount):`
+        );
+
+        if (refundAmountStr === null) {
+          // User canceled
+          return;
+        }
+
+        // Ask user to choose between referenceId or transactionId
+        const useReferenceId = confirm(
+          `Choose which field to use for originalReferenceId:\n\n` +
+            `Click OK to use transaction's referenceId: ${selectedSaleCaptureTransaction.referenceId || 'N/A'}\n` +
+            `Click Cancel to use transaction's transactionId: ${selectedSaleCaptureTransaction.id || 'N/A'}`
+        );
+
+        // Build request data
+        const requestData = {
+          referenceId: localStorage.getItem(REFERENCE_ID_STORAGE) || `ref_${Date.now()}`,
+        };
+
+        // Add originalReferenceId based on user choice
+        if (useReferenceId) {
+          if (selectedSaleCaptureTransaction.referenceId) {
+            requestData.originalReferenceId = selectedSaleCaptureTransaction.referenceId;
+          } else {
+            alert(
+              'Selected transaction does not have a referenceId. Please try again and choose transactionId.'
+            );
+            return;
+          }
+        } else {
+          if (selectedSaleCaptureTransaction.id) {
+            requestData.originalReferenceId = selectedSaleCaptureTransaction.id;
+          } else {
+            alert(
+              'Selected transaction does not have a transactionId. Please try again and choose referenceId.'
+            );
+            return;
+          }
+        }
+
+        // Add amount if provided
+        if (refundAmountStr.trim() !== '') {
+          const refundAmount = parseInt(refundAmountStr.trim());
+          if (isNaN(refundAmount) || refundAmount <= 0) {
+            alert('Please enter a valid amount in cents.');
+            return;
+          }
+          requestData.amount = refundAmount;
+        }
+
+        // Add optional fields from the form
+        const invoiceNumber = localStorage.getItem(INVOICE_NUMBER_STORAGE);
+        const orderNumber = localStorage.getItem(ORDER_NUMBER_STORAGE);
+
+        if (invoiceNumber) {
+          requestData.invoiceNumber = invoiceNumber;
+        }
+        if (orderNumber) {
+          requestData.orderNumber = orderNumber;
+        }
+
+        try {
+          // Show loading state
+          const originalText = refundBtn.textContent;
+          refundBtn.textContent = 'Processing...';
+          refundBtn.disabled = true;
+
+          console.log('Refund request:', JSON.stringify(requestData, null, 2));
+
+          const response = await fetch(`${getApiBaseUrl()}/transactions/refund`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-api-key': apiKey,
+            },
+            body: JSON.stringify(requestData),
+          });
+
+          const responseText = await response.text();
+          let data;
+
+          try {
+            data = JSON.parse(responseText);
+          } catch (parseError) {
+            throw new Error(`Invalid JSON response: ${responseText}`);
+          }
+
+          if (!response.ok) {
+            let errorMessage = extractErrorMessage(data);
+            if (errorMessage === 'API request failed') {
+              errorMessage = `Error ${response.status}: ${response.statusText}`;
+            }
+            throw new Error(errorMessage);
+          }
+
+          // Success
+          const successMessage =
+            `Refund successful!\n` +
+            `Transaction ID: ${data.id || 'Unknown'}\n` +
+            `Result: ${data.resultText || 'Success'}\n` +
+            `Used originalReferenceId: ${requestData.originalReferenceId}`;
+
+          alert(successMessage);
+
+          // Refresh the sale/capture transactions list
+          getSaleCaptureTransactions();
+        } catch (error) {
+          console.error('Error processing refund:', error);
+          alert(`Refund failed: ${error.message}`);
+        } finally {
+          // Reset button state
+          refundBtn.textContent = 'Refund';
+          refundBtn.disabled = true;
+          refundBtn.style.opacity = '0.5';
+          refundBtn.style.cursor = 'not-allowed';
+
+          // Clear selection
+          selectedSaleCaptureTransaction = null;
+          document.querySelectorAll('#saleCaptureTransactionsTable tbody tr').forEach((row) => {
+            row.classList.remove('selected');
+          });
         }
       }
     </script>
