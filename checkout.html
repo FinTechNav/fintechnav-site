@@ -2548,13 +2548,34 @@
         const environment = document.getElementById('globalEnvProd').checked ? 'prod' : 'dev';
         const statusElement = document.getElementById('globalConfigStatus');
 
+        // Get all form values
+        const amount = document.getElementById('amount').value.trim();
+        const paymentMethodId = document.getElementById('paymentMethodId').value.trim();
+        const referenceId = document.getElementById('referenceId').value.trim();
+        const amountGoodsAndServices = document
+          .getElementById('amountGoodsAndServices')
+          .value.trim();
+        const tax = document.getElementById('tax').value.trim();
+        const cashBack = document.getElementById('cashBack').value.trim();
+        const tip = document.getElementById('tip').value.trim();
+        const invoiceNumber = document.getElementById('invoiceNumber').value.trim();
+        const orderNumber = document.getElementById('orderNumber').value.trim();
+
         if (apiKey) {
+          // Save API key and environment
           localStorage.setItem(API_KEY_STORAGE, apiKey);
           localStorage.setItem(ENVIRONMENT_STORAGE, environment);
 
-          // Also update the old form fields for backward compatibility
-          const oldApiKeyInput = document.getElementById('apiKey');
-          if (oldApiKeyInput) oldApiKeyInput.value = apiKey;
+          // Save all form values
+          saveOrRemoveFromStorage(AMOUNT_STORAGE, amount);
+          saveOrRemoveFromStorage(PAYMENT_METHOD_ID_STORAGE, paymentMethodId);
+          saveOrRemoveFromStorage(REFERENCE_ID_STORAGE, referenceId);
+          saveOrRemoveFromStorage(AMOUNT_GOODS_SERVICES_STORAGE, amountGoodsAndServices);
+          saveOrRemoveFromStorage(TAX_STORAGE, tax);
+          saveOrRemoveFromStorage(CASHBACK_STORAGE, cashBack);
+          saveOrRemoveFromStorage(TIP_STORAGE, tip);
+          saveOrRemoveFromStorage(INVOICE_NUMBER_STORAGE, invoiceNumber);
+          saveOrRemoveFromStorage(ORDER_NUMBER_STORAGE, orderNumber);
 
           showAlert(statusElement, 'Configuration saved successfully!', 'success');
         } else {
