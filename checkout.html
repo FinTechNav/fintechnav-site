@@ -2599,28 +2599,30 @@
       function buildPaymentMethodFilters() {
         const filters = [];
 
-        const id = document.getElementById('pmId').value.trim();
-        if (id) {
-          const idType = document.querySelector('input[name="pmIdType"]:checked').value;
-          const operator = idType === 'equals' ? '==' : '@=';
-          filters.push(`id${operator}${id}`);
+        const id = document.getElementById('pmId');
+        if (id && id.value.trim()) {
+          const idType = document.querySelector('input[name="pmIdType"]:checked');
+          if (idType) {
+            const operator = idType.value === 'equals' ? '==' : '@=';
+            filters.push(`id${operator}${id.value.trim()}`);
+          }
         }
 
-        const type = document.getElementById('pmType').value;
-        if (type) filters.push(`paymentMethodType==${type}`);
+        const type = document.getElementById('pmType');
+        if (type && type.value) filters.push(`paymentMethodType==${type.value}`);
 
-        const currency = document.getElementById('pmCurrency').value;
-        if (currency) filters.push(`currency==${currency}`);
+        const currency = document.getElementById('pmCurrency');
+        if (currency && currency.value) filters.push(`currency==${currency.value}`);
 
-        const description = document.getElementById('pmDescription').value.trim();
-        if (description) filters.push(`description==${description}`);
+        const description = document.getElementById('pmDescription');
+        if (description && description.value.trim())
+          filters.push(`description==${description.value.trim()}`);
 
-        const ownerId = document.getElementById('pmOwnerId').value.trim();
-        if (ownerId) filters.push(`ownerId==${ownerId}`);
+        const ownerId = document.getElementById('pmOwnerId');
+        if (ownerId && ownerId.value.trim()) filters.push(`ownerId==${ownerId.value.trim()}`);
 
         return filters.join(',');
       }
-
       // Build filter string for transactions
       function buildTransactionFilters() {
         const filters = [];
@@ -2709,10 +2711,10 @@
 
         return filters.join(',');
       }
+
       // Get Payment Methods function
       async function getPaymentMethods() {
         const apiKey = localStorage.getItem(API_KEY_STORAGE);
-        const sortColumn = document.getElementById('pmSortColumn').value;
         const filters = buildPaymentMethodFilters();
         const resultsContainer = document.getElementById('pmResults');
         const resultsText = document.getElementById('pmResultsText');
@@ -2724,9 +2726,13 @@
 
         // Build query parameters
         const params = new URLSearchParams();
-        if (sortColumn) {
-          params.append('sorts', sortColumn);
+
+        // Only add sorts if the element exists
+        const sortColumnElement = document.getElementById('pmSortColumn');
+        if (sortColumnElement && sortColumnElement.value) {
+          params.append('sorts', sortColumnElement.value);
         }
+
         if (filters) {
           params.append('filters', filters);
         }
@@ -2775,6 +2781,7 @@
           button.disabled = false;
         }
       }
+
       // Get Transactions function
       async function getTransactions() {
         const apiKey = localStorage.getItem(API_KEY_STORAGE);
