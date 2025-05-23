@@ -3115,8 +3115,17 @@
           alert(`Capture failed: ${error.message}`);
         } finally {
           // Reset button state
-          captureBtn.textContent = originalText;
-          captureBtn.disabled = false;
+          captureBtn.textContent = 'Capture';
+          // Keep button enabled if we still have a selected transaction
+          if (selectedTransaction) {
+            captureBtn.disabled = false;
+            captureBtn.style.opacity = '1';
+            captureBtn.style.cursor = 'pointer';
+          } else {
+            captureBtn.disabled = true;
+            captureBtn.style.opacity = '0.5';
+            captureBtn.style.cursor = 'not-allowed';
+          }
         }
       }
     </script>
