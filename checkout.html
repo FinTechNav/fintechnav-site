@@ -972,6 +972,32 @@
           min-width: 120px; /* Smaller minimum on mobile but still no wrapping */
         }
       }
+      /* Row selection styling */
+      .transaction-table tbody tr {
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+      }
+
+      .transaction-table tbody tr:hover {
+        background-color: rgba(201, 161, 95, 0.1) !important;
+      }
+
+      .transaction-table tbody tr.selected {
+        background-color: rgba(201, 161, 95, 0.2) !important;
+        border-left: 3px solid var(--color-primary);
+      }
+
+      /* Capture button styling */
+      #captureBtn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        background-color: #6e5a36;
+      }
+
+      #captureBtn:not(:disabled) {
+        opacity: 1;
+        cursor: pointer;
+      }
     </style>
   </head>
   <body>
@@ -1130,7 +1156,17 @@
           </div>
 
           <div id="authTransactionsContainer" class="transaction-table-container">
-            <h3>Auth Transactions</h3>
+            <div style="display: flex; justify-content: space-between; align-items: center">
+              <h3>Auth Transactions</h3>
+              <button
+                id="captureBtn"
+                class="btn"
+                disabled
+                style="opacity: 0.5; cursor: not-allowed"
+              >
+                Capture
+              </button>
+            </div>
             <div id="authTransactionsLoading" class="spinner" style="display: none"></div>
             <div id="authTransactionsError" class="alert alert-error" style="display: none"></div>
             <div class="transaction-table-scroll">
@@ -1499,6 +1535,8 @@
       const checkoutNewBtn = document.getElementById('checkoutNewBtn');
       const authBtn = document.getElementById('authBtn');
       const getAuthTransactionsBtn = document.getElementById('getAuthTransactionsBtn');
+      const captureBtn = document.getElementById('captureBtn');
+      let selectedTransaction = null;
 
       // API endpoints - REPLACE THE EXISTING API_BASE_URL CONSTANT
       function getApiBaseUrl() {
@@ -2248,7 +2286,10 @@
           }
         });
       }
-
+      // Capture button event listener
+      if (captureBtn) {
+        captureBtn.addEventListener('click', processCapture);
+      }
       // Setup iframe message listener on load
       setupIframeMessageListener();
 
@@ -2757,6 +2798,11 @@
         const tableBody = document.getElementById('authTransactionsBody');
         const button = document.getElementById('getAuthTransactionsBtn');
 
+        // Reset selection state
+        selectedTransaction = null;
+        captureBtn.disabled = true;
+        captureBtn.style.opacity = '0.5';
+        captureBtn.style.cursor = 'not-allowed';
         if (!apiKey) {
           showAlert(
             errorDiv,
@@ -2844,10 +2890,31 @@
           });
           tableHeader.appendChild(headerRow);
 
-          // Create data rows
+          // Create data rows with click handlers
           tableBody.innerHTML = '';
-          data.items.forEach((transaction) => {
+          data.items.forEach((transaction, index) => {
             const row = document.createElement('tr');
+            row.setAttribute('data-transaction-index', index);
+
+            // Add click handler for row selection
+            row.addEventListener('click', function () {
+              // Remove selection from other rows
+              document.querySelectorAll('#authTransactionsTable tbody tr').forEach((r) => {
+                r.classList.remove('selected');
+              });
+
+              // Select this row
+              this.classList.add('selected');
+
+              // Store selected transaction data
+              selectedTransaction = transaction;
+
+              // Enable capture button
+              captureBtn.disabled = false;
+              captureBtn.style.opacity = '1';
+              captureBtn.style.cursor = 'pointer';
+            });
+
             headers.forEach((header) => {
               const td = document.createElement('td');
               const value = transaction[header];
@@ -2918,6 +2985,103 @@
         addNewCardBtn.addEventListener('click', () => {
           createCardNotPresentToken();
         });
+      }
+      // Process capture transaction
+      async function processCapture() {
+        if (!selectedTransaction) {
+          alert('Please select a transaction first.');
+          return;
+        }
+
+        const apiKey = localStorage.getItem(API_KEY_STORAGE);
+        if (!apiKey) {
+          alert('API key is missing. Please configure it at the top of the page first.');
+          return;
+        }
+
+        // Show popup with auth amount and request capture amount
+        const authAmount = selectedTransaction.amount || 'Unknown';
+        const captureAmountStr = prompt(
+          `Auth Transaction Amount: ${authAmount} cents\n\nEnter capture amount in cents (leave blank to capture full amount):`
+        );
+
+        if (captureAmountStr === null) {
+          // User canceled
+          return;
+        }
+
+        // Build request data
+        const requestData = {
+          referenceId: selectedTransaction.referenceId || selectedTransaction.id,
+        };
+
+        // Add amount if provided
+        if (captureAmountStr.trim() !== '') {
+          const captureAmount = parseInt(captureAmountStr.trim());
+          if (isNaN(captureAmount) || captureAmount <= 0) {
+            alert('Please enter a valid amount in cents.');
+            return;
+          }
+          requestData.amount = captureAmount;
+        }
+
+        // Add optional fields if they exist in the selected transaction
+        if (selectedTransaction.invoiceNumber) {
+          requestData.invoiceNumber = selectedTransaction.invoiceNumber;
+        }
+        if (selectedTransaction.orderNumber) {
+          requestData.orderNumber = selectedTransaction.orderNumber;
+        }
+
+        try {
+          // Show loading state
+          const originalText = captureBtn.textContent;
+          captureBtn.textContent = 'Processing...';
+          captureBtn.disabled = true;
+
+          console.log('Capture request:', JSON.stringify(requestData, null, 2));
+
+          const response = await fetch(`${getApiBaseUrl()}/transactions/capture`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-api-key': apiKey,
+            },
+            body: JSON.stringify(requestData),
+          });
+
+          const responseText = await response.text();
+          let data;
+
+          try {
+            data = JSON.parse(responseText);
+          } catch (parseError) {
+            throw new Error(`Invalid JSON response: ${responseText}`);
+          }
+
+          if (!response.ok) {
+            let errorMessage = extractErrorMessage(data);
+            if (errorMessage === 'API request failed') {
+              errorMessage = `Error ${response.status}: ${response.statusText}`;
+            }
+            throw new Error(errorMessage);
+          }
+
+          // Success
+          alert(
+            `Capture successful!\nTransaction ID: ${data.id || 'Unknown'}\nResult: ${data.resultText || 'Success'}`
+          );
+
+          // Refresh the auth transactions list
+          getAuthTransactions();
+        } catch (error) {
+          console.error('Error processing capture:', error);
+          alert(`Capture failed: ${error.message}`);
+        } finally {
+          // Reset button state
+          captureBtn.textContent = originalText;
+          captureBtn.disabled = false;
+        }
       }
     </script>
   </body>
