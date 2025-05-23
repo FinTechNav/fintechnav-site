@@ -863,6 +863,74 @@
           font-size: 1rem;
         }
       }
+      /* Transaction table styles */
+      .transaction-table-container {
+        margin-top: 20px;
+        background-color: var(--color-background-secondary);
+        border-radius: var(--border-radius);
+        border: 1px solid var(--color-border);
+        padding: 15px;
+        display: none;
+      }
+
+      .transaction-table-container.show {
+        display: block;
+      }
+
+      .transaction-table-container h3 {
+        margin-top: 0;
+        color: var(--color-primary);
+        border-bottom: 1px solid var(--color-border);
+        padding-bottom: 10px;
+      }
+
+      .transaction-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 15px;
+        font-size: 0.9rem;
+      }
+
+      .transaction-table th,
+      .transaction-table td {
+        padding: 8px 12px;
+        text-align: left;
+        border-bottom: 1px solid var(--color-border);
+        word-break: break-word;
+      }
+
+      .transaction-table th {
+        background-color: rgba(201, 161, 95, 0.1);
+        color: var(--color-primary);
+        font-weight: 500;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+      }
+
+      .transaction-table tbody tr:hover {
+        background-color: rgba(201, 161, 95, 0.05);
+      }
+
+      .transaction-table-scroll {
+        max-height: 400px;
+        overflow-y: auto;
+        border: 1px solid var(--color-border);
+        border-radius: var(--border-radius);
+      }
+
+      /* Responsive table */
+      @media screen and (max-width: 768px) {
+        .transaction-table-scroll {
+          max-height: 300px;
+        }
+
+        .transaction-table th,
+        .transaction-table td {
+          padding: 6px 8px;
+          font-size: 0.8rem;
+        }
+      }
     </style>
   </head>
   <body>
@@ -1013,9 +1081,25 @@
           </div>
 
           <div class="button-container">
-            <button class="btn" id="checkoutExistingBtn">Token Sale</button>
-            <button class="btn" id="checkoutNewBtn">Sale</button>
-            <button class="btn" id="authBtn">Auth</button>
+            <button class="btn" id="checkoutExistingBtn">Complete Checkout with Token ID</button>
+            <button class="btn" id="checkoutNewBtn">Complete Checkout with a New Card</button>
+            <button class="btn" id="getAuthTransactionsBtn">Get Auth Transactions</button>
+          </div>
+
+          <div id="authTransactionsContainer" class="transaction-table-container">
+            <h3>Auth Transactions</h3>
+            <div id="authTransactionsLoading" class="spinner" style="display: none"></div>
+            <div id="authTransactionsError" class="alert alert-error" style="display: none"></div>
+            <div class="transaction-table-scroll">
+              <table class="transaction-table" id="authTransactionsTable">
+                <thead id="authTransactionsHeader">
+                  <!-- Headers will be populated dynamically -->
+                </thead>
+                <tbody id="authTransactionsBody">
+                  <!-- Rows will be populated dynamically -->
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
 
@@ -2228,6 +2312,61 @@
         document.getElementById('getPaymentMethods').addEventListener('click', getPaymentMethods);
         document.getElementById('getTransactions').addEventListener('click', getTransactions);
 
+        document.addEventListener('DOMContentLoaded', () => {
+          const tabButtons = document.querySelectorAll('.tab-button');
+          const tabContents = document.querySelectorAll('.tab-content');
+
+          const timestampExactRadios = document.querySelectorAll(
+            'input[name="timestampExactType"]'
+          );
+          timestampExactRadios.forEach((radio) => {
+            radio.addEventListener('change', toggleTimestampExactInputs);
+          });
+
+          // Set max date/time to current date/time
+          setMaxDateTime();
+
+          // Tab switching
+          tabButtons.forEach((button) => {
+            button.addEventListener('click', () => {
+              const tabId = button.getAttribute('data-tab');
+
+              tabButtons.forEach((btn) => btn.classList.remove('active'));
+              tabContents.forEach((content) => content.classList.remove('active'));
+
+              button.classList.add('active');
+              document.getElementById(`${tabId}-tab`).classList.add('active');
+            });
+          });
+
+          // Load global configuration
+          loadGlobalConfig();
+
+          // Global config save
+          document.getElementById('saveGlobalConfig').addEventListener('click', saveGlobalConfig);
+
+          // Reports functionality
+          document.getElementById('getPaymentMethods').addEventListener('click', getPaymentMethods);
+          document.getElementById('getTransactions').addEventListener('click', getTransactions);
+
+          // ADD THIS LINE HERE:
+          document
+            .getElementById('getAuthTransactionsBtn')
+            .addEventListener('click', getAuthTransactions);
+
+          // Timestamp type toggle
+          const timestampRadios = document.querySelectorAll('input[name="timestampType"]');
+          timestampRadios.forEach((radio) => {
+            radio.addEventListener('change', toggleTimestampInputs);
+          });
+
+          // Amount type toggle
+          const amountRadios = document.querySelectorAll('input[name="amountType"]');
+          amountRadios.forEach((radio) => {
+            radio.addEventListener('change', toggleAmountInputs);
+          });
+        });
+
         // Timestamp type toggle
         const timestampRadios = document.querySelectorAll('input[name="timestampType"]');
         timestampRadios.forEach((radio) => {
@@ -2552,6 +2691,128 @@
 
           const button = document.getElementById('getTransactions');
           button.textContent = 'Get Transactions';
+          button.disabled = false;
+        }
+      }
+
+      // Get Auth Transactions function
+      async function getAuthTransactions() {
+        const apiKey = localStorage.getItem(API_KEY_STORAGE);
+        const container = document.getElementById('authTransactionsContainer');
+        const loading = document.getElementById('authTransactionsLoading');
+        const errorDiv = document.getElementById('authTransactionsError');
+        const tableHeader = document.getElementById('authTransactionsHeader');
+        const tableBody = document.getElementById('authTransactionsBody');
+        const button = document.getElementById('getAuthTransactionsBtn');
+
+        if (!apiKey) {
+          showAlert(
+            errorDiv,
+            'API key is missing. Please configure it at the top of the page first.',
+            'error'
+          );
+          container.classList.add('show');
+          return;
+        }
+
+        // Generate today's date range in UTC
+        const today = new Date();
+        const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+        const endOfDay = new Date(startOfDay);
+        endOfDay.setDate(endOfDay.getDate() + 1);
+
+        const startOfDayUTC = startOfDay.toISOString();
+        const endOfDayUTC = endOfDay.toISOString();
+
+        // Build the filters
+        const filters = `timestamp>=${startOfDayUTC},timestamp<${endOfDayUTC},type==Auth,amount>=1`;
+        const url = `${getApiBaseUrl()}/transactions?filters=${encodeURIComponent(filters)}`;
+
+        try {
+          // Show loading state
+          const originalText = button.textContent;
+          button.textContent = 'Loading...';
+          button.disabled = true;
+          loading.style.display = 'block';
+          errorDiv.style.display = 'none';
+          container.classList.add('show');
+
+          const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-api-key': apiKey,
+            },
+          });
+
+          const responseText = await response.text();
+
+          // Parse the response
+          let data;
+          try {
+            data = JSON.parse(responseText);
+          } catch (parseError) {
+            throw new Error(`Invalid JSON response: ${responseText}`);
+          }
+
+          if (!response.ok) {
+            throw new Error(`API Error ${response.status}: ${data.message || responseText}`);
+          }
+
+          // Check if we have transactions
+          if (!data.items || !Array.isArray(data.items) || data.items.length === 0) {
+            showAlert(errorDiv, 'No Auth transactions found for today.', 'error');
+            loading.style.display = 'none';
+            button.textContent = originalText;
+            button.disabled = false;
+            return;
+          }
+
+          // Generate table headers from the first transaction
+          const firstTransaction = data.items[0];
+          const headers = Object.keys(firstTransaction);
+
+          // Create header row
+          tableHeader.innerHTML = '';
+          const headerRow = document.createElement('tr');
+          headers.forEach((header) => {
+            const th = document.createElement('th');
+            th.textContent = header;
+            headerRow.appendChild(th);
+          });
+          tableHeader.appendChild(headerRow);
+
+          // Create data rows
+          tableBody.innerHTML = '';
+          data.items.forEach((transaction) => {
+            const row = document.createElement('tr');
+            headers.forEach((header) => {
+              const td = document.createElement('td');
+              const value = transaction[header];
+
+              // Format the value for display
+              if (value === null || value === undefined) {
+                td.textContent = '';
+              } else if (typeof value === 'object') {
+                td.textContent = JSON.stringify(value);
+              } else {
+                td.textContent = String(value);
+              }
+
+              row.appendChild(td);
+            });
+            tableBody.appendChild(row);
+          });
+
+          // Hide loading, restore button
+          loading.style.display = 'none';
+          button.textContent = originalText;
+          button.disabled = false;
+        } catch (error) {
+          console.error('Error fetching Auth transactions:', error);
+          showAlert(errorDiv, `Error: ${error.message}`, 'error');
+          loading.style.display = 'none';
+          button.textContent = 'Get Auth Transactions';
           button.disabled = false;
         }
       }
