@@ -1214,13 +1214,12 @@
             <h3>Get Payment Methods</h3>
             <div class="filter-grid">
               <div class="filter-group">
-                <label for="txnType">Type:</label>
-                <select id="txnType" class="filter-input">
+                <label for="pmType">Payment Method Type:</label>
+                <select id="pmType" class="filter-input">
                   <option value="">N/A</option>
-                  <option value="Auth">Auth</option>
-                  <option value="Sale">Sale</option>
-                  <option value="Capture">Capture</option>
-                  <option value="Refund">Refund</option>
+                  <option value="Virtual">Virtual</option>
+                  <option value="Physical">Physical</option>
+                  <option value="Token">Token</option>
                 </select>
               </div>
 
@@ -1416,6 +1415,8 @@
                   <option value="">N/A</option>
                   <option value="Auth">Auth</option>
                   <option value="Sale">Sale</option>
+                  <option value="Capture">Capture</option>
+                  <option value="Refund">Refund</option>
                 </select>
               </div>
 
