@@ -3326,8 +3326,8 @@
         const startOfDayUTC = startOfDay.toISOString();
         const endOfDayUTC = endOfDay.toISOString();
 
-        // Build the filters for both Sale and Capture types with sorting
-        const filters = `timestamp>=${startOfDayUTC},timestamp<${endOfDayUTC},type==Sale,type==Capture,amount>=1`;
+        // Build the filters for Sale OR Capture types with sorting
+        const filters = `timestamp>=${startOfDayUTC},timestamp<${endOfDayUTC},type==Sale|Capture,amount>=1`;
         const sorts = '-timestamp'; // Descending order (most recent first)
         const url = `${getApiBaseUrl()}/transactions?filters=${encodeURIComponent(filters)}&sorts=${sorts}`;
 
