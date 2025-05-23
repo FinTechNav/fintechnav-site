@@ -2819,11 +2819,20 @@
             button.disabled = false;
             return;
           }
-          // Replace the table generation part in getAuthTransactions() function:
 
-          // Generate table headers from the first transaction
+          // Replace the table generation section in getAuthTransactions() function:
+
+          // Generate table headers from the first transaction with custom order
           const firstTransaction = data.items[0];
-          const headers = Object.keys(firstTransaction);
+          const allHeaders = Object.keys(firstTransaction);
+
+          // Define custom column order - timestamp first, amount second, then rest alphabetically
+          const priorityHeaders = ['timestamp', 'amount'];
+          const remainingHeaders = allHeaders
+            .filter((header) => !priorityHeaders.includes(header))
+            .sort(); // Sort remaining headers alphabetically
+
+          const headers = [...priorityHeaders, ...remainingHeaders];
 
           // Create header row
           tableHeader.innerHTML = '';
