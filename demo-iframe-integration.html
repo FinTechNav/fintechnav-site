@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fiska Payment Iframe Integration Demo - JavaScript Callbacks</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        h1 {
+            color: #2c3e50;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 10px;
+        }
+        
+        h2 {
+            color: #34495e;
+            margin-top: 30px;
+        }
+        
+        .code-block {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 15px 0;
+            font-family: 'Fira Code', 'Monaco', 'Consolas', 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+        
+        .code-block::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #3498db, #2ecc71, #f39c12);
+            border-radius: 8px 8px 0 0;
+        }
+        
+        .json-block {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 15px 0;
+            font-family: 'Fira Code', 'Monaco', 'Consolas', 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+        
+        .json-block::before {
+            content: 'JSON';
+            position: absolute;
+            top: 8px;
+            right: 12px;
+            background: #007acc;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: bold;
+        }
+        
+        .json-key {
+            color: #9cdcfe;
+        }
+        
+        .json-string {
+            color: #ce9178;
+        }
+        
+        .json-number {
+            color: #b5cea8;
+        }
+        
+        .json-boolean {
+            color: #569cd6;
+        }
+        
+        .json-null {
+            color: #569cd6;
+        }
+        
+        .json-highlight {
+            background: #f39c12;
+            color: #2c3e50;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-weight: bold;
+        }
+        
+        .highlight {
+            background: #f39c12;
+            color: white;
+            padding: 2px 5px;
+            border-radius: 3px;
+        }
+        
+        .step {
+            background: #ecf0f1;
+            border-left: 4px solid #3498db;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        
+        .step-number {
+            background: #3498db;
+            color: white;
+            border-radius: 50%;
+            width: 25px;
+            height: 25px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            font-weight: bold;
+        }
+        
+        .demo-section {
+            border: 2px solid #3498db;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            background: #f8f9fa;
+        }
+        
+        .iframe-container {
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            padding: 10px;
+            background: white;
+            text-align: center;
+            min-height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+        
+        .iframe-container.has-iframe {
+            min-height: auto;
+            align-items: flex-start;
+        }
+        
+        .iframe-placeholder {
+            color: #7f8c8d;
+            font-style: italic;
+            text-align: center;
+        }
+        
+        button {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+        }
+        
+        button:hover {
+            background: #2980b9;
+        }
+        
+        button:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+        }
+        
+        .log-container {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 15px;
+            border-radius: 5px;
+            height: 200px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            margin-top: 10px;
+        }
+        
+        .log-entry {
+            margin: 2px 0;
+            padding: 2px 0;
+        }
+        
+        .log-success {
+            color: #2ecc71;
+        }
+        
+        .log-error {
+            color: #e74c3c;
+        }
+        
+        .log-info {
+            color: #3498db;
+        }
+        
+        .warning {
+            background: #f39c12;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        
+        .success {
+            background: #2ecc71;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        
+        .error {
+            background: #e74c3c;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        
+        .form-group {
+            margin: 15px 0;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        input, select, textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+        }
+        
+        .checkbox-group input[type="checkbox"] {
+            width: auto;
+            margin-right: 10px;
+        }
+        
+        .api-example {
+            background: #e8f5e8;
+            border: 1px solid #2ecc71;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+        
+        .tabs {
+            display: flex;
+            border-bottom: 2px solid #ddd;
+            margin-bottom: 20px;
+        }
+        
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            background: #f8f9fa;
+            margin-right: 5px;
+        }
+        
+        .tab.active {
+            border-bottom-color: #3498db;
+            background: white;
+            color: #3498db;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Fiska Payment Iframe Integration Demo</h1>
+        <p><strong>JavaScript Callbacks Feature</strong> - A comprehensive guide for integrators</p>
+        
+        <div class="warning">
+            <strong>⚠️ Prerequisites:</strong> This demo assumes you have already made an API call to create a payment session and received an iframe URL. If you haven't done this yet, please refer to the API documentation first.
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>📋 Overview</h2>
+        <p>This demo shows how to integrate Fiska's payment iframe using the new <span class="highlight">JavaScript callback feature</span> instead of traditional URL redirects. This approach provides a more seamless user experience by keeping users on your page throughout the payment process.</p>
+        
+        <h3>🔄 Traditional Flow vs JavaScript Callbacks</h3>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 20px 0;">
+            <div style="background: #fff3cd; padding: 15px; border-radius: 5px;">
+                <h4>❌ Traditional Redirect Flow</h4>
+                <ol>
+                    <li>User fills payment form in iframe</li>
+                    <li>Payment processed</li>
+                    <li><strong>Page redirects to success/failure URL</strong></li>
+                    <li>User sees result on new page</li>
+                </ol>
+            </div>
+            <div style="background: #d1ecf1; padding: 15px; border-radius: 5px;">
+                <h4>✅ JavaScript Callback Flow</h4>
+                <ol>
+                    <li>User fills payment form in iframe</li>
+                    <li>Payment processed</li>
+                    <li><strong>JavaScript message sent to parent window</strong></li>
+                    <li>Your page handles result dynamically</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>🛠️ Step-by-Step Implementation</h2>
+        
+        <div class="step">
+            <span class="step-number">1</span>
+            <strong>Enable JavaScript Callbacks in API Request</strong>
+            <p>When creating your payment session, set <code>useJavaScriptCallback: true</code>:</p>
+            
+            <div class="tabs">
+                <div class="tab active" onclick="showTab('tokenize-api')">Tokenization</div>
+                <div class="tab" onclick="showTab('sale-api')">Sale</div>
+                <div class="tab" onclick="showTab('auth-api')">Authorization</div>
+            </div>
+            
+            <div id="tokenize-api" class="tab-content active">
+                <div class="api-example">
+                    <strong>POST /v1/payment-methods/virtual</strong>
+                    <div class="json-block">
+{
+  <span class="json-key">"merchantId"</span>: <span class="json-string">"your-merchant-id"</span>,
+  <span class="json-key">"currency"</span>: <span class="json-string">"USD"</span>,
+  <span class="json-key">"returnUrl"</span>: <span class="json-string">"https://your-site.com/return"</span>,
+  <span class="json-key">"referenceId"</span>: <span class="json-string">"your-reference-id"</span>,
+  <span class="json-key json-highlight">"useJavaScriptCallback"</span>: <span class="json-boolean json-highlight">true</span>
+}
+                    </div>
+                </div>
+            </div>
+            
+            <div id="sale-api" class="tab-content">
+                <div class="api-example">
+                    <strong>POST /v1/transactions/virtual-sale</strong>
+                    <div class="json-block">
+{
+  <span class="json-key">"merchantId"</span>: <span class="json-string">"your-merchant-id"</span>,
+  <span class="json-key">"amount"</span>: <span class="json-number">1000</span>,
+  <span class="json-key">"currency"</span>: <span class="json-string">"USD"</span>,
+  <span class="json-key">"returnUrl"</span>: <span class="json-string">"https://your-site.com/return"</span>,
+  <span class="json-key">"referenceId"</span>: <span class="json-string">"your-reference-id"</span>,
+  <span class="json-key json-highlight">"useJavaScriptCallback"</span>: <span class="json-boolean json-highlight">true</span>
+}
+                    </div>
+                </div>
+            </div>
+            
+            <div id="auth-api" class="tab-content">
+                <div class="api-example">
+                    <strong>POST /v1/transactions/virtual-auth</strong>
+                    <div class="json-block">
+{
+  <span class="json-key">"merchantId"</span>: <span class="json-string">"your-merchant-id"</span>,
+  <span class="json-key">"amount"</span>: <span class="json-number">1000</span>,
+  <span class="json-key">"currency"</span>: <span class="json-string">"USD"</span>,
+  <span class="json-key">"returnUrl"</span>: <span class="json-string">"https://your-site.com/return"</span>,
+  <span class="json-key">"referenceId"</span>: <span class="json-string">"your-reference-id"</span>,
+  <span class="json-key json-highlight">"useJavaScriptCallback"</span>: <span class="json-boolean json-highlight">true</span>
+}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="step">
+            <span class="step-number">2</span>
+            <strong>Add Message Event Listener</strong>
+            <p>Set up a listener to receive payment results from the iframe:</p>
+            <div class="code-block">
+window.addEventListener("message", function(event) {
+    // Security: Validate the origin (allow localhost for local testing)
+    const isValidOrigin = event.origin === "https://your-payment-domain.com" || 
+                         event.origin === "null" || 
+                         event.origin === window.location.origin ||
+                         event.origin.includes('localhost') ||
+                         event.origin.includes('127.0.0.1');
+    
+    if (!isValidOrigin) {
+        console.warn("Received message from untrusted origin:", event.origin);
+        return;
+    }
+    
+    // Check if this is a Fiska payment result
+    if (event.data && event.data.type === "fiskaPaymentResult") {
+        const result = event.data.data;
+        
+        if (result.success) {
+            handlePaymentSuccess(result);
+        } else {
+            handlePaymentError(result);
+        }
+    }
+});
+            </div>
+        </div>
+
+        <div class="step">
+            <span class="step-number">3</span>
+            <strong>Implement Success Handler</strong>
+            <div class="code-block">
+function handlePaymentSuccess(result) {
+    console.log("✅ Payment successful:", result);
+    
+    // Hide the iframe
+    document.getElementById("payment-iframe").style.display = "none";
+    
+    // Extract important information
+    const transactionId = result.transactionId;
+    const amount = result.amount;
+    const paymentMethod = result.paymentMethod;
+    
+    // Update your UI
+    showSuccessMessage({
+        transactionId: transactionId,
+        amount: amount,
+        currency: result.currency,
+        paymentMethod: paymentMethod
+    });
+    
+    // Optional: Send confirmation to your backend
+    sendTransactionConfirmation(result);
+}
+            </div>
+        </div>
+
+        <div class="step">
+            <span class="step-number">4</span>
+            <strong>Implement Error Handler</strong>
+            <div class="code-block">
+function handlePaymentError(result) {
+    console.log("❌ Payment failed:", result);
+    
+    // Hide the iframe
+    document.getElementById("payment-iframe").style.display = "none";
+    
+    // Show error message to user
+    showErrorMessage({
+        errorMessage: result.errorMessage,
+        errorCode: result.errorCode,
+        transactionId: result.transactionId
+    });
+    
+    // Optional: Log error for analytics
+    logPaymentError(result);
+}
+            </div>
+        </div>
+
+        <div class="step">
+            <span class="step-number">5</span>
+            <strong>Embed the Iframe</strong>
+            <div class="code-block">
+&lt;iframe 
+    id="payment-iframe"
+    src="YOUR_IFRAME_URL_FROM_API_RESPONSE"
+    width="500" 
+    height="600"
+    frameborder="0"
+    style="border: 1px solid #ddd; border-radius: 8px;"&gt;
+&lt;/iframe&gt;
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>🧪 Interactive Demo</h2>
+        <p>Use this demo to test the JavaScript callback integration. You can simulate different payment scenarios.</p>
+        
+        <div class="demo-section">
+            <h3>Configuration</h3>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div>
+                    <div class="form-group">
+                        <label for="iframe-url">Iframe URL (from API response):</label>
+                        <input type="text" id="iframe-url" placeholder="https://beta-payment-api-http.dev.ms.fiska.tech/session/your-token" />
+                    </div>
+                    <div class="form-group">
+                        <label for="trusted-origin">Trusted Origin:</label>
+                        <input type="text" id="trusted-origin" value="https://beta-payment-api-http.dev.ms.fiska.tech" />
+                        <small style="color: #666; font-size: 12px;">Note: "null" origin, localhost, and 127.0.0.1 are automatically allowed for local testing</small>
+                    </div>
+                </div>
+                <div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="enable-callbacks" checked />
+                        <label for="enable-callbacks">Enable JavaScript Callbacks</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="verbose-logging" checked />
+                        <label for="verbose-logging">Verbose Logging</label>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="margin-top: 20px;">
+                <button onclick="loadIframe()">Load Payment Iframe</button>
+                <button onclick="simulateSuccess()">Simulate Success</button>
+                <button onclick="simulateError()">Simulate Error</button>
+                <button onclick="clearDemo()">Clear Demo</button>
+            </div>
+        </div>
+
+        <div class="demo-section">
+            <h3>Payment Iframe</h3>
+            <div id="iframe-container" class="iframe-container">
+                <div class="iframe-placeholder">
+                    <p>📱 Payment iframe will appear here</p>
+                    <p>Enter an iframe URL above and click "Load Payment Iframe"</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="demo-section">
+            <h3>Event Log</h3>
+            <p>This log shows all JavaScript events and messages received:</p>
+            <div id="event-log" class="log-container">
+                <div class="log-entry log-info">[INFO] Demo initialized. Waiting for iframe URL...</div>
+            </div>
+            <button onclick="clearLog()">Clear Log</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>📊 Message Structure Reference</h2>
+        
+        <h3>Success Message</h3>
+        <div class="json-block">
+{
+  <span class="json-key">"type"</span>: <span class="json-string">"fiskaPaymentResult"</span>,
+  <span class="json-key">"data"</span>: {
+    <span class="json-key">"success"</span>: <span class="json-boolean">true</span>,
+    <span class="json-key">"transactionId"</span>: <span class="json-string">"txn_01JRZPRGFF4J2SZC3HMDBYEN2J"</span>,
+    <span class="json-key">"referenceId"</span>: <span class="json-string">"your-reference-id"</span>,
+    <span class="json-key">"orderNumber"</span>: <span class="json-string">"order-123"</span>,
+    <span class="json-key">"invoiceNumber"</span>: <span class="json-string">"inv-456"</span>,
+    <span class="json-key">"amount"</span>: <span class="json-number">1000</span>,
+    <span class="json-key">"currency"</span>: <span class="json-string">"USD"</span>,
+    <span class="json-key">"actionType"</span>: <span class="json-string">"Sale"</span>, <span style="color: #6a9955;">// 'Sale', 'Auth', 'Tokenize'</span>
+    <span class="json-key">"paymentMethod"</span>: {
+      <span class="json-key">"id"</span>: <span class="json-string">"pmt_tkn_01JRZPRGFF4J2SZC3HMDBYEN2J"</span>,
+      <span class="json-key">"type"</span>: <span class="json-string">"CreditCard"</span>,
+      <span class="json-key">"cardType"</span>: <span class="json-string">"VISA"</span>,
+      <span class="json-key">"last4"</span>: <span class="json-string">"1234"</span>
+    },
+    <span class="json-key">"transactionResponses"</span>: [{
+      <span class="json-key">"accountType"</span>: <span class="json-string">"Credit"</span>,
+      <span class="json-key">"cardType"</span>: <span class="json-string">"VISA"</span>,
+      <span class="json-key">"responseCode"</span>: <span class="json-number">1</span>
+    }],
+    <span class="json-key">"resultCode"</span>: <span class="json-number">0</span>,
+    <span class="json-key">"resultText"</span>: <span class="json-string">"Transaction completed successfully"</span>,
+    <span class="json-key">"timestamp"</span>: <span class="json-number">1640995200</span>
+  }
+}
+        </div>
+
+        <h3>Error Message</h3>
+        <div class="json-block">
+{
+  <span class="json-key">"type"</span>: <span class="json-string">"fiskaPaymentResult"</span>,
+  <span class="json-key">"data"</span>: {
+    <span class="json-key">"success"</span>: <span class="json-boolean">false</span>,
+    <span class="json-key">"transactionId"</span>: <span class="json-string">"txn_01JRZPRGFF4J2SZC3HMDBYEN2J"</span>,
+    <span class="json-key">"referenceId"</span>: <span class="json-string">"your-reference-id"</span>,
+    <span class="json-key">"amount"</span>: <span class="json-number">1000</span>,
+    <span class="json-key">"currency"</span>: <span class="json-string">"USD"</span>,
+    <span class="json-key">"actionType"</span>: <span class="json-string">"Sale"</span>,
+    <span class="json-key">"resultCode"</span>: <span class="json-number">9999</span>,
+    <span class="json-key">"errorMessage"</span>: <span class="json-string">"Card declined"</span>,
+    <span class="json-key">"errorCode"</span>: <span class="json-string">"1001"</span>,
+    <span class="json-key">"timestamp"</span>: <span class="json-number">1640995200</span>
+  }
+}
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>🔒 Security Best Practices</h2>
+        
+        <div class="step">
+            <span class="step-number">1</span>
+            <strong>Origin Validation</strong>
+            <p>Always validate the origin of incoming messages (allow null, localhost for local testing):</p>
+            <div class="code-block">
+// Allow your payment domain, null origin (local testing), same origin, and localhost
+const isValidOrigin = event.origin === "https://your-payment-domain.com" || 
+                     event.origin === "null" || 
+                     event.origin === window.location.origin ||
+                     event.origin.includes('localhost') ||
+                     event.origin.includes('127.0.0.1');
+
+if (!isValidOrigin) {
+    console.warn("Untrusted origin:", event.origin);
+    return; // Ignore the message
+}
+            </div>
+        </div>
+
+        <div class="step">
+            <span class="step-number">2</span>
+            <strong>Message Type Verification</strong>
+            <p>Check the message type to ensure you're handling the correct messages:</p>
+            <div class="code-block">
+if (event.data && event.data.type === "fiskaPaymentResult") {
+    // Process payment result
+} else {
+    // Ignore other message types
+}
+            </div>
+        </div>
+
+        <div class="step">
+            <span class="step-number">3</span>
+            <strong>Data Validation</strong>
+            <p>Validate the structure and content of received data:</p>
+            <div class="code-block">
+function validatePaymentResult(data) {
+    if (!data || typeof data !== 'object') return false;
+    if (typeof data.success !== 'boolean') return false;
+    if (!data.transactionId || typeof data.transactionId !== 'string') return false;
+    // Add more validation as needed
+    return true;
+}
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>🔄 Migration Guide</h2>
+        <p>If you're currently using URL redirects, here's how to migrate:</p>
+        
+        <div class="step">
+            <span class="step-number">1</span>
+            <strong>Update API Calls</strong>
+            <p>Add <code>useJavaScriptCallback: true</code> to your payment session creation requests.</p>
+        </div>
+
+        <div class="step">
+            <span class="step-number">2</span>
+            <strong>Implement Message Listener</strong>
+            <p>Add the JavaScript message listener to your payment page.</p>
+        </div>
+
+        <div class="step">
+            <span class="step-number">3</span>
+            <strong>Update Success/Error Handling</strong>
+            <p>Replace your redirect-based success/error pages with JavaScript handlers.</p>
+        </div>
+
+        <div class="step">
+            <span class="step-number">4</span>
+            <strong>Keep Fallback URLs</strong>
+            <p>Keep your <code>returnUrl</code> parameter as a fallback mechanism in case JavaScript callbacks fail.</p>
+        </div>
+
+        <div class="step">
+            <span class="step-number">5</span>
+            <strong>Test Thoroughly</strong>
+            <p>Test both success and failure scenarios to ensure your integration works correctly.</p>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>❓ Troubleshooting</h2>
+        
+        <h3>Common Issues</h3>
+        <div style="background: #f8f9fa; padding: 15px; border-radius: 5px; margin: 10px 0;">
+            <strong>Q: I'm not receiving any messages</strong><br>
+            A: Check that you've set <code>useJavaScriptCallback: true</code> in your API request and that your message listener is properly set up.
+        </div>
+        
+        <div style="background: #f8f9fa; padding: 15px; border-radius: 5px; margin: 10px 0;">
+            <strong>Q: Messages are being blocked</strong><br>
+            A: Verify that you're validating the correct origin and that your iframe source matches your trusted origin.
+        </div>
+        
+        <div style="background: #f8f9fa; padding: 15px; border-radius: 5px; margin: 10px 0;">
+            <strong>Q: Fallback redirects are happening</strong><br>
+            A: This usually means the JavaScript callback failed. Check your browser console for errors and ensure your message listener is active.
+        </div>
+    </div>
+
+    <script>
+        // Demo functionality
+        let messageListener = null;
+        
+        function log(message, type = 'info') {
+            const logContainer = document.getElementById('event-log');
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.className = `log-entry log-${type}`;
+            logEntry.textContent = `[${timestamp}] ${message}`;
+            logContainer.appendChild(logEntry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+            
+            if (document.getElementById('verbose-logging').checked) {
+                console.log(`[${type.toUpperCase()}] ${message}`);
+            }
+        }
+        
+        function clearLog() {
+            document.getElementById('event-log').innerHTML = '';
+            log('Event log cleared', 'info');
+        }
+        
+        function showTab(tabId) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // Remove active class from all tabs
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected tab content
+            document.getElementById(tabId).classList.add('active');
+            
+            // Add active class to clicked tab
+            event.target.classList.add('active');
+        }
+        
+        function setupMessageListener() {
+            if (messageListener) {
+                window.removeEventListener("message", messageListener);
+            }
+            
+            messageListener = function(event) {
+                const trustedOrigin = document.getElementById('trusted-origin').value;
+                
+                log(`Received message from origin: ${event.origin}`, 'info');
+                
+                // Security check - allow trusted origin, null origin (local testing), same-origin, and localhost
+                const isValidOrigin = event.origin === trustedOrigin || 
+                                    event.origin === "null" || 
+                                    event.origin === window.location.origin ||
+                                    event.origin.includes('localhost') ||
+                                    event.origin.includes('127.0.0.1');
+                
+                if (!isValidOrigin) {
+                    log(`⚠️ Message from untrusted origin: ${event.origin}`, 'error');
+                    return;
+                }
+                
+                // Check if this is a Fiska payment result
+                if (event.data && event.data.type === "fiskaPaymentResult") {
+                    log('📨 Received Fiska payment result', 'info');
+                    const result = event.data.data;
+                    
+                    if (result.success) {
+                        handlePaymentSuccess(result);
+                    } else {
+                        handlePaymentError(result);
+                    }
+                } else {
+                    log(`Received non-payment message: ${JSON.stringify(event.data)}`, 'info');
+                }
+            };
+            
+            window.addEventListener("message", messageListener);
+            log('✅ Message listener setup complete', 'success');
+        }
+        
+        function handlePaymentSuccess(result) {
+            log('🎉 Payment successful!', 'success');
+            log(`Transaction ID: ${result.transactionId}`, 'success');
+            log(`Amount: ${result.amount} ${result.currency}`, 'success');
+            log(`Action Type: ${result.actionType}`, 'success');
+            
+            // Hide iframe and show success message
+            const container = document.getElementById('iframe-container');
+            container.innerHTML = `
+                <div class="success">
+                    <h3>🎉 Payment Successful!</h3>
+                    <p><strong>Transaction ID:</strong> ${result.transactionId}</p>
+                    <p><strong>Reference ID:</strong> ${result.referenceId}</p>
+                    <p><strong>Amount:</strong> ${result.amount} ${result.currency}</p>
+                    <p><strong>Action:</strong> ${result.actionType}</p>
+                    ${result.paymentMethod ? `<p><strong>Payment Method:</strong> ${result.paymentMethod.cardType} ending in ${result.paymentMethod.last4 || 'XXXX'}</p>` : ''}
+                    <button onclick="clearDemo()">Start New Payment</button>
+                </div>
+            `;
+            
+            // Log full result object
+            log(`Full result: ${JSON.stringify(result, null, 2)}`, 'info');
+        }
+        
+        function handlePaymentError(result) {
+            log('❌ Payment failed!', 'error');
+            log(`Error: ${result.errorMessage}`, 'error');
+            log(`Error Code: ${result.errorCode}`, 'error');
+            
+            // Hide iframe and show error message
+            const container = document.getElementById('iframe-container');
+            container.innerHTML = `
+                <div class="error">
+                    <h3>❌ Payment Failed</h3>
+                    <p><strong>Error:</strong> ${result.errorMessage}</p>
+                    <p><strong>Error Code:</strong> ${result.errorCode}</p>
+                    <p><strong>Transaction ID:</strong> ${result.transactionId}</p>
+                    <button onclick="clearDemo()">Try Again</button>
+                </div>
+            `;
+            
+            // Log full result object
+            log(`Full error result: ${JSON.stringify(result, null, 2)}`, 'error');
+        }
+        
+        function loadIframe() {
+            const iframeUrl = document.getElementById('iframe-url').value;
+            
+            if (!iframeUrl) {
+                alert('Please enter an iframe URL first');
+                return;
+            }
+            
+            log(`Loading iframe: ${iframeUrl}`, 'info');
+            
+            const container = document.getElementById('iframe-container');
+            container.classList.add('has-iframe');
+            container.innerHTML = `
+                <iframe 
+                    id="payment-iframe"
+                    src="${iframeUrl}"
+                    width="100%" 
+                    height="650"
+                    frameborder="0"
+                    style="border: 1px solid #ddd; border-radius: 8px; max-width: 600px;"
+                    onload="adjustIframeHeight(this)">
+                </iframe>
+            `;
+            
+            // Setup message listener if callbacks are enabled
+            if (document.getElementById('enable-callbacks').checked) {
+                setupMessageListener();
+            } else {
+                log('⚠️ JavaScript callbacks are disabled', 'info');
+            }
+        }
+        
+        function adjustIframeHeight(iframe) {
+            try {
+                // Try to access iframe content to adjust height
+                const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+                if (iframeDoc && iframeDoc.body) {
+                    const height = Math.max(
+                        iframeDoc.body.scrollHeight,
+                        iframeDoc.body.offsetHeight,
+                        iframeDoc.documentElement.clientHeight,
+                        iframeDoc.documentElement.scrollHeight,
+                        iframeDoc.documentElement.offsetHeight
+                    );
+                    
+                    if (height > 100) { // Only adjust if we get a reasonable height
+                        iframe.style.height = height + 'px';
+                        log(`📏 Adjusted iframe height to ${height}px`, 'info');
+                    }
+                }
+            } catch (e) {
+                // Cross-origin restrictions prevent height adjustment
+                log('📏 Cannot auto-adjust iframe height due to cross-origin restrictions', 'info');
+                
+                // Set up a message listener for height adjustment
+                const heightListener = function(event) {
+                    if (event.data && event.data.type === 'resize' && event.data.height) {
+                        iframe.style.height = event.data.height + 'px';
+                        log(`📏 Adjusted iframe height to ${event.data.height}px via message`, 'info');
+                    }
+                };
+                
+                window.addEventListener('message', heightListener);
+            }
+        }
+        
+        function simulateSuccess() {
+            log('🧪 Simulating successful payment...', 'info');
+            
+            const mockSuccessResult = {
+                success: true,
+                transactionId: 'txn_demo_' + Date.now(),
+                referenceId: 'demo-ref-123',
+                orderNumber: 'order-demo-456',
+                invoiceNumber: 'inv-demo-789',
+                amount: 2500,
+                currency: 'USD',
+                actionType: 'Sale',
+                paymentMethod: {
+                    id: 'pmt_tkn_demo_' + Date.now(),
+                    type: 'CreditCard',
+                    cardType: 'VISA',
+                    last4: '1234'
+                },
+                transactionResponses: [{
+                    accountType: 'Credit',
+                    cardType: 'VISA',
+                    responseCode: 1
+                }],
+                resultCode: 0,
+                resultText: 'Transaction completed successfully',
+                timestamp: Math.floor(Date.now() / 1000)
+            };
+            
+            handlePaymentSuccess(mockSuccessResult);
+        }
+        
+        function simulateError() {
+            log('🧪 Simulating payment error...', 'info');
+            
+            const mockErrorResult = {
+                success: false,
+                transactionId: 'txn_demo_' + Date.now(),
+                referenceId: 'demo-ref-123',
+                amount: 2500,
+                currency: 'USD',
+                actionType: 'Sale',
+                resultCode: 9999,
+                errorMessage: 'Card declined - Insufficient funds',
+                errorCode: '1001',
+                timestamp: Math.floor(Date.now() / 1000)
+            };
+            
+            handlePaymentError(mockErrorResult);
+        }
+        
+        function clearDemo() {
+            const container = document.getElementById('iframe-container');
+            container.classList.remove('has-iframe');
+            container.innerHTML = `
+                <div class="iframe-placeholder">
+                    <p>📱 Payment iframe will appear here</p>
+                    <p>Enter an iframe URL above and click "Load Payment Iframe"</p>
+                </div>
+            `;
+            log('🧹 Demo cleared', 'info');
+        }
+        
+        // Initialize demo
+        document.addEventListener('DOMContentLoaded', function() {
+            log('🚀 Demo page loaded and ready', 'success');
+            log('Enter an iframe URL and click "Load Payment Iframe" to begin', 'info');
+        });
+    </script>
+</body>
+</html> 
