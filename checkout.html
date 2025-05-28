@@ -1147,6 +1147,7 @@
           </div>
 
           <div class="button-container">
+            <button class="btn" id="createTokenBtn">Create Token</button>
             <button class="btn" id="checkoutExistingBtn">Token Sale</button>
             <button class="btn" id="checkoutNewBtn">Sale</button>
             <button class="btn" id="tokenAuthBtn">Token Auth</button>
@@ -1559,6 +1560,7 @@
       const checkoutNewBtn = document.getElementById('checkoutNewBtn');
       const authBtn = document.getElementById('authBtn');
       const getAuthTransactionsBtn = document.getElementById('getAuthTransactionsBtn');
+      const createTokenBtn = document.getElementById('createTokenBtn');
       const captureBtn = document.getElementById('captureBtn');
       let selectedTransaction = null;
       const tokenAuthBtn = document.getElementById('tokenAuthBtn');
@@ -3623,6 +3625,23 @@
             row.classList.remove('selected');
           });
         }
+      }
+      // Create Token button event listener
+      const createTokenBtn = document.getElementById('createTokenBtn');
+      if (createTokenBtn) {
+        createTokenBtn.addEventListener('click', () => {
+          // Reset modal state
+          paymentIframe.style.display = 'none';
+          apiError.style.display = 'none';
+          spinner.style.display = 'block';
+
+          // Display the modal for creating token
+          cardModal.style.display = 'flex';
+          toggleBlur(true);
+
+          // Call the existing function
+          createCardNotPresentToken();
+        });
       }
     </script>
   </body>
