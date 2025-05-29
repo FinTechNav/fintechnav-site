@@ -2002,7 +2002,7 @@
         const apiKey = localStorage.getItem(API_KEY_STORAGE);
 
         if (!apiKey) {
-          alert('API key is missing. Please enter and save your API key.');
+          showCopyableError('API key is missing. Please enter and save your API key.');
           return;
         }
 
@@ -2085,7 +2085,7 @@
             }
           } catch (error) {
             console.error('Error parsing response:', error);
-            showAlert(apiError, 'Invalid response format', 'error');
+            showCopyableError(`Invalid response format\n\nRaw response: ${responseText}`);
             spinner.style.display = 'none';
             return;
           }
@@ -2111,7 +2111,8 @@
             spinner.style.display = 'none';
           } else {
             // Handle missing iframe URL
-            showAlert(apiError, 'No payment iframe URL returned', 'error');
+            const fullErrorMessage = `Virtual Sale Error\n\nNo payment iframe URL returned\n\nFull Response:\n${JSON.stringify(data, null, 2)}`;
+            showCopyableError(fullErrorMessage);
             spinner.style.display = 'none';
           }
         } catch (error) {
@@ -2125,7 +2126,7 @@
         const apiKey = localStorage.getItem(API_KEY_STORAGE);
 
         if (!apiKey) {
-          alert('API key is missing. Please enter and save your API key.');
+          showCopyableError('API key is missing. Please enter and save your API key.');
           return;
         }
 
@@ -2208,7 +2209,7 @@
             }
           } catch (error) {
             console.error('Error parsing response:', error);
-            showAlert(apiError, 'Invalid response format', 'error');
+            showCopyableError(`Invalid response format\n\nRaw response: ${responseText}`);
             spinner.style.display = 'none';
             return;
           }
@@ -2234,7 +2235,8 @@
             spinner.style.display = 'none';
           } else {
             // Handle missing iframe URL
-            showAlert(apiError, 'No payment iframe URL returned', 'error');
+            const fullErrorMessage = `Virtual Sale Error\n\nNo payment iframe URL returned\n\nFull Response:\n${JSON.stringify(data, null, 2)}`;
+            showCopyableError(fullErrorMessage);
             spinner.style.display = 'none';
           }
         } catch (error) {
@@ -2249,12 +2251,12 @@
         const apiKey = localStorage.getItem(API_KEY_STORAGE);
 
         if (!apiKey) {
-          alert('API key is missing. Please enter and save your API key.');
+          showCopyableError('API key is missing. Please enter and save your API key.');
           return;
         }
 
         if (!tokenId) {
-          alert('Please select a payment method first.');
+          showCopyableError('Please select a payment method first.');
           return;
         }
 
@@ -3351,12 +3353,12 @@
         const apiKey = localStorage.getItem(API_KEY_STORAGE);
 
         if (!apiKey) {
-          alert('API key is missing. Please enter and save your API key.');
+          showCopyableError('API key is missing. Please enter and save your API key.');
           return;
         }
 
         if (!tokenId) {
-          alert('Please select a payment method first.');
+          showCopyableError('Please select a payment method first.');
           return;
         }
 
@@ -3429,14 +3431,20 @@
             }
           } catch (error) {
             console.error('Error parsing response:', error);
-            alert(`Error: Invalid response format\n\nRaw response: ${responseText}`);
+            showCopyableError(`Error: Invalid response format\n\nRaw response: ${responseText}`);
             return;
           }
 
           // Handle error response
           if (!response.ok) {
-            let errorMessage = `Error: API returned an error.\n\nStatus: ${response.status}\n\nRaw Response:\n${responseText}`;
-            alert(errorMessage);
+            let errorMessage = `Token Auth Error\n\nStatus: ${response.status}\n\nRaw Response:\n${responseText}`;
+            try {
+              const formattedJson = JSON.stringify(data, null, 2);
+              errorMessage += `\n\nFormatted JSON:\n${formattedJson}`;
+            } catch (e) {
+              // JSON formatting failed, raw response is already included
+            }
+            showCopyableError(errorMessage);
             return;
           }
 
