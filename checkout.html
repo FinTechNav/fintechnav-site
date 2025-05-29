@@ -3352,7 +3352,10 @@
             if (errorMessage === 'API request failed') {
               errorMessage = `Error ${response.status}: ${response.statusText}`;
             }
-            throw new Error(errorMessage);
+
+            const fullErrorMessage = `Capture Error\n\nStatus: ${response.status}\n\nMessage: ${errorMessage}\n\nFull Response:\n${JSON.stringify(data, null, 2)}`;
+            showCopyableError(fullErrorMessage);
+            return; // Return instead of throwing
           }
 
           // Success - show detailed response
@@ -3372,7 +3375,9 @@
           // Refresh the auth transactions list
           getAuthTransactions();
         } catch (error) {
-          const errorMessage = `Capture Processing Error\n\n${error.message}\n\nStack trace:\n${error.stack}`;
+          // Only show stack trace for actual JavaScript errors, not API errors
+          console.error('JavaScript error in capture processing:', error);
+          const errorMessage = `Capture Processing Error\n\nJavaScript Error: ${error.message}\n\nThis appears to be a code error, not an API error.`;
           showCopyableError(errorMessage);
         } finally {
           // Reset button state
@@ -3816,7 +3821,10 @@
             if (errorMessage === 'API request failed') {
               errorMessage = `Error ${response.status}: ${response.statusText}`;
             }
-            throw new Error(errorMessage);
+
+            const fullErrorMessage = `Refund Error\n\nStatus: ${response.status}\n\nMessage: ${errorMessage}\n\nFull Response:\n${JSON.stringify(data, null, 2)}`;
+            showCopyableError(fullErrorMessage);
+            return; // Return instead of throwing
           }
 
           // Success
@@ -3836,7 +3844,9 @@
           // Refresh the sale/capture transactions list
           getSaleCaptureTransactions();
         } catch (error) {
-          const errorMessage = `Refund Processing Error\n\n${error.message}\n\nStack trace:\n${error.stack}`;
+          // Only show stack trace for actual JavaScript errors, not API errors
+          console.error('JavaScript error in refund processing:', error);
+          const errorMessage = `Refund Processing Error\n\nJavaScript Error: ${error.message}\n\nThis appears to be a code error, not an API error.`;
           showCopyableError(errorMessage);
         } finally {
           // Reset button state
