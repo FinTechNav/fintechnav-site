@@ -1849,7 +1849,7 @@
         // Always make sure to stop the spinner in case of errors
         try {
           if (!apiKey) {
-            showAlert(apiError, 'API key is missing. Please enter and save your API key.', 'error');
+            showCopyableError('API key is missing. Please enter and save your API key.');
             spinner.style.display = 'none';
             return;
           }
@@ -1937,15 +1937,12 @@
           // Handle error response
           if (!response.ok) {
             let errorMessage = extractErrorMessage(data);
-
-            // If no specific message was found, use status-based message
             if (errorMessage === 'API request failed') {
               errorMessage = `Error ${response.status}: ${response.statusText}`;
             }
 
-            console.error('API error:', errorMessage);
-            console.error('Full response data:', data);
-            showAlert(apiError, errorMessage, 'error');
+            const fullErrorMessage = `Create Token Error\n\nStatus: ${response.status}\n\nMessage: ${errorMessage}\n\nFull Response:\n${JSON.stringify(data, null, 2)}`;
+            showCopyableError(fullErrorMessage);
             spinner.style.display = 'none';
             return;
           }
@@ -2096,15 +2093,12 @@
           // Handle error response
           if (!response.ok) {
             let errorMessage = extractErrorMessage(data);
-
-            // If no specific message was found, use status-based message
             if (errorMessage === 'API request failed') {
               errorMessage = `Error ${response.status}: ${response.statusText}`;
             }
 
-            console.error('API error:', errorMessage);
-            console.error('Full response data:', data);
-            showAlert(apiError, errorMessage, 'error');
+            const fullErrorMessage = `Virtual Sale Error\n\nStatus: ${response.status}\n\nMessage: ${errorMessage}\n\nFull Response:\n${JSON.stringify(data, null, 2)}`;
+            showCopyableError(fullErrorMessage);
             spinner.style.display = 'none';
             return;
           }
@@ -2121,8 +2115,8 @@
             spinner.style.display = 'none';
           }
         } catch (error) {
-          console.error('Error processing virtual sale:', error);
-          showAlert(apiError, `Payment processing error: ${error.message}`, 'error');
+          const errorMessage = `Virtual Sale Processing Error\n\n${error.message}\n\nStack trace:\n${error.stack}`;
+          showCopyableError(errorMessage);
           spinner.style.display = 'none';
         }
       }
@@ -2222,15 +2216,12 @@
           // Handle error response
           if (!response.ok) {
             let errorMessage = extractErrorMessage(data);
-
-            // If no specific message was found, use status-based message
             if (errorMessage === 'API request failed') {
               errorMessage = `Error ${response.status}: ${response.statusText}`;
             }
 
-            console.error('API error:', errorMessage);
-            console.error('Full response data:', data);
-            showAlert(apiError, errorMessage, 'error');
+            const fullErrorMessage = `Virtual Auth Error\n\nStatus: ${response.status}\n\nMessage: ${errorMessage}\n\nFull Response:\n${JSON.stringify(data, null, 2)}`;
+            showCopyableError(fullErrorMessage);
             spinner.style.display = 'none';
             return;
           }
@@ -2247,8 +2238,8 @@
             spinner.style.display = 'none';
           }
         } catch (error) {
-          console.error('Error processing virtual auth:', error);
-          showAlert(apiError, `Payment processing error: ${error.message}`, 'error');
+          const errorMessage = `Virtual Auth Processing Error\n\n${error.message}\n\nStack trace:\n${error.stack}`;
+          showCopyableError(errorMessage);
           spinner.style.display = 'none';
         }
       }
