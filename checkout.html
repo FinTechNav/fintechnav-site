@@ -3303,11 +3303,7 @@
         // Add amount if provided
         if (captureAmountStr.trim() !== '') {
           const captureAmount = parseInt(captureAmountStr.trim());
-          if (isNaN(captureAmount) || captureAmount <= 0) {
-            alert('Please enter a valid amount in cents.');
-            return;
-          }
-          requestData.amount = captureAmount;
+          requestData.amount = captureAmount; // Send whatever the user entered, let API validate
         }
 
         // Add optional fields from the form (not from selected transaction)
@@ -3772,11 +3768,7 @@
         // Add amount if provided
         if (refundAmountStr.trim() !== '') {
           const refundAmount = parseInt(refundAmountStr.trim());
-          if (isNaN(refundAmount) || refundAmount <= 0) {
-            alert('Please enter a valid amount in cents.');
-            return;
-          }
-          requestData.amount = refundAmount;
+          requestData.amount = refundAmount; // Send whatever the user entered, let API validate
         }
 
         // Add optional fields from the form
