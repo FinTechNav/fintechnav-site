@@ -3329,8 +3329,8 @@
           // Refresh the auth transactions list
           getAuthTransactions();
         } catch (error) {
-          console.error('Error processing capture:', error);
-          alert(`Capture failed: ${error.message}`);
+          const errorMessage = `Capture Processing Error\n\n${error.message}\n\nStack trace:\n${error.stack}`;
+          showCopyableError(errorMessage);
         } finally {
           // Reset button state
           captureBtn.textContent = 'Capture';
@@ -3446,10 +3446,9 @@
             `Token Auth successful!\nTransaction ID: ${data.id || 'Unknown'}\nResult: ${data.resultText || 'Success'}`
           );
         } catch (error) {
-          console.error('Error processing token auth:', error);
-          alert(`Token Auth processing error: ${error.message}`);
+          const errorMessage = `Token Auth Processing Error\n\n${error.message}\n\nStack trace:\n${error.stack}`;
+          showCopyableError(errorMessage);
         } finally {
-          // Reset button state
           tokenAuthBtn.textContent = 'Token Auth';
           tokenAuthBtn.disabled = false;
         }
@@ -3740,8 +3739,8 @@
           // Refresh the sale/capture transactions list
           getSaleCaptureTransactions();
         } catch (error) {
-          console.error('Error processing refund:', error);
-          alert(`Refund failed: ${error.message}`);
+          const errorMessage = `Refund Processing Error\n\n${error.message}\n\nStack trace:\n${error.stack}`;
+          showCopyableError(errorMessage);
         } finally {
           // Reset button state
           refundBtn.textContent = 'Refund';
