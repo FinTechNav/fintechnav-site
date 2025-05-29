@@ -3036,7 +3036,7 @@
         const endOfDayUTC = endOfDay.toISOString();
 
         // Build the filters with explicit descending sort
-        const filters = `timestamp>=${startOfDayUTC},timestamp<${endOfDayUTC},type==Auth,amount>=1`;
+        const filters = `timestamp>=${startOfDayUTC},timestamp<${endOfDayUTC},type==Auth,approvedAmount>=1`;
         const sorts = '-timestamp'; // Negative sign for descending order
         const url = `${getApiBaseUrl()}/transactions?filters=${encodeURIComponent(filters)}&sorts=${sorts}`;
 
@@ -3085,7 +3085,7 @@
           const allHeaders = Object.keys(firstTransaction);
 
           // Define specific column order - first 5 columns in specified order, then rest alphabetically
-          const priorityHeaders = ['timestamp', 'type', 'amount', 'referenceId', 'id'];
+          const priorityHeaders = ['timestamp', 'type', 'approvedAmount', 'referenceId', 'id'];
           const remainingHeaders = allHeaders
             .filter((header) => !priorityHeaders.includes(header))
             .sort(); // Sort remaining headers alphabetically
@@ -3157,6 +3157,7 @@
           button.disabled = false;
         }
       }
+
       // Toggle between datetime and date-only inputs
       function toggleTimestampExactInputs() {
         const datetimeInput = document.getElementById('txnTimestampExact');
@@ -3213,7 +3214,8 @@
         }
 
         // Show popup with auth amount and request capture amount
-        const authAmount = selectedTransaction.amount || 'Unknown';
+        const authAmount =
+          selectedTransaction.approvedAmount || selectedTransaction.requestedAmount || 'Unknown';
         const captureAmountStr = prompt(
           `Auth Transaction Amount: ${authAmount} cents\n\nEnter capture amount in cents (leave blank to capture full amount):`
         );
@@ -3458,6 +3460,7 @@
           tokenAuthBtn.disabled = false;
         }
       }
+
       // Get Sale/Capture Transactions function
       async function getSaleCaptureTransactions() {
         const apiKey = localStorage.getItem(API_KEY_STORAGE);
@@ -3494,7 +3497,7 @@
         const endOfDayUTC = endOfDay.toISOString();
 
         // Build the filters for Sale OR Capture types with sorting
-        const filters = `timestamp>=${startOfDayUTC},timestamp<${endOfDayUTC},type==Sale|Capture,amount>=1`;
+        const filters = `timestamp>=${startOfDayUTC},timestamp<${endOfDayUTC},type==Sale|Capture,approvedAmount>=1`;
         const sorts = '-timestamp'; // Descending order (most recent first)
         const url = `${getApiBaseUrl()}/transactions?filters=${encodeURIComponent(filters)}&sorts=${sorts}`;
 
@@ -3543,7 +3546,7 @@
           const allHeaders = Object.keys(firstTransaction);
 
           // Define specific column order - first 5 columns in specified order, then rest alphabetically
-          const priorityHeaders = ['timestamp', 'type', 'amount', 'referenceId', 'id'];
+          const priorityHeaders = ['timestamp', 'type', 'approvedAmount', 'referenceId', 'id'];
           const remainingHeaders = allHeaders
             .filter((header) => !priorityHeaders.includes(header))
             .sort(); // Sort remaining headers alphabetically
@@ -3615,6 +3618,7 @@
           button.disabled = false;
         }
       }
+
       // Process refund transaction
       async function processRefund() {
         if (!selectedSaleCaptureTransaction) {
@@ -3629,7 +3633,10 @@
         }
 
         // Show popup with original amount and request refund amount
-        const originalAmount = selectedSaleCaptureTransaction.amount || 'Unknown';
+        const originalAmount =
+          selectedSaleCaptureTransaction.approvedAmount ||
+          selectedSaleCaptureTransaction.requestedAmount ||
+          'Unknown';
         const refundAmountStr = prompt(
           `Original Transaction Amount: ${originalAmount} cents\n\nEnter refund amount in cents (leave blank to refund full amount):`
         );
