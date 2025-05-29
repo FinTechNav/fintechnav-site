@@ -3035,8 +3035,8 @@
         const startOfDayUTC = startOfDay.toISOString();
         const endOfDayUTC = endOfDay.toISOString();
 
-        // Build the filters with explicit descending sort
-        const filters = `timestamp>=${startOfDayUTC},timestamp<${endOfDayUTC},type==Auth,approvedAmount>=1`;
+        // Build the filters with explicit descending sort - KEEP ORIGINAL REQUEST PARAMETERS
+        const filters = `timestamp>=${startOfDayUTC},timestamp<${endOfDayUTC},type==Auth,amount>=1`;
         const sorts = '-timestamp'; // Negative sign for descending order
         const url = `${getApiBaseUrl()}/transactions?filters=${encodeURIComponent(filters)}&sorts=${sorts}`;
 
@@ -3084,7 +3084,7 @@
           const firstTransaction = data.items[0];
           const allHeaders = Object.keys(firstTransaction);
 
-          // Define specific column order - first 5 columns in specified order, then rest alphabetically
+          // Define specific column order - updated for new response format
           const priorityHeaders = ['timestamp', 'type', 'approvedAmount', 'referenceId', 'id'];
           const remainingHeaders = allHeaders
             .filter((header) => !priorityHeaders.includes(header))
@@ -3496,8 +3496,8 @@
         const startOfDayUTC = startOfDay.toISOString();
         const endOfDayUTC = endOfDay.toISOString();
 
-        // Build the filters for Sale OR Capture types with sorting
-        const filters = `timestamp>=${startOfDayUTC},timestamp<${endOfDayUTC},type==Sale|Capture,approvedAmount>=1`;
+        // Build the filters for Sale OR Capture types with sorting - KEEP ORIGINAL REQUEST PARAMETERS
+        const filters = `timestamp>=${startOfDayUTC},timestamp<${endOfDayUTC},type==Sale|Capture,amount>=1`;
         const sorts = '-timestamp'; // Descending order (most recent first)
         const url = `${getApiBaseUrl()}/transactions?filters=${encodeURIComponent(filters)}&sorts=${sorts}`;
 
@@ -3545,7 +3545,7 @@
           const firstTransaction = data.items[0];
           const allHeaders = Object.keys(firstTransaction);
 
-          // Define specific column order - first 5 columns in specified order, then rest alphabetically
+          // Define specific column order - updated for new response format
           const priorityHeaders = ['timestamp', 'type', 'approvedAmount', 'referenceId', 'id'];
           const remainingHeaders = allHeaders
             .filter((header) => !priorityHeaders.includes(header))
