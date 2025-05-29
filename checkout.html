@@ -3080,17 +3080,29 @@
             return;
           }
 
-          // Generate table headers from the first transaction with custom order
-          const firstTransaction = data.items[0];
-          const allHeaders = Object.keys(firstTransaction);
-
-          // Define specific column order - updated for new response format
-          const priorityHeaders = ['timestamp', 'type', 'approvedAmount', 'referenceId', 'id'];
-          const remainingHeaders = allHeaders
-            .filter((header) => !priorityHeaders.includes(header))
-            .sort(); // Sort remaining headers alphabetically
-
-          const headers = [...priorityHeaders, ...remainingHeaders];
+          // Define the specific columns we want to display
+          const headers = [
+            'timestamp',
+            'type',
+            'id',
+            'referenceId',
+            'orderNumber',
+            'invoiceNumber',
+            'resultCode',
+            'resultText',
+            'requestedAmount',
+            'approvedAmount',
+            'balanceAmount',
+            'paymentMethodId',
+            'responseCode',
+            'authCode',
+            'transactionPaymentMethodId',
+            'transactionPaymentMethodType',
+            'transactionCardType',
+            'transactionMaskedCardNumber',
+            'transactionCardExpDate',
+            'hostResponseText',
+          ];
 
           // Create header row
           tableHeader.innerHTML = '';
@@ -3127,19 +3139,50 @@
               captureBtn.style.cursor = 'pointer';
             });
 
+            // Parse and display specific fields
             headers.forEach((header) => {
               const td = document.createElement('td');
-              const value = transaction[header];
+              let value = '';
 
-              // Format the value for display
-              if (value === null || value === undefined) {
-                td.textContent = '';
-              } else if (typeof value === 'object') {
-                td.textContent = JSON.stringify(value);
-              } else {
-                td.textContent = String(value);
+              switch (header) {
+                case 'paymentMethodId':
+                  value = transaction.paymentMethod?.id || '';
+                  break;
+                case 'responseCode':
+                  value = transaction.transactionResponses?.[0]?.responseCode || '';
+                  break;
+                case 'authCode':
+                  value = transaction.transactionResponses?.[0]?.authCode || '';
+                  break;
+                case 'transactionPaymentMethodId':
+                  value = transaction.transactionResponses?.[0]?.paymentMethod?.id || '';
+                  break;
+                case 'transactionPaymentMethodType':
+                  value = transaction.transactionResponses?.[0]?.paymentMethod?.type || '';
+                  break;
+                case 'transactionCardType':
+                  value = transaction.transactionResponses?.[0]?.paymentMethod?.cardType || '';
+                  break;
+                case 'transactionMaskedCardNumber':
+                  value =
+                    transaction.transactionResponses?.[0]?.paymentMethod?.maskedCardNumber || '';
+                  break;
+                case 'transactionCardExpDate':
+                  value = transaction.transactionResponses?.[0]?.paymentMethod?.cardExpDate || '';
+                  break;
+                case 'hostResponseText':
+                  value = transaction.transactionResponses?.[0]?.hostResponseText || '';
+                  break;
+                default:
+                  // For regular transaction fields
+                  value = transaction[header];
+                  if (value === null || value === undefined) {
+                    value = '';
+                  }
+                  break;
               }
 
+              td.textContent = String(value);
               row.appendChild(td);
             });
             tableBody.appendChild(row);
@@ -3157,7 +3200,6 @@
           button.disabled = false;
         }
       }
-
       // Toggle between datetime and date-only inputs
       function toggleTimestampExactInputs() {
         const datetimeInput = document.getElementById('txnTimestampExact');
@@ -3541,17 +3583,29 @@
             return;
           }
 
-          // Generate table headers from the first transaction with custom order
-          const firstTransaction = data.items[0];
-          const allHeaders = Object.keys(firstTransaction);
-
-          // Define specific column order - updated for new response format
-          const priorityHeaders = ['timestamp', 'type', 'approvedAmount', 'referenceId', 'id'];
-          const remainingHeaders = allHeaders
-            .filter((header) => !priorityHeaders.includes(header))
-            .sort(); // Sort remaining headers alphabetically
-
-          const headers = [...priorityHeaders, ...remainingHeaders];
+          // Define the specific columns we want to display
+          const headers = [
+            'timestamp',
+            'type',
+            'id',
+            'referenceId',
+            'orderNumber',
+            'invoiceNumber',
+            'resultCode',
+            'resultText',
+            'requestedAmount',
+            'approvedAmount',
+            'balanceAmount',
+            'paymentMethodId',
+            'responseCode',
+            'authCode',
+            'transactionPaymentMethodId',
+            'transactionPaymentMethodType',
+            'transactionCardType',
+            'transactionMaskedCardNumber',
+            'transactionCardExpDate',
+            'hostResponseText',
+          ];
 
           // Create header row
           tableHeader.innerHTML = '';
@@ -3588,19 +3642,50 @@
               refundBtn.style.cursor = 'pointer';
             });
 
+            // Parse and display specific fields
             headers.forEach((header) => {
               const td = document.createElement('td');
-              const value = transaction[header];
+              let value = '';
 
-              // Format the value for display
-              if (value === null || value === undefined) {
-                td.textContent = '';
-              } else if (typeof value === 'object') {
-                td.textContent = JSON.stringify(value);
-              } else {
-                td.textContent = String(value);
+              switch (header) {
+                case 'paymentMethodId':
+                  value = transaction.paymentMethod?.id || '';
+                  break;
+                case 'responseCode':
+                  value = transaction.transactionResponses?.[0]?.responseCode || '';
+                  break;
+                case 'authCode':
+                  value = transaction.transactionResponses?.[0]?.authCode || '';
+                  break;
+                case 'transactionPaymentMethodId':
+                  value = transaction.transactionResponses?.[0]?.paymentMethod?.id || '';
+                  break;
+                case 'transactionPaymentMethodType':
+                  value = transaction.transactionResponses?.[0]?.paymentMethod?.type || '';
+                  break;
+                case 'transactionCardType':
+                  value = transaction.transactionResponses?.[0]?.paymentMethod?.cardType || '';
+                  break;
+                case 'transactionMaskedCardNumber':
+                  value =
+                    transaction.transactionResponses?.[0]?.paymentMethod?.maskedCardNumber || '';
+                  break;
+                case 'transactionCardExpDate':
+                  value = transaction.transactionResponses?.[0]?.paymentMethod?.cardExpDate || '';
+                  break;
+                case 'hostResponseText':
+                  value = transaction.transactionResponses?.[0]?.hostResponseText || '';
+                  break;
+                default:
+                  // For regular transaction fields
+                  value = transaction[header];
+                  if (value === null || value === undefined) {
+                    value = '';
+                  }
+                  break;
               }
 
+              td.textContent = String(value);
               row.appendChild(td);
             });
             tableBody.appendChild(row);
