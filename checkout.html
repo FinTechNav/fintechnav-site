@@ -2231,13 +2231,10 @@
               // JSON formatting failed, raw response is already included
             }
 
-            // Show in a modal-style alert that can be copied
-            showAlert(apiKeyStatus, errorMessage, 'error');
+            // Show the error using alert() for now since we're not in modal context
+            alert(errorMessage);
 
-            // Scroll to the error message
-            apiKeyStatus.scrollIntoView({ behavior: 'smooth', block: 'center' });
-
-            checkoutExistingBtn.textContent = originalButtonText;
+            checkoutExistingBtn.textContent = 'Token Sale';
             checkoutExistingBtn.disabled = false;
             return;
           }
