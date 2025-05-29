@@ -387,7 +387,7 @@
 
       .additional-fields-grid {
         display: grid;
-        grid-template-columns: 1fr 1fr;
+        grid-template-columns: 1fr 1fr 1fr;
         gap: 15px;
       }
 
@@ -411,6 +411,12 @@
 
         .additional-fields-grid {
           grid-template-columns: 1fr;
+        }
+      }
+
+      @media screen and (max-width: 1200px) and (min-width: 769px) {
+        .additional-fields-grid {
+          grid-template-columns: 1fr 1fr;
         }
       }
       /* Compact layout styles */
@@ -1049,7 +1055,7 @@
         <!-- Payments Tab -->
         <div class="tab-content active" id="payments-tab">
           <div class="api-key-section">
-            <div class="form-row">
+            <div class="additional-fields-grid">
               <div class="form-group">
                 <label for="amount">Amount (in cents):</label>
                 <input
@@ -1059,6 +1065,7 @@
                   placeholder="e.g., 7273 for $72.73"
                 />
               </div>
+
               <div class="form-group">
                 <label for="paymentMethodId">Payment Method ID (optional):</label>
                 <input
@@ -1068,9 +1075,7 @@
                   placeholder="Enter payment method ID or leave blank if you only have one payment method ID"
                 />
               </div>
-            </div>
 
-            <div class="form-row">
               <div class="form-group">
                 <label for="referenceId">Reference ID:</label>
                 <input
@@ -1080,10 +1085,7 @@
                   placeholder="e.g., REF-12345"
                 />
               </div>
-            </div>
 
-            <!-- Additional API configuration fields (always visible) -->
-            <div class="additional-fields-grid">
               <div class="form-group">
                 <label for="amountGoodsAndServices">Amount Goods and Services (in cents):</label>
                 <input
