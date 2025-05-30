@@ -1998,11 +1998,6 @@
       async function processVirtualSale() {
         const apiKey = localStorage.getItem(API_KEY_STORAGE);
 
-        if (!apiKey) {
-          showCopyableError('API key is missing. Please enter and save your API key.');
-          return;
-        }
-
         // Generate a reference ID using current timestamp or use saved one
         const referenceId = localStorage.getItem(REFERENCE_ID_STORAGE) || `ref_${Date.now()}`;
 
@@ -2121,11 +2116,6 @@
       // Process a virtual (Card Not Present) auth
       async function processVirtualAuth() {
         const apiKey = localStorage.getItem(API_KEY_STORAGE);
-
-        if (!apiKey) {
-          showCopyableError('API key is missing. Please enter and save your API key.');
-          return;
-        }
 
         // Generate a reference ID using current timestamp or use saved one
         const referenceId = localStorage.getItem(REFERENCE_ID_STORAGE) || `ref_${Date.now()}`;
@@ -2246,11 +2236,6 @@
       // Complete updated processTokenSale function with enhanced debugging and error handling
       async function processTokenSale(tokenId) {
         const apiKey = localStorage.getItem(API_KEY_STORAGE);
-
-        if (!apiKey) {
-          showCopyableError('API key is missing. Please enter and save your API key.');
-          return;
-        }
 
         if (!tokenId) {
           showCopyableError('Please select a payment method first.');
@@ -2865,11 +2850,6 @@
         const resultsContainer = document.getElementById('pmResults');
         const resultsText = document.getElementById('pmResultsText');
 
-        if (!apiKey) {
-          alert('API key is missing. Please configure it at the top of the page first.');
-          return;
-        }
-
         // Build query parameters
         const params = new URLSearchParams();
 
@@ -2935,11 +2915,6 @@
         const filters = buildTransactionFilters();
         const resultsContainer = document.getElementById('txnResults');
         const resultsText = document.getElementById('txnResultsText');
-
-        if (!apiKey) {
-          alert('API key is missing. Please configure it at the top of the page first.');
-          return;
-        }
 
         // Build query parameters
         const params = new URLSearchParams();
@@ -3010,16 +2985,6 @@
         captureBtn.disabled = true;
         captureBtn.style.opacity = '0.5';
         captureBtn.style.cursor = 'not-allowed';
-
-        if (!apiKey) {
-          showAlert(
-            errorDiv,
-            'API key is missing. Please configure it at the top of the page first.',
-            'error'
-          );
-          container.classList.add('show');
-          return;
-        }
 
         // Generate today's date range in UTC
         const today = new Date();
@@ -3244,12 +3209,6 @@
           return;
         }
 
-        const apiKey = localStorage.getItem(API_KEY_STORAGE);
-        if (!apiKey) {
-          alert('API key is missing. Please configure it at the top of the page first.');
-          return;
-        }
-
         // Show popup with auth amount and request capture amount
         const authAmount =
           selectedTransaction.approvedAmount || selectedTransaction.requestedAmount || 'Unknown';
@@ -3389,11 +3348,6 @@
       async function processTokenAuth(tokenId) {
         const apiKey = localStorage.getItem(API_KEY_STORAGE);
 
-        if (!apiKey) {
-          showCopyableError('API key is missing. Please enter and save your API key.');
-          return;
-        }
-
         if (!tokenId) {
           showCopyableError('Please select a payment method first.');
           return;
@@ -3508,16 +3462,6 @@
         const tableHeader = document.getElementById('saleCaptureTransactionsHeader');
         const tableBody = document.getElementById('saleCaptureTransactionsBody');
         const button = document.getElementById('getSaleCaptureTransactionsBtn');
-
-        if (!apiKey) {
-          showAlert(
-            errorDiv,
-            'API key is missing. Please configure it at the top of the page first.',
-            'error'
-          );
-          container.classList.add('show');
-          return;
-        }
 
         // Reset selection state
         selectedSaleCaptureTransaction = null;
@@ -3708,10 +3652,6 @@
         }
 
         const apiKey = localStorage.getItem(API_KEY_STORAGE);
-        if (!apiKey) {
-          alert('API key is missing. Please configure it at the top of the page first.');
-          return;
-        }
 
         // Show popup with original amount and request refund amount
         const originalAmount =
