@@ -2005,7 +2005,7 @@
         const paymentMethodId = localStorage.getItem(PAYMENT_METHOD_ID_STORAGE);
 
         // Get other configuration values
-        const amount = parseInt(localStorage.getItem(AMOUNT_STORAGE) || '7273');
+        const amount = localStorage.getItem(AMOUNT_STORAGE) || '7273';
         const tax = parseInt(localStorage.getItem(TAX_STORAGE) || '0');
         const cashBack = parseInt(localStorage.getItem(CASHBACK_STORAGE) || '0');
         const tip = parseInt(localStorage.getItem(TIP_STORAGE) || '0');
@@ -2124,7 +2124,7 @@
         const paymentMethodId = localStorage.getItem(PAYMENT_METHOD_ID_STORAGE);
 
         // Get other configuration values
-        const amount = parseInt(localStorage.getItem(AMOUNT_STORAGE) || '7273');
+        const amount = localStorage.getItem(AMOUNT_STORAGE) || '7273';
         const tax = parseInt(localStorage.getItem(TAX_STORAGE) || '0');
         const cashBack = parseInt(localStorage.getItem(CASHBACK_STORAGE) || '0');
         const tip = parseInt(localStorage.getItem(TIP_STORAGE) || '0');
@@ -2244,7 +2244,7 @@
 
         // Get configuration values
         const referenceId = localStorage.getItem(REFERENCE_ID_STORAGE) || `ref_${Date.now()}`;
-        const amount = parseInt(localStorage.getItem(AMOUNT_STORAGE) || '7273');
+        const amount = localStorage.getItem(AMOUNT_STORAGE) || '7273';
         const tax = parseInt(localStorage.getItem(TAX_STORAGE) || '0');
         const cashBack = parseInt(localStorage.getItem(CASHBACK_STORAGE) || '0');
         const tip = parseInt(localStorage.getItem(TIP_STORAGE) || '0');
@@ -3257,8 +3257,7 @@
 
         // Add amount if provided
         if (captureAmountStr.trim() !== '') {
-          const captureAmount = parseInt(captureAmountStr.trim());
-          requestData.amount = captureAmount; // Send whatever the user entered, let API validate
+          requestData.amount = captureAmountStr.trim(); // Send the raw string, let API validate
         }
 
         // Add optional fields from the form (not from selected transaction)
@@ -3356,7 +3355,7 @@
 
         // Get configuration values
         const referenceId = localStorage.getItem(REFERENCE_ID_STORAGE) || `ref_${Date.now()}`;
-        const amount = parseInt(localStorage.getItem(AMOUNT_STORAGE) || '7273');
+        const amount = localStorage.getItem(AMOUNT_STORAGE) || '7273';
         const tax = parseInt(localStorage.getItem(TAX_STORAGE) || '0');
         const cashBack = parseInt(localStorage.getItem(CASHBACK_STORAGE) || '0');
         const tip = parseInt(localStorage.getItem(TIP_STORAGE) || '0');
@@ -3702,8 +3701,7 @@
 
         // Add amount if provided
         if (refundAmountStr.trim() !== '') {
-          const refundAmount = parseInt(refundAmountStr.trim());
-          requestData.amount = refundAmount; // Send whatever the user entered, let API validate
+          requestData.amount = refundAmountStr.trim(); // Send the raw string, let API validate
         }
 
         // Add optional fields from the form
