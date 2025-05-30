@@ -2673,7 +2673,6 @@
         }
       }
 
-      // Save global configuration
       function saveGlobalConfig() {
         const apiKey = document.getElementById('globalApiKey').value.trim();
         const environment = document.getElementById('globalEnvProd').checked ? 'prod' : 'dev';
@@ -2692,26 +2691,22 @@
         const invoiceNumber = document.getElementById('invoiceNumber').value.trim();
         const orderNumber = document.getElementById('orderNumber').value.trim();
 
-        if (apiKey) {
-          // Save API key and environment
-          localStorage.setItem(API_KEY_STORAGE, apiKey);
-          localStorage.setItem(ENVIRONMENT_STORAGE, environment);
+        // Save API key and environment (even if blank)
+        localStorage.setItem(API_KEY_STORAGE, apiKey);
+        localStorage.setItem(ENVIRONMENT_STORAGE, environment);
 
-          // Save all form values
-          saveOrRemoveFromStorage(AMOUNT_STORAGE, amount);
-          saveOrRemoveFromStorage(PAYMENT_METHOD_ID_STORAGE, paymentMethodId);
-          saveOrRemoveFromStorage(REFERENCE_ID_STORAGE, referenceId);
-          saveOrRemoveFromStorage(AMOUNT_GOODS_SERVICES_STORAGE, amountGoodsAndServices);
-          saveOrRemoveFromStorage(TAX_STORAGE, tax);
-          saveOrRemoveFromStorage(CASHBACK_STORAGE, cashBack);
-          saveOrRemoveFromStorage(TIP_STORAGE, tip);
-          saveOrRemoveFromStorage(INVOICE_NUMBER_STORAGE, invoiceNumber);
-          saveOrRemoveFromStorage(ORDER_NUMBER_STORAGE, orderNumber);
+        // Save all form values
+        saveOrRemoveFromStorage(AMOUNT_STORAGE, amount);
+        saveOrRemoveFromStorage(PAYMENT_METHOD_ID_STORAGE, paymentMethodId);
+        saveOrRemoveFromStorage(REFERENCE_ID_STORAGE, referenceId);
+        saveOrRemoveFromStorage(AMOUNT_GOODS_SERVICES_STORAGE, amountGoodsAndServices);
+        saveOrRemoveFromStorage(TAX_STORAGE, tax);
+        saveOrRemoveFromStorage(CASHBACK_STORAGE, cashBack);
+        saveOrRemoveFromStorage(TIP_STORAGE, tip);
+        saveOrRemoveFromStorage(INVOICE_NUMBER_STORAGE, invoiceNumber);
+        saveOrRemoveFromStorage(ORDER_NUMBER_STORAGE, orderNumber);
 
-          showAlert(statusElement, 'Configuration saved successfully!', 'success');
-        } else {
-          showAlert(statusElement, 'Please enter a valid API key.', 'error');
-        }
+        showAlert(statusElement, 'Configuration saved successfully!', 'success');
       }
 
       // Toggle timestamp input fields
