@@ -2480,19 +2480,13 @@
         // Prompt for token ID
         const tokenId = prompt('Enter Payment Method ID (Token ID):', '');
 
-        // Validate input
-        if (tokenId === null) {
-          // User canceled the prompt
-          return;
-        }
-
         if (!tokenId.trim()) {
           alert('Please enter a valid Payment Method ID');
           return;
         }
 
         // Process the sale with the provided token
-        processTokenSale(tokenId.trim());
+        processTokenSale(tokenId);
       });
 
       checkoutNewBtn.addEventListener('click', () => {
@@ -2524,7 +2518,7 @@
             alert('Please enter a valid Payment Method ID');
             return;
           }
-          processTokenAuth(tokenId.trim());
+          processTokenAuth(tokenId);
         });
       }
 
@@ -3356,16 +3350,14 @@
         // Get configuration values
         const referenceId = localStorage.getItem(REFERENCE_ID_STORAGE) || `ref_${Date.now()}`;
         const amount = localStorage.getItem(AMOUNT_STORAGE) || '7273';
-        const tax = parseInt(localStorage.getItem(TAX_STORAGE) || '0');
-        const cashBack = parseInt(localStorage.getItem(CASHBACK_STORAGE) || '0');
-        const tip = parseInt(localStorage.getItem(TIP_STORAGE) || '0');
+        const tax = localStorage.getItem(TAX_STORAGE) || '0';
+        const cashBack = localStorage.getItem(CASHBACK_STORAGE) || '0';
+        const tip = localStorage.getItem(TIP_STORAGE) || '0';
         const invoiceNumber = localStorage.getItem(INVOICE_NUMBER_STORAGE) || `inv_${Date.now()}`;
         const orderNumber = localStorage.getItem(ORDER_NUMBER_STORAGE) || `ord_${Date.now()}`;
 
         // Get breakdown values
-        let amountGoodsAndServices = parseInt(
-          localStorage.getItem(AMOUNT_GOODS_SERVICES_STORAGE) || '0'
-        );
+        let amountGoodsAndServices = localStorage.getItem(AMOUNT_GOODS_SERVICES_STORAGE) || '0';
 
         try {
           // Show loading state
@@ -3383,7 +3375,7 @@
           };
 
           // Only add amountBreakdown if at least one field has a value
-          if (amountGoodsAndServices > 0 || tax > 0 || cashBack > 0 || tip > 0) {
+          if (amountGoodsAndServices || tax || cashBack || tip) {
             requestData.amountBreakdown = {
               tax: tax,
               cashBack: cashBack,
