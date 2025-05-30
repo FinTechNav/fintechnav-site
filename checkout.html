@@ -3204,6 +3204,7 @@
 
       // Process capture transaction
       async function processCapture() {
+        const apiKey = localStorage.getItem(API_KEY_STORAGE);
         if (!selectedTransaction) {
           alert('Please select a transaction first.');
           return;
@@ -3646,12 +3647,11 @@
 
       // Process refund transaction
       async function processRefund() {
+        const apiKey = localStorage.getItem(API_KEY_STORAGE);
         if (!selectedSaleCaptureTransaction) {
           alert('Please select a transaction first.');
           return;
         }
-
-        const apiKey = localStorage.getItem(API_KEY_STORAGE);
 
         // Show popup with original amount and request refund amount
         const originalAmount =
