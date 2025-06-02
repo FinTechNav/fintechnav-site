@@ -1852,7 +1852,7 @@
           }
 
           // Generate a reference ID using current timestamp
-          const referenceId = localStorage.getItem(REFERENCE_ID_STORAGE) || `ref_${Date.now()}`;
+          const referenceId = localStorage.getItem(REFERENCE_ID_STORAGE);
 
           // Check if the user has provided a payment method ID
           let paymentMethodId = localStorage.getItem(PAYMENT_METHOD_ID_STORAGE);
@@ -1861,9 +1861,13 @@
 
           // Prepare the request data
           const requestData = {
-            referenceId: referenceId,
             returnUrl: RETURN_URL,
           };
+
+          // Only add referenceId if one was actually provided
+          if (referenceId && referenceId.trim()) {
+            requestData.referenceId = referenceId;
+          }
 
           // Only add paymentMethodId to the request if we have one
           if (paymentMethodId) {
