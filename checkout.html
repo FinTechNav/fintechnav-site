@@ -2371,11 +2371,28 @@
           // Handle successful response
           console.log('Payment successful:', data);
 
-          // Redirect to payment complete page with transaction details
+          // Build comprehensive redirect parameters
           const params = new URLSearchParams();
-          params.append('resultCode', data.resultCode || '0');
-          params.append('transactionId', data.id || 'unknown');
-          params.append('amount', amount.toString());
+          params.append('resultCode', data.resultCode.toString());
+          params.append('transactionId', data.id);
+          params.append('amount', data.approvedAmount.toString()); // Use approved amount from response
+          params.append('type', data.type);
+          params.append('referenceId', data.referenceId);
+          params.append('orderNumber', data.orderNumber);
+          params.append('invoiceNumber', data.invoiceNumber);
+
+          // Add payment method info
+          if (data.paymentMethod) {
+            params.append('cardType', data.paymentMethod.cardType);
+            params.append('maskedCardNumber', data.paymentMethod.maskedCardNumber);
+            params.append('paymentMethodId', data.paymentMethod.id);
+          }
+
+          // Add transaction response details
+          if (data.transactionResponses && data.transactionResponses[0]) {
+            params.append('authCode', data.transactionResponses[0].authCode);
+            params.append('responseCode', data.transactionResponses[0].responseCode.toString());
+          }
 
           window.location.href = `${RETURN_URL}?${params.toString()}`;
         } catch (error) {
@@ -3451,9 +3468,29 @@
 
           // Handle successful response
           console.log('Token Auth successful:', data);
-          alert(
-            `Token Auth successful!\nTransaction ID: ${data.id || 'Unknown'}\nResult: ${data.resultText || 'Success'}`
-          );
+
+          // Create detailed success message
+          const successDetails = [
+            `✅ Token Auth Successful!`,
+            ``,
+            `Transaction ID: ${data.id}`,
+            `Reference ID: ${data.referenceId}`,
+            `Amount: $${(data.approvedAmount / 100).toFixed(2)}`,
+            `Auth Code: ${data.transactionResponses?.[0]?.authCode || 'N/A'}`,
+            `Card: ${data.paymentMethod?.cardType} ${data.paymentMethod?.maskedCardNumber}`,
+            `Balance: $${(data.balanceAmount / 100).toFixed(2)} (available for capture)`,
+          ].join('\n');
+
+          alert(successDetails);
+
+          // Optionally refresh the auth transactions table if it's visible
+          const authContainer = document.getElementById('authTransactionsContainer');
+          if (authContainer && authContainer.classList.contains('show')) {
+            // Refresh the auth transactions list to show the new auth
+            setTimeout(() => {
+              getAuthTransactions();
+            }, 1000); // Small delay to ensure the transaction is fully processed
+          }
         } catch (error) {
           const errorMessage = `Token Auth Processing Error\n\n${error.message}\n\nStack trace:\n${error.stack}`;
           showCopyableError(errorMessage);
