@@ -1999,7 +1999,7 @@
         const apiKey = localStorage.getItem(API_KEY_STORAGE);
 
         // Generate a reference ID using current timestamp or use saved one
-        const referenceId = localStorage.getItem(REFERENCE_ID_STORAGE) || `ref_${Date.now()}`;
+        const referenceId = localStorage.getItem(REFERENCE_ID_STORAGE);
 
         // Get payment method ID if available
         const paymentMethodId = localStorage.getItem(PAYMENT_METHOD_ID_STORAGE);
@@ -2029,12 +2029,15 @@
         try {
           // Prepare request data
           const requestData = {
-            referenceId: referenceId,
             returnUrl: RETURN_URL,
             amount: amount,
             invoiceNumber: invoiceNumber,
             orderNumber: orderNumber,
           };
+          // Only add referenceId if one was actually provided
+          if (referenceId && referenceId.trim()) {
+            requestData.referenceId = referenceId;
+          }
 
           // Only add amountBreakdown if at least one field has a value
           if (amountGoodsAndServices > 0 || tax > 0 || cashBack > 0 || tip > 0) {
@@ -2118,7 +2121,7 @@
         const apiKey = localStorage.getItem(API_KEY_STORAGE);
 
         // Generate a reference ID using current timestamp or use saved one
-        const referenceId = localStorage.getItem(REFERENCE_ID_STORAGE) || `ref_${Date.now()}`;
+        const referenceId = localStorage.getItem(REFERENCE_ID_STORAGE);
 
         // Get payment method ID if available
         const paymentMethodId = localStorage.getItem(PAYMENT_METHOD_ID_STORAGE);
@@ -2148,12 +2151,15 @@
         try {
           // Prepare request data
           const requestData = {
-            referenceId: referenceId,
             returnUrl: RETURN_URL,
             amount: amount,
             invoiceNumber: invoiceNumber,
             orderNumber: orderNumber,
           };
+          // Only add referenceId if one was actually provided
+          if (referenceId && referenceId.trim()) {
+            requestData.referenceId = referenceId;
+          }
 
           // Only add amountBreakdown if at least one field has a value
           if (amountGoodsAndServices > 0 || tax > 0 || cashBack > 0 || tip > 0) {
@@ -2243,7 +2249,7 @@
         }
 
         // Get configuration values
-        const referenceId = localStorage.getItem(REFERENCE_ID_STORAGE) || `ref_${Date.now()}`;
+        const referenceId = localStorage.getItem(REFERENCE_ID_STORAGE);
         const amount = localStorage.getItem(AMOUNT_STORAGE) || '7273';
         const tax = parseInt(localStorage.getItem(TAX_STORAGE) || '0');
         const cashBack = parseInt(localStorage.getItem(CASHBACK_STORAGE) || '0');
@@ -2264,12 +2270,16 @@
 
           // Prepare request data
           const requestData = {
-            referenceId: referenceId,
-            paymentMethodId: tokenId, // Using paymentMethodId instead of tokenId
+            paymentMethodId: tokenId,
             amount: amount,
             invoiceNumber: invoiceNumber,
             orderNumber: orderNumber,
           };
+
+          // Only add referenceId if one was actually provided
+          if (referenceId && referenceId.trim()) {
+            requestData.referenceId = referenceId;
+          }
 
           // Only add amountBreakdown if at least one field has a value
           if (amountGoodsAndServices > 0 || tax > 0 || cashBack > 0 || tip > 0) {
@@ -3348,7 +3358,7 @@
         }
 
         // Get configuration values
-        const referenceId = localStorage.getItem(REFERENCE_ID_STORAGE) || `ref_${Date.now()}`;
+        const referenceId = localStorage.getItem(REFERENCE_ID_STORAGE);
         const amount = localStorage.getItem(AMOUNT_STORAGE) || '7273';
         const tax = localStorage.getItem(TAX_STORAGE) || '0';
         const cashBack = localStorage.getItem(CASHBACK_STORAGE) || '0';
@@ -3367,12 +3377,16 @@
 
           // Prepare request data
           const requestData = {
-            referenceId: referenceId,
             paymentMethodId: tokenId,
             amount: amount,
             invoiceNumber: invoiceNumber,
             orderNumber: orderNumber,
           };
+
+          // Only add referenceId if one was actually provided
+          if (referenceId && referenceId.trim()) {
+            requestData.referenceId = referenceId;
+          }
 
           // Only add amountBreakdown if at least one field has a value
           if (amountGoodsAndServices || tax || cashBack || tip) {
