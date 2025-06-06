@@ -360,8 +360,34 @@
 
       .button-container {
         display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+
+      /* Button row organization */
+      .button-row {
+        margin-bottom: 25px;
+      }
+
+      .button-row-title {
+        font-family: var(--font-family-heading);
+        color: var(--color-primary);
+        font-size: 1.2rem;
+        margin: 0 0 10px 0;
+        font-weight: 400;
+        letter-spacing: 0.03em;
+      }
+
+      .button-group {
+        display: flex;
         flex-wrap: wrap;
         gap: 10px;
+      }
+
+      @media screen and (max-width: 768px) {
+        .button-group {
+          flex-direction: column;
+        }
       }
 
       .divider {
@@ -1149,13 +1175,36 @@
           </div>
 
           <div class="button-container">
-            <button class="btn" id="createTokenBtn">Create Token</button>
-            <button class="btn" id="checkoutExistingBtn">Token Sale</button>
-            <button class="btn" id="checkoutNewBtn">Sale</button>
-            <button class="btn" id="tokenAuthBtn">Token Auth</button>
-            <button class="btn" id="authBtn">Auth</button>
-            <button class="btn" id="getAuthTransactionsBtn">Get Auth Trx</button>
-            <button class="btn" id="getSaleCaptureTransactionsBtn">Get Sale/Capture Trx</button>
+            <!-- Card Present Functions Row -->
+            <div class="button-row">
+              <h3 class="button-row-title">Card Present Functions:</h3>
+              <div class="button-group">
+                <button class="btn" id="createTokenCardPresentBtn">Create Token</button>
+                <button class="btn" id="saleCardPresentBtn">Sale</button>
+                <button class="btn" id="authCardPresentBtn">Auth</button>
+              </div>
+            </div>
+
+            <!-- Card Not Present Functions Row -->
+            <div class="button-row">
+              <h3 class="button-row-title">Card Not Present Functions:</h3>
+              <div class="button-group">
+                <button class="btn" id="createTokenBtn">Create Token</button>
+                <button class="btn" id="checkoutNewBtn">Sale</button>
+                <button class="btn" id="authBtn">Auth</button>
+              </div>
+            </div>
+
+            <!-- Token/Reference Functions Row -->
+            <div class="button-row">
+              <h3 class="button-row-title">Token/Reference Functions:</h3>
+              <div class="button-group">
+                <button class="btn" id="checkoutExistingBtn">Token Sale</button>
+                <button class="btn" id="tokenAuthBtn">Token Auth</button>
+                <button class="btn" id="getAuthTransactionsBtn">Get Auth Trx</button>
+                <button class="btn" id="getSaleCaptureTransactionsBtn">Get Sale/Capture Trx</button>
+              </div>
+            </div>
           </div>
 
           <div id="authTransactionsContainer" class="transaction-table-container">
@@ -1838,6 +1887,275 @@
           }, 200);
         }
       });
+
+      // Card Present Token Creation
+      async function createCardPresentToken() {
+        const apiKey = localStorage.getItem(API_KEY_STORAGE);
+        
+        if (!apiKey) {
+          showCopyableError('API key is missing. Please enter and save your API key.');
+          return;
+        }
+
+        const referenceId = localStorage.getItem(REFERENCE_ID_STORAGE) || `ref_${Date.now()}`;
+        let paymentMethodId = localStorage.getItem(PAYMENT_METHOD_ID_STORAGE);
+
+        // Reset modal state
+        paymentIframe.style.display = 'none';
+        apiError.style.display = 'none';
+        spinner.style.display = 'block';
+
+        // Display the modal for processing
+        cardModal.style.display = 'flex';
+        toggleBlur(true);
+
+        try {
+          const requestData = {
+            referenceId: referenceId,
+            returnUrl: RETURN_URL,
+          };
+
+          if (paymentMethodId) {
+            requestData.paymentMethodId = paymentMethodId;
+          }
+
+          console.log('Card Present Token request:', JSON.stringify(requestData, null, 2));
+
+          const endpoint = `${getApiBaseUrl()}/payment-methods/physical`;
+          const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-api-key': apiKey,
+            },
+            body: JSON.stringify(requestData),
+          });
+
+          const responseText = await response.text();
+          let data;
+
+          try {
+            if (responseText && responseText.trim() !== '') {
+              data = JSON.parse(responseText);
+            } else {
+              throw new Error('Empty response');
+            }
+          } catch (error) {
+            showCopyableError(`Invalid response format\n\nRaw response: ${responseText}`);
+            spinner.style.display = 'none';
+            return;
+          }
+
+          if (!response.ok) {
+            let errorMessage = extractErrorMessage(data);
+            const fullErrorMessage = `Card Present Token Error\n\nStatus: ${response.status}\n\nMessage: ${errorMessage}\n\nFull Response:\n${JSON.stringify(data, null, 2)}`;
+            showCopyableError(fullErrorMessage);
+            spinner.style.display = 'none';
+            return;
+          }
+
+          if (data.iframeUrl) {
+            paymentIframe.src = data.iframeUrl;
+            paymentIframe.style.display = 'block';
+            spinner.style.display = 'none';
+          } else {
+            showCopyableError(`Card Present Token Error\n\nNo iframe URL returned\n\nFull Response:\n${JSON.stringify(data, null, 2)}`);
+            spinner.style.display = 'none';
+          }
+        } catch (error) {
+          const errorMessage = `Card Present Token Processing Error\n\n${error.message}\n\nStack trace:\n${error.stack}`;
+          showCopyableError(errorMessage);
+          spinner.style.display = 'none';
+        }
+      }
+
+      // Card Present Sale
+      async function processCardPresentSale() {
+        const apiKey = localStorage.getItem(API_KEY_STORAGE);
+        
+        const referenceId = localStorage.getItem(REFERENCE_ID_STORAGE) || `ref_${Date.now()}`;
+        const paymentMethodId = localStorage.getItem(PAYMENT_METHOD_ID_STORAGE);
+        const amount = localStorage.getItem(AMOUNT_STORAGE) || '7273';
+        const tax = parseInt(localStorage.getItem(TAX_STORAGE) || '0');
+        const cashBack = parseInt(localStorage.getItem(CASHBACK_STORAGE) || '0');
+        const tip = parseInt(localStorage.getItem(TIP_STORAGE) || '0');
+        const invoiceNumber = localStorage.getItem(INVOICE_NUMBER_STORAGE) || `inv_${Date.now()}`;
+        const orderNumber = localStorage.getItem(ORDER_NUMBER_STORAGE) || `ord_${Date.now()}`;
+        let amountGoodsAndServices = parseInt(localStorage.getItem(AMOUNT_GOODS_SERVICES_STORAGE) || '0');
+
+        // Reset modal state
+        paymentIframe.style.display = 'none';
+        apiError.style.display = 'none';
+        spinner.style.display = 'block';
+
+        cardModal.style.display = 'flex';
+        toggleBlur(true);
+
+        try {
+          const requestData = {
+            referenceId: referenceId,
+            returnUrl: RETURN_URL,
+            amount: amount,
+            invoiceNumber: invoiceNumber,
+            orderNumber: orderNumber,
+          };
+
+          if (amountGoodsAndServices > 0 || tax > 0 || cashBack > 0 || tip > 0) {
+            requestData.amountBreakdown = {
+              tax: tax,
+              cashBack: cashBack,
+              tip: tip,
+              amountGoodsAndServices: amountGoodsAndServices,
+            };
+          }
+
+          if (paymentMethodId) {
+            requestData.paymentMethodId = paymentMethodId;
+          }
+
+          console.log('Card Present Sale request:', JSON.stringify(requestData, null, 2));
+
+          const endpoint = `${getApiBaseUrl()}/transactions/physical-sale`;
+          const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-api-key': apiKey,
+            },
+            body: JSON.stringify(requestData),
+          });
+
+          const responseText = await response.text();
+          let data;
+
+          try {
+            if (responseText && responseText.trim() !== '') {
+              data = JSON.parse(responseText);
+            } else {
+              throw new Error('Empty response');
+            }
+          } catch (error) {
+            showCopyableError(`Invalid response format\n\nRaw response: ${responseText}`);
+            spinner.style.display = 'none';
+            return;
+          }
+
+          if (!response.ok) {
+            let errorMessage = extractErrorMessage(data);
+            const fullErrorMessage = `Card Present Sale Error\n\nStatus: ${response.status}\n\nMessage: ${errorMessage}\n\nFull Response:\n${JSON.stringify(data, null, 2)}`;
+            showCopyableError(fullErrorMessage);
+            spinner.style.display = 'none';
+            return;
+          }
+
+          if (data.iframeUrl) {
+            paymentIframe.src = data.iframeUrl;
+            paymentIframe.style.display = 'block';
+            spinner.style.display = 'none';
+          } else {
+            showCopyableError(`Card Present Sale Error\n\nNo iframe URL returned\n\nFull Response:\n${JSON.stringify(data, null, 2)}`);
+            spinner.style.display = 'none';
+          }
+        } catch (error) {
+          const errorMessage = `Card Present Sale Processing Error\n\n${error.message}\n\nStack trace:\n${error.stack}`;
+          showCopyableError(errorMessage);
+          spinner.style.display = 'none';
+        }
+      }
+
+      // Card Present Auth
+      async function processCardPresentAuth() {
+        const apiKey = localStorage.getItem(API_KEY_STORAGE);
+        
+        const referenceId = localStorage.getItem(REFERENCE_ID_STORAGE) || `ref_${Date.now()}`;
+        const paymentMethodId = localStorage.getItem(PAYMENT_METHOD_ID_STORAGE);
+        const amount = localStorage.getItem(AMOUNT_STORAGE) || '7273';
+        const tax = parseInt(localStorage.getItem(TAX_STORAGE) || '0');
+        const cashBack = parseInt(localStorage.getItem(CASHBACK_STORAGE) || '0');
+        const tip = parseInt(localStorage.getItem(TIP_STORAGE) || '0');
+        const invoiceNumber = localStorage.getItem(INVOICE_NUMBER_STORAGE) || `inv_${Date.now()}`;
+        const orderNumber = localStorage.getItem(ORDER_NUMBER_STORAGE) || `ord_${Date.now()}`;
+        let amountGoodsAndServices = parseInt(localStorage.getItem(AMOUNT_GOODS_SERVICES_STORAGE) || '0');
+
+        // Reset modal state
+        paymentIframe.style.display = 'none';
+        apiError.style.display = 'none';
+        spinner.style.display = 'block';
+
+        cardModal.style.display = 'flex';
+        toggleBlur(true);
+
+        try {
+          const requestData = {
+            referenceId: referenceId,
+            returnUrl: RETURN_URL,
+            amount: amount,
+            invoiceNumber: invoiceNumber,
+            orderNumber: orderNumber,
+          };
+
+          if (amountGoodsAndServices > 0 || tax > 0 || cashBack > 0 || tip > 0) {
+            requestData.amountBreakdown = {
+              tax: tax,
+              cashBack: cashBack,
+              tip: tip,
+              amountGoodsAndServices: amountGoodsAndServices,
+            };
+          }
+
+          if (paymentMethodId) {
+            requestData.paymentMethodId = paymentMethodId;
+          }
+
+          console.log('Card Present Auth request:', JSON.stringify(requestData, null, 2));
+
+          const endpoint = `${getApiBaseUrl()}/transactions/physical-auth`;
+          const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-api-key': apiKey,
+            },
+            body: JSON.stringify(requestData),
+          });
+
+          const responseText = await response.text();
+          let data;
+
+          try {
+            if (responseText && responseText.trim() !== '') {
+              data = JSON.parse(responseText);
+            } else {
+              throw new Error('Empty response');
+            }
+          } catch (error) {
+            showCopyableError(`Invalid response format\n\nRaw response: ${responseText}`);
+            spinner.style.display = 'none';
+            return;
+          }
+
+          if (!response.ok) {
+            let errorMessage = extractErrorMessage(data);
+            const fullErrorMessage = `Card Present Auth Error\n\nStatus: ${response.status}\n\nMessage: ${errorMessage}\n\nFull Response:\n${JSON.stringify(data, null, 2)}`;
+            showCopyableError(fullErrorMessage);
+            spinner.style.display = 'none';
+            return;
+          }
+
+          if (data.iframeUrl) {
+            paymentIframe.src = data.iframeUrl;
+            paymentIframe.style.display = 'block';
+            spinner.style.display = 'none';
+          } else {
+            showCopyableError(`Card Present Auth Error\n\nNo iframe URL returned\n\nFull Response:\n${JSON.stringify(data, null, 2)}`);
+            spinner.style.display = 'none';
+          }
+        } catch (error) {
+          const errorMessage = `Card Present Auth Processing Error\n\n${error.message}\n\nStack trace:\n${error.stack}`;
+          showCopyableError(errorMessage);
+          spinner.style.display = 'none';
+        }
+      }
 
       // Function to create a card not present token
       async function createCardNotPresentToken() {
@@ -3850,6 +4168,19 @@
           createCardNotPresentToken();
         });
       }
+
+      // Card Present button event listeners
+      document.getElementById('createTokenCardPresentBtn').addEventListener('click', () => {
+        createCardPresentToken();
+      });
+
+      document.getElementById('saleCardPresentBtn').addEventListener('click', () => {
+        processCardPresentSale();
+      });
+
+      document.getElementById('authCardPresentBtn').addEventListener('click', () => {
+        processCardPresentAuth();
+      });
     </script>
   </body>
 </html>
