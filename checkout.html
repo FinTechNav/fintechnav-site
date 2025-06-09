@@ -4320,7 +4320,7 @@
         processCardPresentAuth();
       });
 
-      // Synchronize horizontal scrolling between table headers and bodies
+      // Synchronize column widths and horizontal scrolling between table headers and bodies
       function setupTableScrollSync() {
         // Auth transactions table
         const authBody = document.querySelector('#authTransactionsContainer .transaction-table-body');
@@ -4330,6 +4330,9 @@
           authBody.addEventListener('scroll', () => {
             authHeader.scrollLeft = authBody.scrollLeft;
           });
+          
+          // Sync column widths
+          syncColumnWidths('#authTransactionsTable', '#authTransactionsHeader');
         }
 
         // Sale/Capture transactions table
@@ -4340,7 +4343,48 @@
           saleCaptureBody.addEventListener('scroll', () => {
             saleCaptureHeader.scrollLeft = saleCaptureBody.scrollLeft;
           });
+          
+          // Sync column widths
+          syncColumnWidths('#saleCaptureTransactionsTable', '#saleCaptureTransactionsHeader');
         }
+      }
+
+      // Function to synchronize column widths between body and header tables
+      function syncColumnWidths(bodyTableSelector, headerTableSelector) {
+        // Use setTimeout to ensure DOM is fully rendered
+        setTimeout(() => {
+          const bodyTable = document.querySelector(bodyTableSelector);
+          const headerTable = document.querySelector(headerTableSelector + ' table');
+          
+          if (!bodyTable || !headerTable) return;
+          
+          // Get the first row of body table to measure column widths
+          const bodyRow = bodyTable.querySelector('tbody tr');
+          const headerRow = headerTable.querySelector('thead tr');
+          
+          if (!bodyRow || !headerRow) return;
+          
+          const bodyCells = bodyRow.querySelectorAll('td');
+          const headerCells = headerRow.querySelectorAll('th');
+          
+          // Ensure both tables use the same width
+          const totalWidth = bodyTable.offsetWidth;
+          headerTable.style.width = totalWidth + 'px';
+          bodyTable.style.width = totalWidth + 'px';
+          
+          // Set both tables to have fixed layout for consistent column widths
+          bodyTable.style.tableLayout = 'fixed';
+          headerTable.style.tableLayout = 'fixed';
+          
+          // Measure and set column widths based on the body table
+          bodyCells.forEach((cell, index) => {
+            if (headerCells[index]) {
+              const width = cell.offsetWidth + 'px';
+              headerCells[index].style.width = width;
+              bodyCells[index].style.width = width;
+            }
+          });
+        }, 50); // Small delay to ensure DOM rendering is complete
       }
 
       // Initialize scroll synchronization when DOM is ready
