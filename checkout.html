@@ -966,13 +966,11 @@
       }
 
       .transaction-table {
-        width: auto; /* Allow table to expand naturally */
-        min-width: 100%; /* Ensure it's at least full width */
-        border-collapse: collapse;
-        margin-top: 15px;
+        width: 100%; /* Full width */
+        border-collapse: separate;
+        border-spacing: 0;
         font-size: 0.9rem;
         table-layout: auto;
-        position: relative;
       }
 
       .transaction-table th,
@@ -996,13 +994,9 @@
         background-color: rgba(201, 161, 95, 0.15);
         color: var(--color-primary);
         font-weight: 600;
-        position: sticky;
-        top: 0;
-        z-index: 100;
         font-size: 0.9rem;
         text-transform: capitalize; /* Make headers more readable */
-        border-bottom: 2px solid var(--color-border);
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        border-bottom: none;
       }
 
       .transaction-table tbody tr:hover {
@@ -1010,44 +1004,59 @@
       }
 
       .transaction-table-scroll {
-        max-height: 400px;
-        overflow: auto;
+        height: 400px;
+        overflow: hidden;
         border: 1px solid var(--color-border);
         border-radius: var(--border-radius);
-        scrollbar-width: thin;
-        scrollbar-color: var(--color-primary) var(--color-background-secondary);
         width: 100%; /* Ensure it uses full width */
         position: relative;
-        isolation: isolate; /* Create new stacking context */
+        display: flex;
+        flex-direction: column;
+      }
+
+      .transaction-table-header {
+        flex-shrink: 0;
+        background-color: rgba(201, 161, 95, 0.15);
+        border-bottom: 2px solid var(--color-border);
+        z-index: 1000;
+        position: relative;
+      }
+
+      .transaction-table-body {
+        flex: 1;
+        overflow-y: auto;
+        overflow-x: auto;
+        scrollbar-width: thin;
+        scrollbar-color: var(--color-primary) var(--color-background-secondary);
       }
       /* Custom scrollbar for webkit browsers */
-      .transaction-table-scroll::-webkit-scrollbar {
+      .transaction-table-body::-webkit-scrollbar {
         width: 10px;
         height: 10px;
       }
 
-      .transaction-table-scroll::-webkit-scrollbar-track {
+      .transaction-table-body::-webkit-scrollbar-track {
         background: var(--color-background-secondary);
         border-radius: 5px;
       }
 
-      .transaction-table-scroll::-webkit-scrollbar-thumb {
+      .transaction-table-body::-webkit-scrollbar-thumb {
         background: var(--color-primary);
         border-radius: 5px;
       }
 
-      .transaction-table-scroll::-webkit-scrollbar-thumb:hover {
+      .transaction-table-body::-webkit-scrollbar-thumb:hover {
         background: var(--color-primary-hover);
       }
 
-      .transaction-table-scroll::-webkit-scrollbar-corner {
+      .transaction-table-body::-webkit-scrollbar-corner {
         background: var(--color-background-secondary);
       }
 
       /* Responsive table */
       @media screen and (max-width: 768px) {
         .transaction-table-scroll {
-          max-height: 300px;
+          height: 300px;
         }
 
         .transaction-table th,
@@ -1062,7 +1071,6 @@
         cursor: pointer;
         transition: background-color 0.2s ease;
         position: relative;
-        z-index: 1;
       }
 
       .transaction-table tbody tr:hover {
@@ -1074,11 +1082,7 @@
         border-left: 3px solid var(--color-primary);
       }
 
-      .transaction-table thead {
-        position: sticky;
-        top: 0;
-        z-index: 99;
-      }
+
 
       /* Capture button styling */
       #captureBtn:disabled {
@@ -1284,14 +1288,20 @@
             <div id="authTransactionsLoading" class="spinner" style="display: none"></div>
             <div id="authTransactionsError" class="alert alert-error" style="display: none"></div>
             <div class="transaction-table-scroll">
-              <table class="transaction-table" id="authTransactionsTable">
-                <thead id="authTransactionsHeader">
-                  <!-- Headers will be populated dynamically -->
-                </thead>
-                <tbody id="authTransactionsBody">
-                  <!-- Rows will be populated dynamically -->
-                </tbody>
-              </table>
+              <div class="transaction-table-header">
+                <table class="transaction-table">
+                  <thead id="authTransactionsHeader">
+                    <!-- Headers will be populated dynamically -->
+                  </thead>
+                </table>
+              </div>
+              <div class="transaction-table-body">
+                <table class="transaction-table" id="authTransactionsTable">
+                  <tbody id="authTransactionsBody">
+                    <!-- Rows will be populated dynamically -->
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
           <div id="saleCaptureTransactionsContainer" class="transaction-table-container">
@@ -1308,14 +1318,20 @@
               style="display: none"
             ></div>
             <div class="transaction-table-scroll">
-              <table class="transaction-table" id="saleCaptureTransactionsTable">
-                <thead id="saleCaptureTransactionsHeader">
-                  <!-- Headers will be populated dynamically -->
-                </thead>
-                <tbody id="saleCaptureTransactionsBody">
-                  <!-- Rows will be populated dynamically -->
-                </tbody>
-              </table>
+              <div class="transaction-table-header">
+                <table class="transaction-table">
+                  <thead id="saleCaptureTransactionsHeader">
+                    <!-- Headers will be populated dynamically -->
+                  </thead>
+                </table>
+              </div>
+              <div class="transaction-table-body">
+                <table class="transaction-table" id="saleCaptureTransactionsTable">
+                  <tbody id="saleCaptureTransactionsBody">
+                    <!-- Rows will be populated dynamically -->
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         </div>
