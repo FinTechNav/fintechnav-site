@@ -4388,90 +4388,67 @@
           
           if (!bodyTable || !headerTable) return;
           
-          // Reset to natural layout first
+          // Step 1: Let body table render naturally to get optimal column widths
           bodyTable.style.tableLayout = 'auto';
-          headerTable.style.tableLayout = 'auto';
           bodyTable.style.width = 'auto';
-          headerTable.style.width = 'auto';
           
-          // Clear all existing width constraints
-          const allCells = [...bodyTable.querySelectorAll('td'), ...headerTable.querySelectorAll('th')];
-          allCells.forEach(cell => {
+          // Clear all existing width constraints on body table
+          const allBodyCells = bodyTable.querySelectorAll('td');
+          allBodyCells.forEach(cell => {
             cell.style.width = '';
             cell.style.minWidth = '';
             cell.style.maxWidth = '';
           });
           
-          // Force a reflow to get natural sizing
+          // Force reflow
           bodyTable.offsetHeight;
-          headerTable.offsetHeight;
           
-          // Let the tables render naturally for a moment
           setTimeout(() => {
-            // Get the first body row to measure natural column widths
-            const headerRow = headerTable.querySelector('thead tr');
+            // Step 2: Measure the natural column widths from the body table
             const firstBodyRow = bodyTable.querySelector('tbody tr');
+            if (!firstBodyRow) return;
             
-            if (!headerRow || !firstBodyRow) return;
-            
-            const headerCells = Array.from(headerRow.querySelectorAll('th'));
             const bodyCells = Array.from(firstBodyRow.querySelectorAll('td'));
+            const naturalWidths = bodyCells.map(cell => cell.getBoundingClientRect().width);
             
-            // Measure the natural widths of both header and body cells
-            const columnWidths = [];
-            const numColumns = Math.max(headerCells.length, bodyCells.length);
-            
-            for (let i = 0; i < numColumns; i++) {
-              let maxWidth = 150; // minimum width
-              
-              // Check header cell width
-              if (headerCells[i]) {
-                maxWidth = Math.max(maxWidth, headerCells[i].offsetWidth);
-              }
-              
-              // Check body cell width
-              if (bodyCells[i]) {
-                maxWidth = Math.max(maxWidth, bodyCells[i].offsetWidth);
-              }
-              
-              // Check all other rows in this column for longer content
-              const allBodyRows = bodyTable.querySelectorAll('tbody tr');
-              allBodyRows.forEach(row => {
-                if (row.cells[i]) {
-                  maxWidth = Math.max(maxWidth, row.cells[i].offsetWidth);
-                }
-              });
-              
-              columnWidths.push(maxWidth);
-            }
-            
-            // Now apply fixed layout with the measured widths
-            bodyTable.style.tableLayout = 'fixed';
-            headerTable.style.tableLayout = 'fixed';
-            
-            // Calculate total width
-            const totalWidth = columnWidths.reduce((sum, width) => sum + width, 0);
-            
-            // Set table widths to ensure horizontal scrolling works
-            bodyTable.style.width = totalWidth + 'px';
-            headerTable.style.width = totalWidth + 'px';
-            
-            // Apply column widths
-            headerCells.forEach((cell, index) => {
-              if (columnWidths[index]) {
-                const width = columnWidths[index] + 'px';
-                cell.style.width = width;
-                cell.style.minWidth = width;
-                cell.style.maxWidth = width;
-              }
-            });
-            
-            // Apply to all body rows
+            // Check all rows to ensure we capture the widest content
             const allBodyRows = bodyTable.querySelectorAll('tbody tr');
             allBodyRows.forEach(row => {
               Array.from(row.cells).forEach((cell, index) => {
-                if (columnWidths[index]) {
-                  const width = columnWidths[index] + 'px';
+                if (cell && naturalWidths[index] !== undefined) {
+                  naturalWidths[index] = Math.max(naturalWidths[index], cell.getBoundingClientRect().width);
+                }
+              });
+            });
+            
+            // Step 3: Apply these exact widths to both tables
+            const totalWidth = naturalWidths.reduce((sum, width) => sum + width, 0);
+            
+            // Set both tables to fixed layout with the same total width
+            bodyTable.style.tableLayout = 'fixed';
+            headerTable.style.tableLayout = 'fixed';
+            bodyTable.style.width = totalWidth + 'px';
+            headerTable.style.width = totalWidth + 'px';
+            
+            // Apply exact widths to header cells
+            const headerRow = headerTable.querySelector('thead tr');
+            if (headerRow) {
+              const headerCells = Array.from(headerRow.querySelectorAll('th'));
+              headerCells.forEach((cell, index) => {
+                if (naturalWidths[index] !== undefined) {
+                  const width = naturalWidths[index] + 'px';
+                  cell.style.width = width;
+                  cell.style.minWidth = width;
+                  cell.style.maxWidth = width;
+                }
+              });
+            }
+            
+            // Apply exact widths to all body cells
+            allBodyRows.forEach(row => {
+              Array.from(row.cells).forEach((cell, index) => {
+                if (naturalWidths[index] !== undefined) {
+                  const width = naturalWidths[index] + 'px';
                   cell.style.width = width;
                   cell.style.minWidth = width;
                   cell.style.maxWidth = width;
@@ -4479,9 +4456,29 @@
               });
             });
             
-          }, 50); // Additional delay for natural rendering
+            // Step 4: Final synchronization check
+            setTimeout(() => {
+              // Double-check that header widths match body widths
+              if (headerRow && firstBodyRow) {
+                const headerCells = Array.from(headerRow.querySelectorAll('th'));
+                const bodyCells = Array.from(firstBodyRow.querySelectorAll('td'));
+                
+                bodyCells.forEach((bodyCell, index) => {
+                  const headerCell = headerCells[index];
+                  if (headerCell && bodyCell) {
+                    const bodyWidth = bodyCell.getBoundingClientRect().width;
+                    const width = bodyWidth + 'px';
+                    headerCell.style.width = width;
+                    headerCell.style.minWidth = width;
+                    headerCell.style.maxWidth = width;
+                  }
+                });
+              }
+            }, 10);
+            
+          }, 50);
           
-        }, 100); // Initial delay to ensure DOM rendering is complete
+        }, 100);
       }
 
       // Initialize scroll synchronization when DOM is ready
