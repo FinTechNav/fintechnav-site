@@ -1885,14 +1885,20 @@
         textarea.select();
         textarea.focus();
 
-        // Event handlers
-        closeBtn.addEventListener('click', () => {
+        // Helper function to close both error modal and main modal
+        const closeErrorModal = () => {
           document.body.removeChild(errorModal);
-        });
+          // Also close the main modal and remove blur
+          cardModal.style.display = 'none';
+          toggleBlur(false);
+        };
+
+        // Event handlers
+        closeBtn.addEventListener('click', closeErrorModal);
 
         errorModal.addEventListener('click', (e) => {
           if (e.target === errorModal) {
-            document.body.removeChild(errorModal);
+            closeErrorModal();
           }
         });
 
@@ -1908,7 +1914,7 @@
         // Close on Escape key
         const escapeHandler = (e) => {
           if (e.key === 'Escape') {
-            document.body.removeChild(errorModal);
+            closeErrorModal();
             document.removeEventListener('keydown', escapeHandler);
           }
         };
@@ -1999,7 +2005,6 @@
             }
           } catch (error) {
             showCopyableError(`Invalid response format\n\nRaw response: ${responseText}`);
-            spinner.style.display = 'none';
             return;
           }
 
@@ -2007,7 +2012,6 @@
             let errorMessage = extractErrorMessage(data);
             const fullErrorMessage = `Card Present Token Error\n\nStatus: ${response.status}\n\nMessage: ${errorMessage}\n\nFull Response:\n${JSON.stringify(data, null, 2)}`;
             showCopyableError(fullErrorMessage);
-            spinner.style.display = 'none';
             return;
           }
 
@@ -2017,12 +2021,10 @@
             spinner.style.display = 'none';
           } else {
             showCopyableError(`Card Present Token Error\n\nNo iframe URL returned\n\nFull Response:\n${JSON.stringify(data, null, 2)}`);
-            spinner.style.display = 'none';
           }
         } catch (error) {
           const errorMessage = `Card Present Token Processing Error\n\n${error.message}\n\nStack trace:\n${error.stack}`;
           showCopyableError(errorMessage);
-          spinner.style.display = 'none';
         }
       }
 
@@ -2094,7 +2096,6 @@
             }
           } catch (error) {
             showCopyableError(`Invalid response format\n\nRaw response: ${responseText}`);
-            terminalMessage.style.display = 'none';
             return;
           }
 
@@ -2102,7 +2103,6 @@
             let errorMessage = extractErrorMessage(data);
             const fullErrorMessage = `Card Present Sale Error\n\nStatus: ${response.status}\n\nMessage: ${errorMessage}\n\nFull Response:\n${JSON.stringify(data, null, 2)}`;
             showCopyableError(fullErrorMessage);
-            terminalMessage.style.display = 'none';
             return;
           }
 
@@ -2140,7 +2140,6 @@
         } catch (error) {
           const errorMessage = `Card Present Sale Processing Error\n\n${error.message}\n\nStack trace:\n${error.stack}`;
           showCopyableError(errorMessage);
-          terminalMessage.style.display = 'none';
         }
       }
 
@@ -2212,7 +2211,6 @@
             }
           } catch (error) {
             showCopyableError(`Invalid response format\n\nRaw response: ${responseText}`);
-            terminalMessage.style.display = 'none';
             return;
           }
 
@@ -2220,7 +2218,6 @@
             let errorMessage = extractErrorMessage(data);
             const fullErrorMessage = `Card Present Auth Error\n\nStatus: ${response.status}\n\nMessage: ${errorMessage}\n\nFull Response:\n${JSON.stringify(data, null, 2)}`;
             showCopyableError(fullErrorMessage);
-            terminalMessage.style.display = 'none';
             return;
           }
 
@@ -2259,7 +2256,6 @@
         } catch (error) {
           const errorMessage = `Card Present Auth Processing Error\n\n${error.message}\n\nStack trace:\n${error.stack}`;
           showCopyableError(errorMessage);
-          terminalMessage.style.display = 'none';
         }
       }
 
@@ -2271,7 +2267,6 @@
         try {
           if (!apiKey) {
             showCopyableError('API key is missing. Please enter and save your API key.');
-            spinner.style.display = 'none';
             return;
           }
 
@@ -2368,7 +2363,6 @@
 
             const fullErrorMessage = `Create Token Error\n\nStatus: ${response.status}\n\nMessage: ${errorMessage}\n\nFull Response:\n${JSON.stringify(data, null, 2)}`;
             showCopyableError(fullErrorMessage);
-            spinner.style.display = 'none';
             return;
           }
 
@@ -2509,7 +2503,6 @@
           } catch (error) {
             console.error('Error parsing response:', error);
             showCopyableError(`Invalid response format\n\nRaw response: ${responseText}`);
-            spinner.style.display = 'none';
             return;
           }
 
@@ -2522,7 +2515,6 @@
 
             const fullErrorMessage = `Virtual Sale Error\n\nStatus: ${response.status}\n\nMessage: ${errorMessage}\n\nFull Response:\n${JSON.stringify(data, null, 2)}`;
             showCopyableError(fullErrorMessage);
-            spinner.style.display = 'none';
             return;
           }
 
@@ -2536,12 +2528,10 @@
             // Handle missing iframe URL
             const fullErrorMessage = `Virtual Sale Error\n\nNo payment iframe URL returned\n\nFull Response:\n${JSON.stringify(data, null, 2)}`;
             showCopyableError(fullErrorMessage);
-            spinner.style.display = 'none';
           }
         } catch (error) {
           const errorMessage = `Virtual Sale Processing Error\n\n${error.message}\n\nStack trace:\n${error.stack}`;
           showCopyableError(errorMessage);
-          spinner.style.display = 'none';
         }
       }
       // Process a virtual (Card Not Present) auth
@@ -2631,7 +2621,6 @@
           } catch (error) {
             console.error('Error parsing response:', error);
             showCopyableError(`Invalid response format\n\nRaw response: ${responseText}`);
-            spinner.style.display = 'none';
             return;
           }
 
@@ -2644,7 +2633,6 @@
 
             const fullErrorMessage = `Virtual Auth Error\n\nStatus: ${response.status}\n\nMessage: ${errorMessage}\n\nFull Response:\n${JSON.stringify(data, null, 2)}`;
             showCopyableError(fullErrorMessage);
-            spinner.style.display = 'none';
             return;
           }
 
@@ -2658,12 +2646,10 @@
             // Handle missing iframe URL
             const fullErrorMessage = `Virtual Sale Error\n\nNo payment iframe URL returned\n\nFull Response:\n${JSON.stringify(data, null, 2)}`;
             showCopyableError(fullErrorMessage);
-            spinner.style.display = 'none';
           }
         } catch (error) {
           const errorMessage = `Virtual Auth Processing Error\n\n${error.message}\n\nStack trace:\n${error.stack}`;
           showCopyableError(errorMessage);
-          spinner.style.display = 'none';
         }
       }
 
