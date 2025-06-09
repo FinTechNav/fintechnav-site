@@ -973,13 +973,7 @@
         table-layout: auto;
       }
       
-      /* Ensure header and body tables have consistent structure */
-      .transaction-table-header .transaction-table,
-      .transaction-table-body .transaction-table {
-        width: auto;
-        min-width: 100%;
-        table-layout: auto;
-      }
+
 
       .transaction-table th,
       .transaction-table td {
@@ -1013,60 +1007,10 @@
 
       .transaction-table-scroll {
         height: 400px;
-        overflow: hidden;
+        overflow: auto;
         border: 1px solid var(--color-border);
         border-radius: var(--border-radius);
-        width: 100%; /* Ensure it uses full width */
-        position: relative;
-        display: flex;
-        flex-direction: column;
-      }
-
-      .transaction-table-header {
-        flex-shrink: 0;
-        background-color: rgba(201, 161, 95, 0.15);
-        border-bottom: 2px solid var(--color-border);
-        z-index: 1000;
-        position: relative;
-        overflow-x: auto;
-        overflow-y: hidden;
-        scrollbar-width: none; /* Hide scrollbar on Firefox */
-        -ms-overflow-style: none; /* Hide scrollbar on IE/Edge */
-      }
-      
-      .transaction-table-header::-webkit-scrollbar {
-        display: none; /* Hide scrollbar on webkit browsers */
-      }
-
-      .transaction-table-body {
-        flex: 1;
-        overflow-y: auto;
-        overflow-x: auto;
-        scrollbar-width: thin;
-        scrollbar-color: var(--color-primary) var(--color-background-secondary);
-      }
-      /* Custom scrollbar for webkit browsers */
-      .transaction-table-body::-webkit-scrollbar {
-        width: 10px;
-        height: 10px;
-      }
-
-      .transaction-table-body::-webkit-scrollbar-track {
-        background: var(--color-background-secondary);
-        border-radius: 5px;
-      }
-
-      .transaction-table-body::-webkit-scrollbar-thumb {
-        background: var(--color-primary);
-        border-radius: 5px;
-      }
-
-      .transaction-table-body::-webkit-scrollbar-thumb:hover {
-        background: var(--color-primary-hover);
-      }
-
-      .transaction-table-body::-webkit-scrollbar-corner {
-        background: var(--color-background-secondary);
+        width: 100%;
       }
 
       /* Responsive table */
@@ -1304,20 +1248,14 @@
             <div id="authTransactionsLoading" class="spinner" style="display: none"></div>
             <div id="authTransactionsError" class="alert alert-error" style="display: none"></div>
             <div class="transaction-table-scroll">
-              <div class="transaction-table-header">
-                <table class="transaction-table">
-                  <thead id="authTransactionsHeader">
-                    <!-- Headers will be populated dynamically -->
-                  </thead>
-                </table>
-              </div>
-              <div class="transaction-table-body">
-                <table class="transaction-table" id="authTransactionsTable">
-                  <tbody id="authTransactionsBody">
-                    <!-- Rows will be populated dynamically -->
-                  </tbody>
-                </table>
-              </div>
+              <table class="transaction-table" id="authTransactionsTable">
+                <thead id="authTransactionsHeader">
+                  <!-- Headers will be populated dynamically -->
+                </thead>
+                <tbody id="authTransactionsBody">
+                  <!-- Rows will be populated dynamically -->
+                </tbody>
+              </table>
             </div>
           </div>
           <div id="saleCaptureTransactionsContainer" class="transaction-table-container">
@@ -1334,20 +1272,14 @@
               style="display: none"
             ></div>
             <div class="transaction-table-scroll">
-              <div class="transaction-table-header">
-                <table class="transaction-table">
-                  <thead id="saleCaptureTransactionsHeader">
-                    <!-- Headers will be populated dynamically -->
-                  </thead>
-                </table>
-              </div>
-              <div class="transaction-table-body">
-                <table class="transaction-table" id="saleCaptureTransactionsTable">
-                  <tbody id="saleCaptureTransactionsBody">
-                    <!-- Rows will be populated dynamically -->
-                  </tbody>
-                </table>
-              </div>
+              <table class="transaction-table" id="saleCaptureTransactionsTable">
+                <thead id="saleCaptureTransactionsHeader">
+                  <!-- Headers will be populated dynamically -->
+                </thead>
+                <tbody id="saleCaptureTransactionsBody">
+                  <!-- Rows will be populated dynamically -->
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
@@ -3634,9 +3566,6 @@
           loading.style.display = 'none';
           button.textContent = originalText;
           button.disabled = false;
-          
-          // Re-initialize scroll synchronization after table is populated
-          setupTableScrollSync();
         } catch (error) {
           console.error('Error fetching Auth transactions:', error);
           showAlert(errorDiv, `Error: ${error.message}`, 'error');
@@ -4142,9 +4071,6 @@
           loading.style.display = 'none';
           button.textContent = originalText;
           button.disabled = false;
-          
-          // Re-initialize scroll synchronization after table is populated
-          setupTableScrollSync();
         } catch (error) {
           console.error('Error fetching Sale/Capture transactions:', error);
           showAlert(errorDiv, `Error: ${error.message}`, 'error');
@@ -4328,168 +4254,7 @@
         processCardPresentAuth();
       });
 
-      // Global scroll handlers to avoid scoping issues
-      let authScrollHandler = null;
-      let saleCaptureScrollHandler = null;
 
-      // Synchronize column widths and horizontal scrolling between table headers and bodies
-      function setupTableScrollSync() {
-        // Auth transactions table
-        const authBody = document.querySelector('#authTransactionsContainer .transaction-table-body');
-        const authHeader = document.querySelector('#authTransactionsContainer .transaction-table-header');
-        
-        if (authBody && authHeader) {
-          // Remove existing listeners to prevent duplicates
-          if (authScrollHandler) {
-            authBody.removeEventListener('scroll', authScrollHandler);
-          }
-          
-          // Create new scroll handler
-          authScrollHandler = () => {
-            authHeader.scrollLeft = authBody.scrollLeft;
-          };
-          authBody.addEventListener('scroll', authScrollHandler);
-          
-          // Sync column widths multiple times to ensure it works
-          syncColumnWidths('#authTransactionsTable', '#authTransactionsHeader');
-          setTimeout(() => syncColumnWidths('#authTransactionsTable', '#authTransactionsHeader'), 150);
-          setTimeout(() => syncColumnWidths('#authTransactionsTable', '#authTransactionsHeader'), 300);
-        }
-
-        // Sale/Capture transactions table
-        const saleCaptureBody = document.querySelector('#saleCaptureTransactionsContainer .transaction-table-body');
-        const saleCaptureHeader = document.querySelector('#saleCaptureTransactionsContainer .transaction-table-header');
-        
-        if (saleCaptureBody && saleCaptureHeader) {
-          // Remove existing listeners to prevent duplicates
-          if (saleCaptureScrollHandler) {
-            saleCaptureBody.removeEventListener('scroll', saleCaptureScrollHandler);
-          }
-          
-          // Create new scroll handler
-          saleCaptureScrollHandler = () => {
-            saleCaptureHeader.scrollLeft = saleCaptureBody.scrollLeft;
-          };
-          saleCaptureBody.addEventListener('scroll', saleCaptureScrollHandler);
-          
-          // Sync column widths multiple times to ensure it works
-          syncColumnWidths('#saleCaptureTransactionsTable', '#saleCaptureTransactionsHeader');
-          setTimeout(() => syncColumnWidths('#saleCaptureTransactionsTable', '#saleCaptureTransactionsHeader'), 150);
-          setTimeout(() => syncColumnWidths('#saleCaptureTransactionsTable', '#saleCaptureTransactionsHeader'), 300);
-        }
-      }
-
-      // Function to synchronize column widths between body and header tables
-      function syncColumnWidths(bodyTableSelector, headerTableSelector) {
-        setTimeout(() => {
-          const bodyTable = document.querySelector(bodyTableSelector);
-          const headerTable = document.querySelector(headerTableSelector + ' table');
-          
-          if (!bodyTable || !headerTable) return;
-          
-          // Create a measurement element with table styling
-          const measureElement = document.createElement('div');
-          measureElement.style.position = 'absolute';
-          measureElement.style.visibility = 'hidden';
-          measureElement.style.whiteSpace = 'nowrap';
-          measureElement.style.fontSize = '0.9rem';
-          measureElement.style.fontFamily = getComputedStyle(bodyTable).fontFamily;
-          measureElement.style.padding = '12px 16px';
-          measureElement.style.border = 'none';
-          measureElement.style.margin = '0';
-          document.body.appendChild(measureElement);
-          
-          // Get header and body data
-          const headerRow = headerTable.querySelector('thead tr');
-          const bodyRows = Array.from(bodyTable.querySelectorAll('tbody tr'));
-          
-          if (!headerRow || bodyRows.length === 0) {
-            document.body.removeChild(measureElement);
-            return;
-          }
-          
-          const headerCells = Array.from(headerRow.querySelectorAll('th'));
-          const numColumns = headerCells.length;
-          
-          // Calculate the required width for each column
-          const columnWidths = [];
-          
-          for (let colIndex = 0; colIndex < numColumns; colIndex++) {
-            let maxWidth = 150; // minimum width
-            
-            // Measure header text width (bold)
-            if (headerCells[colIndex]) {
-              const headerText = headerCells[colIndex].textContent.trim();
-              measureElement.style.fontWeight = '600'; // bold like headers
-              measureElement.textContent = headerText;
-              const headerWidth = measureElement.offsetWidth;
-              maxWidth = Math.max(maxWidth, headerWidth);
-            }
-            
-            // Measure all data cell content in this column (normal weight)
-            measureElement.style.fontWeight = 'normal';
-            bodyRows.forEach(row => {
-              if (row.cells[colIndex]) {
-                const cellText = row.cells[colIndex].textContent.trim();
-                measureElement.textContent = cellText;
-                const cellWidth = measureElement.offsetWidth;
-                maxWidth = Math.max(maxWidth, cellWidth);
-              }
-            });
-            
-            // Add a small buffer to prevent cramped text
-            columnWidths.push(maxWidth + 10);
-          }
-          
-          // Clean up measurement element
-          document.body.removeChild(measureElement);
-          
-          // Clear any existing width constraints
-          const allCells = [...bodyTable.querySelectorAll('td'), ...headerTable.querySelectorAll('th')];
-          allCells.forEach(cell => {
-            cell.style.width = '';
-            cell.style.minWidth = '';
-            cell.style.maxWidth = '';
-          });
-          
-          // Apply fixed layout and calculated widths
-          const totalWidth = columnWidths.reduce((sum, width) => sum + width, 0);
-          
-          bodyTable.style.tableLayout = 'fixed';
-          headerTable.style.tableLayout = 'fixed';
-          bodyTable.style.width = totalWidth + 'px';
-          headerTable.style.width = totalWidth + 'px';
-          
-          // Apply widths to header cells
-          headerCells.forEach((cell, index) => {
-            if (columnWidths[index]) {
-              const width = columnWidths[index] + 'px';
-              cell.style.width = width;
-              cell.style.minWidth = width;
-              cell.style.maxWidth = width;
-            }
-          });
-          
-          // Apply widths to all body cells
-          bodyRows.forEach(row => {
-            Array.from(row.cells).forEach((cell, index) => {
-              if (columnWidths[index]) {
-                const width = columnWidths[index] + 'px';
-                cell.style.width = width;
-                cell.style.minWidth = width;
-                cell.style.maxWidth = width;
-              }
-            });
-          });
-          
-        }, 100);
-      }
-
-      // Initialize scroll synchronization when DOM is ready
-      document.addEventListener('DOMContentLoaded', setupTableScrollSync);
-      
-      // Also call it immediately in case DOM is already loaded
-      setupTableScrollSync();
     </script>
   </body>
 </html>
