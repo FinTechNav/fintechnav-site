@@ -972,6 +972,13 @@
         font-size: 0.9rem;
         table-layout: auto;
       }
+      
+      /* Ensure header and body tables have consistent structure */
+      .transaction-table-header .transaction-table,
+      .transaction-table-body .transaction-table {
+        width: 100%;
+        table-layout: fixed;
+      }
 
       .transaction-table th,
       .transaction-table td {
@@ -4320,6 +4327,10 @@
         processCardPresentAuth();
       });
 
+      // Global scroll handlers to avoid scoping issues
+      let authScrollHandler = null;
+      let saleCaptureScrollHandler = null;
+
       // Synchronize column widths and horizontal scrolling between table headers and bodies
       function setupTableScrollSync() {
         // Auth transactions table
@@ -4327,12 +4338,21 @@
         const authHeader = document.querySelector('#authTransactionsContainer .transaction-table-header');
         
         if (authBody && authHeader) {
-          authBody.addEventListener('scroll', () => {
-            authHeader.scrollLeft = authBody.scrollLeft;
-          });
+          // Remove existing listeners to prevent duplicates
+          if (authScrollHandler) {
+            authBody.removeEventListener('scroll', authScrollHandler);
+          }
           
-          // Sync column widths
+          // Create new scroll handler
+          authScrollHandler = () => {
+            authHeader.scrollLeft = authBody.scrollLeft;
+          };
+          authBody.addEventListener('scroll', authScrollHandler);
+          
+          // Sync column widths multiple times to ensure it works
           syncColumnWidths('#authTransactionsTable', '#authTransactionsHeader');
+          setTimeout(() => syncColumnWidths('#authTransactionsTable', '#authTransactionsHeader'), 150);
+          setTimeout(() => syncColumnWidths('#authTransactionsTable', '#authTransactionsHeader'), 300);
         }
 
         // Sale/Capture transactions table
@@ -4340,12 +4360,21 @@
         const saleCaptureHeader = document.querySelector('#saleCaptureTransactionsContainer .transaction-table-header');
         
         if (saleCaptureBody && saleCaptureHeader) {
-          saleCaptureBody.addEventListener('scroll', () => {
-            saleCaptureHeader.scrollLeft = saleCaptureBody.scrollLeft;
-          });
+          // Remove existing listeners to prevent duplicates
+          if (saleCaptureScrollHandler) {
+            saleCaptureBody.removeEventListener('scroll', saleCaptureScrollHandler);
+          }
           
-          // Sync column widths
+          // Create new scroll handler
+          saleCaptureScrollHandler = () => {
+            saleCaptureHeader.scrollLeft = saleCaptureBody.scrollLeft;
+          };
+          saleCaptureBody.addEventListener('scroll', saleCaptureScrollHandler);
+          
+          // Sync column widths multiple times to ensure it works
           syncColumnWidths('#saleCaptureTransactionsTable', '#saleCaptureTransactionsHeader');
+          setTimeout(() => syncColumnWidths('#saleCaptureTransactionsTable', '#saleCaptureTransactionsHeader'), 150);
+          setTimeout(() => syncColumnWidths('#saleCaptureTransactionsTable', '#saleCaptureTransactionsHeader'), 300);
         }
       }
 
@@ -4358,33 +4387,62 @@
           
           if (!bodyTable || !headerTable) return;
           
-          // Get the first row of body table to measure column widths
+          // Reset any previous styling to get natural widths first
+          bodyTable.style.tableLayout = 'auto';
+          headerTable.style.tableLayout = 'auto';
+          bodyTable.style.width = '100%';
+          headerTable.style.width = '100%';
+          
+          // Clear any previous column width styling
+          const allCells = [...bodyTable.querySelectorAll('td'), ...headerTable.querySelectorAll('th')];
+          allCells.forEach(cell => {
+            cell.style.width = '';
+            cell.style.minWidth = '';
+            cell.style.maxWidth = '';
+          });
+          
+          // Force a reflow
+          bodyTable.offsetHeight;
+          headerTable.offsetHeight;
+          
+          // Now measure the natural widths of the body table
           const bodyRow = bodyTable.querySelector('tbody tr');
           const headerRow = headerTable.querySelector('thead tr');
           
           if (!bodyRow || !headerRow) return;
           
-          const bodyCells = bodyRow.querySelectorAll('td');
-          const headerCells = headerRow.querySelectorAll('th');
+          const bodyCells = Array.from(bodyRow.querySelectorAll('td'));
+          const headerCells = Array.from(headerRow.querySelectorAll('th'));
           
-          // Ensure both tables use the same width
-          const totalWidth = bodyTable.offsetWidth;
-          headerTable.style.width = totalWidth + 'px';
-          bodyTable.style.width = totalWidth + 'px';
+          // Measure actual rendered widths
+          const columnWidths = bodyCells.map(cell => cell.getBoundingClientRect().width);
           
-          // Set both tables to have fixed layout for consistent column widths
+          // Apply fixed layout and set exact widths
           bodyTable.style.tableLayout = 'fixed';
           headerTable.style.tableLayout = 'fixed';
           
-          // Measure and set column widths based on the body table
-          bodyCells.forEach((cell, index) => {
+          // Set the total width to match the body table's natural width
+          const bodyTableWidth = bodyTable.getBoundingClientRect().width;
+          headerTable.style.width = bodyTableWidth + 'px';
+          bodyTable.style.width = bodyTableWidth + 'px';
+          
+          // Apply the measured widths to both tables
+          columnWidths.forEach((width, index) => {
             if (headerCells[index]) {
-              const width = cell.offsetWidth + 'px';
-              headerCells[index].style.width = width;
-              bodyCells[index].style.width = width;
+              const widthPx = width + 'px';
+              headerCells[index].style.width = widthPx;
+              headerCells[index].style.minWidth = widthPx;
+              headerCells[index].style.maxWidth = widthPx;
+            }
+            if (bodyCells[index]) {
+              const widthPx = width + 'px';
+              bodyCells[index].style.width = widthPx;
+              bodyCells[index].style.minWidth = widthPx;
+              bodyCells[index].style.maxWidth = widthPx;
             }
           });
-        }, 50); // Small delay to ensure DOM rendering is complete
+          
+        }, 100); // Increased delay to ensure DOM rendering is complete
       }
 
       // Initialize scroll synchronization when DOM is ready
