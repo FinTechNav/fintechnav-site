@@ -4390,8 +4390,8 @@
           // Reset any previous styling to get natural widths first
           bodyTable.style.tableLayout = 'auto';
           headerTable.style.tableLayout = 'auto';
-          bodyTable.style.width = '100%';
-          headerTable.style.width = '100%';
+          bodyTable.style.width = 'auto';
+          headerTable.style.width = 'auto';
           
           // Clear any previous column width styling
           const allCells = [...bodyTable.querySelectorAll('td'), ...headerTable.querySelectorAll('th')];
@@ -4401,48 +4401,77 @@
             cell.style.maxWidth = '';
           });
           
-          // Force a reflow
+          // Force a reflow to get natural widths
           bodyTable.offsetHeight;
           headerTable.offsetHeight;
           
-          // Now measure the natural widths of the body table
-          const bodyRow = bodyTable.querySelector('tbody tr');
+          // Get all rows to find the maximum width needed for each column
           const headerRow = headerTable.querySelector('thead tr');
+          const bodyRows = Array.from(bodyTable.querySelectorAll('tbody tr'));
           
-          if (!bodyRow || !headerRow) return;
+          if (!headerRow || bodyRows.length === 0) return;
           
-          const bodyCells = Array.from(bodyRow.querySelectorAll('td'));
           const headerCells = Array.from(headerRow.querySelectorAll('th'));
+          const numColumns = headerCells.length;
           
-          // Measure actual rendered widths
-          const columnWidths = bodyCells.map(cell => cell.getBoundingClientRect().width);
+          // Calculate the maximum width needed for each column
+          const columnWidths = [];
           
-          // Apply fixed layout and set exact widths
+          for (let colIndex = 0; colIndex < numColumns; colIndex++) {
+            let maxWidth = 0;
+            
+            // Check header width
+            if (headerCells[colIndex]) {
+              const headerWidth = headerCells[colIndex].scrollWidth + 32; // Add padding
+              maxWidth = Math.max(maxWidth, headerWidth);
+            }
+            
+            // Check all body rows for this column
+            bodyRows.forEach(row => {
+              const cell = row.cells[colIndex];
+              if (cell) {
+                const cellWidth = cell.scrollWidth + 32; // Add padding
+                maxWidth = Math.max(maxWidth, cellWidth);
+              }
+            });
+            
+            // Ensure minimum width
+            maxWidth = Math.max(maxWidth, 150);
+            columnWidths.push(maxWidth);
+          }
+          
+          // Apply fixed layout and set calculated widths
           bodyTable.style.tableLayout = 'fixed';
           headerTable.style.tableLayout = 'fixed';
           
-          // Set the total width to match the body table's natural width
-          const bodyTableWidth = bodyTable.getBoundingClientRect().width;
-          headerTable.style.width = bodyTableWidth + 'px';
-          bodyTable.style.width = bodyTableWidth + 'px';
+          // Calculate total width needed
+          const totalWidth = columnWidths.reduce((sum, width) => sum + width, 0);
+          headerTable.style.width = totalWidth + 'px';
+          bodyTable.style.width = totalWidth + 'px';
           
-          // Apply the measured widths to both tables
-          columnWidths.forEach((width, index) => {
-            if (headerCells[index]) {
-              const widthPx = width + 'px';
-              headerCells[index].style.width = widthPx;
-              headerCells[index].style.minWidth = widthPx;
-              headerCells[index].style.maxWidth = widthPx;
-            }
-            if (bodyCells[index]) {
-              const widthPx = width + 'px';
-              bodyCells[index].style.width = widthPx;
-              bodyCells[index].style.minWidth = widthPx;
-              bodyCells[index].style.maxWidth = widthPx;
+          // Apply the calculated widths to header cells
+          headerCells.forEach((cell, index) => {
+            if (columnWidths[index]) {
+              const widthPx = columnWidths[index] + 'px';
+              cell.style.width = widthPx;
+              cell.style.minWidth = widthPx;
+              cell.style.maxWidth = widthPx;
             }
           });
           
-        }, 100); // Increased delay to ensure DOM rendering is complete
+          // Apply the same widths to all body rows
+          bodyRows.forEach(row => {
+            Array.from(row.cells).forEach((cell, index) => {
+              if (columnWidths[index]) {
+                const widthPx = columnWidths[index] + 'px';
+                cell.style.width = widthPx;
+                cell.style.minWidth = widthPx;
+                cell.style.maxWidth = widthPx;
+              }
+            });
+          });
+          
+        }, 100); // Delay to ensure DOM rendering is complete
       }
 
       // Initialize scroll synchronization when DOM is ready
