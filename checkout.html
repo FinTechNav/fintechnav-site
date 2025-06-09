@@ -3618,6 +3618,9 @@
           loading.style.display = 'none';
           button.textContent = originalText;
           button.disabled = false;
+          
+          // Re-initialize scroll synchronization after table is populated
+          setupTableScrollSync();
         } catch (error) {
           console.error('Error fetching Auth transactions:', error);
           showAlert(errorDiv, `Error: ${error.message}`, 'error');
@@ -4123,6 +4126,9 @@
           loading.style.display = 'none';
           button.textContent = originalText;
           button.disabled = false;
+          
+          // Re-initialize scroll synchronization after table is populated
+          setupTableScrollSync();
         } catch (error) {
           console.error('Error fetching Sale/Capture transactions:', error);
           showAlert(errorDiv, `Error: ${error.message}`, 'error');
@@ -4305,6 +4311,35 @@
       document.getElementById('authCardPresentBtn').addEventListener('click', () => {
         processCardPresentAuth();
       });
+
+      // Synchronize horizontal scrolling between table headers and bodies
+      function setupTableScrollSync() {
+        // Auth transactions table
+        const authBody = document.querySelector('#authTransactionsContainer .transaction-table-body');
+        const authHeader = document.querySelector('#authTransactionsContainer .transaction-table-header');
+        
+        if (authBody && authHeader) {
+          authBody.addEventListener('scroll', () => {
+            authHeader.scrollLeft = authBody.scrollLeft;
+          });
+        }
+
+        // Sale/Capture transactions table
+        const saleCaptureBody = document.querySelector('#saleCaptureTransactionsContainer .transaction-table-body');
+        const saleCaptureHeader = document.querySelector('#saleCaptureTransactionsContainer .transaction-table-header');
+        
+        if (saleCaptureBody && saleCaptureHeader) {
+          saleCaptureBody.addEventListener('scroll', () => {
+            saleCaptureHeader.scrollLeft = saleCaptureBody.scrollLeft;
+          });
+        }
+      }
+
+      // Initialize scroll synchronization when DOM is ready
+      document.addEventListener('DOMContentLoaded', setupTableScrollSync);
+      
+      // Also call it immediately in case DOM is already loaded
+      setupTableScrollSync();
     </script>
   </body>
 </html>
