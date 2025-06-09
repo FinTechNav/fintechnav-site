@@ -1020,6 +1020,14 @@
         border-bottom: 2px solid var(--color-border);
         z-index: 1000;
         position: relative;
+        overflow-x: auto;
+        overflow-y: hidden;
+        scrollbar-width: none; /* Hide scrollbar on Firefox */
+        -ms-overflow-style: none; /* Hide scrollbar on IE/Edge */
+      }
+      
+      .transaction-table-header::-webkit-scrollbar {
+        display: none; /* Hide scrollbar on webkit browsers */
       }
 
       .transaction-table-body {
