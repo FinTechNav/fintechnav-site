@@ -618,6 +618,55 @@
         }
       }
 
+      /* Terminal message styles */
+      .terminal-message {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 40px 20px;
+        text-align: center;
+        background-color: rgba(201, 161, 95, 0.1);
+        border: 2px solid rgba(201, 161, 95, 0.3);
+        border-radius: var(--border-radius);
+        margin: 20px;
+      }
+
+      .terminal-icon {
+        font-size: 4rem;
+        margin-bottom: 20px;
+        animation: pulse 2s infinite;
+      }
+
+      .terminal-text h3 {
+        color: var(--color-primary);
+        font-family: var(--font-family-heading);
+        font-size: 1.8rem;
+        margin: 0 0 15px 0;
+        font-weight: 400;
+        letter-spacing: 0.03em;
+      }
+
+      .terminal-text p {
+        color: var(--color-text);
+        font-family: var(--font-family-body);
+        font-size: 1.2rem;
+        margin: 0;
+        line-height: 1.6;
+        max-width: 400px;
+      }
+
+      @keyframes pulse {
+        0%, 100% {
+          transform: scale(1);
+          opacity: 1;
+        }
+        50% {
+          transform: scale(1.1);
+          opacity: 0.8;
+        }
+      }
+
       /* Tab styles */
       .tab-container {
         margin-bottom: 20px;
@@ -1529,6 +1578,13 @@
         <div id="paymentFormContainer">
           <div id="apiError" class="alert alert-error"></div>
           <div id="spinner" class="spinner"></div>
+          <div id="terminalMessage" class="terminal-message" style="display: none">
+            <div class="terminal-icon">🏪</div>
+            <div class="terminal-text">
+              <h3>Please complete the transaction on the terminal</h3>
+              <p>Follow the prompts on your payment terminal to complete the transaction.</p>
+            </div>
+          </div>
           <iframe
             id="paymentIframe"
             class="iframe-container"
@@ -1602,6 +1658,7 @@
       const paymentIframe = document.getElementById('paymentIframe');
       const apiError = document.getElementById('apiError');
       const spinner = document.getElementById('spinner');
+      const terminalMessage = document.getElementById('terminalMessage');
       const paymentFormContainer = document.getElementById('paymentFormContainer');
       const mainContainer = document.getElementById('mainContainer');
       const checkoutExistingBtn = document.getElementById('checkoutExistingBtn');
@@ -1983,10 +2040,11 @@
         const orderNumber = localStorage.getItem(ORDER_NUMBER_STORAGE) || `ord_${Date.now()}`;
         let amountGoodsAndServices = parseInt(localStorage.getItem(AMOUNT_GOODS_SERVICES_STORAGE) || '0');
 
-        // Reset modal state
+        // Reset modal state and show terminal message
         paymentIframe.style.display = 'none';
         apiError.style.display = 'none';
-        spinner.style.display = 'block';
+        spinner.style.display = 'none';
+        terminalMessage.style.display = 'block';
 
         cardModal.style.display = 'flex';
         toggleBlur(true);
@@ -2036,7 +2094,7 @@
             }
           } catch (error) {
             showCopyableError(`Invalid response format\n\nRaw response: ${responseText}`);
-            spinner.style.display = 'none';
+            terminalMessage.style.display = 'none';
             return;
           }
 
@@ -2044,22 +2102,45 @@
             let errorMessage = extractErrorMessage(data);
             const fullErrorMessage = `Card Present Sale Error\n\nStatus: ${response.status}\n\nMessage: ${errorMessage}\n\nFull Response:\n${JSON.stringify(data, null, 2)}`;
             showCopyableError(fullErrorMessage);
-            spinner.style.display = 'none';
+            terminalMessage.style.display = 'none';
             return;
           }
 
-          if (data.iframeUrl) {
-            paymentIframe.src = data.iframeUrl;
-            paymentIframe.style.display = 'block';
-            spinner.style.display = 'none';
-          } else {
-            showCopyableError(`Card Present Sale Error\n\nNo iframe URL returned\n\nFull Response:\n${JSON.stringify(data, null, 2)}`);
-            spinner.style.display = 'none';
+          // Hide terminal message and close modal
+          terminalMessage.style.display = 'none';
+          cardModal.style.display = 'none';
+          toggleBlur(false);
+
+          // Handle successful response (transaction completed)
+          console.log('Card Present Sale successful:', data);
+
+          // Create detailed success message similar to token sale
+          const successDetails = [
+            `✅ Card Present Sale Successful!`,
+            ``,
+            `Transaction ID: ${data.id}`,
+            `Reference ID: ${data.referenceId}`,
+            `Amount: $${(data.approvedAmount / 100).toFixed(2)}`,
+            `Auth Code: ${data.transactionResponses?.[0]?.authCode || 'N/A'}`,
+            `Card: ${data.paymentMethod?.cardType} ${data.paymentMethod?.maskedCardNumber}`,
+            `Result: ${data.resultText || 'Success'}`,
+          ].join('\n');
+
+          alert(successDetails);
+
+          // Optionally refresh the sale/capture transactions table if it's visible
+          const saleCaptureContainer = document.getElementById('saleCaptureTransactionsContainer');
+          if (saleCaptureContainer && saleCaptureContainer.classList.contains('show')) {
+            // Refresh the transactions list to show the new sale
+            setTimeout(() => {
+              getSaleCaptureTransactions();
+            }, 1000); // Small delay to ensure the transaction is fully processed
           }
+
         } catch (error) {
           const errorMessage = `Card Present Sale Processing Error\n\n${error.message}\n\nStack trace:\n${error.stack}`;
           showCopyableError(errorMessage);
-          spinner.style.display = 'none';
+          terminalMessage.style.display = 'none';
         }
       }
 
@@ -2077,10 +2158,11 @@
         const orderNumber = localStorage.getItem(ORDER_NUMBER_STORAGE) || `ord_${Date.now()}`;
         let amountGoodsAndServices = parseInt(localStorage.getItem(AMOUNT_GOODS_SERVICES_STORAGE) || '0');
 
-        // Reset modal state
+        // Reset modal state and show terminal message
         paymentIframe.style.display = 'none';
         apiError.style.display = 'none';
-        spinner.style.display = 'block';
+        spinner.style.display = 'none';
+        terminalMessage.style.display = 'block';
 
         cardModal.style.display = 'flex';
         toggleBlur(true);
@@ -2130,7 +2212,7 @@
             }
           } catch (error) {
             showCopyableError(`Invalid response format\n\nRaw response: ${responseText}`);
-            spinner.style.display = 'none';
+            terminalMessage.style.display = 'none';
             return;
           }
 
@@ -2138,22 +2220,46 @@
             let errorMessage = extractErrorMessage(data);
             const fullErrorMessage = `Card Present Auth Error\n\nStatus: ${response.status}\n\nMessage: ${errorMessage}\n\nFull Response:\n${JSON.stringify(data, null, 2)}`;
             showCopyableError(fullErrorMessage);
-            spinner.style.display = 'none';
+            terminalMessage.style.display = 'none';
             return;
           }
 
-          if (data.iframeUrl) {
-            paymentIframe.src = data.iframeUrl;
-            paymentIframe.style.display = 'block';
-            spinner.style.display = 'none';
-          } else {
-            showCopyableError(`Card Present Auth Error\n\nNo iframe URL returned\n\nFull Response:\n${JSON.stringify(data, null, 2)}`);
-            spinner.style.display = 'none';
+          // Hide terminal message and close modal
+          terminalMessage.style.display = 'none';
+          cardModal.style.display = 'none';
+          toggleBlur(false);
+
+          // Handle successful response (transaction completed)
+          console.log('Card Present Auth successful:', data);
+
+          // Create detailed success message similar to token auth
+          const successDetails = [
+            `✅ Card Present Auth Successful!`,
+            ``,
+            `Transaction ID: ${data.id}`,
+            `Reference ID: ${data.referenceId}`,
+            `Amount: $${(data.approvedAmount / 100).toFixed(2)}`,
+            `Auth Code: ${data.transactionResponses?.[0]?.authCode || 'N/A'}`,
+            `Card: ${data.paymentMethod?.cardType} ${data.paymentMethod?.maskedCardNumber}`,
+            `Balance: $${(data.balanceAmount / 100).toFixed(2)} (available for capture)`,
+            `Result: ${data.resultText || 'Success'}`,
+          ].join('\n');
+
+          alert(successDetails);
+
+          // Optionally refresh the auth transactions table if it's visible
+          const authContainer = document.getElementById('authTransactionsContainer');
+          if (authContainer && authContainer.classList.contains('show')) {
+            // Refresh the auth transactions list to show the new auth
+            setTimeout(() => {
+              getAuthTransactions();
+            }, 1000); // Small delay to ensure the transaction is fully processed
           }
+
         } catch (error) {
           const errorMessage = `Card Present Auth Processing Error\n\n${error.message}\n\nStack trace:\n${error.stack}`;
           showCopyableError(errorMessage);
-          spinner.style.display = 'none';
+          terminalMessage.style.display = 'none';
         }
       }
 
