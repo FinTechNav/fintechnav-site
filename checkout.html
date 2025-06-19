@@ -1501,7 +1501,6 @@
                 <label for="txnStatus">Status:</label>
                 <select id="txnStatus" class="filter-input">
                   <option value="">N/A</option>
-                  <option value="Unknown">Unknown</option>
                   <option value="Created">Created</option>
                   <option value="Pending">Pending</option>
                   <option value="Completed">Completed</option>
@@ -3260,7 +3259,7 @@
         if (type && type !== '') filters.push(`type==${type}`);
 
         const status = document.getElementById('txnStatus').value;
-        if (status && status !== '') filters.push(`status==${status}`);
+        if (status && status !== '' && status !== 'N/A') filters.push(`status==${status}`);
 
         // Amount handling
         const amountType = document.querySelector('input[name="amountType"]:checked').value;
