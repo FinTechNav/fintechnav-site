@@ -2103,6 +2103,29 @@
             return;
           }
 
+          // Check resultCode to determine if transaction was approved or declined
+          if (data.resultCode && data.resultCode !== 0) {
+            // Transaction was declined
+            resetModalState();
+            cardModal.style.display = 'none';
+            toggleBlur(false);
+            
+            const declineDetails = [
+              `❌ Card Present Sale Declined`,
+              ``,
+              `Transaction ID: ${data.id}`,
+              `Reference ID: ${data.referenceId}`,
+              `Amount: $${(data.requestedAmount / 100).toFixed(2)}`,
+              `Result Code: ${data.resultCode}`,
+              `Result: ${data.resultText || 'DECLINED'}`,
+              `Auth Code: ${data.transactionResponses?.[0]?.authCode || 'N/A'}`,
+              `Host Response: ${data.transactionResponses?.[0]?.hostResponseText || 'N/A'}`,
+            ].join('\n');
+            
+            alert(declineDetails);
+            return;
+          }
+
           // Hide terminal message and close modal
           resetModalState();
           cardModal.style.display = 'none';
@@ -2210,19 +2233,42 @@
           }
 
           if (!response.ok) {
-            let errorMessage = extractErrorMessage(data);
-            const fullErrorMessage = `Card Present Auth Error\n\nStatus: ${response.status}\n\nMessage: ${errorMessage}\n\nFull Response:\n${JSON.stringify(data, null, 2)}`;
-            showCopyableError(fullErrorMessage);
-            return;
-          }
+          let errorMessage = extractErrorMessage(data);
+          const fullErrorMessage = `Card Present Auth Error\n\nStatus: ${response.status}\n\nMessage: ${errorMessage}\n\nFull Response:\n${JSON.stringify(data, null, 2)}`;
+          showCopyableError(fullErrorMessage);
+          return;
+        }
 
-          // Hide terminal message and close modal
+        // Check resultCode to determine if transaction was approved or declined
+        if (data.resultCode && data.resultCode !== 0) {
+          // Transaction was declined
           resetModalState();
           cardModal.style.display = 'none';
           toggleBlur(false);
+          
+          const declineDetails = [
+            `❌ Card Present Auth Declined`,
+            ``,
+            `Transaction ID: ${data.id}`,
+            `Reference ID: ${data.referenceId}`,
+            `Amount: $${(data.requestedAmount / 100).toFixed(2)}`,
+            `Result Code: ${data.resultCode}`,
+            `Result: ${data.resultText || 'DECLINED'}`,
+            `Auth Code: ${data.transactionResponses?.[0]?.authCode || 'N/A'}`,
+            `Host Response: ${data.transactionResponses?.[0]?.hostResponseText || 'N/A'}`,
+          ].join('\n');
+          
+          alert(declineDetails);
+          return;
+        }
 
-          // Handle successful response (transaction completed)
-          console.log('Card Present Auth successful:', data);
+        // Hide terminal message and close modal
+        resetModalState();
+        cardModal.style.display = 'none';
+        toggleBlur(false);
+
+        // Handle successful response (transaction completed)
+        console.log('Card Present Auth successful:', data);
 
           // Create detailed success message similar to token auth
           const successDetails = [
@@ -2774,6 +2820,24 @@
           // Handle successful response - SHOW ALERT INSTEAD OF REDIRECT
           console.log('Payment successful:', data);
 
+          // Check resultCode to determine if transaction was approved or declined
+          if (data.resultCode && data.resultCode !== 0) {
+            // Transaction was declined
+            const declineDetails = [
+              `❌ Token Sale Declined`,
+              ``,
+              `Transaction ID: ${data.id}`,
+              `Reference ID: ${data.referenceId}`,
+              `Amount: $${(data.requestedAmount / 100).toFixed(2)}`,
+              `Result Code: ${data.resultCode}`,
+              `Result: ${data.resultText || 'DECLINED'}`,
+              `Auth Code: ${data.transactionResponses?.[0]?.authCode || 'N/A'}`,
+              `Card: ${data.paymentMethod?.cardType} ${data.paymentMethod?.maskedCardNumber}`,
+            ].join('\n');
+            
+            alert(declineDetails);
+            return;
+          }
           // Create detailed success message similar to Token Auth
           const successDetails = [
             `✅ Token Sale Successful!`,
@@ -3873,6 +3937,25 @@
 
           // Handle successful response
           console.log('Token Auth successful:', data);
+
+          // Check resultCode to determine if transaction was approved or declined
+          if (data.resultCode && data.resultCode !== 0) {
+            // Transaction was declined
+            const declineDetails = [
+              `❌ Token Auth Declined`,
+              ``,
+              `Transaction ID: ${data.id}`,
+              `Reference ID: ${data.referenceId}`,
+              `Amount: $${(data.requestedAmount / 100).toFixed(2)}`,
+              `Result Code: ${data.resultCode}`,
+              `Result: ${data.resultText || 'DECLINED'}`,
+              `Auth Code: ${data.transactionResponses?.[0]?.authCode || 'N/A'}`,
+              `Card: ${data.paymentMethod?.cardType} ${data.paymentMethod?.maskedCardNumber}`,
+            ].join('\n');
+            
+            alert(declineDetails);
+            return;
+          }
 
           // Create detailed success message
           const successDetails = [
