@@ -2646,7 +2646,7 @@
         }
       }
 
-      // Complete updated processTokenSale function with enhanced debugging and error handling
+      // Updated processTokenSale function - shows alert instead of redirecting
       async function processTokenSale(tokenId) {
         const apiKey = localStorage.getItem(API_KEY_STORAGE);
 
@@ -2771,33 +2771,32 @@
             return;
           }
 
-          // Handle successful response
+          // Handle successful response - SHOW ALERT INSTEAD OF REDIRECT
           console.log('Payment successful:', data);
 
-          // Build comprehensive redirect parameters
-          const params = new URLSearchParams();
-          params.append('resultCode', data.resultCode.toString());
-          params.append('transactionId', data.id);
-          params.append('amount', data.approvedAmount.toString()); // Use approved amount from response
-          params.append('type', data.type);
-          params.append('referenceId', data.referenceId);
-          params.append('orderNumber', data.orderNumber);
-          params.append('invoiceNumber', data.invoiceNumber);
+          // Create detailed success message similar to Token Auth
+          const successDetails = [
+            `✅ Token Sale Successful!`,
+            ``,
+            `Transaction ID: ${data.id}`,
+            `Reference ID: ${data.referenceId}`,
+            `Amount: $${(data.approvedAmount / 100).toFixed(2)}`,
+            `Auth Code: ${data.transactionResponses?.[0]?.authCode || 'N/A'}`,
+            `Card: ${data.paymentMethod?.cardType} ${data.paymentMethod?.maskedCardNumber}`,
+            `Result: ${data.resultText || 'Success'}`,
+          ].join('\n');
 
-          // Add payment method info
-          if (data.paymentMethod) {
-            params.append('cardType', data.paymentMethod.cardType);
-            params.append('maskedCardNumber', data.paymentMethod.maskedCardNumber);
-            params.append('paymentMethodId', data.paymentMethod.id);
+          alert(successDetails);
+
+          // Optionally refresh the sale/capture transactions table if it's visible
+          const saleCaptureContainer = document.getElementById('saleCaptureTransactionsContainer');
+          if (saleCaptureContainer && saleCaptureContainer.classList.contains('show')) {
+            // Refresh the transactions list to show the new sale
+            setTimeout(() => {
+              getSaleCaptureTransactions();
+            }, 1000); // Small delay to ensure the transaction is fully processed
           }
 
-          // Add transaction response details
-          if (data.transactionResponses && data.transactionResponses[0]) {
-            params.append('authCode', data.transactionResponses[0].authCode);
-            params.append('responseCode', data.transactionResponses[0].responseCode.toString());
-          }
-
-          window.location.href = `${RETURN_URL}?${params.toString()}`;
         } catch (error) {
           console.error('Error processing token sale:', error);
           alert(`Payment processing error: ${error.message}\n\nStack trace: ${error.stack}`);
@@ -2805,9 +2804,12 @@
           // Reset button state
           checkoutExistingBtn.textContent = 'Token Sale';
           checkoutExistingBtn.disabled = false;
+        } finally {
+          // Reset button state
+          checkoutExistingBtn.textContent = 'Token Sale';
+          checkoutExistingBtn.disabled = false;
         }
       }
-
       // Set up event listener for iframe postMessages
       function setupIframeMessageListener() {
         window.addEventListener('message', (event) => {
