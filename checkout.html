@@ -1498,6 +1498,16 @@
               </div>
 
               <div class="filter-group">
+                <label for="txnStatus">Status:</label>
+                <select id="txnStatus" class="filter-input">
+                  <option value="">N/A</option>
+                  <option value="Created">Created</option>
+                  <option value="Pending">Pending</option>
+                  <option value="Completed">Completed</option>
+                </select>
+              </div>
+
+              <div class="filter-group">
                 <label>Amount (in cents):</label>
                 <div class="datetime-selector">
                   <div class="datetime-type">
@@ -1558,7 +1568,7 @@
           <div id="terminalMessage" class="terminal-message" style="display: none">
             <div class="terminal-icon">🏪</div>
             <div class="terminal-text">
-              <h3>Please complete the transaction on the terminal</h3>
+              <h3>Please complete the transaction on the payment terminal</h3>
               <p>Follow the prompts on your payment terminal to complete the transaction.</p>
             </div>
           </div>
@@ -2093,27 +2103,89 @@
             return;
           }
 
-          // Hide terminal message and close modal
-          resetModalState();
-          cardModal.style.display = 'none';
-          toggleBlur(false);
+          // Check resultCode first (0 = good request/response)
+          if (data.resultCode && data.resultCode !== 0) {
+            // Bad request/response
+            resetModalState();
+            cardModal.style.display = 'none';
+            toggleBlur(false);
+            
+            const errorDetails = [
+              `❌ Card Present Sale Request Error`,
+              ``,
+              `Transaction ID: ${data.id}`,
+              `Reference ID: ${data.referenceId}`,
+              `Result Code: ${data.resultCode}`,
+              `Result: ${data.resultText || 'ERROR'}`,
+            ].join('\n');
+            
+            alert(errorDetails);
+            return;
+          }
+
+          // Now check responseCode for transaction approval status
+          const responseCode = data.transactionResponses?.[0]?.responseCode;
+          if (responseCode === 1) {
+            // Approved
+            resetModalState();
+            cardModal.style.display = 'none';
+            toggleBlur(false);
+            
+            const successDetails = [
+              `✅ Card Present Sale Approved!`,
+              ``,
+              `Transaction ID: ${data.id}`,
+              `Reference ID: ${data.referenceId}`,
+              `Amount: $${(data.approvedAmount / 100).toFixed(2)}`,
+              `Auth Code: ${data.transactionResponses?.[0]?.authCode || 'N/A'}`,
+              `Card: ${data.transactionResponses?.[0]?.paymentMethod?.cardType || data.paymentMethod?.cardType || 'N/A'} ${data.transactionResponses?.[0]?.paymentMethod?.maskedCardNumber || data.paymentMethod?.maskedCardNumber || 'N/A'}`,
+              `Result: ${data.resultText || 'APPROVED'}`,
+            ].join('\n');
+            
+            alert(successDetails);
+          } else if (responseCode === 2) {
+            // Partially Approved
+            resetModalState();
+            cardModal.style.display = 'none';
+            toggleBlur(false);
+            
+            const partialDetails = [
+              `⚠️ Card Present Sale Partially Approved!`,
+              ``,
+              `Transaction ID: ${data.id}`,
+              `Reference ID: ${data.referenceId}`,
+              `Requested: $${(data.requestedAmount / 100).toFixed(2)}`,
+              `Approved: $${(data.approvedAmount / 100).toFixed(2)}`,
+              `Auth Code: ${data.transactionResponses?.[0]?.authCode || 'N/A'}`,
+              `Card: ${data.transactionResponses?.[0]?.paymentMethod?.cardType || data.paymentMethod?.cardType || 'N/A'} ${data.transactionResponses?.[0]?.paymentMethod?.maskedCardNumber || data.paymentMethod?.maskedCardNumber || 'N/A'}`,
+              `Result: ${data.resultText || 'PARTIALLY APPROVED'}`,
+            ].join('\n');
+            
+            alert(partialDetails);
+          } else {
+            // Declined
+            resetModalState();
+            cardModal.style.display = 'none';
+            toggleBlur(false);
+            
+            const declineDetails = [
+              `❌ Card Present Sale Declined`,
+              ``,
+              `Transaction ID: ${data.id}`,
+              `Reference ID: ${data.referenceId}`,
+              `Amount: $${(data.requestedAmount / 100).toFixed(2)}`,
+              `Response Code: ${responseCode || 'N/A'}`,
+              `Result: ${data.resultText || 'DECLINED'}`,
+              `Auth Code: ${data.transactionResponses?.[0]?.authCode || 'N/A'}`,
+              `Host Response: ${data.transactionResponses?.[0]?.hostResponseText || 'N/A'}`,
+            ].join('\n');
+            
+            alert(declineDetails);
+            return;
+          }
 
           // Handle successful response (transaction completed)
-          console.log('Card Present Sale successful:', data);
-
-          // Create detailed success message similar to token sale
-          const successDetails = [
-            `✅ Card Present Sale Successful!`,
-            ``,
-            `Transaction ID: ${data.id}`,
-            `Reference ID: ${data.referenceId}`,
-            `Amount: $${(data.approvedAmount / 100).toFixed(2)}`,
-            `Auth Code: ${data.transactionResponses?.[0]?.authCode || 'N/A'}`,
-            `Card: ${data.paymentMethod?.cardType} ${data.paymentMethod?.maskedCardNumber}`,
-            `Result: ${data.resultText || 'Success'}`,
-          ].join('\n');
-
-          alert(successDetails);
+          console.log('Card Present Sale processed:', data);
 
           // Optionally refresh the sale/capture transactions table if it's visible
           const saleCaptureContainer = document.getElementById('saleCaptureTransactionsContainer');
@@ -2206,28 +2278,91 @@
             return;
           }
 
-          // Hide terminal message and close modal
-          resetModalState();
-          cardModal.style.display = 'none';
-          toggleBlur(false);
+          // Check resultCode first (0 = good request/response)
+          if (data.resultCode && data.resultCode !== 0) {
+            // Bad request/response
+            resetModalState();
+            cardModal.style.display = 'none';
+            toggleBlur(false);
+            
+            const errorDetails = [
+              `❌ Card Present Auth Request Error`,
+              ``,
+              `Transaction ID: ${data.id}`,
+              `Reference ID: ${data.referenceId}`,
+              `Result Code: ${data.resultCode}`,
+              `Result: ${data.resultText || 'ERROR'}`,
+            ].join('\n');
+            
+            alert(errorDetails);
+            return;
+          }
+
+          // Now check responseCode for transaction approval status
+          const responseCode = data.transactionResponses?.[0]?.responseCode;
+          if (responseCode === 1) {
+            // Approved
+            resetModalState();
+            cardModal.style.display = 'none';
+            toggleBlur(false);
+            
+            const successDetails = [
+              `✅ Card Present Auth Approved!`,
+              ``,
+              `Transaction ID: ${data.id}`,
+              `Reference ID: ${data.referenceId}`,
+              `Amount: $${(data.approvedAmount / 100).toFixed(2)}`,
+              `Auth Code: ${data.transactionResponses?.[0]?.authCode || 'N/A'}`,
+              `Card: ${data.transactionResponses?.[0]?.paymentMethod?.cardType || data.paymentMethod?.cardType || 'N/A'} ${data.transactionResponses?.[0]?.paymentMethod?.maskedCardNumber || data.paymentMethod?.maskedCardNumber || 'N/A'}`,
+              `Balance: $${(data.balanceAmount / 100).toFixed(2)} (available for capture)`,
+              `Result: ${data.resultText || 'APPROVED'}`,
+            ].join('\n');
+            
+            alert(successDetails);
+          } else if (responseCode === 2) {
+            // Partially Approved
+            resetModalState();
+            cardModal.style.display = 'none';
+            toggleBlur(false);
+            
+            const partialDetails = [
+              `⚠️ Card Present Auth Partially Approved!`,
+              ``,
+              `Transaction ID: ${data.id}`,
+              `Reference ID: ${data.referenceId}`,
+              `Requested: $${(data.requestedAmount / 100).toFixed(2)}`,
+              `Approved: $${(data.approvedAmount / 100).toFixed(2)}`,
+              `Auth Code: ${data.transactionResponses?.[0]?.authCode || 'N/A'}`,
+              `Card: ${data.transactionResponses?.[0]?.paymentMethod?.cardType || data.paymentMethod?.cardType || 'N/A'} ${data.transactionResponses?.[0]?.paymentMethod?.maskedCardNumber || data.paymentMethod?.maskedCardNumber || 'N/A'}`,
+              `Balance: $${(data.balanceAmount / 100).toFixed(2)} (available for capture)`,
+              `Result: ${data.resultText || 'PARTIALLY APPROVED'}`,
+            ].join('\n');
+            
+            alert(partialDetails);
+          } else {
+            // Declined
+            resetModalState();
+            cardModal.style.display = 'none';
+            toggleBlur(false);
+            
+            const declineDetails = [
+              `❌ Card Present Auth Declined`,
+              ``,
+              `Transaction ID: ${data.id}`,
+              `Reference ID: ${data.referenceId}`,
+              `Amount: $${(data.requestedAmount / 100).toFixed(2)}`,
+              `Response Code: ${responseCode || 'N/A'}`,
+              `Result: ${data.resultText || 'DECLINED'}`,
+              `Auth Code: ${data.transactionResponses?.[0]?.authCode || 'N/A'}`,
+              `Host Response: ${data.transactionResponses?.[0]?.hostResponseText || 'N/A'}`,
+            ].join('\n');
+            
+            alert(declineDetails);
+            return;
+          }
 
           // Handle successful response (transaction completed)
-          console.log('Card Present Auth successful:', data);
-
-          // Create detailed success message similar to token auth
-          const successDetails = [
-            `✅ Card Present Auth Successful!`,
-            ``,
-            `Transaction ID: ${data.id}`,
-            `Reference ID: ${data.referenceId}`,
-            `Amount: $${(data.approvedAmount / 100).toFixed(2)}`,
-            `Auth Code: ${data.transactionResponses?.[0]?.authCode || 'N/A'}`,
-            `Card: ${data.paymentMethod?.cardType} ${data.paymentMethod?.maskedCardNumber}`,
-            `Balance: $${(data.balanceAmount / 100).toFixed(2)} (available for capture)`,
-            `Result: ${data.resultText || 'Success'}`,
-          ].join('\n');
-
-          alert(successDetails);
+          console.log('Card Present Auth processed:', data);
 
           // Optionally refresh the auth transactions table if it's visible
           const authContainer = document.getElementById('authTransactionsContainer');
@@ -2636,7 +2771,7 @@
         }
       }
 
-      // Complete updated processTokenSale function with enhanced debugging and error handling
+      // Updated processTokenSale function - shows alert instead of redirecting
       async function processTokenSale(tokenId) {
         const apiKey = localStorage.getItem(API_KEY_STORAGE);
 
@@ -2737,57 +2872,83 @@
             return;
           }
 
-          // Handle error response
-          if (!response.ok) {
-            console.error('API Error Response Status:', response.status);
-            console.error('API Error Raw Response:', responseText);
+            // Handle successful response - SHOW ALERT INSTEAD OF REDIRECT
+            console.log('Payment successful:', data);
 
-            let errorMessage = `Error: API returned an error.\n\nStatus: ${response.status}\n\nRaw Response:\n${responseText}`;
-
-            try {
-              // Try to format the JSON response for display
-              const formattedJson = JSON.stringify(data, null, 2);
-              console.error('API Error Formatted JSON:', formattedJson);
-              errorMessage += `\n\nFormatted JSON:\n${formattedJson}`;
-            } catch (e) {
-              // JSON formatting failed, raw response is already included
+            // Check resultCode first (0 = good request/response)
+            if (data.resultCode && data.resultCode !== 0) {
+              // Bad request/response
+              const errorDetails = [
+                `❌ Token Sale Request Error`,
+                ``,
+                `Transaction ID: ${data.id}`,
+                `Reference ID: ${data.referenceId}`,
+                `Result Code: ${data.resultCode}`,
+                `Result: ${data.resultText || 'ERROR'}`,
+              ].join('\n');
+              
+              alert(errorDetails);
+              return;
             }
 
-            // Create and show copyable error modal
-            showCopyableError(errorMessage);
+            // Now check responseCode for transaction approval status
+            const responseCode = data.transactionResponses?.[0]?.responseCode;
+            if (responseCode === 1) {
+              // Approved
+              const successDetails = [
+                `✅ Token Sale Approved!`,
+                ``,
+                `Transaction ID: ${data.id}`,
+                `Reference ID: ${data.referenceId}`,
+                `Amount: $${(data.approvedAmount / 100).toFixed(2)}`,
+                `Auth Code: ${data.transactionResponses?.[0]?.authCode || 'N/A'}`,
+                `Card: ${data.paymentMethod?.cardType} ${data.paymentMethod?.maskedCardNumber}`,
+                `Result: ${data.resultText || 'APPROVED'}`,
+              ].join('\n');
+              
+              alert(successDetails);
+            } else if (responseCode === 2) {
+              // Partially Approved
+              const partialDetails = [
+                `⚠️ Token Sale Partially Approved!`,
+                ``,
+                `Transaction ID: ${data.id}`,
+                `Reference ID: ${data.referenceId}`,
+                `Requested: $${(data.requestedAmount / 100).toFixed(2)}`,
+                `Approved: $${(data.approvedAmount / 100).toFixed(2)}`,
+                `Auth Code: ${data.transactionResponses?.[0]?.authCode || 'N/A'}`,
+                `Card: ${data.paymentMethod?.cardType} ${data.paymentMethod?.maskedCardNumber}`,
+                `Result: ${data.resultText || 'PARTIALLY APPROVED'}`,
+              ].join('\n');
+              
+              alert(partialDetails);
+            } else {
+              // Declined
+              const declineDetails = [
+                `❌ Token Sale Declined`,
+                ``,
+                `Transaction ID: ${data.id}`,
+                `Reference ID: ${data.referenceId}`,
+                `Amount: $${(data.requestedAmount / 100).toFixed(2)}`,
+                `Response Code: ${responseCode || 'N/A'}`,
+                `Result: ${data.resultText || 'DECLINED'}`,
+                `Auth Code: ${data.transactionResponses?.[0]?.authCode || 'N/A'}`,
+                `Card: ${data.paymentMethod?.cardType} ${data.paymentMethod?.maskedCardNumber}`,
+              ].join('\n');
+              
+              alert(declineDetails);
+              return;
+            }
 
-            checkoutExistingBtn.textContent = 'Token Sale';
-            checkoutExistingBtn.disabled = false;
-            return;
+          // Optionally refresh the sale/capture transactions table if it's visible
+          const saleCaptureContainer = document.getElementById('saleCaptureTransactionsContainer');
+          if (saleCaptureContainer && saleCaptureContainer.classList.contains('show')) {
+            // Refresh the transactions list to show the new sale
+            setTimeout(() => {
+              getSaleCaptureTransactions();
+            }, 1000); // Small delay to ensure the transaction is fully processed
           }
 
-          // Handle successful response
-          console.log('Payment successful:', data);
-
-          // Build comprehensive redirect parameters
-          const params = new URLSearchParams();
-          params.append('resultCode', data.resultCode.toString());
-          params.append('transactionId', data.id);
-          params.append('amount', data.approvedAmount.toString()); // Use approved amount from response
-          params.append('type', data.type);
-          params.append('referenceId', data.referenceId);
-          params.append('orderNumber', data.orderNumber);
-          params.append('invoiceNumber', data.invoiceNumber);
-
-          // Add payment method info
-          if (data.paymentMethod) {
-            params.append('cardType', data.paymentMethod.cardType);
-            params.append('maskedCardNumber', data.paymentMethod.maskedCardNumber);
-            params.append('paymentMethodId', data.paymentMethod.id);
-          }
-
-          // Add transaction response details
-          if (data.transactionResponses && data.transactionResponses[0]) {
-            params.append('authCode', data.transactionResponses[0].authCode);
-            params.append('responseCode', data.transactionResponses[0].responseCode.toString());
-          }
-
-          window.location.href = `${RETURN_URL}?${params.toString()}`;
         } catch (error) {
           console.error('Error processing token sale:', error);
           alert(`Payment processing error: ${error.message}\n\nStack trace: ${error.stack}`);
@@ -2795,9 +2956,12 @@
           // Reset button state
           checkoutExistingBtn.textContent = 'Token Sale';
           checkoutExistingBtn.disabled = false;
+        } finally {
+          // Reset button state
+          checkoutExistingBtn.textContent = 'Token Sale';
+          checkoutExistingBtn.disabled = false;
         }
       }
-
       // Set up event listener for iframe postMessages
       function setupIframeMessageListener() {
         window.addEventListener('message', (event) => {
@@ -2917,11 +3081,6 @@
 
       checkoutNewBtn.addEventListener('click', () => {
         processVirtualSale();
-      });
-
-      // Auth button event listener
-      authBtn.addEventListener('click', () => {
-        processVirtualAuth();
       });
 
       // Get Auth Transactions button event listener
@@ -3247,6 +3406,9 @@
 
         const type = document.getElementById('txnType').value;
         if (type && type !== '') filters.push(`type==${type}`);
+
+        const status = document.getElementById('txnStatus').value;
+        if (status && status !== '' && status !== 'N/A') filters.push(`status==${status}`);
 
         // Amount handling
         const amountType = document.querySelector('input[name="amountType"]:checked').value;
@@ -3848,35 +4010,75 @@
             return;
           }
 
-          // Handle error response
-          if (!response.ok) {
-            let errorMessage = `Token Auth Error\n\nStatus: ${response.status}\n\nRaw Response:\n${responseText}`;
-            try {
-              const formattedJson = JSON.stringify(data, null, 2);
-              errorMessage += `\n\nFormatted JSON:\n${formattedJson}`;
-            } catch (e) {
-              // JSON formatting failed, raw response is already included
-            }
-            showCopyableError(errorMessage);
-            return;
-          }
-
           // Handle successful response
           console.log('Token Auth successful:', data);
 
-          // Create detailed success message
-          const successDetails = [
-            `✅ Token Auth Successful!`,
-            ``,
-            `Transaction ID: ${data.id}`,
-            `Reference ID: ${data.referenceId}`,
-            `Amount: $${(data.approvedAmount / 100).toFixed(2)}`,
-            `Auth Code: ${data.transactionResponses?.[0]?.authCode || 'N/A'}`,
-            `Card: ${data.paymentMethod?.cardType} ${data.paymentMethod?.maskedCardNumber}`,
-            `Balance: $${(data.balanceAmount / 100).toFixed(2)} (available for capture)`,
-          ].join('\n');
+          // Check resultCode first (0 = good request/response)
+          if (data.resultCode && data.resultCode !== 0) {
+            // Bad request/response
+            const errorDetails = [
+              `❌ Token Auth Request Error`,
+              ``,
+              `Transaction ID: ${data.id}`,
+              `Reference ID: ${data.referenceId}`,
+              `Result Code: ${data.resultCode}`,
+              `Result: ${data.resultText || 'ERROR'}`,
+            ].join('\n');
+            
+            alert(errorDetails);
+            return;
+          }
 
-          alert(successDetails);
+          // Now check responseCode for transaction approval status
+          const responseCode = data.transactionResponses?.[0]?.responseCode;
+          if (responseCode === 1) {
+            // Approved
+            const successDetails = [
+              `✅ Token Auth Approved!`,
+              ``,
+              `Transaction ID: ${data.id}`,
+              `Reference ID: ${data.referenceId}`,
+              `Amount: $${(data.approvedAmount / 100).toFixed(2)}`,
+              `Auth Code: ${data.transactionResponses?.[0]?.authCode || 'N/A'}`,
+              `Card: ${data.paymentMethod?.cardType} ${data.paymentMethod?.maskedCardNumber}`,
+              `Balance: $${(data.balanceAmount / 100).toFixed(2)} (available for capture)`,
+              `Result: ${data.resultText || 'APPROVED'}`,
+            ].join('\n');
+            
+            alert(successDetails);
+          } else if (responseCode === 2) {
+            // Partially Approved
+            const partialDetails = [
+              `⚠️ Token Auth Partially Approved!`,
+              ``,
+              `Transaction ID: ${data.id}`,
+              `Reference ID: ${data.referenceId}`,
+              `Requested: $${(data.requestedAmount / 100).toFixed(2)}`,
+              `Approved: $${(data.approvedAmount / 100).toFixed(2)}`,
+              `Auth Code: ${data.transactionResponses?.[0]?.authCode || 'N/A'}`,
+              `Card: ${data.paymentMethod?.cardType} ${data.paymentMethod?.maskedCardNumber}`,
+              `Balance: $${(data.balanceAmount / 100).toFixed(2)} (available for capture)`,
+              `Result: ${data.resultText || 'PARTIALLY APPROVED'}`,
+            ].join('\n');
+            
+            alert(partialDetails);
+          } else {
+            // Declined
+            const declineDetails = [
+              `❌ Token Auth Declined`,
+              ``,
+              `Transaction ID: ${data.id}`,
+              `Reference ID: ${data.referenceId}`,
+              `Amount: $${(data.requestedAmount / 100).toFixed(2)}`,
+              `Response Code: ${responseCode || 'N/A'}`,
+              `Result: ${data.resultText || 'DECLINED'}`,
+              `Auth Code: ${data.transactionResponses?.[0]?.authCode || 'N/A'}`,
+              `Card: ${data.paymentMethod?.cardType} ${data.paymentMethod?.maskedCardNumber}`,
+            ].join('\n');
+            
+            alert(declineDetails);
+            return;
+          } 
 
           // Optionally refresh the auth transactions table if it's visible
           const authContainer = document.getElementById('authTransactionsContainer');
