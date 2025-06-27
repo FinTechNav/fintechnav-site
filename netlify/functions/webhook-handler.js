@@ -289,6 +289,7 @@ function createEmailContent(webhookPayload, eventType, timestamp) {
           color: #333;
           max-width: 800px;
           margin: 0 auto;
+          padding: 20px;
         }
         .header {
           background-color: #c9a15f;
@@ -296,12 +297,27 @@ function createEmailContent(webhookPayload, eventType, timestamp) {
           padding: 20px;
           text-align: center;
           border-radius: 8px 8px 0 0;
+          margin-bottom: 0;
+        }
+        .header h1 {
+          margin: 0 0 10px 0;
+          font-size: 24px;
+        }
+        .header p {
+          margin: 0;
+          font-size: 16px;
         }
         .content {
           padding: 20px;
           border: 1px solid #ddd;
           border-top: none;
           border-radius: 0 0 8px 8px;
+          background-color: #fff;
+        }
+        .timestamp {
+          margin-bottom: 20px;
+          font-weight: bold;
+          color: #666;
         }
         .details-table {
           width: 100%;
@@ -312,19 +328,38 @@ function createEmailContent(webhookPayload, eventType, timestamp) {
           border: 1px solid #ddd;
           padding: 12px;
           text-align: left;
+          vertical-align: top;
         }
         .details-table th {
           background-color: #f5f5f5;
+          font-weight: bold;
+          width: 25%;
+        }
+        .payload-section {
+          margin-top: 30px;
+        }
+        .payload-section h3 {
+          margin-bottom: 10px;
+          color: #333;
         }
         .payload {
           background-color: #f9f9f9;
           padding: 15px;
           border-radius: 4px;
-          font-family: monospace;
+          border: 1px solid #ddd;
+          font-family: 'Courier New', monospace;
+          font-size: 12px;
           white-space: pre-wrap;
           word-wrap: break-word;
           max-height: 400px;
           overflow-y: auto;
+        }
+        .processing-details {
+          margin-top: 30px;
+          border-top: 1px solid #ddd;
+          padding-top: 15px;
+          color: #777;
+          font-size: 12px;
         }
       </style>
     </head>
@@ -334,7 +369,9 @@ function createEmailContent(webhookPayload, eventType, timestamp) {
         <p>Event Type: ${eventType}</p>
       </div>
       <div class="content">
-        <p><strong>Received:</strong> ${timestamp}</p>
+        <div class="timestamp">
+          <strong>Received:</strong> ${timestamp}
+        </div>
         
         <table class="details-table">
           <tr>
@@ -355,8 +392,10 @@ function createEmailContent(webhookPayload, eventType, timestamp) {
           </tr>
         </table>
         
-        <h3>Full Payload:</h3>
-        <div class="payload">${JSON.stringify(webhookPayload, null, 2)}</div>
+        <div class="payload-section">
+          <h3>Full Payload:</h3>
+          <div class="payload">${JSON.stringify(webhookPayload, null, 2)}</div>
+        </div>
       </div>
     </body>
     </html>
