@@ -240,6 +240,7 @@ function verifyChecksum(body, checksum, secret) {
 }
 
 // Helper function to create formatted email content
+
 function createEmailContent(webhookPayload, eventType, timestamp) {
   let transactionId = 'N/A';
   let referenceId = 'N/A';
@@ -261,144 +262,131 @@ function createEmailContent(webhookPayload, eventType, timestamp) {
   }
 
   const text = `
-    Webhook Notification
-    ====================
-    
-    Event Type: ${eventType}
-    Timestamp: ${timestamp}
-    
-    Transaction Details:
-    -------------------
-    Transaction ID: ${transactionId}
-    Reference ID: ${referenceId}
-    Amount: ${amount}
-    Payment Method: ${paymentMethodDesc}
-    
-    Full Payload:
-    ${JSON.stringify(webhookPayload, null, 2)}
+Webhook Notification
+====================
+
+Event Type: ${eventType}
+Timestamp: ${timestamp}
+
+Transaction Details:
+-------------------
+Transaction ID: ${transactionId}
+Reference ID: ${referenceId}
+Amount: ${amount}
+Payment Method: ${paymentMethodDesc}
+
+Full Payload:
+${JSON.stringify(webhookPayload, null, 2)}
   `;
 
   const html = `
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <style>
-        body {
-          font-family: Arial, sans-serif;
-          line-height: 1.6;
-          color: #333;
-          max-width: 800px;
-          margin: 0 auto;
-          padding: 20px;
-        }
-        .header {
-          background-color: #c9a15f;
-          color: white;
-          padding: 20px;
-          text-align: center;
-          border-radius: 8px 8px 0 0;
-          margin-bottom: 0;
-        }
-        .header h1 {
-          margin: 0 0 10px 0;
-          font-size: 24px;
-        }
-        .header p {
-          margin: 0;
-          font-size: 16px;
-        }
-        .content {
-          padding: 20px;
-          border: 1px solid #ddd;
-          border-top: none;
-          border-radius: 0 0 8px 8px;
-          background-color: #fff;
-        }
-        .timestamp {
-          margin-bottom: 20px;
-          font-weight: bold;
-          color: #666;
-        }
-        .details-table {
-          width: 100%;
-          border-collapse: collapse;
-          margin: 20px 0;
-        }
-        .details-table th, .details-table td {
-          border: 1px solid #ddd;
-          padding: 12px;
-          text-align: left;
-          vertical-align: top;
-        }
-        .details-table th {
-          background-color: #f5f5f5;
-          font-weight: bold;
-          width: 25%;
-        }
-        .payload-section {
-          margin-top: 30px;
-        }
-        .payload-section h3 {
-          margin-bottom: 10px;
-          color: #333;
-        }
-        .payload {
-          background-color: #f9f9f9;
-          padding: 15px;
-          border-radius: 4px;
-          border: 1px solid #ddd;
-          font-family: 'Courier New', monospace;
-          font-size: 12px;
-          white-space: pre-wrap;
-          word-wrap: break-word;
-          max-height: 400px;
-          overflow-y: auto;
-        }
-        .processing-details {
-          margin-top: 30px;
-          border-top: 1px solid #ddd;
-          padding-top: 15px;
-          color: #777;
-          font-size: 12px;
-        }
-      </style>
-    </head>
-    <body>
-      <div class="header">
-        <h1>FinTechNav Webhook Notification</h1>
-        <p>Event Type: ${eventType}</p>
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #f5f5f5;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      background-color: white;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    .header {
+      background-color: #c9a15f;
+      color: white;
+      padding: 20px;
+      text-align: center;
+    }
+    .header h1 {
+      margin: 0;
+      font-size: 20px;
+    }
+    .content {
+      padding: 20px;
+    }
+    .info-row {
+      margin: 10px 0;
+      padding: 8px 0;
+      border-bottom: 1px solid #eee;
+    }
+    .label {
+      font-weight: bold;
+      color: #333;
+      display: inline-block;
+      width: 140px;
+    }
+    .value {
+      color: #666;
+    }
+    .payload {
+      background-color: #f8f8f8;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      padding: 15px;
+      margin: 20px 0;
+      font-family: monospace;
+      font-size: 11px;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+    .footer {
+      background-color: #f0f0f0;
+      padding: 15px;
+      font-size: 12px;
+      color: #666;
+      border-top: 1px solid #ddd;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>FinTechNav Webhook Notification</h1>
+      <p>Event: ${eventType}</p>
+    </div>
+    
+    <div class="content">
+      <div class="info-row">
+        <span class="label">Received:</span>
+        <span class="value">${timestamp}</span>
       </div>
-      <div class="content">
-        <div class="timestamp">
-          <strong>Received:</strong> ${timestamp}
-        </div>
-        
-        <table class="details-table">
-          <tr>
-            <th>Transaction ID</th>
-            <td>${transactionId}</td>
-          </tr>
-          <tr>
-            <th>Reference ID</th>
-            <td>${referenceId}</td>
-          </tr>
-          <tr>
-            <th>Amount</th>
-            <td>${amount}</td>
-          </tr>
-          <tr>
-            <th>Payment Method</th>
-            <td>${paymentMethodDesc}</td>
-          </tr>
-        </table>
-        
-        <div class="payload-section">
-          <h3>Full Payload:</h3>
-          <div class="payload">${JSON.stringify(webhookPayload, null, 2)}</div>
-        </div>
+      
+      <div class="info-row">
+        <span class="label">Transaction ID:</span>
+        <span class="value">${transactionId}</span>
       </div>
-    </body>
-    </html>
+      
+      <div class="info-row">
+        <span class="label">Reference ID:</span>
+        <span class="value">${referenceId}</span>
+      </div>
+      
+      <div class="info-row">
+        <span class="label">Amount:</span>
+        <span class="value">${amount}</span>
+      </div>
+      
+      <div class="info-row">
+        <span class="label">Payment Method:</span>
+        <span class="value">${paymentMethodDesc}</span>
+      </div>
+      
+      <h3>Full Payload:</h3>
+      <div class="payload">${JSON.stringify(webhookPayload, null, 2)}</div>
+    </div>
+  </div>
+</body>
+</html>
   `;
 
   return { text, html };
