@@ -19,10 +19,10 @@ This repository contains the source code for my professional portfolio website a
 ## Technologies Used
 
 - **Frontend**: HTML5, CSS3, JavaScript, React
-- **Backend**: Netlify Functions, SendGrid API
+- **Backend**: Netlify Functions, Zoho Mail API
 - **Deployment**: Netlify
 - **Code Quality**: ESLint (v8.56+), Prettier, Husky, lint-staged
-- **Other**: Babel (for JSX), Google Fonts
+- **Other**: Babel (for JSX), Google Fonts, nodemailer
 
 ## Project Structure
 
@@ -70,7 +70,11 @@ project/
 2. Open index.html in your browser for basic viewing
 3. For email functionality:
    - Copy `.env.example` to `.env`
-   - Add your SendGrid API key
+   - Add your Zoho Mail credentials:
+     ```
+     ZOHO_EMAIL=your_email@yourdomain.com
+     ZOHO_APP_PASSWORD=your_zoho_app_password
+     ```
    - Run `npm install` to install dependencies
    - Use the Netlify CLI for local function testing: `netlify dev`
 
@@ -91,7 +95,8 @@ This site is deployed on Netlify with continuous deployment from the main branch
 
 Environment variables required for deployment:
 
-- SENDGRID_API_KEY
+- ZOHO_EMAIL
+- ZOHO_APP_PASSWORD
 
 ## Special Architecture Notes
 
