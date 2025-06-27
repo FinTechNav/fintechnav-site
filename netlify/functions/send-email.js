@@ -1,11 +1,30 @@
 // netlify/functions/send-email.js
-const sendgrid = require('@sendgrid/mail');
+const nodemailer = require('nodemailer');
 
 exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') {
     return {
       statusCode: 405,
-      body: JSON.stringify({ error: 'Method not allowed' })
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': 'Content-Type',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      },
+      body: JSON.stringify({ error: 'Method not allowed' }),
+    };
+  }
+
+  // Handle CORS preflight
+  if (event.httpMethod === 'OPTIONS') {
+    return {
+      statusCode: 200,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': 'Content-Type',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      },
+      body: '',
     };
   }
 
@@ -16,19 +35,28 @@ exports.handler = async (event) => {
   if (!name || !email || !message) {
     return {
       statusCode: 400,
-      body: JSON.stringify({ error: 'Missing required fields' })
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+      },
+      body: JSON.stringify({ error: 'Missing required fields' }),
     };
   }
 
-  // Set up SendGrid API key
-  sendgrid.setApiKey(process.env.SENDGRID_API_KEY);
-
-  const msg = {
-    to: 'brad@fintechnav.com',
-    from: {
-      email: 'noreply@fintechnav.com', // Use a verified sender
-      name: 'Brad Jensen Website'
+  // Create Zoho transporter
+  const transporter = nodemailer.createTransporter({
+    host: 'smtp.zoho.com',
+    port: 587,
+    secure: false, // true for 465, false for other ports
+    auth: {
+      user: process.env.ZOHO_EMAIL, // Your Zoho email address
+      pass: process.env.ZOHO_APP_PASSWORD, // Your Zoho app-specific password
     },
+  });
+
+  const mailOptions = {
+    from: `"Brad Jensen Website" <${process.env.ZOHO_EMAIL}>`,
+    to: 'brad@fintechnav.com',
     replyTo: email,
     subject: `Website Contact from ${name}`,
     text: `Name: ${name}\nEmail: ${email}\n\nMessage:\n${message}`,
@@ -38,17 +66,18 @@ exports.handler = async (event) => {
       <p><strong>Email:</strong> ${email}</p>
       <p><strong>Message:</strong></p>
       <p>${message.replace(/\n/g, '<br>')}</p>
-    `
+    `,
   };
 
   try {
-    await sendgrid.send(msg);
+    await transporter.sendMail(mailOptions);
     return {
       statusCode: 200,
       headers: {
         'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
       },
-      body: JSON.stringify({ message: 'Email sent successfully!' })
+      body: JSON.stringify({ message: 'Email sent successfully!' }),
     };
   } catch (error) {
     console.error('Error sending email:', error);
@@ -56,8 +85,9 @@ exports.handler = async (event) => {
       statusCode: 500,
       headers: {
         'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
       },
-      body: JSON.stringify({ error: 'Failed to send email' })
+      body: JSON.stringify({ error: 'Failed to send email' }),
     };
   }
 };

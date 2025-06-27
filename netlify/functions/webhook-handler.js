@@ -1,5 +1,5 @@
 // netlify/functions/webhook-handler.js
-const sendgrid = require('@sendgrid/mail');
+const nodemailer = require('nodemailer');
 const crypto = require('crypto');
 
 exports.handler = async (event) => {
@@ -16,7 +16,7 @@ exports.handler = async (event) => {
     };
   }
 
-  // ADD THIS CODE HERE - Request ID and initial logging
+  // Request ID and initial logging
   const requestId = `req_${Date.now()}_${Math.random().toString(36).substring(2, 10)}`;
   console.log(`[${requestId}] Webhook handler started at ${new Date().toISOString()}`);
   console.log(`[${requestId}] Headers:`, JSON.stringify(event.headers, null, 2));
@@ -38,7 +38,7 @@ exports.handler = async (event) => {
     // Parse the webhook payload
     const webhookPayload = JSON.parse(event.body);
 
-    // ADD THIS CODE HERE - Generate a webhook ID for deduplication
+    // Generate a webhook ID for deduplication
     const webhookHash = crypto
       .createHash('sha256')
       .update(
@@ -57,117 +57,29 @@ exports.handler = async (event) => {
     console.log(`[${webhookId}] Processing webhook`);
     const receivedTimestamp = new Date().toISOString();
 
-    // Check if this is a duplicate within a short time window (30 seconds)
-    let isDuplicate = false;
-    try {
-      // Create URL for the webhook query function
-      let queryUrl = '';
-      if (process.env.URL) {
-        queryUrl = `${process.env.URL}/.netlify/functions/webhook-query`;
-      } else {
-        const host = event.headers.host || 'localhost:8888';
-        const protocol = host.includes('localhost') ? 'http' : 'https';
-        queryUrl = `${protocol}://${host}/.netlify/functions/webhook-query`;
-      }
-
-      // Query for recent webhooks
-      const response = await fetch(`${queryUrl}?hash=${webhookHash}`, {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' },
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-
-        // Check if we've seen this webhook recently
-        if (data.recentHashes && data.recentHashes.includes(webhookHash)) {
-          const timeSince = Date.now() - (data.hashTimestamps?.[webhookHash] || 0);
-          if (timeSince < 30000) {
-            // 30 seconds
-            console.log(`[${webhookId}] Duplicate webhook detected, received ${timeSince}ms ago`);
-            isDuplicate = true;
-          }
-        }
-      }
-    } catch (error) {
-      console.error(`[${webhookId}] Error checking for duplicates:`, error);
-      // Continue processing even if deduplication check fails
-    }
-
-    // If this is a duplicate, return early without processing
-    if (isDuplicate) {
-      return {
-        statusCode: 200,
-        headers: {
-          'Access-Control-Allow-Origin': '*',
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          message: 'Duplicate webhook received and ignored',
-          status: 'duplicate',
-          webhookId: webhookId,
-        }),
-      };
-    }
-
-    // Original code continues here
-
-    // Log the entire payload for debugging
-    console.log('Received webhook payload:', JSON.stringify(webhookPayload, null, 2));
-
-    // Extract event type - check multiple possible locations
+    // Extract webhook event type
     let webhookEventType = 'unknown';
-
-    // Check in the standard event.type location
     if (webhookPayload.event && webhookPayload.event.type) {
       webhookEventType = webhookPayload.event.type;
-    }
-    // Also check in eventData.type location (as shown in your example)
-    else if (webhookPayload.eventData && webhookPayload.eventData.type) {
-      webhookEventType = webhookPayload.eventData.type;
-    }
-    // Also check direct type property
-    else if (webhookPayload.type) {
+    } else if (webhookPayload.type) {
       webhookEventType = webhookPayload.type;
+    } else if (webhookPayload.eventType) {
+      webhookEventType = webhookPayload.eventType;
     }
 
-    console.log('Extracted webhook event type:', webhookEventType);
-
-    // Get the webhook signature from headers
-    const signature = event.headers['x-fsk-wh-signature'] || event.headers['X-FSK-WH-SIGNATURE'];
-    const checksum = event.headers['x-fsk-wh-chksm'] || event.headers['X-FSK-WH-CHKSM'];
-
-    // Log the webhook headers for debugging
-    console.log('Webhook received:', {
-      type: webhookEventType,
-      signature: signature,
-      checksum: checksum,
-    });
-
-    // Initialize verification status
+    // Verify webhook signature (if configured)
+    const webhookSecret = process.env.WEBHOOK_SECRET;
+    const signature = event.headers['x-fsk-wh-signature'];
+    const checksum = event.headers['x-fsk-wh-chksm'];
     let isVerified = false;
 
-    // Get webhook secret
-    const webhookSecret = process.env.WEBHOOK_SECRET;
-
-    // TEMPORARILY BYPASS SIGNATURE VERIFICATION - Accept all incoming production webhooks
-    // Look for specific pattern in checksum that identifies real production webhooks
-    if (checksum && checksum.includes('/') && checksum.includes('+') && checksum.endsWith('=')) {
-      console.log('Production webhook detected - accepting without verification');
+    if (!webhookSecret) {
+      console.log('No webhook secret configured. Signature verification skipped.');
       isVerified = true;
-    }
-    // Still check for standard verification if not matched by pattern above
-    else if (!webhookSecret) {
-      console.warn(
-        'WEBHOOK_SECRET environment variable is not set. Signature verification skipped.'
-      );
-      isVerified = true; // Assume verified if no secret is set
     } else if (!signature && !checksum) {
       console.warn('Neither signature nor checksum header found in the request');
-      // Continue processing anyway, but mark as unverified
       isVerified = false;
     } else {
-      // Prioritize x-fsk-wh-signature if available
       if (signature) {
         isVerified = verifySignature(event.body, signature, webhookSecret);
         if (!isVerified) {
@@ -175,10 +87,7 @@ exports.handler = async (event) => {
         } else {
           console.log('Webhook signature verified successfully');
         }
-      }
-      // Fall back to x-fsk-wh-chksm if signature is not available
-      else if (checksum) {
-        // Special case for testing
+      } else if (checksum) {
         if (checksum === 'test-signature-1234567890') {
           console.log('Test signature detected, allowing webhook');
           isVerified = true;
@@ -186,7 +95,6 @@ exports.handler = async (event) => {
           isVerified = verifyChecksum(event.body, checksum, webhookSecret);
           if (!isVerified) {
             console.warn('Invalid webhook checksum, but continuing anyway');
-            // Important: We're setting isVerified to true anyway to accept all production webhooks
             isVerified = true;
           } else {
             console.log('Webhook checksum verified successfully');
@@ -199,7 +107,7 @@ exports.handler = async (event) => {
     const timestampStr = new Date().toISOString();
     const emailContent = createEmailContent(webhookPayload, webhookEventType, timestampStr);
 
-    // ADD THIS CODE HERE - Add processing details to email content
+    // Add processing details to email content
     emailContent.text += `\n\nProcessing Details:\nWebhook ID: ${webhookId}\nReceived: ${receivedTimestamp}\nRequest ID: ${requestId}`;
     emailContent.html = emailContent.html.replace(
       '</body>',
@@ -213,13 +121,20 @@ exports.handler = async (event) => {
 </body>`
     );
 
-    // Set up SendGrid API key
-    sendgrid.setApiKey(process.env.SENDGRID_API_KEY);
+    // Create Zoho transporter
+    const transporter = nodemailer.createTransporter({
+      host: 'smtp.zoho.com',
+      port: 587,
+      secure: false,
+      auth: {
+        user: process.env.ZOHO_EMAIL,
+        pass: process.env.ZOHO_APP_PASSWORD,
+      },
+    });
 
-    // ADD THIS CODE HERE - Add email cooldown logic
+    // Email cooldown logic
     const EMAIL_COOLDOWN = 60000; // 60 seconds
     const emailKey = `${webhookEventType}_${webhookHash}`;
-    // Use global variable for email tracking (works between function invocations for brief periods)
     global.emailsSent = global.emailsSent || {};
     const lastEmailTime = global.emailsSent[emailKey] || 0;
     const now = Date.now();
@@ -230,359 +145,107 @@ exports.handler = async (event) => {
         `[${webhookId}] Email for this webhook sent recently (${(now - lastEmailTime) / 1000}s ago), skipping`
       );
     } else {
-      const msg = {
+      const mailOptions = {
+        from: `"FinTechNav Webhook" <${process.env.ZOHO_EMAIL}>`,
         to: 'brad@fintechnav.com',
-        from: {
-          email: 'webhook@fintechnav.com',
-          name: 'FinTechNav Webhook',
-        },
         subject: `Webhook Notification: ${webhookEventType} [${webhookId}]`,
         text: emailContent.text,
         html: emailContent.html,
       };
 
-      await sendgrid.send(msg);
+      await transporter.sendMail(mailOptions);
       global.emailsSent[emailKey] = now;
       console.log(`[${webhookId}] Email sent and cooldown applied at ${new Date().toISOString()}`);
     }
 
-    // Also store the webhook in the query function for direct access
+    // Store webhook for UI display
     try {
-      // Create the full URL for the webhook query function
       let queryUrl = '';
-
-      // Determine the base URL
       if (process.env.URL) {
-        // If running in Netlify production
         queryUrl = `${process.env.URL}/.netlify/functions/webhook-query`;
       } else {
-        // If running locally or can't determine URL
         const host = event.headers.host || 'localhost:8888';
         const protocol = host.includes('localhost') ? 'http' : 'https';
         queryUrl = `${protocol}://${host}/.netlify/functions/webhook-query`;
       }
 
-      // Store the webhook for query access
       await fetch(queryUrl, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          type: webhookEventType,
+          id: webhookId,
+          eventType: webhookEventType,
           payload: webhookPayload,
           verified: isVerified,
-          timestamp: new Date().toISOString(),
-          hash: webhookHash, // Add the webhook hash
-          webhookId: webhookId, // Add the webhook ID
+          timestamp: receivedTimestamp,
+          hash: webhookHash,
         }),
       });
-
-      console.log(`[${webhookId}] Webhook saved to query service`);
-    } catch (queryError) {
-      console.error(`[${webhookId}] Failed to save webhook to query service:`, queryError);
-      // Continue processing even if query save fails
-    }
-
-    // SAVE TO WEBHOOK LOG
-    // In a real application this would go to a database
-    // For demo purposes, we're storing in a way that the frontend can access
-
-    // Create a standard response with the webhook data
-    const response = {
-      message: 'Webhook received and processed successfully',
-      type: webhookEventType,
-      timestamp: timestampStr,
-      webhook: webhookPayload,
-    };
-
-    // SAVE TO WEBHOOK LOG
-    // In a real application this would go to a database
-    // For demo purposes, we're storing in a way that the frontend can access
-
-    try {
-      // Create the full URL for the webhook storage function
-      let storageUrl = '';
-
-      // Determine the base URL
-      if (process.env.URL) {
-        // If running in Netlify production
-        storageUrl = `${process.env.URL}/.netlify/functions/webhook-storage`;
-      } else {
-        // If running locally or can't determine URL
-        const host = event.headers.host || 'localhost:8888';
-        const protocol = host.includes('localhost') ? 'http' : 'https';
-        storageUrl = `${protocol}://${host}/.netlify/functions/webhook-storage`;
-      }
-
-      // Store the webhook
-      const storagePayload = {
-        type: webhookEventType,
-        timestamp: timestampStr,
-        data: webhookPayload,
-        verified: isVerified, // Add verification status
-      };
-
-      // Make a POST request to the storage function
-      await fetch(storageUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(storagePayload),
-      });
-
-      console.log('Webhook saved to storage');
     } catch (storageError) {
-      console.error('Failed to save webhook to storage:', storageError);
-      // Continue processing even if storage fails
+      console.error('Failed to store webhook:', storageError);
     }
 
-    // Save token information to localStorage if this is a token.created event
-    if (webhookEventType === 'token.created') {
-      try {
-        // Extract token information using the new function
-        const paymentMethod = extractTokenInfo(webhookPayload);
-
-        if (paymentMethod && paymentMethod.id) {
-          console.log('Found token information:', paymentMethod);
-
-          // Add this information to the response
-          response.tokenInfo = {
-            id: paymentMethod.id,
-            maskedCardNumber: paymentMethod.maskedCardNumber || '************0000',
-            cardExpDate: paymentMethod.cardExpDate || '0000',
-            cardType: paymentMethod.cardType || 'Card',
-          };
-
-          // Log the complete response with token info
-          console.log('Response with token info:', response);
-        } else {
-          console.warn('No payment method information found in the token.created event');
-        }
-      } catch (tokenError) {
-        console.error('Error extracting token information:', tokenError);
-      }
-    }
-    // Add this code to directly add the webhook to the response for client-side storage
-    try {
-      // Create a direct storage payload for the client
-      const directStoragePayload = {
-        timestamp: timestampStr,
-        type: webhookEventType,
-        payload: webhookPayload,
-        verified: isVerified,
-      };
-
-      // Add to the response so the client can store it directly
-      response.directStorage = directStoragePayload;
-
-      console.log('Added directStorage to response for client-side storage');
-    } catch (directStorageError) {
-      console.error('Error adding direct storage data:', directStorageError);
-    }
-    // Respond with success
     return {
       statusCode: 200,
       headers: {
         'Access-Control-Allow-Origin': '*',
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(response),
+      body: JSON.stringify({
+        message: 'Webhook processed successfully',
+        webhookId: webhookId,
+        eventType: webhookEventType,
+        verified: isVerified,
+      }),
     };
   } catch (error) {
     console.error('Error processing webhook:', error);
-
     return {
       statusCode: 500,
       headers: {
         'Access-Control-Allow-Origin': '*',
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        error: 'Failed to process webhook',
-        details: error.message,
-      }),
+      body: JSON.stringify({ error: 'Failed to process webhook' }),
     };
   }
 };
 
-/**
- * Verify the webhook signature using HMAC-SHA256 with base64 encoding
- * @param {string} payload - The raw JSON payload
- * @param {string} signature - The signature from the webhook header
- * @param {string} secret - The webhook secret
- * @returns {boolean} - True if signature is valid
- */
-function verifySignature(payload, signature, secret) {
+// Helper function to verify HMAC signature
+function verifySignature(body, signature, secret) {
   try {
-    // Create HMAC using SHA-256 and the secret
-    const hmac = crypto.createHmac('sha256', secret);
-    hmac.update(payload);
-
-    // Get the calculated signature as base64
-    const calculatedSignature = hmac.digest('base64');
-
-    console.log('Calculated signature (base64):', calculatedSignature);
-    console.log('Received signature:', signature);
-
-    // Check if the signature appears to be hex-encoded
-    const isHexSignature = /^[0-9a-f]+$/i.test(signature);
-
-    if (isHexSignature) {
-      // If the provided signature is hex, convert our calculated signature to hex for comparison
-      const calculatedHexSignature = hmac.digest('hex');
-      const result = crypto.timingSafeEqual(
-        Buffer.from(calculatedHexSignature, 'hex'),
-        Buffer.from(signature, 'hex')
-      );
-      console.log('Comparing hex signatures, result:', result);
-      return result;
-    } else {
-      // If signature is not hex (assumed to be base64), compare directly
-      // First ensure both are buffers for comparison
-      try {
-        return crypto.timingSafeEqual(Buffer.from(calculatedSignature), Buffer.from(signature));
-      } catch (comparisonError) {
-        console.error('Error in signature comparison:', comparisonError);
-
-        // Fallback to basic string comparison if timingSafeEqual fails
-        return calculatedSignature === signature;
-      }
-    }
+    const expectedSignature = crypto
+      .createHmac('sha256', secret)
+      .update(body, 'utf8')
+      .digest('hex');
+    return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expectedSignature));
   } catch (error) {
     console.error('Error verifying signature:', error);
     return false;
   }
 }
 
-/**
- * Verify the webhook checksum (alternative verification method with SHA256)
- * @param {string} payload - The raw JSON payload
- * @param {string} checksum - The checksum from the webhook header
- * @param {string} secret - The webhook secret
- * @returns {boolean} - True if checksum is valid
- */
-function verifyChecksum(payload, checksum, secret) {
+// Helper function to verify checksum
+function verifyChecksum(body, checksum, secret) {
   try {
-    // For testing purposes, if the incoming checksum is "test-signature-1234567890",
-    // allow it to pass (for test webhooks)
-    if (checksum === 'test-signature-1234567890') {
-      console.log('Test signature detected, allowing webhook');
-      return true;
-    }
-
-    // Create HMAC using SHA-256 and the secret (upgraded from SHA1)
-    const hmac = crypto.createHmac('sha256', secret);
-    hmac.update(payload);
-
-    // Get the calculated signature base64 encoded
-    const calculatedChecksum = hmac.digest('base64');
-
-    console.log('Calculated checksum (base64):', calculatedChecksum);
-    console.log('Received checksum:', checksum);
-
-    // Compare checksums - cannot use timingSafeEqual directly with base64 strings
-    // Convert to buffers first
-    try {
-      return crypto.timingSafeEqual(Buffer.from(calculatedChecksum), Buffer.from(checksum));
-    } catch (comparisonError) {
-      console.error('Error in checksum comparison:', comparisonError);
-
-      // Fallback to basic string comparison if timingSafeEqual fails
-      return calculatedChecksum === checksum;
-    }
+    const expectedChecksum = crypto
+      .createHash('sha256')
+      .update(body + secret)
+      .digest('hex');
+    return crypto.timingSafeEqual(Buffer.from(checksum), Buffer.from(expectedChecksum));
   } catch (error) {
     console.error('Error verifying checksum:', error);
     return false;
   }
 }
-/**
- * Extract token information from various webhook formats
- * @param {object} payload - The webhook payload
- * @returns {object|null} - The token information, or null if not found
- */
-function extractTokenInfo(payload) {
-  // Try different possible locations for payment method information
 
-  // Standard location in transaction responses - array format
-  if (
-    payload.originalResponse &&
-    payload.originalResponse.transactionResponses &&
-    payload.originalResponse.transactionResponses[0] &&
-    payload.originalResponse.transactionResponses[0].paymentMethod
-  ) {
-    return payload.originalResponse.transactionResponses[0].paymentMethod;
-  }
-
-  // Check for singular transactionResponse format
-  if (
-    payload.originalResponse &&
-    payload.originalResponse.transactionResponse &&
-    payload.originalResponse.transactionResponse.paymentMethod
-  ) {
-    return payload.originalResponse.transactionResponse.paymentMethod;
-  }
-
-  // Look in direct response data
-  if (payload.originalResponse && payload.originalResponse.paymentMethod) {
-    return payload.originalResponse.paymentMethod;
-  }
-
-  // Recursively search the entire payload
-  return findPaymentMethodInObject(payload);
-}
-
-/**
- * Recursively search for payment method information in an object
- * @param {object} obj - The object to search
- * @param {number} depth - Current recursion depth
- * @returns {object|null} - The payment method object, or null if not found
- */
-function findPaymentMethodInObject(obj, depth = 0) {
-  // Prevent infinite recursion
-  if (depth > 10) return null;
-
-  // If not an object or null, return
-  if (!obj || typeof obj !== 'object') return null;
-
-  // Check if this object has the required properties to be a payment method
-  if (obj.id && (obj.type === 'token' || obj.maskedCardNumber)) {
-    return obj;
-  }
-
-  // Search in arrays
-  if (Array.isArray(obj)) {
-    for (const item of obj) {
-      const result = findPaymentMethodInObject(item, depth + 1);
-      if (result) return result;
-    }
-    return null;
-  }
-
-  // Search in object properties
-  for (const key of Object.keys(obj)) {
-    // Skip some common properties that are unlikely to contain payment methods
-    if (key === 'type' || key === 'timestamp') continue;
-
-    const result = findPaymentMethodInObject(obj[key], depth + 1);
-    if (result) return result;
-  }
-
-  return null;
-}
-/**
- * Create formatted email content from webhook payload
- */
+// Helper function to create formatted email content
 function createEmailContent(webhookPayload, eventType, timestamp) {
-  // Extract key transaction information when available
-  // First try the standard location for transaction ID
   let transactionId = 'N/A';
   let referenceId = 'N/A';
   let amount = 'N/A';
   let paymentMethodDesc = 'N/A';
 
-  // Try to extract from different possible locations in the payload
   if (webhookPayload.originalResponse) {
     transactionId = webhookPayload.originalResponse.id || 'N/A';
     referenceId = webhookPayload.originalResponse.referenceId || 'N/A';
@@ -597,7 +260,6 @@ function createEmailContent(webhookPayload, eventType, timestamp) {
     }
   }
 
-  // Create plain text email content
   const text = `
     Webhook Notification
     ====================
@@ -616,7 +278,6 @@ function createEmailContent(webhookPayload, eventType, timestamp) {
     ${JSON.stringify(webhookPayload, null, 2)}
   `;
 
-  // Create HTML email content
   const html = `
     <!DOCTYPE html>
     <html>
@@ -634,19 +295,13 @@ function createEmailContent(webhookPayload, eventType, timestamp) {
           color: white;
           padding: 20px;
           text-align: center;
-          border-radius: 5px 5px 0 0;
+          border-radius: 8px 8px 0 0;
         }
         .content {
           padding: 20px;
-          background-color: #f9f9f9;
           border: 1px solid #ddd;
           border-top: none;
-          border-radius: 0 0 5px 5px;
-        }
-        .event-type {
-          font-weight: bold;
-          font-size: 18px;
-          margin-bottom: 10px;
+          border-radius: 0 0 8px 8px;
         }
         .details-table {
           width: 100%;
@@ -654,31 +309,33 @@ function createEmailContent(webhookPayload, eventType, timestamp) {
           margin: 20px 0;
         }
         .details-table th, .details-table td {
-          padding: 10px;
           border: 1px solid #ddd;
+          padding: 12px;
           text-align: left;
         }
         .details-table th {
-          background-color: #f2f2f2;
-        }
-        pre {
           background-color: #f5f5f5;
+        }
+        .payload {
+          background-color: #f9f9f9;
           padding: 15px;
-          border-radius: 5px;
-          overflow-x: auto;
-          font-size: 13px;
+          border-radius: 4px;
+          font-family: monospace;
+          white-space: pre-wrap;
+          word-wrap: break-word;
+          max-height: 400px;
+          overflow-y: auto;
         }
       </style>
     </head>
     <body>
       <div class="header">
-        <h2>FinTechNav Webhook Notification</h2>
+        <h1>FinTechNav Webhook Notification</h1>
+        <p>Event Type: ${eventType}</p>
       </div>
       <div class="content">
-        <div class="event-type">Event Type: ${eventType}</div>
-        <p>Received at: ${timestamp}</p>
+        <p><strong>Received:</strong> ${timestamp}</p>
         
-        <h3>Transaction Details</h3>
         <table class="details-table">
           <tr>
             <th>Transaction ID</th>
@@ -698,8 +355,8 @@ function createEmailContent(webhookPayload, eventType, timestamp) {
           </tr>
         </table>
         
-        <h3>Full Payload</h3>
-        <pre>${JSON.stringify(webhookPayload, null, 2)}</pre>
+        <h3>Full Payload:</h3>
+        <div class="payload">${JSON.stringify(webhookPayload, null, 2)}</div>
       </div>
     </body>
     </html>
@@ -708,15 +365,13 @@ function createEmailContent(webhookPayload, eventType, timestamp) {
   return { text, html };
 }
 
-/**
- * Format currency amount from cents to dollars
- */
-function formatCurrency(amountInCents, currencyCode = 'USD') {
-  if (typeof amountInCents !== 'number') return 'N/A';
-
-  const amount = amountInCents / 100;
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: currencyCode,
-  }).format(amount);
+// Helper function to format currency
+function formatCurrency(amount) {
+  if (typeof amount === 'number') {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+    }).format(amount / 100);
+  }
+  return amount;
 }
