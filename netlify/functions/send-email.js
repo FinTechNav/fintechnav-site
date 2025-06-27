@@ -44,7 +44,7 @@ exports.handler = async (event) => {
   }
 
   // Create Zoho transporter
-  const transporter = nodemailer.createTransporter({
+  const transporter = nodemailer.createTransport({
     host: 'smtp.zoho.com',
     port: 587,
     secure: false, // true for 465, false for other ports
