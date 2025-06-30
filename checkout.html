@@ -1208,6 +1208,7 @@
                 <button class="btn" id="createTokenCardPresentBtn">Create Token</button>
                 <button class="btn" id="saleCardPresentBtn">Sale</button>
                 <button class="btn" id="authCardPresentBtn">Auth</button>
+                <button class="btn" id="unrefRefundCardPresentBtn">Unreferenced Refund</button>
               </div>
             </div>
 
@@ -2375,6 +2376,110 @@
 
         } catch (error) {
           const errorMessage = `Card Present Auth Processing Error\n\n${error.message}\n\nStack trace:\n${error.stack}`;
+          showCopyableError(errorMessage);
+        }
+      }
+
+      // Card Present Unreferenced Refund
+      async function processCardPresentUnreferencedRefund() {
+        const apiKey = localStorage.getItem(API_KEY_STORAGE);
+        
+        const referenceId = localStorage.getItem(REFERENCE_ID_STORAGE) || `ref_${Date.now()}`;
+        const paymentMethodId = localStorage.getItem(PAYMENT_METHOD_ID_STORAGE);
+        const amount = localStorage.getItem(AMOUNT_STORAGE) || '7273';
+        const invoiceNumber = localStorage.getItem(INVOICE_NUMBER_STORAGE);
+        const orderNumber = localStorage.getItem(ORDER_NUMBER_STORAGE);
+
+        if (!apiKey) {
+          showCopyableError('API key is missing. Please enter and save your API key.');
+          return;
+        }
+
+        try {
+          const requestBody = {
+            amount: parseInt(amount),
+            referenceId: referenceId
+          };
+
+          // Add optional fields if they exist
+          if (paymentMethodId) {
+            requestBody.paymentMethodId = paymentMethodId;
+          }
+          if (invoiceNumber) {
+            requestBody.invoiceNumber = invoiceNumber;
+          }
+          if (orderNumber) {
+            requestBody.orderNumber = orderNumber;
+          }
+
+          console.log('Card Present Unreferenced Refund request:', requestBody);
+
+          const response = await fetch(
+            'https://api.omni.integratedcommerce.io/v1/transactions/unreferenced-physical-refund',
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'x-api-key': apiKey,
+              },
+              body: JSON.stringify(requestBody),
+            }
+          );
+
+          const data = await response.json();
+          console.log('Card Present Unreferenced Refund response:', data);
+
+          if (!response.ok) {
+            let errorMessage = extractErrorMessage(data);
+            const fullErrorMessage = `Card Present Unreferenced Refund Error\n\nStatus: ${response.status}\n\nMessage: ${errorMessage}\n\nFull Response:\n${JSON.stringify(data, null, 2)}`;
+            showCopyableError(fullErrorMessage);
+            return;
+          }
+
+          // Check for declined transaction
+          if (data.status === 'Declined') {
+            const responseCode = data.transactionResponses?.[0]?.responseCode;
+            const declineDetails = [
+              `❌ Card Present Unreferenced Refund Declined`,
+              ``,
+              `Transaction ID: ${data.id}`,
+              `Reference ID: ${data.referenceId}`,
+              `Amount: $${(data.requestedAmount / 100).toFixed(2)}`,
+              `Response Code: ${responseCode || 'N/A'}`,
+              `Result: ${data.resultText || 'DECLINED'}`,
+              `Auth Code: ${data.transactionResponses?.[0]?.authCode || 'N/A'}`,
+              `Host Response: ${data.transactionResponses?.[0]?.hostResponseText || 'N/A'}`,
+            ].join('\n');
+            
+            alert(declineDetails);
+            return;
+          }
+
+          // Handle successful response
+          const successDetails = [
+            `✅ Card Present Unreferenced Refund Successful`,
+            ``,
+            `Transaction ID: ${data.id}`,
+            `Reference ID: ${data.referenceId}`,
+            `Amount: $${(data.approvedAmount / 100).toFixed(2)}`,
+            `Result: ${data.resultText || 'SUCCESS'}`,
+            `Receipt Lines: ${data.receipt?.lines?.length || 0} lines`,
+          ].join('\n');
+          
+          alert(successDetails);
+
+          console.log('Card Present Unreferenced Refund processed:', data);
+
+          // Optionally refresh transactions if visible
+          const saleCaptureContainer = document.getElementById('saleCaptureTransactionsContainer');
+          if (saleCaptureContainer && saleCaptureContainer.classList.contains('show')) {
+            setTimeout(() => {
+              getSaleCaptureTransactions();
+            }, 1000);
+          }
+
+        } catch (error) {
+          const errorMessage = `Card Present Unreferenced Refund Processing Error\n\n${error.message}\n\nStack trace:\n${error.stack}`;
           showCopyableError(errorMessage);
         }
       }
@@ -4460,6 +4565,9 @@
         processCardPresentAuth();
       });
 
+      document.getElementById('unrefRefundCardPresentBtn').addEventListener('click', () => {
+        processCardPresentUnreferencedRefund();
+      });
 
     </script>
   </body>
