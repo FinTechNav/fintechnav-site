@@ -2414,24 +2414,29 @@
 
           console.log('Card Present Unreferenced Refund request:', requestBody);
 
-          // Show the payment terminal modal
+          // Show the payment terminal modal (similar to other Card Present functions)
           const cardModal = document.getElementById('cardModal');
           const spinner = document.getElementById('spinner');
           const paymentIframe = document.getElementById('paymentIframe');
-          const modalTitle = document.querySelector('.modal-title');
-          const modalSubtitle = document.querySelector('.modal-subtitle');
 
           // Reset modal state
+          resetModalState();
           spinner.style.display = 'none';
           paymentIframe.style.display = 'none';
 
-          // Update modal text for unreferenced refund
-          modalTitle.textContent = 'Please complete the transaction on the payment terminal';
-          modalSubtitle.textContent = 'Follow the prompts on your payment terminal to complete the transaction.';
-
-          // Show the modal
+          // Show the modal with terminal icon/message
           cardModal.style.display = 'flex';
           toggleBlur(true);
+
+          // Create and display the terminal processing message
+          const paymentFormContainer = document.getElementById('paymentFormContainer');
+          paymentFormContainer.innerHTML = `
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; text-align: center; padding: 40px;">
+              <div style="font-size: 64px; margin-bottom: 20px;">🏪</div>
+              <h2 style="color: #c9a15f; margin-bottom: 10px; font-size: 24px;">Please complete the transaction on the payment terminal</h2>
+              <p style="color: #ccc; font-size: 16px;">Follow the prompts on your payment terminal to complete the transaction.</p>
+            </div>
+          `;
 
           const response = await fetch(
             'https://api.omni.integratedcommerce.io/v1/transactions/unreferenced-physical-refund',
@@ -2448,12 +2453,12 @@
           const data = await response.json();
           console.log('Card Present Unreferenced Refund response:', data);
 
+          // Hide the modal
+          resetModalState();
+          cardModal.style.display = 'none';
+          toggleBlur(false);
+
           if (!response.ok) {
-
-            // Hide the modal on API error
-            cardModal.style.display = 'none';
-            toggleBlur(false);
-
             let errorMessage = extractErrorMessage(data);
             const fullErrorMessage = `Card Present Unreferenced Refund Error\n\nStatus: ${response.status}\n\nMessage: ${errorMessage}\n\nFull Response:\n${JSON.stringify(data, null, 2)}`;
             showCopyableError(fullErrorMessage);
@@ -2462,10 +2467,6 @@
 
           // Check for declined transaction
           if (data.status === 'Declined') {
-            // Hide the modal on decline
-            cardModal.style.display = 'none';
-            toggleBlur(false);
-            
             const responseCode = data.transactionResponses?.[0]?.responseCode;
             const declineDetails = [
               `❌ Card Present Unreferenced Refund Declined`,
@@ -2498,10 +2499,6 @@
 
           console.log('Card Present Unreferenced Refund processed:', data);
 
-          // Hide the modal
-          cardModal.style.display = 'none';
-          toggleBlur(false);
-
           // Optionally refresh transactions if visible
           const saleCaptureContainer = document.getElementById('saleCaptureTransactionsContainer');
           if (saleCaptureContainer && saleCaptureContainer.classList.contains('show')) {
@@ -2511,19 +2508,18 @@
           }
 
         } catch (error) {
-
           // Hide the modal on error
           const cardModal = document.getElementById('cardModal');
           if (cardModal) {
+            resetModalState();
             cardModal.style.display = 'none';
             toggleBlur(false);
           }
-
+          
           const errorMessage = `Card Present Unreferenced Refund Processing Error\n\n${error.message}\n\nStack trace:\n${error.stack}`;
           showCopyableError(errorMessage);
         }
       }
-
       // Function to create a card not present token
       async function createCardNotPresentToken() {
         const apiKey = localStorage.getItem(API_KEY_STORAGE);
