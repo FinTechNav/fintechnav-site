@@ -4259,38 +4259,35 @@
           removeTokenBtn.textContent = 'Processing...';
           removeTokenBtn.disabled = true;
 
-          // Prepare request data
-          const requestData = {
-            paymentMethodId: tokenId
-          };
+          // Build the endpoint URL with the token ID in the path
+          const endpoint = `${getApiBaseUrl()}/payment-methods/${tokenId}`;
+          
+          // Add query parameters as shown in the documentation
+          const referenceId = localStorage.getItem(REFERENCE_ID_STORAGE) || `ref_${Date.now()}`;
+          const queryParams = new URLSearchParams({
+            referenceId: referenceId
+          });
+          
+          const fullUrl = `${endpoint}?${queryParams.toString()}`;
 
-          console.log('Remove token request:', JSON.stringify(requestData, null, 2));
+          console.log('Remove token request URL:', fullUrl);
 
-          // Make the API request
-          const endpoint = `${getApiBaseUrl()}/payment-methods/remove`;
+          // Make the API request using DELETE method
           const headers = {
             'Content-Type': 'application/json',
             'x-api-key': apiKey,
           };
-          const body = JSON.stringify(requestData);
 
           // Log request details for debugging
           console.group('API Request Details');
-          console.log('Endpoint:', endpoint);
-          console.log('Method: POST');
+          console.log('Endpoint:', fullUrl);
+          console.log('Method: DELETE');
           console.log('Headers:', headers);
-          console.log('Request Body:', body);
-          try {
-            console.log('Request Body (parsed):', JSON.parse(body));
-          } catch (e) {
-            console.log('Could not parse request body as JSON');
-          }
           console.groupEnd();
 
-          const response = await fetch(endpoint, {
-            method: 'POST',
+          const response = await fetch(fullUrl, {
+            method: 'DELETE',
             headers: headers,
-            body: body,
           });
 
           // Parse the response
@@ -4318,7 +4315,8 @@
           removeTokenBtn.textContent = 'Remove Token';
           removeTokenBtn.disabled = false;
         }
-      }      
+      }
+
       // Get Sale/Capture Transactions function
       async function getSaleCaptureTransactions() {
         const apiKey = localStorage.getItem(API_KEY_STORAGE);
