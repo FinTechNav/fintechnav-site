@@ -4259,22 +4259,24 @@
           removeTokenBtn.textContent = 'Processing...';
           removeTokenBtn.disabled = true;
 
-          // Build the endpoint URL with the token ID in the path
-          const endpoint = `${getApiBaseUrl()}/payment-methods/${tokenId}`;
+          // Build the endpoint URL with the token ID in the path - CORRECTED PATH
+          const endpoint = `${getApiBaseUrl()}/payment-methods/token/${tokenId}`;
           
-          // Add query parameters as shown in the documentation
-          const referenceId = localStorage.getItem(REFERENCE_ID_STORAGE) || `ref_${Date.now()}`;
-          const queryParams = new URLSearchParams({
-            referenceId: referenceId
-          });
+          // Add query parameters as shown in the documentation (referenceId is optional)
+          const referenceId = localStorage.getItem(REFERENCE_ID_STORAGE);
+          let fullUrl = endpoint;
           
-          const fullUrl = `${endpoint}?${queryParams.toString()}`;
+          if (referenceId && referenceId.trim()) {
+            const queryParams = new URLSearchParams({
+              referenceId: referenceId
+            });
+            fullUrl = `${endpoint}?${queryParams.toString()}`;
+          }
 
           console.log('Remove token request URL:', fullUrl);
 
           // Make the API request using DELETE method
           const headers = {
-            'Content-Type': 'application/json',
             'x-api-key': apiKey,
           };
 
@@ -4316,7 +4318,6 @@
           removeTokenBtn.disabled = false;
         }
       }
-
       // Get Sale/Capture Transactions function
       async function getSaleCaptureTransactions() {
         const apiKey = localStorage.getItem(API_KEY_STORAGE);
