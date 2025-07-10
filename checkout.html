@@ -1228,6 +1228,7 @@
               <div class="button-group">
                 <button class="btn" id="checkoutExistingBtn">Token Sale</button>
                 <button class="btn" id="tokenAuthBtn">Token Auth</button>
+                <button class="btn" id="removeTokenBtn">Remove Token</button>
                 <button class="btn" id="getAuthTransactionsBtn">Get Auth Trx</button>
                 <button class="btn" id="getSaleCaptureTransactionsBtn">Get Sale/Capture Trx</button>
               </div>
@@ -1657,6 +1658,7 @@
       const captureBtn = document.getElementById('captureBtn');
       let selectedTransaction = null;
       const tokenAuthBtn = document.getElementById('tokenAuthBtn');
+      const removeTokenBtn = document.getElementById('removeTokenBtn');
       const getSaleCaptureTransactionsBtn = document.getElementById(
         'getSaleCaptureTransactionsBtn'
       );
@@ -3248,6 +3250,15 @@
         });
       }
 
+      // Remove Token button event listener
+      if (removeTokenBtn) {
+        removeTokenBtn.addEventListener('click', () => {
+          const tokenId = prompt('Enter Payment Method ID (Token ID):', '');
+          if (tokenId === null) return;
+          // Note: No input validation - allowing empty values as requested
+          processRemoveToken(tokenId);
+        });
+      }
       // Get Sale/Capture Transactions button event listener
       if (getSaleCaptureTransactionsBtn) {
         getSaleCaptureTransactionsBtn.addEventListener('click', getSaleCaptureTransactions);
@@ -4238,6 +4249,76 @@
         }
       }
 
+      // Process remove token
+      async function processRemoveToken(tokenId) {
+        const apiKey = localStorage.getItem(API_KEY_STORAGE);
+
+        try {
+          // Show loading state
+          const originalButtonText = removeTokenBtn.textContent;
+          removeTokenBtn.textContent = 'Processing...';
+          removeTokenBtn.disabled = true;
+
+          // Prepare request data
+          const requestData = {
+            paymentMethodId: tokenId
+          };
+
+          console.log('Remove token request:', JSON.stringify(requestData, null, 2));
+
+          // Make the API request
+          const endpoint = `${getApiBaseUrl()}/payment-methods/remove`;
+          const headers = {
+            'Content-Type': 'application/json',
+            'x-api-key': apiKey,
+          };
+          const body = JSON.stringify(requestData);
+
+          // Log request details for debugging
+          console.group('API Request Details');
+          console.log('Endpoint:', endpoint);
+          console.log('Method: POST');
+          console.log('Headers:', headers);
+          console.log('Request Body:', body);
+          try {
+            console.log('Request Body (parsed):', JSON.parse(body));
+          } catch (e) {
+            console.log('Could not parse request body as JSON');
+          }
+          console.groupEnd();
+
+          const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: headers,
+            body: body,
+          });
+
+          // Parse the response
+          const responseText = await response.text();
+          console.log('Raw API Response:', responseText);
+
+          let data;
+          try {
+            data = JSON.parse(responseText);
+          } catch (parseError) {
+            console.error('Failed to parse response as JSON:', parseError);
+            const errorMessage = `Remove Token Response Parse Error\n\nResponse was not valid JSON:\n${responseText}`;
+            showCopyableError(errorMessage);
+            return;
+          }
+
+          // Show raw API response in popup
+          const responseMessage = `Remove Token API Response\n\nStatus: ${response.status}\n\nResponse:\n${JSON.stringify(data, null, 2)}`;
+          showCopyableError(responseMessage);
+
+        } catch (error) {
+          const errorMessage = `Remove Token Processing Error\n\n${error.message}\n\nStack trace:\n${error.stack}`;
+          showCopyableError(errorMessage);
+        } finally {
+          removeTokenBtn.textContent = 'Remove Token';
+          removeTokenBtn.disabled = false;
+        }
+      }      
       // Get Sale/Capture Transactions function
       async function getSaleCaptureTransactions() {
         const apiKey = localStorage.getItem(API_KEY_STORAGE);
