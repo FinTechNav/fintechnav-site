@@ -225,16 +225,68 @@ function verifySignature(body, signature, secret) {
   }
 }
 
-// Helper function to verify checksum
-function verifyChecksum(body, checksum, secret) {
+// Helper function to verify checksum using HMAC-SHA256
+function verifyChecksum(body, receivedChecksum, secret) {
   try {
-    const expectedChecksum = crypto
-      .createHash('sha256')
-      .update(body + secret)
-      .digest('hex');
-    return crypto.timingSafeEqual(Buffer.from(checksum), Buffer.from(expectedChecksum));
+    console.log(`[DEBUG] Received checksum: ${receivedChecksum}`);
+    console.log(`[DEBUG] Checksum length: ${receivedChecksum.length}`);
+
+    // Calculate HMAC-SHA256 in both hex and base64 formats
+    const hmacHex = crypto.createHmac('sha256', secret).update(body, 'utf8').digest('hex');
+    const hmacBase64 = crypto.createHmac('sha256', secret).update(body, 'utf8').digest('base64');
+
+    console.log(`[DEBUG] HMAC-SHA256 hex: ${hmacHex}`);
+    console.log(`[DEBUG] HMAC-SHA256 base64: ${hmacBase64}`);
+
+    // Try hex format first (most common)
+    if (receivedChecksum.length === hmacHex.length) {
+      try {
+        const hexMatch = crypto.timingSafeEqual(
+          Buffer.from(receivedChecksum, 'hex'),
+          Buffer.from(hmacHex, 'hex')
+        );
+        if (hexMatch) {
+          console.log('[SUCCESS] Checksum verified using HMAC-SHA256 hex format');
+          return true;
+        }
+      } catch (hexError) {
+        console.log(`[DEBUG] Hex comparison failed: ${hexError.message}`);
+      }
+    }
+
+    // Try base64 format
+    if (receivedChecksum.length === hmacBase64.length) {
+      try {
+        const base64Match = crypto.timingSafeEqual(
+          Buffer.from(receivedChecksum, 'base64'),
+          Buffer.from(hmacBase64, 'base64')
+        );
+        if (base64Match) {
+          console.log('[SUCCESS] Checksum verified using HMAC-SHA256 base64 format');
+          return true;
+        }
+      } catch (base64Error) {
+        console.log(`[DEBUG] Base64 comparison failed: ${base64Error.message}`);
+      }
+    }
+
+    // Try string comparison as fallback
+    if (receivedChecksum === hmacHex) {
+      console.log('[SUCCESS] Checksum verified using HMAC-SHA256 hex (string comparison)');
+      return true;
+    }
+
+    if (receivedChecksum === hmacBase64) {
+      console.log('[SUCCESS] Checksum verified using HMAC-SHA256 base64 (string comparison)');
+      return true;
+    }
+
+    console.warn(
+      `[FAILED] HMAC-SHA256 checksum verification failed. Expected hex: ${hmacHex}, Expected base64: ${hmacBase64}, Received: ${receivedChecksum}`
+    );
+    return false;
   } catch (error) {
-    console.error('Error verifying checksum:', error);
+    console.error('Error verifying HMAC-SHA256 checksum:', error);
     return false;
   }
 }
