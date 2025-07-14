@@ -2,7 +2,6 @@
   "name": "brad-jensen-site",
   "version": "1.0.0",
   "description": "Professional biography website",
-  "type": "module",
   "devDependencies": {
     "@babel/eslint-parser": "^7.27.1",
     "@babel/preset-react": "^7.27.1",
