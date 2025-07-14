@@ -158,7 +158,7 @@ exports.handler = async (event) => {
       console.log(`[${webhookId}] Email sent and cooldown applied at ${new Date().toISOString()}`);
     }
 
-    // Store webhook for UI display
+    // Store webhook for UI display (improved with better error handling)
     try {
       let queryUrl = '';
       if (process.env.URL) {
@@ -169,20 +169,49 @@ exports.handler = async (event) => {
         queryUrl = `${protocol}://${host}/.netlify/functions/webhook-query`;
       }
 
-      await fetch(queryUrl, {
+      console.log(`[${webhookId}] Attempting to store webhook at: ${queryUrl}`);
+
+      const storagePayload = {
+        id: webhookId,
+        eventType: webhookEventType,
+        payload: webhookPayload,
+        verified: isVerified,
+        timestamp: receivedTimestamp,
+        hash: webhookHash,
+      };
+
+      console.log(`[${webhookId}] Storage payload:`, JSON.stringify(storagePayload, null, 2));
+
+      const storageResponse = await fetch(queryUrl, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          id: webhookId,
-          eventType: webhookEventType,
-          payload: webhookPayload,
-          verified: isVerified,
-          timestamp: receivedTimestamp,
-          hash: webhookHash,
-        }),
+        headers: {
+          'Content-Type': 'application/json',
+          'User-Agent': 'FinTechNav-Webhook-Handler/1.0',
+        },
+        body: JSON.stringify(storagePayload),
+        timeout: 5000, // 5 second timeout
       });
+
+      if (!storageResponse.ok) {
+        console.error(
+          `[${webhookId}] Storage request failed with status: ${storageResponse.status}`
+        );
+        const errorText = await storageResponse.text();
+        console.error(`[${webhookId}] Storage error response: ${errorText}`);
+      } else {
+        const storageResult = await storageResponse.json();
+        console.log(`[${webhookId}] Webhook stored successfully:`, storageResult);
+      }
     } catch (storageError) {
-      console.error('Failed to store webhook:', storageError);
+      console.error(`[${webhookId}] Failed to store webhook for UI display:`, storageError);
+      console.error(`[${webhookId}] Storage error details:`, {
+        message: storageError.message,
+        stack: storageError.stack,
+        name: storageError.name,
+      });
+
+      // Don't fail the webhook processing if storage fails
+      console.log(`[${webhookId}] Continuing webhook processing despite storage failure`);
     }
 
     return {
