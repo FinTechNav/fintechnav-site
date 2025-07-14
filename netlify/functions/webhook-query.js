@@ -3,11 +3,12 @@
 // This function allows the frontend to query for recent webhooks
 // It also helps with deduplication of incoming webhooks
 
-// Storage for recent webhooks
-let lastWebhook = null;
+// Storage for recent webhooks - changed to array to match UI expectations
+let storedWebhooks = [];
 const recentHashes = [];
 const hashTimestamps = {};
 const MAX_RECENT_HASHES = 100;
+const MAX_STORED_WEBHOOKS = 50;
 
 exports.handler = async (event) => {
   // Set CORS headers
@@ -35,6 +36,7 @@ exports.handler = async (event) => {
     try {
       // Store the webhook
       const webhookData = JSON.parse(event.body);
+      console.log(`[webhook-query] Storing webhook with eventType: ${webhookData.eventType}`);
 
       // Add hash if provided
       if (webhookData.hash) {
@@ -52,11 +54,25 @@ exports.handler = async (event) => {
         hashTimestamps[webhookData.hash] = Date.now();
       }
 
-      lastWebhook = {
-        timestamp: new Date().toISOString(),
-        data: webhookData,
+      // Create webhook record in format expected by UI
+      const webhookRecord = {
+        id: webhookData.id || `wh_${Date.now()}`,
+        timestamp: webhookData.timestamp || new Date().toISOString(),
+        type: webhookData.eventType || 'unknown',
+        data: webhookData.payload || webhookData,
+        verified: webhookData.verified || false,
         received: Date.now(),
       };
+
+      // Add to the beginning of the array (most recent first)
+      storedWebhooks.unshift(webhookRecord);
+
+      // Limit the number of stored webhooks
+      if (storedWebhooks.length > MAX_STORED_WEBHOOKS) {
+        storedWebhooks.length = MAX_STORED_WEBHOOKS;
+      }
+
+      console.log(`[webhook-query] Stored webhook. Total stored: ${storedWebhooks.length}`);
 
       return {
         statusCode: 200,
@@ -65,6 +81,7 @@ exports.handler = async (event) => {
           message: 'Webhook stored for query',
           status: 'success',
           hash: webhookData.hash,
+          stored: webhookRecord,
         }),
       };
     } catch (error) {
@@ -99,13 +116,15 @@ exports.handler = async (event) => {
       };
     }
 
-    // Otherwise return the most recent webhook
+    // Return all stored webhooks in format expected by UI
+    console.log(`[webhook-query] GET request - returning ${storedWebhooks.length} webhooks`);
     return {
       statusCode: 200,
       headers,
       body: JSON.stringify({
-        hasWebhook: lastWebhook !== null,
-        lastWebhook: lastWebhook,
+        webhooks: storedWebhooks,
+        hasWebhooks: storedWebhooks.length > 0,
+        count: storedWebhooks.length,
         recentHashes: recentHashes,
         hashTimestamps: hashTimestamps,
         currentTime: new Date().toISOString(),
