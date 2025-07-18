@@ -1238,14 +1238,24 @@
           <div id="authTransactionsContainer" class="transaction-table-container">
             <div style="display: flex; justify-content: space-between; align-items: center">
               <h3>Auth Transactions</h3>
-              <button
-                id="captureBtn"
-                class="btn"
-                disabled
-                style="opacity: 0.5; cursor: not-allowed"
-              >
-                Capture
-              </button>
+              <div style="display: flex; gap: 10px;">
+                <button
+                  id="voidAuthBtn"
+                  class="btn"
+                  disabled
+                  style="opacity: 0.5; cursor: not-allowed"
+                >
+                  Void
+                </button>
+                <button
+                  id="captureBtn"
+                  class="btn"
+                  disabled
+                  style="opacity: 0.5; cursor: not-allowed"
+                >
+                  Capture
+                </button>
+              </div>
             </div>
             <div id="authTransactionsLoading" class="spinner" style="display: none"></div>
             <div id="authTransactionsError" class="alert alert-error" style="display: none"></div>
@@ -1263,9 +1273,19 @@
           <div id="saleCaptureTransactionsContainer" class="transaction-table-container">
             <div style="display: flex; justify-content: space-between; align-items: center">
               <h3>Sale/Capture Transactions</h3>
-              <button id="refundBtn" class="btn" disabled style="opacity: 0.5; cursor: not-allowed">
-                Refund
-              </button>
+              <div style="display: flex; gap: 10px;">
+                <button
+                  id="voidSaleCaptureBtn"
+                  class="btn"
+                  disabled
+                  style="opacity: 0.5; cursor: not-allowed"
+                >
+                  Void
+                </button>
+                <button id="refundBtn" class="btn" disabled style="opacity: 0.5; cursor: not-allowed">
+                  Refund
+                </button>
+              </div>
             </div>
             <div id="saleCaptureTransactionsLoading" class="spinner" style="display: none"></div>
             <div
@@ -1664,6 +1684,8 @@
       );
       const refundBtn = document.getElementById('refundBtn');
       let selectedSaleCaptureTransaction = null;
+      const voidAuthBtn = document.getElementById('voidAuthBtn');
+      const voidSaleCaptureBtn = document.getElementById('voidSaleCaptureBtn');
 
       // API endpoints - REPLACE THE EXISTING API_BASE_URL CONSTANT
       function getApiBaseUrl() {
@@ -3720,6 +3742,10 @@
         captureBtn.style.opacity = '0.5';
         captureBtn.style.cursor = 'not-allowed';
 
+        voidAuthBtn.disabled = true;
+        voidAuthBtn.style.opacity = '0.5';
+        voidAuthBtn.style.cursor = 'not-allowed';
+
         // Generate today's date range in UTC
         const today = new Date();
         const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
@@ -3827,10 +3853,14 @@
               // Store selected transaction data
               selectedTransaction = transaction;
 
-              // Enable capture button
+              // Enable capture and void buttons
               captureBtn.disabled = false;
               captureBtn.style.opacity = '1';
               captureBtn.style.cursor = 'pointer';
+
+              voidAuthBtn.disabled = false;
+              voidAuthBtn.style.opacity = '1';
+              voidAuthBtn.style.cursor = 'pointer';
             });
 
             // Parse and display specific fields
@@ -4075,6 +4105,133 @@
           document.querySelectorAll('#authTransactionsTable tbody tr').forEach((row) => {
             row.classList.remove('selected');
           });
+
+          // Reset void button state
+          voidAuthBtn.disabled = true;
+          voidAuthBtn.style.opacity = '0.5';
+          voidAuthBtn.style.cursor = 'not-allowed';
+        }
+      }
+
+      // Process void transaction for auth transactions
+      async function processVoidAuth() {
+        const apiKey = localStorage.getItem(API_KEY_STORAGE);
+        if (!selectedTransaction) {
+          alert('Please select a transaction first.');
+          return;
+        }
+
+        // Ask user to choose between referenceId or transactionId
+        const useReferenceId = confirm(
+          `Choose which field to use:\n\n` +
+            `Click OK to use transaction's referenceId: ${selectedTransaction.referenceId || 'N/A'}\n` +
+            `Click Cancel to use transaction's transactionId: ${selectedTransaction.id || 'N/A'}`
+        );
+
+        // Build request data
+        const requestData = {};
+
+        // Add originalReferenceId OR originalTransactionId based on user choice
+        if (useReferenceId) {
+          if (selectedTransaction.referenceId) {
+            requestData.originalReferenceId = selectedTransaction.referenceId;
+          } else {
+            alert(
+              'Selected transaction does not have a referenceId. Please try again and choose transactionId.'
+            );
+            return;
+          }
+        } else {
+          if (selectedTransaction.id) {
+            requestData.originalTransactionId = selectedTransaction.id;
+          } else {
+            alert(
+              'Selected transaction does not have a transactionId. Please try again and choose referenceId.'
+            );
+            return;
+          }
+        }
+
+        // Add optional fields from the form
+        const invoiceNumber = localStorage.getItem(INVOICE_NUMBER_STORAGE);
+        const orderNumber = localStorage.getItem(ORDER_NUMBER_STORAGE);
+        const referenceId = localStorage.getItem(REFERENCE_ID_STORAGE);
+
+        if (invoiceNumber) {
+          requestData.invoiceNumber = invoiceNumber;
+        }
+        if (orderNumber) {
+          requestData.orderNumber = orderNumber;
+        }
+        if (referenceId) {
+          requestData.referenceId = referenceId;
+        }
+
+        try {
+          // Show loading state
+          const originalText = voidAuthBtn.textContent;
+          voidAuthBtn.textContent = 'Processing...';
+          voidAuthBtn.disabled = true;
+
+          console.log('Void request:', JSON.stringify(requestData, null, 2));
+
+          const response = await fetch(`${getApiBaseUrl()}/transactions/void`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-api-key': apiKey,
+            },
+            body: JSON.stringify(requestData),
+          });
+
+          const responseText = await response.text();
+          let data;
+
+          try {
+            data = JSON.parse(responseText);
+          } catch (parseError) {
+            throw new Error(`Invalid JSON response: ${responseText}`);
+          }
+
+          if (!response.ok) {
+            let errorMessage = extractErrorMessage(data);
+            if (errorMessage === 'API request failed') {
+              errorMessage = `Error ${response.status}: ${response.statusText}`;
+            }
+
+            const fullErrorMessage = `Void Error\n\nStatus: ${response.status}\n\nMessage: ${errorMessage}\n\nFull Response:\n${JSON.stringify(data, null, 2)}`;
+            showCopyableError(fullErrorMessage);
+            return;
+          }
+
+          // Success - show copyable response
+          const responseMessage = `Void API Response\n\nStatus: ${response.status}\n\nResponse:\n${JSON.stringify(data, null, 2)}`;
+          showCopyableError(responseMessage);
+
+          // Refresh the auth transactions list
+          getAuthTransactions();
+        } catch (error) {
+          // Only show stack trace for actual JavaScript errors, not API errors
+          console.error('JavaScript error in void processing:', error);
+          const errorMessage = `Void Processing Error\n\nJavaScript Error: ${error.message}\n\nThis appears to be a code error, not an API error.`;
+          showCopyableError(errorMessage);
+        } finally {
+          // Reset button state
+          voidAuthBtn.textContent = 'Void';
+          voidAuthBtn.disabled = true;
+          voidAuthBtn.style.opacity = '0.5';
+          voidAuthBtn.style.cursor = 'not-allowed';
+
+          // Clear selection
+          selectedTransaction = null;
+          document.querySelectorAll('#authTransactionsTable tbody tr').forEach((row) => {
+            row.classList.remove('selected');
+          });
+
+          // Reset capture button state
+          captureBtn.disabled = true;
+          captureBtn.style.opacity = '0.5';
+          captureBtn.style.cursor = 'not-allowed';
         }
       }
 
@@ -4334,6 +4491,10 @@
         refundBtn.style.opacity = '0.5';
         refundBtn.style.cursor = 'not-allowed';
 
+        voidSaleCaptureBtn.disabled = true;
+        voidSaleCaptureBtn.style.opacity = '0.5';
+        voidSaleCaptureBtn.style.cursor = 'not-allowed';
+
         // Generate today's date range in UTC
         const today = new Date();
         const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
@@ -4441,10 +4602,14 @@
               // Store selected transaction data
               selectedSaleCaptureTransaction = transaction;
 
-              // Enable refund button
+              // Enable refund and void buttons
               refundBtn.disabled = false;
               refundBtn.style.opacity = '1';
               refundBtn.style.cursor = 'pointer';
+
+              voidSaleCaptureBtn.disabled = false;
+              voidSaleCaptureBtn.style.opacity = '1';
+              voidSaleCaptureBtn.style.cursor = 'pointer';
             });
 
             // Parse and display specific fields
@@ -4650,8 +4815,136 @@
           document.querySelectorAll('#saleCaptureTransactionsTable tbody tr').forEach((row) => {
             row.classList.remove('selected');
           });
+
+          // Reset void button state
+          voidSaleCaptureBtn.disabled = true;
+          voidSaleCaptureBtn.style.opacity = '0.5';
+          voidSaleCaptureBtn.style.cursor = 'not-allowed';
         }
       }
+      
+      // Process void transaction for sale/capture transactions
+      async function processVoidSaleCapture() {
+        const apiKey = localStorage.getItem(API_KEY_STORAGE);
+        if (!selectedSaleCaptureTransaction) {
+          alert('Please select a transaction first.');
+          return;
+        }
+
+        // Ask user to choose between referenceId or transactionId
+        const useReferenceId = confirm(
+          `Choose which field to use:\n\n` +
+            `Click OK to use transaction's referenceId: ${selectedSaleCaptureTransaction.referenceId || 'N/A'}\n` +
+            `Click Cancel to use transaction's transactionId: ${selectedSaleCaptureTransaction.id || 'N/A'}`
+        );
+
+        // Build request data
+        const requestData = {};
+
+        // Add originalReferenceId OR originalTransactionId based on user choice
+        if (useReferenceId) {
+          if (selectedSaleCaptureTransaction.referenceId) {
+            requestData.originalReferenceId = selectedSaleCaptureTransaction.referenceId;
+          } else {
+            alert(
+              'Selected transaction does not have a referenceId. Please try again and choose transactionId.'
+            );
+            return;
+          }
+        } else {
+          if (selectedSaleCaptureTransaction.id) {
+            requestData.originalTransactionId = selectedSaleCaptureTransaction.id;
+          } else {
+            alert(
+              'Selected transaction does not have a transactionId. Please try again and choose referenceId.'
+            );
+            return;
+          }
+        }
+
+        // Add optional fields from the form
+        const invoiceNumber = localStorage.getItem(INVOICE_NUMBER_STORAGE);
+        const orderNumber = localStorage.getItem(ORDER_NUMBER_STORAGE);
+        const referenceId = localStorage.getItem(REFERENCE_ID_STORAGE);
+
+        if (invoiceNumber) {
+          requestData.invoiceNumber = invoiceNumber;
+        }
+        if (orderNumber) {
+          requestData.orderNumber = orderNumber;
+        }
+        if (referenceId) {
+          requestData.referenceId = referenceId;
+        }
+
+        try {
+          // Show loading state
+          const originalText = voidSaleCaptureBtn.textContent;
+          voidSaleCaptureBtn.textContent = 'Processing...';
+          voidSaleCaptureBtn.disabled = true;
+
+          console.log('Void request:', JSON.stringify(requestData, null, 2));
+
+          const response = await fetch(`${getApiBaseUrl()}/transactions/void`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-api-key': apiKey,
+            },
+            body: JSON.stringify(requestData),
+          });
+
+          const responseText = await response.text();
+          let data;
+
+          try {
+            data = JSON.parse(responseText);
+          } catch (parseError) {
+            throw new Error(`Invalid JSON response: ${responseText}`);
+          }
+
+          if (!response.ok) {
+            let errorMessage = extractErrorMessage(data);
+            if (errorMessage === 'API request failed') {
+              errorMessage = `Error ${response.status}: ${response.statusText}`;
+            }
+
+            const fullErrorMessage = `Void Error\n\nStatus: ${response.status}\n\nMessage: ${errorMessage}\n\nFull Response:\n${JSON.stringify(data, null, 2)}`;
+            showCopyableError(fullErrorMessage);
+            return;
+          }
+
+          // Success - show copyable response
+          const responseMessage = `Void API Response\n\nStatus: ${response.status}\n\nResponse:\n${JSON.stringify(data, null, 2)}`;
+          showCopyableError(responseMessage);
+
+          // Refresh the sale/capture transactions list
+          getSaleCaptureTransactions();
+        } catch (error) {
+          // Only show stack trace for actual JavaScript errors, not API errors
+          console.error('JavaScript error in void processing:', error);
+          const errorMessage = `Void Processing Error\n\nJavaScript Error: ${error.message}\n\nThis appears to be a code error, not an API error.`;
+          showCopyableError(errorMessage);
+        } finally {
+          // Reset button state
+          voidSaleCaptureBtn.textContent = 'Void';
+          voidSaleCaptureBtn.disabled = true;
+          voidSaleCaptureBtn.style.opacity = '0.5';
+          voidSaleCaptureBtn.style.cursor = 'not-allowed';
+
+          // Clear selection
+          selectedSaleCaptureTransaction = null;
+          document.querySelectorAll('#saleCaptureTransactionsTable tbody tr').forEach((row) => {
+            row.classList.remove('selected');
+          });
+
+          // Reset refund button state
+          refundBtn.disabled = true;
+          refundBtn.style.opacity = '0.5';
+          refundBtn.style.cursor = 'not-allowed';
+        }
+      }
+      
       // Create Token button event listener
       if (createTokenBtn) {
         createTokenBtn.addEventListener('click', () => {
@@ -4684,6 +4977,15 @@
       document.getElementById('unrefRefundCardPresentBtn').addEventListener('click', () => {
         processCardPresentUnreferencedRefund();
       });
+
+      // Void button event listeners
+      if (voidAuthBtn) {
+        voidAuthBtn.addEventListener('click', processVoidAuth);
+      }
+
+      if (voidSaleCaptureBtn) {
+        voidSaleCaptureBtn.addEventListener('click', processVoidSaleCapture);
+      }
 
     </script>
   </body>
