@@ -1231,6 +1231,7 @@
                 <button class="btn" id="removeTokenBtn">Remove Token</button>
                 <button class="btn" id="getAuthTransactionsBtn">Get Auth Trx</button>
                 <button class="btn" id="getSaleCaptureTransactionsBtn">Get Sale/Capture Trx</button>
+                <button class="btn" id="getRefundVoidTransactionsBtn">Get Refund / Void Trx</button>
               </div>
             </div>
           </div>
@@ -1299,6 +1300,35 @@
                   <!-- Headers will be populated dynamically -->
                 </thead>
                 <tbody id="saleCaptureTransactionsBody">
+                  <!-- Rows will be populated dynamically -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div id="refundVoidTransactionsContainer" class="transaction-table-container">
+            <div style="display: flex; justify-content: space-between; align-items: center">
+              <h3>Refund / Void Transactions</h3>
+              <button
+                id="voidRefundBtn"
+                class="btn"
+                disabled
+                style="opacity: 0.5; cursor: not-allowed"
+              >
+                Void
+              </button>
+            </div>
+            <div id="refundVoidTransactionsLoading" class="spinner" style="display: none"></div>
+            <div
+              id="refundVoidTransactionsError"
+              class="alert alert-error"
+              style="display: none"
+            ></div>
+            <div class="transaction-table-scroll">
+              <table class="transaction-table" id="refundVoidTransactionsTable">
+                <thead id="refundVoidTransactionsHeader">
+                  <!-- Headers will be populated dynamically -->
+                </thead>
+                <tbody id="refundVoidTransactionsBody">
                   <!-- Rows will be populated dynamically -->
                 </tbody>
               </table>
@@ -1686,6 +1716,9 @@
       let selectedSaleCaptureTransaction = null;
       const voidAuthBtn = document.getElementById('voidAuthBtn');
       const voidSaleCaptureBtn = document.getElementById('voidSaleCaptureBtn');
+      const getRefundVoidTransactionsBtn = document.getElementById('getRefundVoidTransactionsBtn');
+      const voidRefundBtn = document.getElementById('voidRefundBtn');
+      let selectedRefundVoidTransaction = null;
 
       // API endpoints - REPLACE THE EXISTING API_BASE_URL CONSTANT
       function getApiBaseUrl() {
@@ -4674,6 +4707,314 @@
         }
       }
 
+      // Get Refund/Void Transactions function
+      async function getRefundVoidTransactions() {
+        const apiKey = localStorage.getItem(API_KEY_STORAGE);
+        const container = document.getElementById('refundVoidTransactionsContainer');
+        const loading = document.getElementById('refundVoidTransactionsLoading');
+        const errorDiv = document.getElementById('refundVoidTransactionsError');
+        const tableHeader = document.getElementById('refundVoidTransactionsHeader');
+        const tableBody = document.getElementById('refundVoidTransactionsBody');
+        const button = document.getElementById('getRefundVoidTransactionsBtn');
+
+        // Reset selection state
+        selectedRefundVoidTransaction = null;
+        voidRefundBtn.disabled = true;
+        voidRefundBtn.style.opacity = '0.5';
+        voidRefundBtn.style.cursor = 'not-allowed';
+
+        // Generate today's date range in UTC
+        const today = new Date();
+        const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+        const endOfDay = new Date(startOfDay);
+        endOfDay.setDate(endOfDay.getDate() + 1);
+
+        const startOfDayUTC = startOfDay.toISOString();
+        const endOfDayUTC = endOfDay.toISOString();
+
+        // Build the filters for Refund OR Void types with sorting
+        const filters = `timestamp>=${startOfDayUTC},timestamp<${endOfDayUTC},type==Refund|Void,amount>=1`;
+        const sorts = '-timestamp'; // Descending order (most recent first)
+        const url = `${getApiBaseUrl()}/transactions?filters=${encodeURIComponent(filters)}&sorts=${sorts}`;
+
+        try {
+          // Show loading state
+          const originalText = button.textContent;
+          button.textContent = 'Loading...';
+          button.disabled = true;
+          loading.style.display = 'block';
+          errorDiv.style.display = 'none';
+          container.classList.add('show');
+
+          const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-api-key': apiKey,
+            },
+          });
+
+          const responseText = await response.text();
+
+          // Parse the response
+          let data;
+          try {
+            data = JSON.parse(responseText);
+          } catch (parseError) {
+            throw new Error(`Invalid JSON response: ${responseText}`);
+          }
+
+          if (!response.ok) {
+            throw new Error(`API Error ${response.status}: ${data.message || responseText}`);
+          }
+
+          // Check if we have transactions
+          if (!data.items || !Array.isArray(data.items) || data.items.length === 0) {
+            showAlert(errorDiv, 'No Refund/Void transactions found for today.', 'error');
+            loading.style.display = 'none';
+            button.textContent = originalText;
+            button.disabled = false;
+            return;
+          }
+
+          // Define the specific columns we want to display
+          const headers = [
+            'timestamp',
+            'type',
+            'id',
+            'referenceId',
+            'orderNumber',
+            'invoiceNumber',
+            'resultCode',
+            'resultText',
+            'requestedAmount',
+            'approvedAmount',
+            'balanceAmount',
+            'paymentMethodId',
+            'responseCode',
+            'authCode',
+            'transactionPaymentMethodId',
+            'transactionPaymentMethodType',
+            'transactionCardType',
+            'transactionMaskedCardNumber',
+            'transactionCardExpDate',
+            'hostResponseText',
+          ];
+
+          // Create header row
+          tableHeader.innerHTML = '';
+          const headerRow = document.createElement('tr');
+          headers.forEach((header) => {
+            const th = document.createElement('th');
+            th.textContent = header;
+            headerRow.appendChild(th);
+          });
+          tableHeader.appendChild(headerRow);
+
+          // Create data rows with click handlers
+          tableBody.innerHTML = '';
+          data.items.forEach((transaction, index) => {
+            const row = document.createElement('tr');
+            row.setAttribute('data-transaction-index', index);
+
+            // Add click handler for row selection
+            row.addEventListener('click', function () {
+              // Remove selection from other rows
+              document.querySelectorAll('#refundVoidTransactionsTable tbody tr').forEach((r) => {
+                r.classList.remove('selected');
+              });
+
+              // Select this row
+              this.classList.add('selected');
+
+              // Store selected transaction data
+              selectedRefundVoidTransaction = transaction;
+
+              // Enable void button
+              voidRefundBtn.disabled = false;
+              voidRefundBtn.style.opacity = '1';
+              voidRefundBtn.style.cursor = 'pointer';
+            });
+
+            // Parse and display specific fields
+            headers.forEach((header) => {
+              const td = document.createElement('td');
+              let value = '';
+
+              switch (header) {
+                case 'paymentMethodId':
+                  value = transaction.paymentMethod?.id || '';
+                  break;
+                case 'responseCode':
+                  value = transaction.transactionResponses?.[0]?.responseCode || '';
+                  break;
+                case 'authCode':
+                  value = transaction.transactionResponses?.[0]?.authCode || '';
+                  break;
+                case 'transactionPaymentMethodId':
+                  value = transaction.transactionResponses?.[0]?.paymentMethod?.id || '';
+                  break;
+                case 'transactionPaymentMethodType':
+                  value = transaction.transactionResponses?.[0]?.paymentMethod?.type || '';
+                  break;
+                case 'transactionCardType':
+                  value = transaction.transactionResponses?.[0]?.paymentMethod?.cardType || '';
+                  break;
+                case 'transactionMaskedCardNumber':
+                  value =
+                    transaction.transactionResponses?.[0]?.paymentMethod?.maskedCardNumber || '';
+                  break;
+                case 'transactionCardExpDate':
+                  value = transaction.transactionResponses?.[0]?.paymentMethod?.cardExpDate || '';
+                  break;
+                case 'hostResponseText':
+                  value = transaction.transactionResponses?.[0]?.hostResponseText || '';
+                  break;
+                default:
+                  // For regular transaction fields
+                  value = transaction[header];
+                  if (value === null || value === undefined) {
+                    value = '';
+                  }
+                  break;
+              }
+
+              td.textContent = String(value);
+              row.appendChild(td);
+            });
+            tableBody.appendChild(row);
+          });
+
+          // Hide loading, restore button
+          loading.style.display = 'none';
+          button.textContent = originalText;
+          button.disabled = false;
+        } catch (error) {
+          console.error('Error fetching Refund/Void transactions:', error);
+          showAlert(errorDiv, `Error: ${error.message}`, 'error');
+          loading.style.display = 'none';
+          button.textContent = 'Get Refund / Void Trx';
+          button.disabled = false;
+        }
+      }
+      
+      // Process void transaction for refund/void transactions
+      async function processVoidRefund() {
+        const apiKey = localStorage.getItem(API_KEY_STORAGE);
+        if (!selectedRefundVoidTransaction) {
+          alert('Please select a transaction first.');
+          return;
+        }
+
+        // Ask user to choose between referenceId or transactionId
+        const useReferenceId = confirm(
+          `Choose which field to use:\n\n` +
+            `Click OK to use transaction's referenceId: ${selectedRefundVoidTransaction.referenceId || 'N/A'}\n` +
+            `Click Cancel to use transaction's transactionId: ${selectedRefundVoidTransaction.id || 'N/A'}`
+        );
+
+        // Build request data
+        const requestData = {};
+
+        // Add originalReferenceId OR originalTransactionId based on user choice
+        if (useReferenceId) {
+          if (selectedRefundVoidTransaction.referenceId) {
+            requestData.originalReferenceId = selectedRefundVoidTransaction.referenceId;
+          } else {
+            alert(
+              'Selected transaction does not have a referenceId. Please try again and choose transactionId.'
+            );
+            return;
+          }
+        } else {
+          if (selectedRefundVoidTransaction.id) {
+            requestData.originalTransactionId = selectedRefundVoidTransaction.id;
+          } else {
+            alert(
+              'Selected transaction does not have a transactionId. Please try again and choose referenceId.'
+            );
+            return;
+          }
+        }
+
+        // Add optional fields from the form
+        const invoiceNumber = localStorage.getItem(INVOICE_NUMBER_STORAGE);
+        const orderNumber = localStorage.getItem(ORDER_NUMBER_STORAGE);
+        const referenceId = localStorage.getItem(REFERENCE_ID_STORAGE);
+
+        if (invoiceNumber) {
+          requestData.invoiceNumber = invoiceNumber;
+        }
+        if (orderNumber) {
+          requestData.orderNumber = orderNumber;
+        }
+        if (referenceId) {
+          requestData.referenceId = referenceId;
+        }
+
+        try {
+          // Show loading state
+          const originalText = voidRefundBtn.textContent;
+          voidRefundBtn.textContent = 'Processing...';
+          voidRefundBtn.disabled = true;
+
+          console.log('Void request:', JSON.stringify(requestData, null, 2));
+
+          const response = await fetch(`${getApiBaseUrl()}/transactions/void`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-api-key': apiKey,
+            },
+            body: JSON.stringify(requestData),
+          });
+
+          const responseText = await response.text();
+          let data;
+
+          try {
+            data = JSON.parse(responseText);
+          } catch (parseError) {
+            throw new Error(`Invalid JSON response: ${responseText}`);
+          }
+
+          if (!response.ok) {
+            let errorMessage = extractErrorMessage(data);
+            if (errorMessage === 'API request failed') {
+              errorMessage = `Error ${response.status}: ${response.statusText}`;
+            }
+
+            const fullErrorMessage = `Void Error\n\nStatus: ${response.status}\n\nMessage: ${errorMessage}\n\nFull Response:\n${JSON.stringify(data, null, 2)}`;
+            showCopyableError(fullErrorMessage);
+            return;
+          }
+
+          // Success - show copyable response
+          const responseMessage = `Void API Response\n\nStatus: ${response.status}\n\nResponse:\n${JSON.stringify(data, null, 2)}`;
+          showCopyableError(responseMessage);
+
+          // Refresh the refund/void transactions list
+          getRefundVoidTransactions();
+        } catch (error) {
+          // Only show stack trace for actual JavaScript errors, not API errors
+          console.error('JavaScript error in void processing:', error);
+          const errorMessage = `Void Processing Error\n\nJavaScript Error: ${error.message}\n\nThis appears to be a code error, not an API error.`;
+          showCopyableError(errorMessage);
+        } finally {
+          // Reset button state
+          voidRefundBtn.textContent = 'Void';
+          voidRefundBtn.disabled = true;
+          voidRefundBtn.style.opacity = '0.5';
+          voidRefundBtn.style.cursor = 'not-allowed';
+
+          // Clear selection
+          selectedRefundVoidTransaction = null;
+          document.querySelectorAll('#refundVoidTransactionsTable tbody tr').forEach((row) => {
+            row.classList.remove('selected');
+          });
+        }
+      }
+
       // Process refund transaction
       async function processRefund() {
         const apiKey = localStorage.getItem(API_KEY_STORAGE);
@@ -4985,6 +5326,16 @@
 
       if (voidSaleCaptureBtn) {
         voidSaleCaptureBtn.addEventListener('click', processVoidSaleCapture);
+      }
+
+      // Get Refund/Void Transactions button event listener
+      if (getRefundVoidTransactionsBtn) {
+        getRefundVoidTransactionsBtn.addEventListener('click', getRefundVoidTransactions);
+      }
+
+      // Void Refund button event listener
+      if (voidRefundBtn) {
+        voidRefundBtn.addEventListener('click', processVoidRefund);
       }
 
     </script>
