@@ -3813,6 +3813,12 @@
         const tableBody = document.getElementById('authTransactionsBody');
         const button = document.getElementById('getAuthTransactionsBtn');
 
+        // CLEAR EVERYTHING FIRST - ADD THESE LINES
+        tableHeader.innerHTML = '';
+        tableBody.innerHTML = '';
+        errorDiv.style.display = 'none';
+        container.classList.remove('show');
+
         // Reset selection state
         selectedTransaction = null;
         captureBtn.disabled = true;
@@ -3897,7 +3903,6 @@
           ];
 
           // Create header row
-          tableHeader.innerHTML = '';
           const headerRow = document.createElement('tr');
           headers.forEach((header) => {
             const th = document.createElement('th');
@@ -3907,7 +3912,6 @@
           tableHeader.appendChild(headerRow);
 
           // Create data rows with click handlers
-          tableBody.innerHTML = '';
           data.items.forEach((transaction, index) => {
             const row = document.createElement('tr');
             row.setAttribute('data-transaction-index', index);
@@ -4557,6 +4561,12 @@
         const tableBody = document.getElementById('saleCaptureTransactionsBody');
         const button = document.getElementById('getSaleCaptureTransactionsBtn');
 
+        // CLEAR EVERYTHING FIRST - ADD THESE LINES
+        tableHeader.innerHTML = '';
+        tableBody.innerHTML = '';
+        errorDiv.style.display = 'none';
+        container.classList.remove('show');
+
         // Reset selection state
         selectedSaleCaptureTransaction = null;
         refundBtn.disabled = true;
@@ -4641,7 +4651,6 @@
           ];
 
           // Create header row
-          tableHeader.innerHTML = '';
           const headerRow = document.createElement('tr');
           headers.forEach((header) => {
             const th = document.createElement('th');
@@ -4651,7 +4660,6 @@
           tableHeader.appendChild(headerRow);
 
           // Create data rows with click handlers
-          tableBody.innerHTML = '';
           data.items.forEach((transaction, index) => {
             const row = document.createElement('tr');
             row.setAttribute('data-transaction-index', index);
@@ -4751,6 +4759,12 @@
         const tableBody = document.getElementById('refundVoidTransactionsBody');
         const button = document.getElementById('getRefundVoidTransactionsBtn');
 
+        // CLEAR EVERYTHING FIRST - ADD THESE LINES
+        tableHeader.innerHTML = '';
+        tableBody.innerHTML = '';
+        errorDiv.style.display = 'none';
+        container.classList.remove('show');
+
         // Reset selection state
         selectedRefundVoidTransaction = null;
         voidRefundBtn.disabled = true;
@@ -4831,7 +4845,6 @@
           ];
 
           // Create header row
-          tableHeader.innerHTML = '';
           const headerRow = document.createElement('tr');
           headers.forEach((header) => {
             const th = document.createElement('th');
@@ -4841,7 +4854,6 @@
           tableHeader.appendChild(headerRow);
 
           // Create data rows with click handlers
-          tableBody.innerHTML = '';
           data.items.forEach((transaction, index) => {
             const row = document.createElement('tr');
             row.setAttribute('data-transaction-index', index);
