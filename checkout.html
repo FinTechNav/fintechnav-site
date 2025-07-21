@@ -1232,13 +1232,24 @@
               </div>
             </div>
 
-            <!-- List Today's Transactions Row -->
+            <!-- List Transactions Row -->
             <div class="button-row">
-              <h3 class="button-row-title">List Today's Transactions:</h3>
-              <div class="button-group">
-                <button class="btn" id="getAuthTransactionsBtn">Get Auth Trx</button>
-                <button class="btn" id="getSaleCaptureTransactionsBtn">Get Sale/Capture Trx</button>
-                <button class="btn" id="getRefundVoidTransactionsBtn">Get Refund / Void Trx</button>
+              <h3 class="button-row-title">List Transactions:</h3>
+              <div style="display: flex; flex-direction: column; gap: 15px;">
+                <div class="form-group" style="margin-bottom: 0;">
+                  <label for="transactionDate">Transaction Date:</label>
+                  <input
+                    type="date"
+                    id="transactionDate"
+                    class="api-key-input"
+                    style="max-width: 200px;"
+                  />
+                </div>
+                <div class="button-group">
+                  <button class="btn" id="getAuthTransactionsBtn">Get Auth Trx</button>
+                  <button class="btn" id="getSaleCaptureTransactionsBtn">Get Sale/Capture Trx</button>
+                  <button class="btn" id="getRefundVoidTransactionsBtn">Get Refund / Void Trx</button>
+                </div>
               </div>
             </div>
           </div>
@@ -1662,6 +1673,32 @@
 
         return errorMessage;
       }
+
+      // Helper function to get date range from the transaction date picker
+      function getTransactionDateRange() {
+        const dateInput = document.getElementById('transactionDate');
+        let selectedDate;
+        
+        if (dateInput && dateInput.value) {
+          // User selected a specific date
+          selectedDate = new Date(dateInput.value + 'T00:00:00');
+        } else {
+          // Default to today
+          selectedDate = new Date();
+          selectedDate.setHours(0, 0, 0, 0);
+        }
+        
+        const startOfDay = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate());
+        const endOfDay = new Date(startOfDay);
+        endOfDay.setDate(endOfDay.getDate() + 1);
+
+        return {
+          startOfDayUTC: startOfDay.toISOString(),
+          endOfDayUTC: endOfDay.toISOString(),
+          selectedDate: selectedDate
+        };
+      }
+
       // Local storage keys
       const API_KEY_STORAGE = 'fiska_api_key';
       const PAYMENT_METHOD_ID_STORAGE = 'fiska_payment_method_id';
@@ -3358,6 +3395,15 @@
         document.getElementById('getPaymentMethods').addEventListener('click', getPaymentMethods);
         document.getElementById('getTransactions').addEventListener('click', getTransactions);
 
+        // SET TRANSACTION DATE PICKER TO TODAY BY DEFAULT - ADD THIS HERE
+        const transactionDateInput = document.getElementById('transactionDate');
+        if (transactionDateInput) {
+          const today = new Date();
+          const todayStr = today.toISOString().split('T')[0]; // Format: YYYY-MM-DD
+          transactionDateInput.value = todayStr;
+          transactionDateInput.max = todayStr; // Prevent future dates
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
           const tabButtons = document.querySelectorAll('.tab-button');
           const tabContents = document.querySelectorAll('.tab-content');
@@ -3777,14 +3823,8 @@
         voidAuthBtn.style.opacity = '0.5';
         voidAuthBtn.style.cursor = 'not-allowed';
 
-        // Generate today's date range in UTC
-        const today = new Date();
-        const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-        const endOfDay = new Date(startOfDay);
-        endOfDay.setDate(endOfDay.getDate() + 1);
-
-        const startOfDayUTC = startOfDay.toISOString();
-        const endOfDayUTC = endOfDay.toISOString();
+        // Get date range from date picker (defaults to today if not selected)
+        const { startOfDayUTC, endOfDayUTC, selectedDate } = getTransactionDateRange();
 
         // Build the filters with explicit descending sort - KEEP ORIGINAL REQUEST PARAMETERS
         const filters = `timestamp>=${startOfDayUTC},timestamp<${endOfDayUTC},type==Auth,amount>=1`;
@@ -3824,7 +3864,8 @@
 
           // Check if we have transactions
           if (!data.items || !Array.isArray(data.items) || data.items.length === 0) {
-            showAlert(errorDiv, 'No Auth transactions found for today.', 'error');
+            const dateStr = selectedDate.toLocaleDateString();
+            showAlert(errorDiv, `No Auth transactions found for ${dateStr}.`, 'error');
             loading.style.display = 'none';
             button.textContent = originalText;
             button.disabled = false;
@@ -4526,14 +4567,8 @@
         voidSaleCaptureBtn.style.opacity = '0.5';
         voidSaleCaptureBtn.style.cursor = 'not-allowed';
 
-        // Generate today's date range in UTC
-        const today = new Date();
-        const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-        const endOfDay = new Date(startOfDay);
-        endOfDay.setDate(endOfDay.getDate() + 1);
-
-        const startOfDayUTC = startOfDay.toISOString();
-        const endOfDayUTC = endOfDay.toISOString();
+        // Get date range from date picker (defaults to today if not selected)
+        const { startOfDayUTC, endOfDayUTC, selectedDate } = getTransactionDateRange();
 
         // Build the filters for Sale OR Capture types with sorting - KEEP ORIGINAL REQUEST PARAMETERS
         const filters = `timestamp>=${startOfDayUTC},timestamp<${endOfDayUTC},type==Sale|Capture,amount>=1`;
@@ -4573,7 +4608,8 @@
 
           // Check if we have transactions
           if (!data.items || !Array.isArray(data.items) || data.items.length === 0) {
-            showAlert(errorDiv, 'No Sale/Capture transactions found for today.', 'error');
+            const dateStr = selectedDate.toLocaleDateString();
+            showAlert(errorDiv, `No Sale/Capture transactions found for ${dateStr}.`, 'error');
             loading.style.display = 'none';
             button.textContent = originalText;
             button.disabled = false;
@@ -4721,14 +4757,8 @@
         voidRefundBtn.style.opacity = '0.5';
         voidRefundBtn.style.cursor = 'not-allowed';
 
-        // Generate today's date range in UTC
-        const today = new Date();
-        const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-        const endOfDay = new Date(startOfDay);
-        endOfDay.setDate(endOfDay.getDate() + 1);
-
-        const startOfDayUTC = startOfDay.toISOString();
-        const endOfDayUTC = endOfDay.toISOString();
+        // Get date range from date picker (defaults to today if not selected)
+        const { startOfDayUTC, endOfDayUTC, selectedDate } = getTransactionDateRange();
 
         // Build the filters for Refund OR Void types with sorting
         const filters = `timestamp>=${startOfDayUTC},timestamp<${endOfDayUTC},type==Refund|Void,amount>=1`;
@@ -4768,7 +4798,8 @@
 
           // Check if we have transactions
           if (!data.items || !Array.isArray(data.items) || data.items.length === 0) {
-            showAlert(errorDiv, 'No Refund/Void transactions found for today.', 'error');
+            const dateStr = selectedDate.toLocaleDateString();
+            showAlert(errorDiv, `No Refund/Void transactions found for ${dateStr}.`, 'error');
             loading.style.display = 'none';
             button.textContent = originalText;
             button.disabled = false;
