@@ -5333,6 +5333,21 @@
             }
 
             const fullErrorMessage = `Void Error\n\nStatus: ${response.status}\n\nMessage: ${errorMessage}\n\nFull Response:\n${JSON.stringify(data, null, 2)}`;
+            if (!response.ok) {
+              let errorMessage = extractErrorMessage(data);
+              if (errorMessage === 'API request failed') {
+                errorMessage = `Error ${response.status}: ${response.statusText}`;
+              }
+
+              const fullErrorMessage = `Void Error\n\nStatus: ${response.status}\n\nMessage: ${errorMessage}\n\nFull Response:\n${JSON.stringify(data, null, 2)}`;
+              
+              // DEBUG: Log before calling showCopyableResponse
+              console.log('About to show error response modal');
+              console.log('fullErrorMessage:', fullErrorMessage);
+              
+              showCopyableResponse(fullErrorMessage);
+              return;
+            }
             showCopyableResponse(fullErrorMessage);
             return;
           }
