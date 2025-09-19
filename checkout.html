@@ -1886,14 +1886,22 @@
         // Check if this is a successful response (responseCode = 1)
         let isSuccess = false;
         try {
-          // Only show green if BOTH conditions are met:
-          // resultCode = 0 (API call successful) AND responseCode = 1 (transaction approved)
-          if (responseMessage.includes('"resultCode": 0') && responseMessage.includes('"responseCode": 1')) {
+          // More robust pattern matching for the JSON values
+          const hasResultCodeZero = /["']?resultCode["']?\s*:\s*0/.test(responseMessage);
+          const hasResponseCodeOne = /["']?responseCode["']?\s*:\s*1/.test(responseMessage);
+          
+          if (hasResultCodeZero && hasResponseCodeOne) {
             isSuccess = true;
           }
-          // All other cases show red:
-          // - resultCode != 0 (API error) 
-          // - resultCode = 0 but responseCode != 1 (declined transaction)
+          
+          // Debug logging (you can remove this later)
+          console.log('Success detection:', {
+            hasResultCodeZero,
+            hasResponseCodeOne,
+            isSuccess,
+            message: responseMessage.substring(0, 200) // First 200 chars for debugging
+          });
+          
         } catch (e) {
           // If parsing fails, default to error (red)
           isSuccess = false;
