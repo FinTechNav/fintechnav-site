@@ -1119,12 +1119,22 @@
               </div>
 
               <div class="form-group">
-                <label for="paymentMethodId">Payment Method ID (optional):</label>
+                <label for="virtualPaymentMethodId">Virtual Payment Method ID (optional):</label>
                 <input
                   type="text"
-                  id="paymentMethodId"
+                  id="virtualPaymentMethodId"
                   class="api-key-input"
-                  placeholder="Enter payment method ID or leave blank if you only have one payment method ID"
+                  placeholder="Used for Card Not Present functions (Sale, Auth, Create Token)"
+                />
+              </div>
+
+              <div class="form-group">
+                <label for="physicalPaymentMethodId">Physical Payment Method ID (optional):</label>
+                <input
+                  type="text"
+                  id="physicalPaymentMethodId"
+                  class="api-key-input"
+                  placeholder="Used for Card Present functions (Sale, Auth, Create Token, Unreferenced Refund)"
                 />
               </div>
 
@@ -1701,7 +1711,8 @@
 
       // Local storage keys
       const API_KEY_STORAGE = 'fiska_api_key';
-      const PAYMENT_METHOD_ID_STORAGE = 'fiska_payment_method_id';
+      const VIRTUAL_PAYMENT_METHOD_ID_STORAGE = 'fiska_virtual_payment_method_id';
+      const PHYSICAL_PAYMENT_METHOD_ID_STORAGE = 'fiska_physical_payment_method_id';
       const ENVIRONMENT_STORAGE = 'fiska_environment'; // ADD THIS LINE
       const AMOUNT_STORAGE = 'fiska_amount';
       const AMOUNT_GOODS_SERVICES_STORAGE = 'fiska_amount_goods_services';
@@ -1714,7 +1725,8 @@
 
       // DOM elements - Updated to match actual HTML structure
       const globalApiKeyInput = document.getElementById('globalApiKey');
-      const paymentMethodIdInput = document.getElementById('paymentMethodId');
+      const virtualPaymentMethodIdInput = document.getElementById('virtualPaymentMethodId');
+      const physicalPaymentMethodIdInput = document.getElementById('physicalPaymentMethodId');
       const globalEnvDevRadio = document.getElementById('globalEnvDev');
       const globalEnvProdRadio = document.getElementById('globalEnvProd');
       const amountInput = document.getElementById('amount');
@@ -1770,15 +1782,19 @@
       // Load saved configuration if exists
       document.addEventListener('DOMContentLoaded', () => {
         // Load API key and payment method ID
-        const savedApiKey = localStorage.getItem(API_KEY_STORAGE);
-        if (savedApiKey && globalApiKeyInput) {
-          globalApiKeyInput.value = savedApiKey;
-
-          const savedPaymentMethodId = localStorage.getItem(PAYMENT_METHOD_ID_STORAGE);
-          if (savedPaymentMethodId && paymentMethodIdInput) {
-            paymentMethodIdInput.value = savedPaymentMethodId;
+          const savedApiKey = localStorage.getItem(API_KEY_STORAGE);
+          if (savedApiKey && globalApiKeyInput) {
+            globalApiKeyInput.value = savedApiKey;
           }
-        }
+          const savedVirtualPaymentMethodId = localStorage.getItem(VIRTUAL_PAYMENT_METHOD_ID_STORAGE);
+          const savedPhysicalPaymentMethodId = localStorage.getItem(PHYSICAL_PAYMENT_METHOD_ID_STORAGE);
+          if (savedVirtualPaymentMethodId) {
+            virtualPaymentMethodIdInput.value = savedVirtualPaymentMethodId;
+          }
+          if (savedPhysicalPaymentMethodId) {
+            physicalPaymentMethodIdInput.value = savedPhysicalPaymentMethodId;
+          }
+
 
         // Load environment selection
         const savedEnvironment = localStorage.getItem(ENVIRONMENT_STORAGE) || 'dev';
@@ -2054,7 +2070,7 @@
         }
 
         const referenceId = localStorage.getItem(REFERENCE_ID_STORAGE) || `ref_${Date.now()}`;
-        let paymentMethodId = localStorage.getItem(PAYMENT_METHOD_ID_STORAGE);
+        let paymentMethodId = localStorage.getItem(PHYSICAL_PAYMENT_METHOD_ID_STORAGE);
 
         // Reset modal state and show spinner
         resetModalState();
@@ -2125,7 +2141,7 @@
         const apiKey = localStorage.getItem(API_KEY_STORAGE);
         
         const referenceId = localStorage.getItem(REFERENCE_ID_STORAGE) || `ref_${Date.now()}`;
-        const paymentMethodId = localStorage.getItem(PAYMENT_METHOD_ID_STORAGE);
+        const paymentMethodId = localStorage.getItem(PHYSICAL_PAYMENT_METHOD_ID_STORAGE);
         const amount = localStorage.getItem(AMOUNT_STORAGE) || '7273';
         const tax = parseInt(localStorage.getItem(TAX_STORAGE) || '0');
         const cashBack = parseInt(localStorage.getItem(CASHBACK_STORAGE) || '0');
@@ -2300,7 +2316,7 @@
         const apiKey = localStorage.getItem(API_KEY_STORAGE);
         
         const referenceId = localStorage.getItem(REFERENCE_ID_STORAGE) || `ref_${Date.now()}`;
-        const paymentMethodId = localStorage.getItem(PAYMENT_METHOD_ID_STORAGE);
+        const paymentMethodId = localStorage.getItem(PHYSICAL_PAYMENT_METHOD_ID_STORAGE);
         const amount = localStorage.getItem(AMOUNT_STORAGE) || '7273';
         const tax = parseInt(localStorage.getItem(TAX_STORAGE) || '0');
         const cashBack = parseInt(localStorage.getItem(CASHBACK_STORAGE) || '0');
@@ -2477,7 +2493,7 @@
         const apiKey = localStorage.getItem(API_KEY_STORAGE);
         
         const referenceId = localStorage.getItem(REFERENCE_ID_STORAGE) || `ref_${Date.now()}`;
-        const paymentMethodId = localStorage.getItem(PAYMENT_METHOD_ID_STORAGE);
+        const paymentMethodId = localStorage.getItem(PHYSICAL_PAYMENT_METHOD_ID_STORAGE);
         const amount = localStorage.getItem(AMOUNT_STORAGE) || '7273';
         const invoiceNumber = localStorage.getItem(INVOICE_NUMBER_STORAGE);
         const orderNumber = localStorage.getItem(ORDER_NUMBER_STORAGE);
@@ -2627,7 +2643,7 @@
           const referenceId = localStorage.getItem(REFERENCE_ID_STORAGE);
 
           // Check if the user has provided a payment method ID
-          let paymentMethodId = localStorage.getItem(PAYMENT_METHOD_ID_STORAGE);
+          let paymentMethodId = localStorage.getItem(VIRTUAL_PAYMENT_METHOD_ID_STORAGE);
 
           console.log('Return URL:', RETURN_URL);
 
@@ -2777,7 +2793,7 @@
         const referenceId = localStorage.getItem(REFERENCE_ID_STORAGE);
 
         // Get payment method ID if available
-        const paymentMethodId = localStorage.getItem(PAYMENT_METHOD_ID_STORAGE);
+        const paymentMethodId = localStorage.getItem(VIRTUAL_PAYMENT_METHOD_ID_STORAGE);
 
         // Get other configuration values
         const amount = localStorage.getItem(AMOUNT_STORAGE) || '7273';
@@ -2894,7 +2910,7 @@
         const referenceId = localStorage.getItem(REFERENCE_ID_STORAGE);
 
         // Get payment method ID if available
-        const paymentMethodId = localStorage.getItem(PAYMENT_METHOD_ID_STORAGE);
+        const paymentMethodId = localStorage.getItem(VIRTUAL_PAYMENT_METHOD_ID_STORAGE);
 
         // Get other configuration values
         const amount = localStorage.getItem(AMOUNT_STORAGE) || '7273';
@@ -3495,7 +3511,8 @@
 
         // Get all form values
         const amount = document.getElementById('amount').value.trim();
-        const paymentMethodId = document.getElementById('paymentMethodId').value.trim();
+        const virtualPaymentMethodId = document.getElementById('virtualPaymentMethodId').value.trim();
+        const physicalPaymentMethodId = document.getElementById('physicalPaymentMethodId').value.trim();
         const referenceId = document.getElementById('referenceId').value.trim();
         const amountGoodsAndServices = document
           .getElementById('amountGoodsAndServices')
@@ -3512,7 +3529,8 @@
 
         // Save all form values
         saveOrRemoveFromStorage(AMOUNT_STORAGE, amount);
-        saveOrRemoveFromStorage(PAYMENT_METHOD_ID_STORAGE, paymentMethodId);
+        saveOrRemoveFromStorage(VIRTUAL_PAYMENT_METHOD_ID_STORAGE, virtualPaymentMethodId);
+        saveOrRemoveFromStorage(PHYSICAL_PAYMENT_METHOD_ID_STORAGE, physicalPaymentMethodId);
         saveOrRemoveFromStorage(REFERENCE_ID_STORAGE, referenceId);
         saveOrRemoveFromStorage(AMOUNT_GOODS_SERVICES_STORAGE, amountGoodsAndServices);
         saveOrRemoveFromStorage(TAX_STORAGE, tax);
