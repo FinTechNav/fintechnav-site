@@ -1883,27 +1883,23 @@
 
       // Function to show copyable response message
       function showCopyableResponse(errorMessage) {
-        // Check if this is a successful response (responseCode = 1)
+      // Check if this is a successful response (resultCode = 0 AND responseCode = 1)
         let isSuccess = false;
         try {
-          // More robust pattern matching for the JSON values
-          const hasResultCodeZero = /["']?resultCode["']?\s*:\s*0/.test(responseMessage);
-          const hasResponseCodeOne = /["']?responseCode["']?\s*:\s*1/.test(responseMessage);
+          // Debug: Log the exact message being checked
+          console.log('Full responseMessage:', responseMessage);
+          console.log('Contains resultCode 0?', responseMessage.includes('"resultCode": 0'));
+          console.log('Contains responseCode 1?', responseMessage.includes('"responseCode": 1'));
           
-          if (hasResultCodeZero && hasResponseCodeOne) {
+          // Simple string search approach
+          if (responseMessage.includes('"resultCode": 0') && responseMessage.includes('"responseCode": 1')) {
             isSuccess = true;
           }
           
-          // Debug logging (you can remove this later)
-          console.log('Success detection:', {
-            hasResultCodeZero,
-            hasResponseCodeOne,
-            isSuccess,
-            message: responseMessage.substring(0, 200) // First 200 chars for debugging
-          });
+          console.log('Final isSuccess:', isSuccess);
           
         } catch (e) {
-          // If parsing fails, default to error (red)
+          console.log('Error in detection:', e);
           isSuccess = false;
         }
 
