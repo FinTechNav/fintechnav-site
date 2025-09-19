@@ -5358,12 +5358,12 @@
 
           // Refresh the sale/capture transactions list
           getSaleCaptureTransactions();
-        } catch (error) {
-          // Only show stack trace for actual JavaScript errors, not API errors
-          console.error('JavaScript error in void processing:', error);
-          const errorMessage = `Void Processing Error\n\nJavaScript Error: ${error.message}\n\nThis appears to be a code error, not an API error.`;
-          showCopyableResponse(errorMessage);
-        } finally {
+          } catch (error) {
+            // Only show stack trace for actual JavaScript errors, not API errors
+            console.error('JavaScript error in void processing:', error);
+            const errorMessage = `Void Processing Error\n\nJavaScript Error: ${error.message}\n\nStack trace:\n${error.stack}`;
+            showCopyableResponse(errorMessage);
+          }finally {
           // Reset button state
           voidSaleCaptureBtn.textContent = 'Void';
           voidSaleCaptureBtn.disabled = true;
