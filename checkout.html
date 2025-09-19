@@ -1886,12 +1886,16 @@
         // Check if this is a successful response (responseCode = 1)
         let isSuccess = false;
         try {
-          // Try to parse the message to see if it contains responseCode: 1
-          if (errorMessage.includes('"responseCode": 1')) {
+          // Only show green if BOTH conditions are met:
+          // resultCode = 0 (API call successful) AND responseCode = 1 (transaction approved)
+          if (responseMessage.includes('"resultCode": 0') && responseMessage.includes('"responseCode": 1')) {
             isSuccess = true;
           }
+          // All other cases show red:
+          // - resultCode != 0 (API error) 
+          // - resultCode = 0 but responseCode != 1 (declined transaction)
         } catch (e) {
-          // If parsing fails, default to error
+          // If parsing fails, default to error (red)
           isSuccess = false;
         }
 
