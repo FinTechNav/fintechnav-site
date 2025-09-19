@@ -1884,6 +1884,8 @@
       // Function to show copyable response message
       function showCopyableResponse(errorMessage) {
       // Check if this is a successful response (resultCode = 0 AND responseCode = 1)
+        const responseMessage = `Void API Response\n\nStatus: 200\n\nResponse:\n${JSON.stringify(data, null, 2)}`;
+        showCopyableResponse(responseMessage);
         let isSuccess = false;
         try {
           // Debug: Log the exact message being checked
