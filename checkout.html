@@ -3954,6 +3954,10 @@
             const row = document.createElement('tr');
             row.setAttribute('data-transaction-index', index);
 
+            // Check if transaction has resultCode !== 0 and apply red text styling
+            if (transaction.resultCode !== 0) {
+              row.style.color = '#ff6b6b'; // Red color for failed transactions
+            }
             // Add click handler for row selection
             row.addEventListener('click', function () {
               // Remove selection from other rows
@@ -4702,6 +4706,11 @@
             const row = document.createElement('tr');
             row.setAttribute('data-transaction-index', index);
 
+            // Check if transaction has resultCode !== 0 and apply red text styling
+            if (transaction.resultCode !== 0) {
+              row.style.color = '#ff6b6b'; // Red color for failed transactions
+            }
+
             // Add click handler for row selection
             row.addEventListener('click', function () {
               // Remove selection from other rows
@@ -4895,6 +4904,11 @@
           data.items.forEach((transaction, index) => {
             const row = document.createElement('tr');
             row.setAttribute('data-transaction-index', index);
+
+            // Check if transaction has resultCode !== 0 and apply red text styling
+            if (transaction.resultCode !== 0) {
+              row.style.color = '#ff6b6b'; // Red color for failed transactions
+            }
 
             // Add click handler for row selection
             row.addEventListener('click', function () {
