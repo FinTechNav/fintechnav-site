@@ -1881,102 +1881,114 @@
         }
       }
 
-      // Function to show copyable error message
-      function showCopyableError(errorMessage) {
+      // Function to show copyable response message
+      function showCopyableResponse(errorMessage) {
+        // Check if this is a successful response (responseCode = 1)
+        let isSuccess = false;
+        try {
+          // Try to parse the message to see if it contains responseCode: 1
+          if (errorMessage.includes('"responseCode": 1')) {
+            isSuccess = true;
+          }
+        } catch (e) {
+          // If parsing fails, default to error
+          isSuccess = false;
+        }
+
         // Create modal overlay
         const errorModal = document.createElement('div');
         errorModal.style.cssText = `
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: rgba(0, 0, 0, 0.8);
-    z-index: 1000;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 20px;
-  `;
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background-color: rgba(0, 0, 0, 0.8);
+          z-index: 1000;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          padding: 20px;
+        `;
 
         // Create modal content
         const errorContent = document.createElement('div');
         errorContent.style.cssText = `
-    background-color: #2a2a2a;
-    border: 2px solid #ff6b6b;
-    border-radius: 8px;
-    padding: 20px;
-    max-width: 800px;
-    width: 100%;
-    max-height: 80vh;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-  `;
+          background-color: #2a2a2a;
+          border: 2px solid ${isSuccess ? '#4CAF50' : '#ff6b6b'};
+          border-radius: 8px;
+          padding: 20px;
+          max-width: 800px;
+          width: 100%;
+          max-height: 80vh;
+          overflow: hidden;
+          display: flex;
+          flex-direction: column;
+        `;
 
         // Create header
         const header = document.createElement('div');
         header.style.cssText = `
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 15px;
-  `;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 15px;
+        `;
 
         const title = document.createElement('h3');
-        title.textContent = 'API Error Response';
+        title.textContent = isSuccess ? 'API Approved Response' : 'API Error Response';
         title.style.cssText = `
-    color: #ff6b6b;
-    margin: 0;
-    font-family: var(--font-family-heading);
-  `;
+          color: ${isSuccess ? '#4CAF50' : '#ff6b6b'};
+          margin: 0;
+          font-family: var(--font-family-heading);
+        `;
 
         const closeBtn = document.createElement('button');
         closeBtn.textContent = '×';
         closeBtn.style.cssText = `
-    background: #ff6b6b;
-    color: white;
-    border: none;
-    border-radius: 50%;
-    width: 30px;
-    height: 30px;
-    cursor: pointer;
-    font-size: 20px;
-    font-weight: bold;
-  `;
+          background: ${isSuccess ? '#4CAF50' : '#ff6b6b'};
+          color: white;
+          border: none;
+          border-radius: 50%;
+          width: 30px;
+          height: 30px;
+          cursor: pointer;
+          font-size: 20px;
+          font-weight: bold;
+        `;
 
         // Create textarea for copyable content
         const textarea = document.createElement('textarea');
         textarea.value = errorMessage;
         textarea.style.cssText = `
-    width: 100%;
-    height: 400px;
-    background-color: #1e1e1e;
-    color: #e0e0e0;
-    border: 1px solid #555;
-    border-radius: 4px;
-    padding: 15px;
-    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-    font-size: 12px;
-    line-height: 1.4;
-    resize: vertical;
-    box-sizing: border-box;
-  `;
+          width: 100%;
+          height: 400px;
+          background-color: #1e1e1e;
+          color: #e0e0e0;
+          border: 1px solid #555;
+          border-radius: 4px;
+          padding: 15px;
+          font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+          font-size: 12px;
+          line-height: 1.4;
+          resize: vertical;
+          box-sizing: border-box;
+        `;
 
         // Create copy button
         const copyBtn = document.createElement('button');
         copyBtn.textContent = 'Copy to Clipboard';
         copyBtn.style.cssText = `
-    background-color: #c9a15f;
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 14px;
-    margin-top: 15px;
-    align-self: flex-start;
-  `;
+          background-color: #c9a15f;
+          color: white;
+          border: none;
+          padding: 10px 20px;
+          border-radius: 4px;
+          cursor: pointer;
+          font-size: 14px;
+          margin-top: 15px;
+          align-self: flex-start;
+        `;
 
         // Assemble modal
         header.appendChild(title);
@@ -2027,6 +2039,7 @@
         document.addEventListener('keydown', escapeHandler);
       }
 
+
       // Close modal when close button is clicked
       closeModalBtn.addEventListener('click', () => {
         resetModalState();
@@ -2065,7 +2078,7 @@
         const apiKey = localStorage.getItem(API_KEY_STORAGE);
         
         if (!apiKey) {
-          showCopyableError('API key is missing. Please enter and save your API key.');
+          showCopyableResponse('API key is missing. Please enter and save your API key.');
           return;
         }
 
@@ -2112,14 +2125,14 @@
               throw new Error('Empty response');
             }
           } catch (error) {
-            showCopyableError(`Invalid response format\n\nRaw response: ${responseText}`);
+            showCopyableResponse(`Invalid response format\n\nRaw response: ${responseText}`);
             return;
           }
 
           if (!response.ok) {
             let errorMessage = extractErrorMessage(data);
             const fullErrorMessage = `Card Present Token Error\n\nStatus: ${response.status}\n\nMessage: ${errorMessage}\n\nFull Response:\n${JSON.stringify(data, null, 2)}`;
-            showCopyableError(fullErrorMessage);
+            showCopyableResponse(fullErrorMessage);
             return;
           }
 
@@ -2128,11 +2141,11 @@
             paymentIframe.style.display = 'block';
             spinner.style.display = 'none';
           } else {
-            showCopyableError(`Card Present Token Error\n\nNo iframe URL returned\n\nFull Response:\n${JSON.stringify(data, null, 2)}`);
+            showCopyableResponse(`Card Present Token Error\n\nNo iframe URL returned\n\nFull Response:\n${JSON.stringify(data, null, 2)}`);
           }
         } catch (error) {
           const errorMessage = `Card Present Token Processing Error\n\n${error.message}\n\nStack trace:\n${error.stack}`;
-          showCopyableError(errorMessage);
+          showCopyableResponse(errorMessage);
         }
       }
 
@@ -2201,14 +2214,14 @@
               throw new Error('Empty response');
             }
           } catch (error) {
-            showCopyableError(`Invalid response format\n\nRaw response: ${responseText}`);
+            showCopyableResponse(`Invalid response format\n\nRaw response: ${responseText}`);
             return;
           }
 
           if (!response.ok) {
             let errorMessage = extractErrorMessage(data);
             const fullErrorMessage = `Card Present Sale Error\n\nStatus: ${response.status}\n\nMessage: ${errorMessage}\n\nFull Response:\n${JSON.stringify(data, null, 2)}`;
-            showCopyableError(fullErrorMessage);
+            showCopyableResponse(fullErrorMessage);
             return;
           }
 
@@ -2307,7 +2320,7 @@
 
         } catch (error) {
           const errorMessage = `Card Present Sale Processing Error\n\n${error.message}\n\nStack trace:\n${error.stack}`;
-          showCopyableError(errorMessage);
+          showCopyableResponse(errorMessage);
         }
       }
 
@@ -2376,14 +2389,14 @@
               throw new Error('Empty response');
             }
           } catch (error) {
-            showCopyableError(`Invalid response format\n\nRaw response: ${responseText}`);
+            showCopyableResponse(`Invalid response format\n\nRaw response: ${responseText}`);
             return;
           }
 
           if (!response.ok) {
             let errorMessage = extractErrorMessage(data);
             const fullErrorMessage = `Card Present Auth Error\n\nStatus: ${response.status}\n\nMessage: ${errorMessage}\n\nFull Response:\n${JSON.stringify(data, null, 2)}`;
-            showCopyableError(fullErrorMessage);
+            showCopyableResponse(fullErrorMessage);
             return;
           }
 
@@ -2484,7 +2497,7 @@
 
         } catch (error) {
           const errorMessage = `Card Present Auth Processing Error\n\n${error.message}\n\nStack trace:\n${error.stack}`;
-          showCopyableError(errorMessage);
+          showCopyableResponse(errorMessage);
         }
       }
 
@@ -2499,7 +2512,7 @@
         const orderNumber = localStorage.getItem(ORDER_NUMBER_STORAGE);
 
         if (!apiKey) {
-          showCopyableError('API key is missing. Please enter and save your API key.');
+          showCopyableResponse('API key is missing. Please enter and save your API key.');
           return;
         }
 
@@ -2569,7 +2582,7 @@
           if (!response.ok) {
             let errorMessage = extractErrorMessage(data);
             const fullErrorMessage = `Card Present Unreferenced Refund Error\n\nStatus: ${response.status}\n\nMessage: ${errorMessage}\n\nFull Response:\n${JSON.stringify(data, null, 2)}`;
-            showCopyableError(fullErrorMessage);
+            showCopyableResponse(fullErrorMessage);
             return;
           }
 
@@ -2625,7 +2638,7 @@
           }
           
           const errorMessage = `Card Present Unreferenced Refund Processing Error\n\n${error.message}\n\nStack trace:\n${error.stack}`;
-          showCopyableError(errorMessage);
+          showCopyableResponse(errorMessage);
         }
       }
       // Function to create a card not present token
@@ -2635,7 +2648,7 @@
         // Always make sure to stop the spinner in case of errors
         try {
           if (!apiKey) {
-            showCopyableError('API key is missing. Please enter and save your API key.');
+            showCopyableResponse('API key is missing. Please enter and save your API key.');
             return;
           }
 
@@ -2731,7 +2744,7 @@
             }
 
             const fullErrorMessage = `Create Token Error\n\nStatus: ${response.status}\n\nMessage: ${errorMessage}\n\nFull Response:\n${JSON.stringify(data, null, 2)}`;
-            showCopyableError(fullErrorMessage);
+            showCopyableResponse(fullErrorMessage);
             return;
           }
 
@@ -2870,7 +2883,7 @@
             }
           } catch (error) {
             console.error('Error parsing response:', error);
-            showCopyableError(`Invalid response format\n\nRaw response: ${responseText}`);
+            showCopyableResponse(`Invalid response format\n\nRaw response: ${responseText}`);
             return;
           }
 
@@ -2882,7 +2895,7 @@
             }
 
             const fullErrorMessage = `Virtual Sale Error\n\nStatus: ${response.status}\n\nMessage: ${errorMessage}\n\nFull Response:\n${JSON.stringify(data, null, 2)}`;
-            showCopyableError(fullErrorMessage);
+            showCopyableResponse(fullErrorMessage);
             return;
           }
 
@@ -2895,11 +2908,11 @@
           } else {
             // Handle missing iframe URL
             const fullErrorMessage = `Virtual Sale Error\n\nNo payment iframe URL returned\n\nFull Response:\n${JSON.stringify(data, null, 2)}`;
-            showCopyableError(fullErrorMessage);
+            showCopyableResponse(fullErrorMessage);
           }
         } catch (error) {
           const errorMessage = `Virtual Sale Processing Error\n\n${error.message}\n\nStack trace:\n${error.stack}`;
-          showCopyableError(errorMessage);
+          showCopyableResponse(errorMessage);
         }
       }
       // Process a virtual (Card Not Present) auth
@@ -2987,7 +3000,7 @@
             }
           } catch (error) {
             console.error('Error parsing response:', error);
-            showCopyableError(`Invalid response format\n\nRaw response: ${responseText}`);
+            showCopyableResponse(`Invalid response format\n\nRaw response: ${responseText}`);
             return;
           }
 
@@ -2999,7 +3012,7 @@
             }
 
             const fullErrorMessage = `Virtual Auth Error\n\nStatus: ${response.status}\n\nMessage: ${errorMessage}\n\nFull Response:\n${JSON.stringify(data, null, 2)}`;
-            showCopyableError(fullErrorMessage);
+            showCopyableResponse(fullErrorMessage);
             return;
           }
 
@@ -3012,11 +3025,11 @@
           } else {
             // Handle missing iframe URL
             const fullErrorMessage = `Virtual Sale Error\n\nNo payment iframe URL returned\n\nFull Response:\n${JSON.stringify(data, null, 2)}`;
-            showCopyableError(fullErrorMessage);
+            showCopyableResponse(fullErrorMessage);
           }
         } catch (error) {
           const errorMessage = `Virtual Auth Processing Error\n\n${error.message}\n\nStack trace:\n${error.stack}`;
-          showCopyableError(errorMessage);
+          showCopyableResponse(errorMessage);
         }
       }
 
@@ -3025,7 +3038,7 @@
         const apiKey = localStorage.getItem(API_KEY_STORAGE);
 
         if (!tokenId) {
-          showCopyableError('Please select a payment method first.');
+          showCopyableResponse('Please select a payment method first.');
           return;
         }
 
@@ -4162,7 +4175,7 @@
             }
 
             const fullErrorMessage = `Capture Error\n\nStatus: ${response.status}\n\nMessage: ${errorMessage}\n\nFull Response:\n${JSON.stringify(data, null, 2)}`;
-            showCopyableError(fullErrorMessage);
+            showCopyableResponse(fullErrorMessage);
             return; // Return instead of throwing
           }
 
@@ -4186,7 +4199,7 @@
           // Only show stack trace for actual JavaScript errors, not API errors
           console.error('JavaScript error in capture processing:', error);
           const errorMessage = `Capture Processing Error\n\nJavaScript Error: ${error.message}\n\nThis appears to be a code error, not an API error.`;
-          showCopyableError(errorMessage);
+          showCopyableResponse(errorMessage);
         } finally {
           // Reset button state
           captureBtn.textContent = 'Capture';
@@ -4294,13 +4307,13 @@
             }
 
             const fullErrorMessage = `Void Error\n\nStatus: ${response.status}\n\nMessage: ${errorMessage}\n\nFull Response:\n${JSON.stringify(data, null, 2)}`;
-            showCopyableError(fullErrorMessage);
+            showCopyableResponse(fullErrorMessage);
             return;
           }
 
           // Success - show copyable response
           const responseMessage = `Void API Response\n\nStatus: ${response.status}\n\nResponse:\n${JSON.stringify(data, null, 2)}`;
-          showCopyableError(responseMessage);
+          showCopyableResponse(responseMessage);
 
           // Refresh the auth transactions list
           getAuthTransactions();
@@ -4308,7 +4321,7 @@
           // Only show stack trace for actual JavaScript errors, not API errors
           console.error('JavaScript error in void processing:', error);
           const errorMessage = `Void Processing Error\n\nJavaScript Error: ${error.message}\n\nThis appears to be a code error, not an API error.`;
-          showCopyableError(errorMessage);
+          showCopyableResponse(errorMessage);
         } finally {
           // Reset button state
           voidAuthBtn.textContent = 'Void';
@@ -4334,7 +4347,7 @@
         const apiKey = localStorage.getItem(API_KEY_STORAGE);
 
         if (!tokenId) {
-          showCopyableError('Please select a payment method first.');
+          showCopyableResponse('Please select a payment method first.');
           return;
         }
 
@@ -4409,7 +4422,7 @@
             }
           } catch (error) {
             console.error('Error parsing response:', error);
-            showCopyableError(`Error: Invalid response format\n\nRaw response: ${responseText}`);
+            showCopyableResponse(`Error: Invalid response format\n\nRaw response: ${responseText}`);
             return;
           }
 
@@ -4493,7 +4506,7 @@
           }
         } catch (error) {
           const errorMessage = `Token Auth Processing Error\n\n${error.message}\n\nStack trace:\n${error.stack}`;
-          showCopyableError(errorMessage);
+          showCopyableResponse(errorMessage);
         } finally {
           tokenAuthBtn.textContent = 'Token Auth';
           tokenAuthBtn.disabled = false;
@@ -4553,17 +4566,17 @@
           } catch (parseError) {
             console.error('Failed to parse response as JSON:', parseError);
             const errorMessage = `Remove Token Response Parse Error\n\nResponse was not valid JSON:\n${responseText}`;
-            showCopyableError(errorMessage);
+            showCopyableResponse(errorMessage);
             return;
           }
 
           // Show raw API response in popup
           const responseMessage = `Remove Token API Response\n\nStatus: ${response.status}\n\nResponse:\n${JSON.stringify(data, null, 2)}`;
-          showCopyableError(responseMessage);
+          showCopyableResponse(responseMessage);
 
         } catch (error) {
           const errorMessage = `Remove Token Processing Error\n\n${error.message}\n\nStack trace:\n${error.stack}`;
-          showCopyableError(errorMessage);
+          showCopyableResponse(errorMessage);
         } finally {
           removeTokenBtn.textContent = 'Remove Token';
           removeTokenBtn.disabled = false;
@@ -5044,13 +5057,13 @@
             }
 
             const fullErrorMessage = `Void Error\n\nStatus: ${response.status}\n\nMessage: ${errorMessage}\n\nFull Response:\n${JSON.stringify(data, null, 2)}`;
-            showCopyableError(fullErrorMessage);
+            showCopyableResponse(fullErrorMessage);
             return;
           }
 
           // Success - show copyable response
           const responseMessage = `Void API Response\n\nStatus: ${response.status}\n\nResponse:\n${JSON.stringify(data, null, 2)}`;
-          showCopyableError(responseMessage);
+          showCopyableResponse(responseMessage);
 
           // Refresh the refund/void transactions list
           getRefundVoidTransactions();
@@ -5058,7 +5071,7 @@
           // Only show stack trace for actual JavaScript errors, not API errors
           console.error('JavaScript error in void processing:', error);
           const errorMessage = `Void Processing Error\n\nJavaScript Error: ${error.message}\n\nThis appears to be a code error, not an API error.`;
-          showCopyableError(errorMessage);
+          showCopyableResponse(errorMessage);
         } finally {
           // Reset button state
           voidRefundBtn.textContent = 'Void';
@@ -5178,7 +5191,7 @@
             }
 
             const fullErrorMessage = `Refund Error\n\nStatus: ${response.status}\n\nMessage: ${errorMessage}\n\nFull Response:\n${JSON.stringify(data, null, 2)}`;
-            showCopyableError(fullErrorMessage);
+            showCopyableResponse(fullErrorMessage);
             return; // Return instead of throwing
           }
 
@@ -5202,7 +5215,7 @@
           // Only show stack trace for actual JavaScript errors, not API errors
           console.error('JavaScript error in refund processing:', error);
           const errorMessage = `Refund Processing Error\n\nJavaScript Error: ${error.message}\n\nThis appears to be a code error, not an API error.`;
-          showCopyableError(errorMessage);
+          showCopyableResponse(errorMessage);
         } finally {
           // Reset button state
           refundBtn.textContent = 'Refund';
@@ -5310,13 +5323,13 @@
             }
 
             const fullErrorMessage = `Void Error\n\nStatus: ${response.status}\n\nMessage: ${errorMessage}\n\nFull Response:\n${JSON.stringify(data, null, 2)}`;
-            showCopyableError(fullErrorMessage);
+            showCopyableResponse(fullErrorMessage);
             return;
           }
 
           // Success - show copyable response
           const responseMessage = `Void API Response\n\nStatus: ${response.status}\n\nResponse:\n${JSON.stringify(data, null, 2)}`;
-          showCopyableError(responseMessage);
+          showCopyableResponse(responseMessage);
 
           // Refresh the sale/capture transactions list
           getSaleCaptureTransactions();
@@ -5324,7 +5337,7 @@
           // Only show stack trace for actual JavaScript errors, not API errors
           console.error('JavaScript error in void processing:', error);
           const errorMessage = `Void Processing Error\n\nJavaScript Error: ${error.message}\n\nThis appears to be a code error, not an API error.`;
-          showCopyableError(errorMessage);
+          showCopyableResponse(errorMessage);
         } finally {
           // Reset button state
           voidSaleCaptureBtn.textContent = 'Void';
