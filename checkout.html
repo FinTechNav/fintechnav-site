@@ -1886,22 +1886,22 @@
       // Check if this is a successful response (resultCode = 0 AND responseCode = 1)
         const responseMessage = `Void API Response\n\nStatus: 200\n\nResponse:\n${JSON.stringify(data, null, 2)}`;
         showCopyableResponse(responseMessage);
+        // Check if this is a successful response
         let isSuccess = false;
         try {
-          // Debug: Log the exact message being checked
-          console.log('Full responseMessage:', responseMessage);
-          console.log('Contains resultCode 0?', responseMessage.includes('"resultCode": 0'));
-          console.log('Contains responseCode 1?', responseMessage.includes('"responseCode": 1'));
-          
-          // Simple string search approach
-          if (responseMessage.includes('"resultCode": 0') && responseMessage.includes('"responseCode": 1')) {
-            isSuccess = true;
+          // First check if this is a transaction response (has resultCode and responseCode)
+          if (responseMessage.includes('"resultCode"') && responseMessage.includes('"responseCode"')) {
+            // Transaction response: only green if resultCode = 0 AND responseCode = 1
+            if (responseMessage.includes('"resultCode": 0') && responseMessage.includes('"responseCode": 1')) {
+              isSuccess = true;
+            }
+          } else {
+            // API error response (like your example): always red
+            // These have "code" instead of "resultCode" and indicate API-level errors
+            isSuccess = false;
           }
           
-          console.log('Final isSuccess:', isSuccess);
-          
         } catch (e) {
-          console.log('Error in detection:', e);
           isSuccess = false;
         }
 
