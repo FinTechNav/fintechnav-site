@@ -1,9 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Dejavoo Freedom to Design - Payment Test</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
+    <title>Dejavoo Freedom to Design - Card Payment Test</title>
+
     <style>
       :root {
         --color-background: #1a1a1a;
@@ -34,7 +36,7 @@
       }
 
       .container {
-        max-width: 900px;
+        max-width: 600px;
         margin: 0 auto;
         background-color: var(--color-background-secondary);
         border-radius: var(--border-radius);
@@ -67,112 +69,28 @@
       .section h2 {
         color: var(--color-primary);
         margin-bottom: 15px;
-        font-size: 1.4rem;
+        font-size: 1.3rem;
         border-bottom: 2px solid var(--color-border);
         padding-bottom: 10px;
-      }
-
-      .form-group {
-        margin-bottom: 20px;
-      }
-
-      label {
-        display: block;
-        margin-bottom: 8px;
-        font-weight: 500;
-        color: var(--color-primary);
-      }
-
-      input[type='text'],
-      input[type='number'],
-      select,
-      textarea {
-        width: 100%;
-        padding: 12px;
-        background-color: var(--color-background-secondary);
-        border: 1px solid var(--color-border);
-        border-radius: var(--border-radius);
-        color: var(--color-text);
-        font-size: 1rem;
-        transition: border-color 0.3s ease;
-        font-family: 'Courier New', monospace;
-      }
-
-      input[type='text']:focus,
-      input[type='number']:focus,
-      select:focus,
-      textarea:focus {
-        outline: none;
-        border-color: var(--color-primary);
-      }
-
-      .help-text {
-        font-size: 0.85rem;
-        color: #888;
-        margin-top: 5px;
-      }
-
-      .btn {
-        background-color: var(--color-primary);
-        color: #1a1a1a;
-        padding: 12px 30px;
-        border: none;
-        border-radius: var(--border-radius);
-        font-size: 1rem;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        width: 100%;
-        margin-top: 10px;
-      }
-
-      .btn:hover:not(:disabled) {
-        background-color: var(--color-primary-hover);
-        transform: translateY(-2px);
-        box-shadow: 0 4px 8px rgba(201, 161, 95, 0.3);
-      }
-
-      .btn:disabled {
-        background-color: #555;
-        cursor: not-allowed;
-        opacity: 0.5;
-        transform: none;
-      }
-
-      .btn-secondary {
-        background-color: #555;
-        margin-top: 5px;
-      }
-
-      .btn-secondary:hover:not(:disabled) {
-        background-color: #666;
-      }
-
-      #payment-form-container {
-        min-height: 400px;
-        background-color: var(--color-background-secondary);
-        border: 2px dashed var(--color-border);
-        border-radius: var(--border-radius);
-        padding: 20px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: #888;
-      }
-
-      #payment-form-container.loaded {
-        border-style: solid;
-        background-color: transparent;
-        display: block;
-        align-items: initial;
-        justify-content: initial;
       }
 
       .alert {
         padding: 15px;
         border-radius: var(--border-radius);
-        margin-top: 20px;
+        margin-bottom: 20px;
         font-weight: 500;
+      }
+
+      .alert-info {
+        background-color: rgba(33, 150, 243, 0.2);
+        border: 1px solid #2196f3;
+        color: #2196f3;
+      }
+
+      .alert-warning {
+        background-color: rgba(255, 152, 0, 0.2);
+        border: 1px solid var(--color-warning);
+        color: var(--color-warning);
       }
 
       .alert-success {
@@ -187,16 +105,70 @@
         color: var(--color-error);
       }
 
-      .alert-warning {
-        background-color: rgba(255, 152, 0, 0.2);
-        border: 1px solid var(--color-warning);
-        color: var(--color-warning);
+      .form-group {
+        margin-bottom: 20px;
       }
 
-      .alert-info {
-        background-color: rgba(33, 150, 243, 0.2);
-        border: 1px solid #2196f3;
-        color: #2196f3;
+      label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 500;
+        color: var(--color-primary);
+      }
+
+      input[type='text'],
+      input[type='number'] {
+        width: 100%;
+        padding: 12px;
+        background-color: var(--color-background-secondary);
+        border: 1px solid var(--color-border);
+        border-radius: var(--border-radius);
+        color: var(--color-text);
+        font-size: 1rem;
+        transition: border-color 0.3s ease;
+      }
+
+      input[type='text']:focus,
+      input[type='number']:focus {
+        outline: none;
+        border-color: var(--color-primary);
+        box-shadow: 0 0 0 3px rgba(201, 161, 95, 0.1);
+      }
+
+      .help-text {
+        font-size: 0.85rem;
+        color: #888;
+        margin-top: 5px;
+      }
+
+      button[type='submit'],
+      .btn {
+        background-color: var(--color-primary);
+        color: #1a1a1a;
+        padding: 14px 30px;
+        border: none;
+        border-radius: var(--border-radius);
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        width: 100%;
+        margin-top: 10px;
+      }
+
+      button[type='submit']:hover,
+      .btn:hover {
+        background-color: var(--color-primary-hover);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(201, 161, 95, 0.3);
+      }
+
+      button[type='submit']:disabled,
+      .btn:disabled {
+        background-color: #555;
+        cursor: not-allowed;
+        opacity: 0.5;
+        transform: none;
       }
 
       .response-data {
@@ -205,7 +177,7 @@
         border-radius: var(--border-radius);
         margin-top: 15px;
         font-family: 'Courier New', monospace;
-        font-size: 0.85rem;
+        font-size: 0.9rem;
         overflow-x: auto;
         white-space: pre-wrap;
         word-break: break-all;
@@ -213,72 +185,38 @@
         overflow-y: auto;
       }
 
-      .config-status {
-        padding: 10px;
-        border-radius: var(--border-radius);
-        margin-top: 10px;
-        text-align: center;
-        font-size: 0.9rem;
-      }
-
-      .status-ready {
-        background-color: rgba(76, 175, 80, 0.2);
-        color: var(--color-success);
-      }
-
-      .status-missing {
-        background-color: rgba(244, 67, 54, 0.2);
-        color: var(--color-error);
-      }
-
-      .documentation-links {
+      .config-section {
         background-color: var(--color-background);
-        padding: 15px;
+        padding: 20px;
         border-radius: var(--border-radius);
-        margin-top: 20px;
-      }
-
-      .documentation-links h3 {
-        color: var(--color-primary);
-        margin-bottom: 10px;
-        font-size: 1.1rem;
-      }
-
-      .documentation-links a {
-        color: #64b5f6;
-        text-decoration: none;
-        display: block;
-        margin: 5px 0;
-        transition: color 0.3s ease;
-      }
-
-      .documentation-links a:hover {
-        color: var(--color-primary);
-        text-decoration: underline;
-      }
-
-      .warning-box {
-        background-color: rgba(255, 152, 0, 0.1);
-        border-left: 4px solid var(--color-warning);
-        padding: 15px;
         margin-bottom: 20px;
-        border-radius: var(--border-radius);
+        border: 1px solid var(--color-border);
       }
 
-      .warning-box h3 {
-        color: var(--color-warning);
-        margin-bottom: 10px;
-        font-size: 1.1rem;
+      .btn-secondary {
+        background-color: #555;
+        margin-top: 5px;
       }
 
-      .info-box {
-        background-color: rgba(33, 150, 243, 0.1);
-        border-left: 4px solid #2196f3;
+      .btn-secondary:hover {
+        background-color: #666;
+      }
+
+      #results {
+        display: none;
+      }
+
+      .token-display {
+        background-color: rgba(76, 175, 80, 0.1);
+        border: 2px solid var(--color-success);
         padding: 15px;
-        margin-top: 15px;
         border-radius: var(--border-radius);
-        font-size: 0.9rem;
-        line-height: 1.6;
+        margin-top: 15px;
+        word-break: break-all;
+      }
+
+      .token-display strong {
+        color: var(--color-success);
       }
 
       @media (max-width: 768px) {
@@ -289,348 +227,300 @@
         h1 {
           font-size: 1.5rem;
         }
-
-        .section h2 {
-          font-size: 1.2rem;
-        }
       }
     </style>
+
+    <!-- CRITICAL: The script tag needs the security_key attribute with your auth token -->
+    <script
+      id="ftd"
+      src="https://payment.ipospays.com/ftd/v1/freedomtodesign.js"
+      security_key=""
+      defer
+    ></script>
   </head>
+
   <body>
     <div class="container">
-      <h1>Dejavoo Freedom to Design</h1>
-      <p class="subtitle">Payment Integration Test Page</p>
+      <h1>Dejavoo Card Payment</h1>
+      <p class="subtitle">Freedom to Design Integration</p>
 
-      <!-- Findings Section -->
-      <div class="warning-box">
-        <h3>🔍 Investigation Results</h3>
-        <p>The FreedomToDesign library loads successfully but doesn't expose any global JavaScript objects. This suggests:</p>
-        <ul style="margin-left: 20px; margin-top: 10px; line-height: 1.8;">
-          <li><strong>DOM-Based Initialization:</strong> The library might automatically look for specific HTML elements with data attributes</li>
-          <li><strong>Server-Side Integration:</strong> The library might require server-side configuration first</li>
-          <li><strong>Authentication Required:</strong> It may need valid credentials before exposing any methods</li>
-          <li><strong>Incomplete Documentation:</strong> The API docs may be outdated or incomplete</li>
-        </ul>
-        <div class="info-box">
-          <strong>📧 You should contact devsupport@dejavoo.io and share:</strong>
-          <ul style="margin-left: 20px; margin-top: 5px;">
-            <li>The script loads (200 OK) but exports no global objects</li>
-            <li>Request a complete working HTML example</li>
-            <li>Ask about data attributes or DOM requirements</li>
-            <li>Mention you're implementing SoftPOS + SPIn API</li>
-          </ul>
-        </div>
+      <!-- Configuration Alert -->
+      <div class="alert alert-warning" id="configAlert">
+        <strong>⚠️ Configuration Required:</strong> Enter your auth token below and click
+        "Update Script" to enable the payment form.
       </div>
 
-      <!-- Try DOM-Based Approach -->
-      <div class="section">
-        <h2>🧪 Experiment: DOM-Based Initialization</h2>
-        <p style="margin-bottom: 15px;">Since no global objects were found, let's try a DOM-based approach. The library might look for specific HTML structure:</p>
-        
+      <!-- Auth Token Configuration -->
+      <div class="config-section">
+        <h2 style="color: var(--color-primary); margin-bottom: 15px; font-size: 1.2rem">
+          🔑 Configuration
+        </h2>
         <div class="form-group">
-          <label for="authToken">eComm Auth Token:</label>
+          <label for="authTokenConfig">eComm Auth Token:</label>
           <input
             type="text"
-            id="authToken"
-            placeholder="Enter your Dejavoo eComm Auth Token"
+            id="authTokenConfig"
+            placeholder="Enter your Dejavoo auth token"
           />
+          <div class="help-text">
+            This will be added to the script tag's security_key attribute
+          </div>
         </div>
-
-        <div class="form-group">
-          <label for="amount">Transaction Amount (in cents):</label>
-          <input type="number" id="amount" value="1000" min="1" />
-        </div>
-
-        <div class="form-group">
-          <label for="environment">Environment:</label>
-          <select id="environment">
-            <option value="sandbox">Sandbox</option>
-            <option value="production">Production</option>
-          </select>
-        </div>
-
-        <button class="btn" onclick="tryDOMApproach()">Try DOM-Based Initialization</button>
-        <div id="configStatus"></div>
+        <button class="btn" onclick="updateSecurityKey()">Update Script & Reload Page</button>
       </div>
 
-      <!-- Payment Container with various data attributes -->
+      <!-- Payment Form Section -->
       <div class="section">
-        <h2>Payment Form Area</h2>
-        <div 
-          id="payment-form-container"
-          data-ftd-container="true"
-          data-payment-container="true"
-          data-dejavoo-payment="true"
-        >
-          <p>Waiting for initialization...</p>
+        <h2>💳 Card Payment Form</h2>
+
+        <div class="alert alert-info">
+          <strong>Test Cards:</strong> Use test card numbers provided by Dejavoo for sandbox
+          testing
         </div>
+
+        <form id="paymentForm">
+          <div class="form-group">
+            <label for="ccnumber">Card Number:</label>
+            <input
+              type="text"
+              id="ccnumber"
+              placeholder="4111 1111 1111 1111"
+              maxlength="19"
+              required
+            />
+            <div class="help-text">16-digit card number</div>
+          </div>
+
+          <div class="form-group">
+            <label for="ccexpiry">Expiry Date:</label>
+            <input type="text" id="ccexpiry" placeholder="MM/YY" maxlength="5" required />
+            <div class="help-text">Format: MM/YY (e.g., 12/25)</div>
+          </div>
+
+          <div class="form-group">
+            <label for="cccvv">CVV:</label>
+            <input type="text" id="cccvv" placeholder="123" maxlength="4" required />
+            <div class="help-text">3 or 4 digit security code</div>
+          </div>
+
+          <button type="submit" id="payButton">Generate Payment Token</button>
+        </form>
       </div>
 
-      <!-- Script Content Inspector -->
-      <div class="section">
-        <h2>📄 Script Content Analysis</h2>
-        <p style="margin-bottom: 15px;">View the actual loaded script to understand its structure:</p>
-        <button class="btn-secondary btn" onclick="fetchAndShowScript()">Fetch & Display Script Content</button>
-        <textarea id="scriptContent" rows="15" style="display: none; margin-top: 15px;" readonly></textarea>
+      <!-- Results Section -->
+      <div class="section" id="results">
+        <h2>📊 Results</h2>
+        <div id="resultMessage"></div>
+        <div id="responseData" class="response-data"></div>
       </div>
 
-      <!-- Email Template -->
+      <!-- Instructions -->
       <div class="section">
-        <h2>📧 Email Template for Support</h2>
-        <div class="response-data">Subject: Freedom to Design Integration - Need Working Code Example
-
-Hi Dejavoo Support Team,
-
-I'm implementing the Freedom to Design payment solution but encountering an issue with the JavaScript library.
-
-<strong>Current Status:</strong>
-✅ Script loads successfully from: https://payment.ipospays.com/ftd/v1/freedomtodesign.js
-❌ No global JavaScript objects are exposed (FreedomToDesign is undefined)
-❌ Cannot find initialization method
-
-<strong>What I've Tried:</strong>
-- Checked for FreedomToDesign, FTD, Dejavoo, iPOSPays objects in global scope
-- Looked for DOM-based initialization patterns
-- Reviewed the documentation at docs.ipospays.com/freedom-to-design
-
-<strong>My Integration Requirements:</strong>
-- SoftPOS: Tap to pay for iPhone and Android phones/tablets  
-- SPIn API: Reader/terminal support for iPad
-
-<strong>What I Need:</strong>
-1. A complete, working HTML example that uses the Freedom to Design library
-2. Documentation of ALL required HTML elements, data attributes, and IDs
-3. The correct JavaScript initialization code (if any)
-4. Any server-side configuration required before using the library
-5. Confirmation that my account has Freedom to Design enabled
-
-<strong>Questions:</strong>
-- Does the library require specific HTML structure or data attributes?
-- Is there a callback function name I need to define?
-- Does initialization happen automatically on page load?
-- Are there any prerequisites (account setup, API calls) before the library works?
-
-I've attached a screenshot showing the script loads successfully but doesn't expose any objects.
-
-Thank you for your assistance,
-Brad Jensen
-brad@fintechnav.com</div>
+        <h2>📚 How It Works</h2>
+        <ol style="margin-left: 20px; line-height: 1.8">
+          <li>Enter your auth token above and click "Update Script & Reload Page"</li>
+          <li>Fill in the card details (use test cards for sandbox)</li>
+          <li>Click "Generate Payment Token"</li>
+          <li>The library will call <code>postData()</code> and return a payment token</li>
+          <li>
+            Use the payment token with iPOS Transact API to complete the transaction
+            <div class="help-text">Token expires in 24 hours if unused</div>
+          </li>
+        </ol>
       </div>
 
       <!-- Documentation Links -->
-      <div class="documentation-links">
-        <h3>📚 Documentation & Resources</h3>
-        <a href="https://docs.ipospays.com/freedom-to-design" target="_blank">
-          Freedom to Design Overview
-        </a>
-        <a href="https://docs.ipospays.com/freedom-to-design/apidocs" target="_blank">
-          API Documentation
-        </a>
-        <a href="https://simulator.ipostransact.com/" target="_blank">
-          iPOStransact API Simulator
-        </a>
-        <p style="margin-top: 15px; color: #888; font-size: 0.85rem">
-          Support: <a href="mailto:devsupport@dejavoo.io">devsupport@dejavoo.io</a>
-        </p>
+      <div class="section">
+        <h2>🔗 Resources</h2>
+        <ul style="margin-left: 20px; line-height: 1.8">
+          <li>
+            <a
+              href="https://docs.ipospays.com/freedom-to-design"
+              target="_blank"
+              style="color: #64b5f6"
+              >Freedom to Design Docs</a
+            >
+          </li>
+          <li>
+            <a
+              href="https://docs.ipospays.com/freedom-to-design/apidocs"
+              target="_blank"
+              style="color: #64b5f6"
+              >API Documentation</a
+            >
+          </li>
+          <li>
+            <a
+              href="https://simulator.ipostransact.com/"
+              target="_blank"
+              style="color: #64b5f6"
+              >API Simulator</a
+            >
+          </li>
+          <li>Support: <a href="mailto:devsupport@dejavoo.io">devsupport@dejavoo.io</a></li>
+        </ul>
       </div>
     </div>
 
-    <!-- Load Freedom to Design Library -->
-    <script src="https://payment.ipospays.com/ftd/v1/freedomtodesign.js"></script>
-
-    <!-- Application Logic -->
     <script>
-      function tryDOMApproach() {
-        const authToken = document.getElementById('authToken').value.trim();
-        const amount = document.getElementById('amount').value;
-        const environment = document.getElementById('environment').value;
+      // Update the script tag's security_key attribute
+      function updateSecurityKey() {
+        const authToken = document.getElementById('authTokenConfig').value.trim();
 
         if (!authToken) {
-          showConfigStatus('error', 'Please enter your Auth Token');
+          alert('Please enter your auth token');
           return;
         }
 
-        if (!amount || amount < 1) {
-          showConfigStatus('error', 'Please enter a valid amount');
-          return;
-        }
+        // Save to localStorage
+        localStorage.setItem('dejavoo_auth_token', authToken);
 
-        const container = document.getElementById('payment-form-container');
-        
-        // Try different DOM-based approaches
-        showConfigStatus('info', 'Attempting various initialization patterns...');
-        console.log('=== Attempting DOM-Based Initialization ===');
+        // Update the script tag
+        const scriptTag = document.getElementById('ftd');
+        scriptTag.setAttribute('security_key', authToken);
 
-        // Approach 1: Add data attributes and see if library auto-initializes
-        container.setAttribute('data-auth-token', authToken);
-        container.setAttribute('data-amount', amount);
-        container.setAttribute('data-environment', environment);
-        console.log('✓ Added data attributes to container');
+        alert(
+          'Auth token saved! Reloading page to initialize the library with your credentials...'
+        );
 
-        // Approach 2: Try creating specific elements the library might look for
-        container.innerHTML = `
-          <form id="ftd-payment-form" class="ftd-form">
-            <input type="hidden" name="authToken" value="${authToken}" />
-            <input type="hidden" name="amount" value="${amount}" />
-            <input type="hidden" name="environment" value="${environment}" />
-            <div id="ftd-card-element"></div>
-            <div id="payment-element"></div>
-            <div id="card-element"></div>
-          </form>
-        `;
-        console.log('✓ Created form structure with common element IDs');
-
-        // Approach 3: Dispatch custom events that the library might listen for
-        const initEvent = new CustomEvent('ftd:initialize', {
-          detail: { authToken, amount, environment }
-        });
-        window.dispatchEvent(initEvent);
-        document.dispatchEvent(initEvent);
-        container.dispatchEvent(initEvent);
-        console.log('✓ Dispatched custom initialization events');
-
-        // Approach 4: Try postMessage (in case library uses iframe communication)
-        window.postMessage({ 
-          type: 'ftd:init', 
-          authToken, 
-          amount, 
-          environment 
-        }, '*');
-        console.log('✓ Sent postMessage');
-
-        // Check if anything changed
-        setTimeout(() => {
-          const formElement = document.getElementById('ftd-payment-form');
-          const cardElement = document.getElementById('ftd-card-element');
-          
-          if (formElement && (formElement.children.length > 3 || cardElement.children.length > 0)) {
-            showConfigStatus('success', 'Something was injected! Check the payment form area.');
-            console.log('✓ Library may have added content to the form');
-          } else {
-            showConfigStatus('error', 'No response from library. It may require server-side setup first.');
-            console.log('✗ No changes detected. Library may need additional configuration.');
-            
-            container.innerHTML = `
-              <div style="padding: 20px; text-align: left;">
-                <p style="color: var(--color-error); font-weight: bold; margin-bottom: 15px;">
-                  ❌ DOM-based initialization attempts failed
-                </p>
-                <p style="margin-bottom: 10px;">The library did not respond to:</p>
-                <ul style="margin-left: 20px; line-height: 1.8;">
-                  <li>Data attributes on container</li>
-                  <li>Standard form elements (card-element, payment-element)</li>
-                  <li>Custom events (ftd:initialize)</li>
-                  <li>PostMessage API calls</li>
-                </ul>
-                <p style="margin-top: 15px; padding: 15px; background-color: rgba(201, 161, 95, 0.1); border-radius: 8px;">
-                  <strong>This strongly suggests the library requires:</strong><br>
-                  • Server-side API configuration first<br>
-                  • A hosted payment page URL from Dejavoo<br>
-                  • Or uses an entirely different integration method<br><br>
-                  <strong>Contact devsupport@dejavoo.io with the email template below.</strong>
-                </p>
-              </div>
-            `;
-          }
-        }, 2000);
+        // Reload the page to reinitialize the script with the new security_key
+        window.location.reload();
       }
 
-      function fetchAndShowScript() {
-        const scriptArea = document.getElementById('scriptContent');
-        scriptArea.style.display = 'block';
-        scriptArea.value = 'Fetching script content...';
-
-        fetch('https://payment.ipospays.com/ftd/v1/freedomtodesign.js')
-          .then(response => response.text())
-          .then(scriptText => {
-            scriptArea.value = scriptText;
-            console.log('Script content:', scriptText);
-            
-            // Try to find clues in the script
-            const clues = [];
-            if (scriptText.includes('data-')) clues.push('Uses data attributes');
-            if (scriptText.includes('addEventListener')) clues.push('Listens for events');
-            if (scriptText.includes('postMessage')) clues.push('Uses postMessage');
-            if (scriptText.includes('iframe')) clues.push('Creates iframes');
-            if (scriptText.includes('XMLHttpRequest') || scriptText.includes('fetch')) clues.push('Makes API calls');
-            
-            if (clues.length > 0) {
-              alert('Script analysis found: ' + clues.join(', '));
-              console.log('Script clues:', clues);
-            }
-          })
-          .catch(error => {
-            scriptArea.value = 'Error fetching script: ' + error.message;
-            console.error('Error:', error);
-          });
-      }
-
-      function showConfigStatus(type, message) {
-        const statusDiv = document.getElementById('configStatus');
-        statusDiv.className = 'config-status';
-
-        if (type === 'success') {
-          statusDiv.classList.add('status-ready');
-        } else if (type === 'error') {
-          statusDiv.classList.add('status-missing');
-        } else {
-          statusDiv.style.backgroundColor = 'rgba(33, 150, 243, 0.2)';
-          statusDiv.style.color = '#2196f3';
-        }
-
-        statusDiv.textContent = message;
-        statusDiv.style.display = 'block';
-      }
-
-      // Monitor for any DOM changes in the payment container
-      const observer = new MutationObserver((mutations) => {
-        console.log('🔍 DOM mutation detected:', mutations);
-        mutations.forEach((mutation) => {
-          if (mutation.addedNodes.length > 0) {
-            console.log('✓ Nodes added by library:', mutation.addedNodes);
-          }
-        });
-      });
-
-      window.addEventListener('load', () => {
-        const container = document.getElementById('payment-form-container');
-        observer.observe(container, { 
-          childList: true, 
-          subtree: true, 
-          attributes: true 
-        });
-        console.log('✓ Monitoring payment container for changes');
-
-        // Load saved values
+      // Load saved auth token on page load
+      window.addEventListener('DOMContentLoaded', function () {
         const savedToken = localStorage.getItem('dejavoo_auth_token');
-        const savedAmount = localStorage.getItem('dejavoo_amount');
-        const savedEnvironment = localStorage.getItem('dejavoo_environment');
 
-        if (savedToken) document.getElementById('authToken').value = savedToken;
-        if (savedAmount) document.getElementById('amount').value = savedAmount;
-        if (savedEnvironment) document.getElementById('environment').value = savedEnvironment;
+        if (savedToken) {
+          // Update the input field
+          document.getElementById('authTokenConfig').value = savedToken;
+
+          // Update the script tag
+          const scriptTag = document.getElementById('ftd');
+          scriptTag.setAttribute('security_key', savedToken);
+
+          // Hide the warning
+          document.getElementById('configAlert').style.display = 'none';
+
+          console.log('✅ Auth token loaded from localStorage');
+        } else {
+          console.log('⚠️ No auth token found - please configure');
+        }
       });
 
-      // Save values
-      document.getElementById('authToken').addEventListener('change', function () {
-        localStorage.setItem('dejavoo_auth_token', this.value);
+      // Handle form submission
+      async function submitCardFunc(event) {
+        event.preventDefault();
+
+        // Check if postData function exists
+        if (typeof postData !== 'function') {
+          const resultMessage = document.getElementById('resultMessage');
+          resultMessage.className = 'alert alert-error';
+          resultMessage.innerHTML = `
+            <strong>❌ Error:</strong> postData() function not found.<br><br>
+            This means the Freedom to Design library did not load properly. Possible causes:<br>
+            <ul style="margin-left: 20px; margin-top: 10px;">
+              <li>Invalid or missing auth token</li>
+              <li>Auth token doesn't have Freedom to Design access</li>
+              <li>Network connectivity issue</li>
+            </ul>
+            <br>Check the browser console for more details.
+          `;
+          document.getElementById('results').style.display = 'block';
+          console.error('postData() function not available');
+          return;
+        }
+
+        // Show loading state
+        const payButton = document.getElementById('payButton');
+        const originalText = payButton.textContent;
+        payButton.disabled = true;
+        payButton.textContent = 'Processing...';
+
+        try {
+          console.log('🔄 Calling postData() to generate payment token...');
+          const data_response = await postData();
+
+          console.log('✅ Payment token generated:', data_response);
+
+          // Show success
+          const resultMessage = document.getElementById('resultMessage');
+          resultMessage.className = 'alert alert-success';
+          resultMessage.innerHTML = `
+            <strong>✅ Payment Token Generated Successfully!</strong>
+          `;
+
+          // Show the token
+          const responseData = document.getElementById('responseData');
+          responseData.innerHTML = `
+            <div class="token-display">
+              <strong>Payment Token ID:</strong><br>
+              <code>${data_response.payment_token_id}</code>
+            </div>
+            <div style="margin-top: 15px;">
+              <strong>Full Response:</strong>
+              <pre>${JSON.stringify(data_response, null, 2)}</pre>
+            </div>
+            <div style="margin-top: 15px; padding: 15px; background-color: rgba(33, 150, 243, 0.1); border-radius: 8px;">
+              <strong>💡 Next Step:</strong><br>
+              Use this payment token with the iPOS Transact API to complete the transaction.<br>
+              <em>Note: Token expires in 24 hours if unused.</em>
+            </div>
+          `;
+
+          document.getElementById('results').style.display = 'block';
+          document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
+        } catch (error) {
+          console.error('❌ Error processing payment:', error);
+
+          const resultMessage = document.getElementById('resultMessage');
+          resultMessage.className = 'alert alert-error';
+          resultMessage.innerHTML = `
+            <strong>❌ Error:</strong> ${error.message || 'Unknown error occurred'}
+          `;
+
+          const responseData = document.getElementById('responseData');
+          responseData.textContent = JSON.stringify(error, null, 2);
+
+          document.getElementById('results').style.display = 'block';
+          document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
+        } finally {
+          payButton.disabled = false;
+          payButton.textContent = originalText;
+        }
+      }
+
+      // Attach event listener to form
+      var payButton = document.getElementById('payButton');
+      document.getElementById('paymentForm').addEventListener('submit', submitCardFunc);
+
+      // Format card number input with spaces
+      document.getElementById('ccnumber').addEventListener('input', function (e) {
+        let value = e.target.value.replace(/\s/g, '');
+        let formattedValue = value.match(/.{1,4}/g)?.join(' ') || value;
+        e.target.value = formattedValue;
       });
 
-      document.getElementById('amount').addEventListener('change', function () {
-        localStorage.setItem('dejavoo_amount', this.value);
+      // Format expiry date input
+      document.getElementById('ccexpiry').addEventListener('input', function (e) {
+        let value = e.target.value.replace(/\D/g, '');
+        if (value.length >= 2) {
+          value = value.substring(0, 2) + '/' + value.substring(2, 4);
+        }
+        e.target.value = value;
       });
 
-      document.getElementById('environment').addEventListener('change', function () {
-        localStorage.setItem('dejavoo_environment', this.value);
+      // Only allow numbers in CVV
+      document.getElementById('cccvv').addEventListener('input', function (e) {
+        e.target.value = e.target.value.replace(/\D/g, '');
       });
 
-      // Listen for any events that might be dispatched by the library
-      const eventTypes = ['ftd:ready', 'dejavoo:ready', 'payment:ready', 'load', 'DOMContentLoaded'];
-      eventTypes.forEach(eventType => {
-        window.addEventListener(eventType, (e) => {
-          console.log(`🎉 Event captured: ${eventType}`, e);
-        });
-      });
+      // Log when script loads
+      console.log('✅ Page loaded');
+      console.log(
+        '📌 Checking for postData function...',
+        typeof postData !== 'undefined' ? '✅ Found' : '❌ Not found'
+      );
     </script>
   </body>
 </html>
