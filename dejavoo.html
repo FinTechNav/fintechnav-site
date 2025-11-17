@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dejavoo Freedom to Design - Payment Test</title>
+    <style>
+      :root {
+        --color-background: #1a1a1a;
+        --color-background-secondary: #2a2a2a;
+        --color-text: #e0e0e0;
+        --color-primary: #c9a15f;
+        --color-primary-hover: #b08f4f;
+        --color-border: rgba(201, 161, 95, 0.3);
+        --color-success: #4caf50;
+        --color-error: #f44336;
+        --border-radius: 8px;
+        --font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: var(--font-family);
+        background-color: var(--color-background);
+        color: var(--color-text);
+        padding: 20px;
+        line-height: 1.6;
+      }
+
+      .container {
+        max-width: 800px;
+        margin: 0 auto;
+        background-color: var(--color-background-secondary);
+        border-radius: var(--border-radius);
+        padding: 30px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+      }
+
+      h1 {
+        color: var(--color-primary);
+        margin-bottom: 10px;
+        font-size: 2rem;
+        text-align: center;
+      }
+
+      .subtitle {
+        text-align: center;
+        color: #888;
+        margin-bottom: 30px;
+        font-size: 0.9rem;
+      }
+
+      .section {
+        margin-bottom: 30px;
+        padding: 20px;
+        background-color: var(--color-background);
+        border-radius: var(--border-radius);
+        border: 1px solid var(--color-border);
+      }
+
+      .section h2 {
+        color: var(--color-primary);
+        margin-bottom: 15px;
+        font-size: 1.4rem;
+        border-bottom: 2px solid var(--color-border);
+        padding-bottom: 10px;
+      }
+
+      .form-group {
+        margin-bottom: 20px;
+      }
+
+      label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 500;
+        color: var(--color-primary);
+      }
+
+      input[type='text'],
+      input[type='number'],
+      select {
+        width: 100%;
+        padding: 12px;
+        background-color: var(--color-background-secondary);
+        border: 1px solid var(--color-border);
+        border-radius: var(--border-radius);
+        color: var(--color-text);
+        font-size: 1rem;
+        transition: border-color 0.3s ease;
+      }
+
+      input[type='text']:focus,
+      input[type='number']:focus,
+      select:focus {
+        outline: none;
+        border-color: var(--color-primary);
+      }
+
+      .help-text {
+        font-size: 0.85rem;
+        color: #888;
+        margin-top: 5px;
+      }
+
+      .btn {
+        background-color: var(--color-primary);
+        color: #1a1a1a;
+        padding: 12px 30px;
+        border: none;
+        border-radius: var(--border-radius);
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        width: 100%;
+        margin-top: 10px;
+      }
+
+      .btn:hover {
+        background-color: var(--color-primary-hover);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(201, 161, 95, 0.3);
+      }
+
+      .btn:disabled {
+        background-color: #555;
+        cursor: not-allowed;
+        opacity: 0.5;
+        transform: none;
+      }
+
+      #payment-form-container {
+        min-height: 400px;
+        background-color: var(--color-background-secondary);
+        border: 2px dashed var(--color-border);
+        border-radius: var(--border-radius);
+        padding: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #888;
+      }
+
+      #payment-form-container.loaded {
+        border-style: solid;
+        background-color: transparent;
+      }
+
+      .alert {
+        padding: 15px;
+        border-radius: var(--border-radius);
+        margin-top: 20px;
+        font-weight: 500;
+      }
+
+      .alert-success {
+        background-color: rgba(76, 175, 80, 0.2);
+        border: 1px solid var(--color-success);
+        color: var(--color-success);
+      }
+
+      .alert-error {
+        background-color: rgba(244, 67, 54, 0.2);
+        border: 1px solid var(--color-error);
+        color: var(--color-error);
+      }
+
+      .alert-info {
+        background-color: rgba(33, 150, 243, 0.2);
+        border: 1px solid #2196f3;
+        color: #2196f3;
+      }
+
+      .response-data {
+        background-color: var(--color-background);
+        padding: 15px;
+        border-radius: var(--border-radius);
+        margin-top: 15px;
+        font-family: 'Courier New', monospace;
+        font-size: 0.9rem;
+        overflow-x: auto;
+        white-space: pre-wrap;
+        word-break: break-all;
+      }
+
+      .config-status {
+        padding: 10px;
+        border-radius: var(--border-radius);
+        margin-top: 10px;
+        text-align: center;
+        font-size: 0.9rem;
+      }
+
+      .status-ready {
+        background-color: rgba(76, 175, 80, 0.2);
+        color: var(--color-success);
+      }
+
+      .status-missing {
+        background-color: rgba(244, 67, 54, 0.2);
+        color: var(--color-error);
+      }
+
+      .documentation-links {
+        background-color: var(--color-background);
+        padding: 15px;
+        border-radius: var(--border-radius);
+        margin-top: 20px;
+      }
+
+      .documentation-links h3 {
+        color: var(--color-primary);
+        margin-bottom: 10px;
+        font-size: 1.1rem;
+      }
+
+      .documentation-links a {
+        color: #64b5f6;
+        text-decoration: none;
+        display: block;
+        margin: 5px 0;
+        transition: color 0.3s ease;
+      }
+
+      .documentation-links a:hover {
+        color: var(--color-primary);
+        text-decoration: underline;
+      }
+
+      @media (max-width: 768px) {
+        .container {
+          padding: 20px;
+        }
+
+        h1 {
+          font-size: 1.5rem;
+        }
+
+        .section h2 {
+          font-size: 1.2rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Dejavoo Freedom to Design</h1>
+      <p class="subtitle">Payment Integration Test Page</p>
+
+      <!-- Configuration Section -->
+      <div class="section">
+        <h2>Configuration</h2>
+        <div class="form-group">
+          <label for="authToken">eComm Auth Token:</label>
+          <input
+            type="text"
+            id="authToken"
+            placeholder="Enter your Dejavoo eComm Auth Token"
+          />
+          <div class="help-text">
+            Required: Your authentication token from Dejavoo. Contact devsupport@dejavoo.io if
+            you need assistance.
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="amount">Transaction Amount (in cents):</label>
+          <input type="number" id="amount" value="1000" min="1" />
+          <div class="help-text">Amount in cents (e.g., 1000 = $10.00)</div>
+        </div>
+
+        <div class="form-group">
+          <label for="environment">Environment:</label>
+          <select id="environment">
+            <option value="sandbox">Sandbox (Testing)</option>
+            <option value="production">Production (Live)</option>
+          </select>
+          <div class="help-text">Start with Sandbox for testing</div>
+        </div>
+
+        <button class="btn" id="initializeBtn" onclick="initializePaymentForm()">
+          Initialize Payment Form
+        </button>
+
+        <div id="configStatus"></div>
+      </div>
+
+      <!-- Payment Form Section -->
+      <div class="section">
+        <h2>Payment Form</h2>
+        <div id="payment-form-container">
+          <p>Click "Initialize Payment Form" above to load the payment interface</p>
+        </div>
+      </div>
+
+      <!-- Results Section -->
+      <div class="section" id="resultsSection" style="display: none">
+        <h2>Transaction Results</h2>
+        <div id="resultMessage"></div>
+        <div id="responseData" class="response-data"></div>
+      </div>
+
+      <!-- Documentation Links -->
+      <div class="documentation-links">
+        <h3>📚 Documentation & Resources</h3>
+        <a href="https://docs.ipospays.com/freedom-to-design" target="_blank">
+          Freedom to Design Overview
+        </a>
+        <a href="https://docs.ipospays.com/freedom-to-design/apidocs" target="_blank">
+          API Documentation
+        </a>
+        <a href="https://simulator.ipostransact.com/" target="_blank">
+          iPOStransact API Simulator (ACH Form)
+        </a>
+        <p style="margin-top: 15px; color: #888; font-size: 0.85rem">
+          For technical support, email:
+          <a href="mailto:devsupport@dejavoo.io">devsupport@dejavoo.io</a>
+        </p>
+      </div>
+    </div>
+
+    <!-- Load Freedom to Design Library -->
+    <script src="https://payment.ipospays.com/ftd/v1/freedomtodesign.js"></script>
+
+    <!-- Application Logic -->
+    <script>
+      let paymentFormInitialized = false;
+
+      function initializePaymentForm() {
+        // Get configuration values
+        const authToken = document.getElementById('authToken').value.trim();
+        const amount = document.getElementById('amount').value;
+        const environment = document.getElementById('environment').value;
+        const configStatus = document.getElementById('configStatus');
+
+        // Validate inputs
+        if (!authToken) {
+          showConfigStatus('error', 'Please enter your Auth Token');
+          return;
+        }
+
+        if (!amount || amount < 1) {
+          showConfigStatus('error', 'Please enter a valid amount');
+          return;
+        }
+
+        // Show loading state
+        showConfigStatus('info', 'Initializing payment form...');
+        document.getElementById('initializeBtn').disabled = true;
+
+        // Clear the container
+        const container = document.getElementById('payment-form-container');
+        container.innerHTML = '';
+        container.classList.add('loaded');
+
+        try {
+          // Initialize FreedomToDesign
+          // Note: The actual initialization may vary based on the API
+          // This is based on the example provided by Dejavoo support
+          FreedomToDesign.init({
+            container: '#payment-form-container',
+            authToken: authToken,
+            amount: parseInt(amount),
+            environment: environment,
+            onSuccess: function (response) {
+              handleSuccess(response);
+            },
+            onError: function (error) {
+              handleError(error);
+            },
+            onCancel: function () {
+              handleCancel();
+            },
+          });
+
+          paymentFormInitialized = true;
+          showConfigStatus('success', 'Payment form initialized successfully!');
+        } catch (error) {
+          console.error('Initialization error:', error);
+          showConfigStatus('error', `Initialization failed: ${error.message}`);
+          document.getElementById('initializeBtn').disabled = false;
+          container.classList.remove('loaded');
+          container.innerHTML =
+            '<p>Failed to initialize. Check console for details.</p>';
+        }
+      }
+
+      function handleSuccess(response) {
+        console.log('Payment successful:', response);
+
+        // Show results section
+        document.getElementById('resultsSection').style.display = 'block';
+        document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth' });
+
+        // Display success message
+        const resultMessage = document.getElementById('resultMessage');
+        resultMessage.className = 'alert alert-success';
+        resultMessage.innerHTML = `
+          <strong>✓ Payment Successful!</strong><br>
+          Transaction completed successfully.
+        `;
+
+        // Display response data
+        document.getElementById('responseData').textContent = JSON.stringify(
+          response,
+          null,
+          2
+        );
+
+        // Reset form
+        setTimeout(() => {
+          resetForm();
+        }, 5000);
+      }
+
+      function handleError(error) {
+        console.error('Payment error:', error);
+
+        // Show results section
+        document.getElementById('resultsSection').style.display = 'block';
+        document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth' });
+
+        // Display error message
+        const resultMessage = document.getElementById('resultMessage');
+        resultMessage.className = 'alert alert-error';
+        resultMessage.innerHTML = `
+          <strong>✗ Payment Failed</strong><br>
+          ${error.message || 'An error occurred during payment processing.'}
+        `;
+
+        // Display error data
+        document.getElementById('responseData').textContent = JSON.stringify(error, null, 2);
+
+        // Re-enable form
+        document.getElementById('initializeBtn').disabled = false;
+      }
+
+      function handleCancel() {
+        console.log('Payment cancelled by user');
+
+        // Show results section
+        document.getElementById('resultsSection').style.display = 'block';
+        document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth' });
+
+        // Display cancellation message
+        const resultMessage = document.getElementById('resultMessage');
+        resultMessage.className = 'alert alert-info';
+        resultMessage.innerHTML = `
+          <strong>Payment Cancelled</strong><br>
+          The transaction was cancelled by the user.
+        `;
+
+        // Clear response data
+        document.getElementById('responseData').textContent = 'No transaction data available.';
+
+        // Re-enable form
+        document.getElementById('initializeBtn').disabled = false;
+      }
+
+      function resetForm() {
+        document.getElementById('payment-form-container').innerHTML =
+          '<p>Click "Initialize Payment Form" above to start a new transaction</p>';
+        document.getElementById('payment-form-container').classList.remove('loaded');
+        document.getElementById('initializeBtn').disabled = false;
+        paymentFormInitialized = false;
+      }
+
+      function showConfigStatus(type, message) {
+        const statusDiv = document.getElementById('configStatus');
+        statusDiv.className = 'config-status';
+
+        if (type === 'success') {
+          statusDiv.classList.add('status-ready');
+        } else if (type === 'error') {
+          statusDiv.classList.add('status-missing');
+        } else {
+          statusDiv.style.backgroundColor = 'rgba(33, 150, 243, 0.2)';
+          statusDiv.style.color = '#2196f3';
+        }
+
+        statusDiv.textContent = message;
+        statusDiv.style.display = 'block';
+      }
+
+      // Check if FreedomToDesign library is loaded
+      window.addEventListener('load', function () {
+        if (typeof FreedomToDesign === 'undefined') {
+          console.error('FreedomToDesign library failed to load');
+          showConfigStatus(
+            'error',
+            'Warning: Freedom to Design library not loaded. Check your internet connection.'
+          );
+        } else {
+          console.log('FreedomToDesign library loaded successfully');
+        }
+      });
+
+      // Save form values to localStorage
+      document.getElementById('authToken').addEventListener('change', function () {
+        localStorage.setItem('dejavoo_auth_token', this.value);
+      });
+
+      document.getElementById('amount').addEventListener('change', function () {
+        localStorage.setItem('dejavoo_amount', this.value);
+      });
+
+      document.getElementById('environment').addEventListener('change', function () {
+        localStorage.setItem('dejavoo_environment', this.value);
+      });
+
+      // Load saved values on page load
+      window.addEventListener('load', function () {
+        const savedToken = localStorage.getItem('dejavoo_auth_token');
+        const savedAmount = localStorage.getItem('dejavoo_amount');
+        const savedEnvironment = localStorage.getItem('dejavoo_environment');
+
+        if (savedToken) document.getElementById('authToken').value = savedToken;
+        if (savedAmount) document.getElementById('amount').value = savedAmount;
+        if (savedEnvironment) document.getElementById('environment').value = savedEnvironment;
+      });
+    </script>
+  </body>
+</html>
