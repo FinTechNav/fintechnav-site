@@ -85,7 +85,8 @@
 
       input[type='text'],
       input[type='number'],
-      select {
+      select,
+      textarea {
         width: 100%;
         padding: 12px;
         background-color: var(--color-background-secondary);
@@ -94,11 +95,13 @@
         color: var(--color-text);
         font-size: 1rem;
         transition: border-color 0.3s ease;
+        font-family: 'Courier New', monospace;
       }
 
       input[type='text']:focus,
       input[type='number']:focus,
-      select:focus {
+      select:focus,
+      textarea:focus {
         outline: none;
         border-color: var(--color-primary);
       }
@@ -202,11 +205,11 @@
         border-radius: var(--border-radius);
         margin-top: 15px;
         font-family: 'Courier New', monospace;
-        font-size: 0.9rem;
+        font-size: 0.85rem;
         overflow-x: auto;
         white-space: pre-wrap;
         word-break: break-all;
-        max-height: 500px;
+        max-height: 400px;
         overflow-y: auto;
       }
 
@@ -268,18 +271,14 @@
         font-size: 1.1rem;
       }
 
-      .debug-section {
-        background-color: var(--color-background);
+      .info-box {
+        background-color: rgba(33, 150, 243, 0.1);
+        border-left: 4px solid #2196f3;
         padding: 15px;
-        border-radius: var(--border-radius);
         margin-top: 15px;
-        border: 1px solid rgba(33, 150, 243, 0.3);
-      }
-
-      .debug-section h3 {
-        color: #2196f3;
-        margin-bottom: 10px;
-        font-size: 1rem;
+        border-radius: var(--border-radius);
+        font-size: 0.9rem;
+        line-height: 1.6;
       }
 
       @media (max-width: 768px) {
@@ -302,24 +301,32 @@
       <h1>Dejavoo Freedom to Design</h1>
       <p class="subtitle">Payment Integration Test Page</p>
 
-      <!-- Warning Box for Library Status -->
-      <div class="warning-box" id="libraryWarning" style="display: none;">
-        <h3 id="libraryWarningTitle">⚠️ Library Status</h3>
-        <p id="libraryWarningText"></p>
+      <!-- Findings Section -->
+      <div class="warning-box">
+        <h3>🔍 Investigation Results</h3>
+        <p>The FreedomToDesign library loads successfully but doesn't expose any global JavaScript objects. This suggests:</p>
+        <ul style="margin-left: 20px; margin-top: 10px; line-height: 1.8;">
+          <li><strong>DOM-Based Initialization:</strong> The library might automatically look for specific HTML elements with data attributes</li>
+          <li><strong>Server-Side Integration:</strong> The library might require server-side configuration first</li>
+          <li><strong>Authentication Required:</strong> It may need valid credentials before exposing any methods</li>
+          <li><strong>Incomplete Documentation:</strong> The API docs may be outdated or incomplete</li>
+        </ul>
+        <div class="info-box">
+          <strong>📧 You should contact devsupport@dejavoo.io and share:</strong>
+          <ul style="margin-left: 20px; margin-top: 5px;">
+            <li>The script loads (200 OK) but exports no global objects</li>
+            <li>Request a complete working HTML example</li>
+            <li>Ask about data attributes or DOM requirements</li>
+            <li>Mention you're implementing SoftPOS + SPIn API</li>
+          </ul>
+        </div>
       </div>
 
-      <!-- Debug Section -->
+      <!-- Try DOM-Based Approach -->
       <div class="section">
-        <h2>🔍 Library Debug Info</h2>
-        <button class="btn-secondary btn" onclick="inspectGlobalScope()">
-          Inspect Global Scope for Payment Objects
-        </button>
-        <div id="debugOutput" class="response-data" style="margin-top: 15px; display: none;"></div>
-      </div>
-
-      <!-- Configuration Section -->
-      <div class="section">
-        <h2>Configuration</h2>
+        <h2>🧪 Experiment: DOM-Based Initialization</h2>
+        <p style="margin-bottom: 15px;">Since no global objects were found, let's try a DOM-based approach. The library might look for specific HTML structure:</p>
+        
         <div class="form-group">
           <label for="authToken">eComm Auth Token:</label>
           <input
@@ -327,46 +334,87 @@
             id="authToken"
             placeholder="Enter your Dejavoo eComm Auth Token"
           />
-          <div class="help-text">
-            Required: Your authentication token from Dejavoo
-          </div>
         </div>
 
         <div class="form-group">
           <label for="amount">Transaction Amount (in cents):</label>
           <input type="number" id="amount" value="1000" min="1" />
-          <div class="help-text">Amount in cents (e.g., 1000 = $10.00)</div>
         </div>
 
         <div class="form-group">
           <label for="environment">Environment:</label>
           <select id="environment">
-            <option value="sandbox">Sandbox (Testing)</option>
-            <option value="production">Production (Live)</option>
+            <option value="sandbox">Sandbox</option>
+            <option value="production">Production</option>
           </select>
-          <div class="help-text">Start with Sandbox for testing</div>
         </div>
 
-        <button class="btn" id="initializeBtn" onclick="initializePaymentForm()">
-          Initialize Payment Form
-        </button>
-
+        <button class="btn" onclick="tryDOMApproach()">Try DOM-Based Initialization</button>
         <div id="configStatus"></div>
       </div>
 
-      <!-- Payment Form Section -->
+      <!-- Payment Container with various data attributes -->
       <div class="section">
-        <h2>Payment Form</h2>
-        <div id="payment-form-container">
-          <p>Click "Initialize Payment Form" above to load the payment interface</p>
+        <h2>Payment Form Area</h2>
+        <div 
+          id="payment-form-container"
+          data-ftd-container="true"
+          data-payment-container="true"
+          data-dejavoo-payment="true"
+        >
+          <p>Waiting for initialization...</p>
         </div>
       </div>
 
-      <!-- Results Section -->
-      <div class="section" id="resultsSection" style="display: none">
-        <h2>Transaction Results</h2>
-        <div id="resultMessage"></div>
-        <div id="responseData" class="response-data"></div>
+      <!-- Script Content Inspector -->
+      <div class="section">
+        <h2>📄 Script Content Analysis</h2>
+        <p style="margin-bottom: 15px;">View the actual loaded script to understand its structure:</p>
+        <button class="btn-secondary btn" onclick="fetchAndShowScript()">Fetch & Display Script Content</button>
+        <textarea id="scriptContent" rows="15" style="display: none; margin-top: 15px;" readonly></textarea>
+      </div>
+
+      <!-- Email Template -->
+      <div class="section">
+        <h2>📧 Email Template for Support</h2>
+        <div class="response-data">Subject: Freedom to Design Integration - Need Working Code Example
+
+Hi Dejavoo Support Team,
+
+I'm implementing the Freedom to Design payment solution but encountering an issue with the JavaScript library.
+
+<strong>Current Status:</strong>
+✅ Script loads successfully from: https://payment.ipospays.com/ftd/v1/freedomtodesign.js
+❌ No global JavaScript objects are exposed (FreedomToDesign is undefined)
+❌ Cannot find initialization method
+
+<strong>What I've Tried:</strong>
+- Checked for FreedomToDesign, FTD, Dejavoo, iPOSPays objects in global scope
+- Looked for DOM-based initialization patterns
+- Reviewed the documentation at docs.ipospays.com/freedom-to-design
+
+<strong>My Integration Requirements:</strong>
+- SoftPOS: Tap to pay for iPhone and Android phones/tablets  
+- SPIn API: Reader/terminal support for iPad
+
+<strong>What I Need:</strong>
+1. A complete, working HTML example that uses the Freedom to Design library
+2. Documentation of ALL required HTML elements, data attributes, and IDs
+3. The correct JavaScript initialization code (if any)
+4. Any server-side configuration required before using the library
+5. Confirmation that my account has Freedom to Design enabled
+
+<strong>Questions:</strong>
+- Does the library require specific HTML structure or data attributes?
+- Is there a callback function name I need to define?
+- Does initialization happen automatically on page load?
+- Are there any prerequisites (account setup, API calls) before the library works?
+
+I've attached a screenshot showing the script loads successfully but doesn't expose any objects.
+
+Thank you for your assistance,
+Brad Jensen
+brad@fintechnav.com</div>
       </div>
 
       <!-- Documentation Links -->
@@ -387,174 +435,16 @@
       </div>
     </div>
 
-    <!-- Load Freedom to Design Library with error handling -->
-    <script>
-      // Track library load status
-      let libraryLoaded = false;
-      let discoveredObject = null;
-
-      // Create script element with error handling
-      (function loadLibrary() {
-        const script = document.createElement('script');
-        script.src = 'https://payment.ipospays.com/ftd/v1/freedomtodesign.js';
-        
-        script.onload = function() {
-          libraryLoaded = true;
-          console.log('✅ Script loaded successfully from CDN');
-          
-          // Try to discover the actual object name
-          setTimeout(discoverLibraryObject, 100);
-        };
-        
-        script.onerror = function() {
-          console.error('❌ Failed to load script from CDN');
-          showLibraryWarning(false, 'Script failed to load from CDN');
-        };
-        
-        document.head.appendChild(script);
-      })();
-
-      function discoverLibraryObject() {
-        // Check common variations
-        const possibleNames = [
-          'FreedomToDesign',
-          'freedomtodesign', 
-          'FTD',
-          'ftd',
-          'DejavooFTD',
-          'Dejavoo',
-          'dejavoo',
-          'iPOSPays',
-          'ipospays',
-          'PaymentForm',
-          'paymentForm'
-        ];
-
-        for (let name of possibleNames) {
-          if (typeof window[name] !== 'undefined') {
-            discoveredObject = name;
-            console.log(`✅ Found payment object: window.${name}`, window[name]);
-            showLibraryWarning(true, `Library loaded as: window.${name}`);
-            return;
-          }
-        }
-
-        // If we can't find it, show what we do have
-        console.warn('⚠️ Could not find expected payment object in global scope');
-        showLibraryWarning(false, 'Script loaded but payment object not found in global scope. Click "Inspect Global Scope" button to see what was loaded.');
-      }
-
-      function inspectGlobalScope() {
-        const debugOutput = document.getElementById('debugOutput');
-        debugOutput.style.display = 'block';
-        
-        let output = '=== GLOBAL SCOPE INSPECTION ===\n\n';
-        
-        // Get all properties added to window
-        const windowProps = Object.getOwnPropertyNames(window);
-        const suspectProps = windowProps.filter(prop => {
-          // Filter for properties that might be from the library
-          const lowerProp = prop.toLowerCase();
-          return (
-            lowerProp.includes('dejavoo') ||
-            lowerProp.includes('freedom') ||
-            lowerProp.includes('ftd') ||
-            lowerProp.includes('ipos') ||
-            lowerProp.includes('payment') ||
-            lowerProp.includes('pay')
-          );
-        });
-
-        if (suspectProps.length > 0) {
-          output += 'Potential payment-related properties found:\n\n';
-          suspectProps.forEach(prop => {
-            try {
-              const value = window[prop];
-              const type = typeof value;
-              output += `window.${prop} (${type})\n`;
-              
-              if (type === 'object' && value !== null) {
-                const methods = Object.getOwnPropertyNames(value).filter(p => typeof value[p] === 'function');
-                if (methods.length > 0) {
-                  output += `  Methods: ${methods.join(', ')}\n`;
-                }
-              } else if (type === 'function') {
-                output += `  ${value.toString().substring(0, 100)}...\n`;
-              }
-              output += '\n';
-            } catch (e) {
-              output += `window.${prop} - Could not inspect (${e.message})\n\n`;
-            }
-          });
-        } else {
-          output += 'No obvious payment-related properties found in global scope.\n\n';
-        }
-
-        output += '=== SCRIPT TAG INSPECTION ===\n\n';
-        const scripts = document.getElementsByTagName('script');
-        Array.from(scripts).forEach((script, index) => {
-          if (script.src && script.src.includes('freedomtodesign')) {
-            output += `Script ${index}: ${script.src}\n`;
-            output += `  Loaded: ${libraryLoaded ? 'Yes' : 'No'}\n\n`;
-          }
-        });
-
-        output += '=== RECOMMENDED ACTIONS ===\n\n';
-        output += '1. Check the browser Network tab to see if the script loaded\n';
-        output += '2. Look at the loaded script content to see what it exports\n';
-        output += '3. Contact devsupport@dejavoo.io with this debug info\n';
-        output += '4. Ask them for the correct object name and initialization method\n';
-
-        debugOutput.textContent = output;
-        console.log(output);
-      }
-
-      function showLibraryWarning(success, message) {
-        const warning = document.getElementById('libraryWarning');
-        const warningTitle = document.getElementById('libraryWarningTitle');
-        const warningText = document.getElementById('libraryWarningText');
-        warning.style.display = 'block';
-        
-        if (success) {
-          warning.style.backgroundColor = 'rgba(76, 175, 80, 0.1)';
-          warning.style.borderColor = 'var(--color-success)';
-          warningTitle.style.color = 'var(--color-success)';
-          warningTitle.textContent = '✅ Library Status';
-          warningText.style.color = 'var(--color-success)';
-          warningText.textContent = message;
-        } else {
-          warningText.textContent = message + ' Click the "Inspect Global Scope" button to see what was loaded.';
-        }
-      }
-    </script>
+    <!-- Load Freedom to Design Library -->
+    <script src="https://payment.ipospays.com/ftd/v1/freedomtodesign.js"></script>
 
     <!-- Application Logic -->
     <script>
-      let paymentFormInitialized = false;
-
-      function initializePaymentForm() {
-        // First, try to find the library
-        let PaymentLibrary = null;
-        
-        if (discoveredObject) {
-          PaymentLibrary = window[discoveredObject];
-          console.log(`Using discovered object: ${discoveredObject}`);
-        } else if (typeof FreedomToDesign !== 'undefined') {
-          PaymentLibrary = FreedomToDesign;
-          console.log('Using FreedomToDesign');
-        }
-
-        if (!PaymentLibrary) {
-          showLibraryNotAvailable();
-          return;
-        }
-
-        // Get configuration values
+      function tryDOMApproach() {
         const authToken = document.getElementById('authToken').value.trim();
         const amount = document.getElementById('amount').value;
         const environment = document.getElementById('environment').value;
 
-        // Validate inputs
         if (!authToken) {
           showConfigStatus('error', 'Please enter your Auth Token');
           return;
@@ -565,138 +455,114 @@
           return;
         }
 
-        // Show loading state
-        showConfigStatus('info', 'Initializing payment form...');
-        document.getElementById('initializeBtn').disabled = true;
-
-        // Clear the container
         const container = document.getElementById('payment-form-container');
-        container.innerHTML = '';
-        container.classList.add('loaded');
-
-        try {
-          // Log what we're trying to call
-          console.log('Payment Library object:', PaymentLibrary);
-          console.log('Attempting to call init method...');
-
-          // Try different initialization patterns
-          if (typeof PaymentLibrary.init === 'function') {
-            PaymentLibrary.init({
-              container: '#payment-form-container',
-              authToken: authToken,
-              amount: parseInt(amount),
-              environment: environment,
-              onSuccess: handleSuccess,
-              onError: handleError,
-              onCancel: handleCancel,
-            });
-          } else if (typeof PaymentLibrary === 'function') {
-            // Maybe it's a constructor
-            new PaymentLibrary({
-              container: '#payment-form-container',
-              authToken: authToken,
-              amount: parseInt(amount),
-              environment: environment,
-              onSuccess: handleSuccess,
-              onError: handleError,
-              onCancel: handleCancel,
-            });
-          } else {
-            throw new Error('Could not determine how to initialize the library. Available methods: ' + 
-              Object.keys(PaymentLibrary).filter(k => typeof PaymentLibrary[k] === 'function').join(', '));
-          }
-
-          paymentFormInitialized = true;
-          showConfigStatus('success', 'Payment form initialized successfully!');
-        } catch (error) {
-          console.error('Initialization error:', error);
-          showConfigStatus('error', `Initialization failed: ${error.message}`);
-          document.getElementById('initializeBtn').disabled = false;
-          container.classList.remove('loaded');
-          container.innerHTML = `<p style="color: var(--color-error);">Initialization failed. Check console for details.</p>
-                                 <p style="margin-top: 10px; font-size: 0.9rem;">Error: ${error.message}</p>`;
-        }
-      }
-
-      function showLibraryNotAvailable() {
-        const container = document.getElementById('payment-form-container');
-        container.classList.add('loaded');
-        container.innerHTML = `
-          <div style="text-align: left;">
-            <h3 style="color: var(--color-error); margin-bottom: 15px;">⚠️ Payment Library Not Found</h3>
-            
-            <p style="margin-bottom: 15px;">The script loaded successfully, but the payment object is not available in the expected location.</p>
-            
-            <p style="margin-bottom: 15px;"><strong>Next Steps:</strong></p>
-            <ol style="margin-left: 20px; margin-bottom: 20px; line-height: 1.8;">
-              <li>Click the "Inspect Global Scope" button above to see what was loaded</li>
-              <li>Check the browser console for any error messages</li>
-              <li>Open the Network tab and verify the script loaded (should show 200 status)</li>
-              <li>Contact <a href="mailto:devsupport@dejavoo.io" style="color: #64b5f6;">devsupport@dejavoo.io</a> with:
-                <ul style="margin-left: 20px; margin-top: 5px;">
-                  <li>The debug output from "Inspect Global Scope"</li>
-                  <li>Browser console errors (if any)</li>
-                  <li>Request correct initialization code example</li>
-                </ul>
-              </li>
-            </ol>
-
-            <p style="background-color: rgba(201, 161, 95, 0.1); padding: 15px; border-radius: 8px; margin-top: 15px;">
-              <strong>📧 When contacting support, ask:</strong><br>
-              "The freedomtodesign.js script loads successfully but I cannot find the initialization object. 
-              What is the correct global object name and initialization method? Please provide a working code example."
-            </p>
-          </div>
-        `;
         
-        showConfigStatus('error', 'Library object not found - see details above');
+        // Try different DOM-based approaches
+        showConfigStatus('info', 'Attempting various initialization patterns...');
+        console.log('=== Attempting DOM-Based Initialization ===');
+
+        // Approach 1: Add data attributes and see if library auto-initializes
+        container.setAttribute('data-auth-token', authToken);
+        container.setAttribute('data-amount', amount);
+        container.setAttribute('data-environment', environment);
+        console.log('✓ Added data attributes to container');
+
+        // Approach 2: Try creating specific elements the library might look for
+        container.innerHTML = `
+          <form id="ftd-payment-form" class="ftd-form">
+            <input type="hidden" name="authToken" value="${authToken}" />
+            <input type="hidden" name="amount" value="${amount}" />
+            <input type="hidden" name="environment" value="${environment}" />
+            <div id="ftd-card-element"></div>
+            <div id="payment-element"></div>
+            <div id="card-element"></div>
+          </form>
+        `;
+        console.log('✓ Created form structure with common element IDs');
+
+        // Approach 3: Dispatch custom events that the library might listen for
+        const initEvent = new CustomEvent('ftd:initialize', {
+          detail: { authToken, amount, environment }
+        });
+        window.dispatchEvent(initEvent);
+        document.dispatchEvent(initEvent);
+        container.dispatchEvent(initEvent);
+        console.log('✓ Dispatched custom initialization events');
+
+        // Approach 4: Try postMessage (in case library uses iframe communication)
+        window.postMessage({ 
+          type: 'ftd:init', 
+          authToken, 
+          amount, 
+          environment 
+        }, '*');
+        console.log('✓ Sent postMessage');
+
+        // Check if anything changed
+        setTimeout(() => {
+          const formElement = document.getElementById('ftd-payment-form');
+          const cardElement = document.getElementById('ftd-card-element');
+          
+          if (formElement && (formElement.children.length > 3 || cardElement.children.length > 0)) {
+            showConfigStatus('success', 'Something was injected! Check the payment form area.');
+            console.log('✓ Library may have added content to the form');
+          } else {
+            showConfigStatus('error', 'No response from library. It may require server-side setup first.');
+            console.log('✗ No changes detected. Library may need additional configuration.');
+            
+            container.innerHTML = `
+              <div style="padding: 20px; text-align: left;">
+                <p style="color: var(--color-error); font-weight: bold; margin-bottom: 15px;">
+                  ❌ DOM-based initialization attempts failed
+                </p>
+                <p style="margin-bottom: 10px;">The library did not respond to:</p>
+                <ul style="margin-left: 20px; line-height: 1.8;">
+                  <li>Data attributes on container</li>
+                  <li>Standard form elements (card-element, payment-element)</li>
+                  <li>Custom events (ftd:initialize)</li>
+                  <li>PostMessage API calls</li>
+                </ul>
+                <p style="margin-top: 15px; padding: 15px; background-color: rgba(201, 161, 95, 0.1); border-radius: 8px;">
+                  <strong>This strongly suggests the library requires:</strong><br>
+                  • Server-side API configuration first<br>
+                  • A hosted payment page URL from Dejavoo<br>
+                  • Or uses an entirely different integration method<br><br>
+                  <strong>Contact devsupport@dejavoo.io with the email template below.</strong>
+                </p>
+              </div>
+            `;
+          }
+        }, 2000);
       }
 
-      function handleSuccess(response) {
-        console.log('Payment successful:', response);
-        document.getElementById('resultsSection').style.display = 'block';
-        document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth' });
+      function fetchAndShowScript() {
+        const scriptArea = document.getElementById('scriptContent');
+        scriptArea.style.display = 'block';
+        scriptArea.value = 'Fetching script content...';
 
-        const resultMessage = document.getElementById('resultMessage');
-        resultMessage.className = 'alert alert-success';
-        resultMessage.innerHTML = '<strong>✓ Payment Successful!</strong><br>Transaction completed successfully.';
-
-        document.getElementById('responseData').textContent = JSON.stringify(response, null, 2);
-
-        setTimeout(() => resetForm(), 5000);
-      }
-
-      function handleError(error) {
-        console.error('Payment error:', error);
-        document.getElementById('resultsSection').style.display = 'block';
-        document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth' });
-
-        const resultMessage = document.getElementById('resultMessage');
-        resultMessage.className = 'alert alert-error';
-        resultMessage.innerHTML = `<strong>✗ Payment Failed</strong><br>${error.message || 'An error occurred during payment processing.'}`;
-
-        document.getElementById('responseData').textContent = JSON.stringify(error, null, 2);
-        document.getElementById('initializeBtn').disabled = false;
-      }
-
-      function handleCancel() {
-        console.log('Payment cancelled by user');
-        document.getElementById('resultsSection').style.display = 'block';
-        document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth' });
-
-        const resultMessage = document.getElementById('resultMessage');
-        resultMessage.className = 'alert alert-info';
-        resultMessage.innerHTML = '<strong>Payment Cancelled</strong><br>The transaction was cancelled by the user.';
-
-        document.getElementById('responseData').textContent = 'No transaction data available.';
-        document.getElementById('initializeBtn').disabled = false;
-      }
-
-      function resetForm() {
-        document.getElementById('payment-form-container').innerHTML = '<p>Click "Initialize Payment Form" above to start a new transaction</p>';
-        document.getElementById('payment-form-container').classList.remove('loaded');
-        document.getElementById('initializeBtn').disabled = false;
-        paymentFormInitialized = false;
+        fetch('https://payment.ipospays.com/ftd/v1/freedomtodesign.js')
+          .then(response => response.text())
+          .then(scriptText => {
+            scriptArea.value = scriptText;
+            console.log('Script content:', scriptText);
+            
+            // Try to find clues in the script
+            const clues = [];
+            if (scriptText.includes('data-')) clues.push('Uses data attributes');
+            if (scriptText.includes('addEventListener')) clues.push('Listens for events');
+            if (scriptText.includes('postMessage')) clues.push('Uses postMessage');
+            if (scriptText.includes('iframe')) clues.push('Creates iframes');
+            if (scriptText.includes('XMLHttpRequest') || scriptText.includes('fetch')) clues.push('Makes API calls');
+            
+            if (clues.length > 0) {
+              alert('Script analysis found: ' + clues.join(', '));
+              console.log('Script clues:', clues);
+            }
+          })
+          .catch(error => {
+            scriptArea.value = 'Error fetching script: ' + error.message;
+            console.error('Error:', error);
+          });
       }
 
       function showConfigStatus(type, message) {
@@ -716,7 +582,36 @@
         statusDiv.style.display = 'block';
       }
 
-      // Save form values to localStorage
+      // Monitor for any DOM changes in the payment container
+      const observer = new MutationObserver((mutations) => {
+        console.log('🔍 DOM mutation detected:', mutations);
+        mutations.forEach((mutation) => {
+          if (mutation.addedNodes.length > 0) {
+            console.log('✓ Nodes added by library:', mutation.addedNodes);
+          }
+        });
+      });
+
+      window.addEventListener('load', () => {
+        const container = document.getElementById('payment-form-container');
+        observer.observe(container, { 
+          childList: true, 
+          subtree: true, 
+          attributes: true 
+        });
+        console.log('✓ Monitoring payment container for changes');
+
+        // Load saved values
+        const savedToken = localStorage.getItem('dejavoo_auth_token');
+        const savedAmount = localStorage.getItem('dejavoo_amount');
+        const savedEnvironment = localStorage.getItem('dejavoo_environment');
+
+        if (savedToken) document.getElementById('authToken').value = savedToken;
+        if (savedAmount) document.getElementById('amount').value = savedAmount;
+        if (savedEnvironment) document.getElementById('environment').value = savedEnvironment;
+      });
+
+      // Save values
       document.getElementById('authToken').addEventListener('change', function () {
         localStorage.setItem('dejavoo_auth_token', this.value);
       });
@@ -729,15 +624,12 @@
         localStorage.setItem('dejavoo_environment', this.value);
       });
 
-      // Load saved values on page load
-      window.addEventListener('load', function () {
-        const savedToken = localStorage.getItem('dejavoo_auth_token');
-        const savedAmount = localStorage.getItem('dejavoo_amount');
-        const savedEnvironment = localStorage.getItem('dejavoo_environment');
-
-        if (savedToken) document.getElementById('authToken').value = savedToken;
-        if (savedAmount) document.getElementById('amount').value = savedAmount;
-        if (savedEnvironment) document.getElementById('environment').value = savedEnvironment;
+      // Listen for any events that might be dispatched by the library
+      const eventTypes = ['ftd:ready', 'dejavoo:ready', 'payment:ready', 'load', 'DOMContentLoaded'];
+      eventTypes.forEach(eventType => {
+        window.addEventListener(eventType, (e) => {
+          console.log(`🎉 Event captured: ${eventType}`, e);
+        });
       });
     </script>
   </body>
