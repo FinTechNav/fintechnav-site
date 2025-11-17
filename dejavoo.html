@@ -14,6 +14,7 @@
         --color-border: rgba(201, 161, 95, 0.3);
         --color-success: #4caf50;
         --color-error: #f44336;
+        --color-warning: #ff9800;
         --border-radius: 8px;
         --font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       }
@@ -33,7 +34,7 @@
       }
 
       .container {
-        max-width: 800px;
+        max-width: 900px;
         margin: 0 auto;
         background-color: var(--color-background-secondary);
         border-radius: var(--border-radius);
@@ -122,7 +123,7 @@
         margin-top: 10px;
       }
 
-      .btn:hover {
+      .btn:hover:not(:disabled) {
         background-color: var(--color-primary-hover);
         transform: translateY(-2px);
         box-shadow: 0 4px 8px rgba(201, 161, 95, 0.3);
@@ -150,6 +151,9 @@
       #payment-form-container.loaded {
         border-style: solid;
         background-color: transparent;
+        display: block;
+        align-items: initial;
+        justify-content: initial;
       }
 
       .alert {
@@ -169,6 +173,12 @@
         background-color: rgba(244, 67, 54, 0.2);
         border: 1px solid var(--color-error);
         color: var(--color-error);
+      }
+
+      .alert-warning {
+        background-color: rgba(255, 152, 0, 0.2);
+        border: 1px solid var(--color-warning);
+        color: var(--color-warning);
       }
 
       .alert-info {
@@ -233,6 +243,56 @@
         text-decoration: underline;
       }
 
+      .warning-box {
+        background-color: rgba(255, 152, 0, 0.1);
+        border-left: 4px solid var(--color-warning);
+        padding: 15px;
+        margin-bottom: 20px;
+        border-radius: var(--border-radius);
+      }
+
+      .warning-box h3 {
+        color: var(--color-warning);
+        margin-bottom: 10px;
+        font-size: 1.1rem;
+      }
+
+      .info-box {
+        background-color: rgba(201, 161, 95, 0.1);
+        border-left: 4px solid var(--color-primary);
+        padding: 15px;
+        margin-top: 20px;
+        border-radius: var(--border-radius);
+      }
+
+      .info-box h4 {
+        color: var(--color-primary);
+        margin-bottom: 10px;
+        font-size: 1rem;
+      }
+
+      .info-box ul,
+      .info-box ol {
+        margin-left: 20px;
+        margin-top: 10px;
+        line-height: 1.8;
+      }
+
+      .info-box ul ul {
+        margin-top: 5px;
+      }
+
+      .email-template {
+        background-color: var(--color-background-secondary);
+        padding: 15px;
+        border-radius: var(--border-radius);
+        margin-top: 15px;
+        font-family: 'Courier New', monospace;
+        font-size: 0.85rem;
+        white-space: pre-wrap;
+        border: 1px solid var(--color-border);
+      }
+
       @media (max-width: 768px) {
         .container {
           padding: 20px;
@@ -252,6 +312,12 @@
     <div class="container">
       <h1>Dejavoo Freedom to Design</h1>
       <p class="subtitle">Payment Integration Test Page</p>
+
+      <!-- Warning Box for Library Status -->
+      <div class="warning-box" id="libraryWarning" style="display: none;">
+        <h3>⚠️ Library Status</h3>
+        <p id="libraryWarningText"></p>
+      </div>
 
       <!-- Configuration Section -->
       <div class="section">
@@ -325,19 +391,62 @@
       </div>
     </div>
 
-    <!-- Load Freedom to Design Library -->
-    <script src="https://payment.ipospays.com/ftd/v1/freedomtodesign.js"></script>
+    <!-- Load Freedom to Design Library with error handling -->
+    <script>
+      // Track library load status
+      let libraryLoaded = false;
+
+      // Create script element with error handling
+      (function loadLibrary() {
+        const script = document.createElement('script');
+        script.src = 'https://payment.ipospays.com/ftd/v1/freedomtodesign.js';
+        
+        script.onload = function() {
+          libraryLoaded = true;
+          console.log('✅ FreedomToDesign library loaded successfully');
+        };
+        
+        script.onerror = function() {
+          console.error('❌ Failed to load FreedomToDesign library');
+          showLibraryWarning(false);
+        };
+        
+        document.head.appendChild(script);
+      })();
+
+      function showLibraryWarning(success) {
+        const warning = document.getElementById('libraryWarning');
+        const warningText = document.getElementById('libraryWarningText');
+        warning.style.display = 'block';
+        
+        if (success) {
+          warning.style.backgroundColor = 'rgba(76, 175, 80, 0.1)';
+          warning.style.borderColor = 'var(--color-success)';
+          warning.querySelector('h3').style.color = 'var(--color-success)';
+          warning.querySelector('h3').textContent = '✅ Library Status';
+          warningText.style.color = 'var(--color-success)';
+          warningText.textContent = 'FreedomToDesign library loaded successfully and ready to use!';
+        } else {
+          warningText.textContent = 'The FreedomToDesign JavaScript library could not be loaded from the CDN. This is expected if the library requires authentication or special access. See troubleshooting information below when you click "Initialize Payment Form".';
+        }
+      }
+    </script>
 
     <!-- Application Logic -->
     <script>
       let paymentFormInitialized = false;
 
       function initializePaymentForm() {
+        // Check if library is available
+        if (typeof FreedomToDesign === 'undefined') {
+          showLibraryNotAvailable();
+          return;
+        }
+
         // Get configuration values
         const authToken = document.getElementById('authToken').value.trim();
         const amount = document.getElementById('amount').value;
         const environment = document.getElementById('environment').value;
-        const configStatus = document.getElementById('configStatus');
 
         // Validate inputs
         if (!authToken) {
@@ -361,8 +470,7 @@
 
         try {
           // Initialize FreedomToDesign
-          // Note: The actual initialization may vary based on the API
-          // This is based on the example provided by Dejavoo support
+          // Based on Serena's example - may need adjustment
           FreedomToDesign.init({
             container: '#payment-form-container',
             authToken: authToken,
@@ -386,86 +494,139 @@
           showConfigStatus('error', `Initialization failed: ${error.message}`);
           document.getElementById('initializeBtn').disabled = false;
           container.classList.remove('loaded');
-          container.innerHTML =
-            '<p>Failed to initialize. Check console for details.</p>';
+          container.innerHTML = '<p>Failed to initialize. Check console for details.</p>';
         }
+      }
+
+      function showLibraryNotAvailable() {
+        const container = document.getElementById('payment-form-container');
+        container.classList.add('loaded');
+        container.innerHTML = `
+          <div style="text-align: left;">
+            <h3 style="color: var(--color-error); margin-bottom: 15px;">⚠️ FreedomToDesign Library Not Available</h3>
+            
+            <p style="margin-bottom: 15px;">The Dejavoo FreedomToDesign JavaScript library is not loading. This could be because:</p>
+            <ul style="margin-left: 20px; margin-bottom: 20px; line-height: 1.8;">
+              <li>The library URL is incorrect or has changed</li>
+              <li>The library requires authentication before it can be loaded</li>
+              <li>Your account may not have Freedom to Design feature access yet</li>
+              <li>There may be CORS (Cross-Origin Resource Sharing) restrictions</li>
+              <li>The library may only be available in a different environment</li>
+            </ul>
+            
+            <div class="info-box">
+              <h4>📧 Contact Dejavoo Support</h4>
+              <p>Email <a href="mailto:devsupport@dejavoo.io" style="color: #64b5f6;">devsupport@dejavoo.io</a> and ask for:</p>
+              <ol>
+                <li>The correct script URL for the FreedomToDesign library</li>
+                <li>Confirmation that your account has Freedom to Design enabled</li>
+                <li>A working code example or demo page</li>
+                <li>Any additional setup steps required</li>
+                <li>Documentation for the init() method parameters</li>
+              </ol>
+            </div>
+
+            <div class="info-box">
+              <h4>🔍 Your Integration Requirements</h4>
+              <ul>
+                <li><strong>SoftPOS</strong>: Tap to pay for iPhone and Android phones/tablets</li>
+                <li><strong>SPIn API</strong>: Reader/terminal support for iPad</li>
+              </ul>
+              <p style="margin-top: 10px;">Make sure to mention these requirements when contacting support.</p>
+            </div>
+
+            <div class="info-box">
+              <h4>💡 Alternative Testing</h4>
+              <p>While waiting for support response:</p>
+              <ul>
+                <li>Test with the <a href="https://simulator.ipostransact.com/" target="_blank" style="color: #64b5f6;">iPOStransact API Simulator</a></li>
+                <li>Review the <a href="https://docs.ipospays.com/freedom-to-design" target="_blank" style="color: #64b5f6;">API documentation</a></li>
+                <li>Check the <a href="https://docs.ipospays.com/freedom-to-design/apidocs" target="_blank" style="color: #64b5f6;">API reference</a></li>
+              </ul>
+            </div>
+
+            <div class="email-template">
+<strong>📋 Suggested Email Template:</strong>
+
+Subject: Freedom to Design Integration - Script Loading Issue
+
+Hi Dejavoo Support Team,
+
+I'm working on integrating the Freedom to Design payment solution and need assistance with the JavaScript library.
+
+<strong>Issue:</strong>
+The FreedomToDesign library is not loading from:
+https://payment.ipospays.com/ftd/v1/freedomtodesign.js
+
+<strong>My Use Case:</strong>
+- Implementing SoftPOS (tap to pay) for iPhone and Android
+- Implementing SPIn API for iPad reader/terminal support
+
+<strong>Questions:</strong>
+1. What is the correct URL to load the FreedomToDesign library?
+2. Does my account have Freedom to Design access enabled?
+3. Can you provide a working code example or demo page?
+4. Are there any authentication requirements before the library loads?
+5. What are the correct parameters for the FreedomToDesign.init() method?
+
+<strong>Current Setup:</strong>
+- Environment: [Sandbox/Production]
+- Auth Token: [Have/Need]
+
+Any guidance or documentation you can provide would be greatly appreciated.
+
+Thank you,
+Brad Jensen
+brad@fintechnav.com
+            </div>
+          </div>
+        `;
+        
+        showConfigStatus('error', 'FreedomToDesign library not available - see details above');
       }
 
       function handleSuccess(response) {
         console.log('Payment successful:', response);
-
-        // Show results section
         document.getElementById('resultsSection').style.display = 'block';
         document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth' });
 
-        // Display success message
         const resultMessage = document.getElementById('resultMessage');
         resultMessage.className = 'alert alert-success';
-        resultMessage.innerHTML = `
-          <strong>✓ Payment Successful!</strong><br>
-          Transaction completed successfully.
-        `;
+        resultMessage.innerHTML = '<strong>✓ Payment Successful!</strong><br>Transaction completed successfully.';
 
-        // Display response data
-        document.getElementById('responseData').textContent = JSON.stringify(
-          response,
-          null,
-          2
-        );
+        document.getElementById('responseData').textContent = JSON.stringify(response, null, 2);
 
-        // Reset form
-        setTimeout(() => {
-          resetForm();
-        }, 5000);
+        setTimeout(() => resetForm(), 5000);
       }
 
       function handleError(error) {
         console.error('Payment error:', error);
-
-        // Show results section
         document.getElementById('resultsSection').style.display = 'block';
         document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth' });
 
-        // Display error message
         const resultMessage = document.getElementById('resultMessage');
         resultMessage.className = 'alert alert-error';
-        resultMessage.innerHTML = `
-          <strong>✗ Payment Failed</strong><br>
-          ${error.message || 'An error occurred during payment processing.'}
-        `;
+        resultMessage.innerHTML = `<strong>✗ Payment Failed</strong><br>${error.message || 'An error occurred during payment processing.'}`;
 
-        // Display error data
         document.getElementById('responseData').textContent = JSON.stringify(error, null, 2);
-
-        // Re-enable form
         document.getElementById('initializeBtn').disabled = false;
       }
 
       function handleCancel() {
         console.log('Payment cancelled by user');
-
-        // Show results section
         document.getElementById('resultsSection').style.display = 'block';
         document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth' });
 
-        // Display cancellation message
         const resultMessage = document.getElementById('resultMessage');
         resultMessage.className = 'alert alert-info';
-        resultMessage.innerHTML = `
-          <strong>Payment Cancelled</strong><br>
-          The transaction was cancelled by the user.
-        `;
+        resultMessage.innerHTML = '<strong>Payment Cancelled</strong><br>The transaction was cancelled by the user.';
 
-        // Clear response data
         document.getElementById('responseData').textContent = 'No transaction data available.';
-
-        // Re-enable form
         document.getElementById('initializeBtn').disabled = false;
       }
 
       function resetForm() {
-        document.getElementById('payment-form-container').innerHTML =
-          '<p>Click "Initialize Payment Form" above to start a new transaction</p>';
+        document.getElementById('payment-form-container').innerHTML = '<p>Click "Initialize Payment Form" above to start a new transaction</p>';
         document.getElementById('payment-form-container').classList.remove('loaded');
         document.getElementById('initializeBtn').disabled = false;
         paymentFormInitialized = false;
@@ -488,17 +649,16 @@
         statusDiv.style.display = 'block';
       }
 
-      // Check if FreedomToDesign library is loaded
+      // Check library status after page load
       window.addEventListener('load', function () {
-        if (typeof FreedomToDesign === 'undefined') {
-          console.error('FreedomToDesign library failed to load');
-          showConfigStatus(
-            'error',
-            'Warning: Freedom to Design library not loaded. Check your internet connection.'
-          );
-        } else {
-          console.log('FreedomToDesign library loaded successfully');
-        }
+        setTimeout(function() {
+          if (typeof FreedomToDesign !== 'undefined') {
+            console.log('✅ FreedomToDesign library ready');
+            showLibraryWarning(true);
+          } else {
+            console.warn('⚠️ FreedomToDesign library not available');
+          }
+        }, 1000);
       });
 
       // Save form values to localStorage
