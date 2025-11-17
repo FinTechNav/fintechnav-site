@@ -136,6 +136,15 @@
         transform: none;
       }
 
+      .btn-secondary {
+        background-color: #555;
+        margin-top: 5px;
+      }
+
+      .btn-secondary:hover:not(:disabled) {
+        background-color: #666;
+      }
+
       #payment-form-container {
         min-height: 400px;
         background-color: var(--color-background-secondary);
@@ -197,6 +206,8 @@
         overflow-x: auto;
         white-space: pre-wrap;
         word-break: break-all;
+        max-height: 500px;
+        overflow-y: auto;
       }
 
       .config-status {
@@ -257,40 +268,18 @@
         font-size: 1.1rem;
       }
 
-      .info-box {
-        background-color: rgba(201, 161, 95, 0.1);
-        border-left: 4px solid var(--color-primary);
-        padding: 15px;
-        margin-top: 20px;
-        border-radius: var(--border-radius);
-      }
-
-      .info-box h4 {
-        color: var(--color-primary);
-        margin-bottom: 10px;
-        font-size: 1rem;
-      }
-
-      .info-box ul,
-      .info-box ol {
-        margin-left: 20px;
-        margin-top: 10px;
-        line-height: 1.8;
-      }
-
-      .info-box ul ul {
-        margin-top: 5px;
-      }
-
-      .email-template {
-        background-color: var(--color-background-secondary);
+      .debug-section {
+        background-color: var(--color-background);
         padding: 15px;
         border-radius: var(--border-radius);
         margin-top: 15px;
-        font-family: 'Courier New', monospace;
-        font-size: 0.85rem;
-        white-space: pre-wrap;
-        border: 1px solid var(--color-border);
+        border: 1px solid rgba(33, 150, 243, 0.3);
+      }
+
+      .debug-section h3 {
+        color: #2196f3;
+        margin-bottom: 10px;
+        font-size: 1rem;
       }
 
       @media (max-width: 768px) {
@@ -315,8 +304,17 @@
 
       <!-- Warning Box for Library Status -->
       <div class="warning-box" id="libraryWarning" style="display: none;">
-        <h3>⚠️ Library Status</h3>
+        <h3 id="libraryWarningTitle">⚠️ Library Status</h3>
         <p id="libraryWarningText"></p>
+      </div>
+
+      <!-- Debug Section -->
+      <div class="section">
+        <h2>🔍 Library Debug Info</h2>
+        <button class="btn-secondary btn" onclick="inspectGlobalScope()">
+          Inspect Global Scope for Payment Objects
+        </button>
+        <div id="debugOutput" class="response-data" style="margin-top: 15px; display: none;"></div>
       </div>
 
       <!-- Configuration Section -->
@@ -330,8 +328,7 @@
             placeholder="Enter your Dejavoo eComm Auth Token"
           />
           <div class="help-text">
-            Required: Your authentication token from Dejavoo. Contact devsupport@dejavoo.io if
-            you need assistance.
+            Required: Your authentication token from Dejavoo
           </div>
         </div>
 
@@ -382,11 +379,10 @@
           API Documentation
         </a>
         <a href="https://simulator.ipostransact.com/" target="_blank">
-          iPOStransact API Simulator (ACH Form)
+          iPOStransact API Simulator
         </a>
         <p style="margin-top: 15px; color: #888; font-size: 0.85rem">
-          For technical support, email:
-          <a href="mailto:devsupport@dejavoo.io">devsupport@dejavoo.io</a>
+          Support: <a href="mailto:devsupport@dejavoo.io">devsupport@dejavoo.io</a>
         </p>
       </div>
     </div>
@@ -395,6 +391,7 @@
     <script>
       // Track library load status
       let libraryLoaded = false;
+      let discoveredObject = null;
 
       // Create script element with error handling
       (function loadLibrary() {
@@ -403,31 +400,130 @@
         
         script.onload = function() {
           libraryLoaded = true;
-          console.log('✅ FreedomToDesign library loaded successfully');
+          console.log('✅ Script loaded successfully from CDN');
+          
+          // Try to discover the actual object name
+          setTimeout(discoverLibraryObject, 100);
         };
         
         script.onerror = function() {
-          console.error('❌ Failed to load FreedomToDesign library');
-          showLibraryWarning(false);
+          console.error('❌ Failed to load script from CDN');
+          showLibraryWarning(false, 'Script failed to load from CDN');
         };
         
         document.head.appendChild(script);
       })();
 
-      function showLibraryWarning(success) {
+      function discoverLibraryObject() {
+        // Check common variations
+        const possibleNames = [
+          'FreedomToDesign',
+          'freedomtodesign', 
+          'FTD',
+          'ftd',
+          'DejavooFTD',
+          'Dejavoo',
+          'dejavoo',
+          'iPOSPays',
+          'ipospays',
+          'PaymentForm',
+          'paymentForm'
+        ];
+
+        for (let name of possibleNames) {
+          if (typeof window[name] !== 'undefined') {
+            discoveredObject = name;
+            console.log(`✅ Found payment object: window.${name}`, window[name]);
+            showLibraryWarning(true, `Library loaded as: window.${name}`);
+            return;
+          }
+        }
+
+        // If we can't find it, show what we do have
+        console.warn('⚠️ Could not find expected payment object in global scope');
+        showLibraryWarning(false, 'Script loaded but payment object not found in global scope. Click "Inspect Global Scope" button to see what was loaded.');
+      }
+
+      function inspectGlobalScope() {
+        const debugOutput = document.getElementById('debugOutput');
+        debugOutput.style.display = 'block';
+        
+        let output = '=== GLOBAL SCOPE INSPECTION ===\n\n';
+        
+        // Get all properties added to window
+        const windowProps = Object.getOwnPropertyNames(window);
+        const suspectProps = windowProps.filter(prop => {
+          // Filter for properties that might be from the library
+          const lowerProp = prop.toLowerCase();
+          return (
+            lowerProp.includes('dejavoo') ||
+            lowerProp.includes('freedom') ||
+            lowerProp.includes('ftd') ||
+            lowerProp.includes('ipos') ||
+            lowerProp.includes('payment') ||
+            lowerProp.includes('pay')
+          );
+        });
+
+        if (suspectProps.length > 0) {
+          output += 'Potential payment-related properties found:\n\n';
+          suspectProps.forEach(prop => {
+            try {
+              const value = window[prop];
+              const type = typeof value;
+              output += `window.${prop} (${type})\n`;
+              
+              if (type === 'object' && value !== null) {
+                const methods = Object.getOwnPropertyNames(value).filter(p => typeof value[p] === 'function');
+                if (methods.length > 0) {
+                  output += `  Methods: ${methods.join(', ')}\n`;
+                }
+              } else if (type === 'function') {
+                output += `  ${value.toString().substring(0, 100)}...\n`;
+              }
+              output += '\n';
+            } catch (e) {
+              output += `window.${prop} - Could not inspect (${e.message})\n\n`;
+            }
+          });
+        } else {
+          output += 'No obvious payment-related properties found in global scope.\n\n';
+        }
+
+        output += '=== SCRIPT TAG INSPECTION ===\n\n';
+        const scripts = document.getElementsByTagName('script');
+        Array.from(scripts).forEach((script, index) => {
+          if (script.src && script.src.includes('freedomtodesign')) {
+            output += `Script ${index}: ${script.src}\n`;
+            output += `  Loaded: ${libraryLoaded ? 'Yes' : 'No'}\n\n`;
+          }
+        });
+
+        output += '=== RECOMMENDED ACTIONS ===\n\n';
+        output += '1. Check the browser Network tab to see if the script loaded\n';
+        output += '2. Look at the loaded script content to see what it exports\n';
+        output += '3. Contact devsupport@dejavoo.io with this debug info\n';
+        output += '4. Ask them for the correct object name and initialization method\n';
+
+        debugOutput.textContent = output;
+        console.log(output);
+      }
+
+      function showLibraryWarning(success, message) {
         const warning = document.getElementById('libraryWarning');
+        const warningTitle = document.getElementById('libraryWarningTitle');
         const warningText = document.getElementById('libraryWarningText');
         warning.style.display = 'block';
         
         if (success) {
           warning.style.backgroundColor = 'rgba(76, 175, 80, 0.1)';
           warning.style.borderColor = 'var(--color-success)';
-          warning.querySelector('h3').style.color = 'var(--color-success)';
-          warning.querySelector('h3').textContent = '✅ Library Status';
+          warningTitle.style.color = 'var(--color-success)';
+          warningTitle.textContent = '✅ Library Status';
           warningText.style.color = 'var(--color-success)';
-          warningText.textContent = 'FreedomToDesign library loaded successfully and ready to use!';
+          warningText.textContent = message;
         } else {
-          warningText.textContent = 'The FreedomToDesign JavaScript library could not be loaded from the CDN. This is expected if the library requires authentication or special access. See troubleshooting information below when you click "Initialize Payment Form".';
+          warningText.textContent = message + ' Click the "Inspect Global Scope" button to see what was loaded.';
         }
       }
     </script>
@@ -437,8 +533,18 @@
       let paymentFormInitialized = false;
 
       function initializePaymentForm() {
-        // Check if library is available
-        if (typeof FreedomToDesign === 'undefined') {
+        // First, try to find the library
+        let PaymentLibrary = null;
+        
+        if (discoveredObject) {
+          PaymentLibrary = window[discoveredObject];
+          console.log(`Using discovered object: ${discoveredObject}`);
+        } else if (typeof FreedomToDesign !== 'undefined') {
+          PaymentLibrary = FreedomToDesign;
+          console.log('Using FreedomToDesign');
+        }
+
+        if (!PaymentLibrary) {
           showLibraryNotAvailable();
           return;
         }
@@ -469,23 +575,36 @@
         container.classList.add('loaded');
 
         try {
-          // Initialize FreedomToDesign
-          // Based on Serena's example - may need adjustment
-          FreedomToDesign.init({
-            container: '#payment-form-container',
-            authToken: authToken,
-            amount: parseInt(amount),
-            environment: environment,
-            onSuccess: function (response) {
-              handleSuccess(response);
-            },
-            onError: function (error) {
-              handleError(error);
-            },
-            onCancel: function () {
-              handleCancel();
-            },
-          });
+          // Log what we're trying to call
+          console.log('Payment Library object:', PaymentLibrary);
+          console.log('Attempting to call init method...');
+
+          // Try different initialization patterns
+          if (typeof PaymentLibrary.init === 'function') {
+            PaymentLibrary.init({
+              container: '#payment-form-container',
+              authToken: authToken,
+              amount: parseInt(amount),
+              environment: environment,
+              onSuccess: handleSuccess,
+              onError: handleError,
+              onCancel: handleCancel,
+            });
+          } else if (typeof PaymentLibrary === 'function') {
+            // Maybe it's a constructor
+            new PaymentLibrary({
+              container: '#payment-form-container',
+              authToken: authToken,
+              amount: parseInt(amount),
+              environment: environment,
+              onSuccess: handleSuccess,
+              onError: handleError,
+              onCancel: handleCancel,
+            });
+          } else {
+            throw new Error('Could not determine how to initialize the library. Available methods: ' + 
+              Object.keys(PaymentLibrary).filter(k => typeof PaymentLibrary[k] === 'function').join(', '));
+          }
 
           paymentFormInitialized = true;
           showConfigStatus('success', 'Payment form initialized successfully!');
@@ -494,7 +613,8 @@
           showConfigStatus('error', `Initialization failed: ${error.message}`);
           document.getElementById('initializeBtn').disabled = false;
           container.classList.remove('loaded');
-          container.innerHTML = '<p>Failed to initialize. Check console for details.</p>';
+          container.innerHTML = `<p style="color: var(--color-error);">Initialization failed. Check console for details.</p>
+                                 <p style="margin-top: 10px; font-size: 0.9rem;">Error: ${error.message}</p>`;
         }
       }
 
@@ -503,86 +623,33 @@
         container.classList.add('loaded');
         container.innerHTML = `
           <div style="text-align: left;">
-            <h3 style="color: var(--color-error); margin-bottom: 15px;">⚠️ FreedomToDesign Library Not Available</h3>
+            <h3 style="color: var(--color-error); margin-bottom: 15px;">⚠️ Payment Library Not Found</h3>
             
-            <p style="margin-bottom: 15px;">The Dejavoo FreedomToDesign JavaScript library is not loading. This could be because:</p>
-            <ul style="margin-left: 20px; margin-bottom: 20px; line-height: 1.8;">
-              <li>The library URL is incorrect or has changed</li>
-              <li>The library requires authentication before it can be loaded</li>
-              <li>Your account may not have Freedom to Design feature access yet</li>
-              <li>There may be CORS (Cross-Origin Resource Sharing) restrictions</li>
-              <li>The library may only be available in a different environment</li>
-            </ul>
+            <p style="margin-bottom: 15px;">The script loaded successfully, but the payment object is not available in the expected location.</p>
             
-            <div class="info-box">
-              <h4>📧 Contact Dejavoo Support</h4>
-              <p>Email <a href="mailto:devsupport@dejavoo.io" style="color: #64b5f6;">devsupport@dejavoo.io</a> and ask for:</p>
-              <ol>
-                <li>The correct script URL for the FreedomToDesign library</li>
-                <li>Confirmation that your account has Freedom to Design enabled</li>
-                <li>A working code example or demo page</li>
-                <li>Any additional setup steps required</li>
-                <li>Documentation for the init() method parameters</li>
-              </ol>
-            </div>
+            <p style="margin-bottom: 15px;"><strong>Next Steps:</strong></p>
+            <ol style="margin-left: 20px; margin-bottom: 20px; line-height: 1.8;">
+              <li>Click the "Inspect Global Scope" button above to see what was loaded</li>
+              <li>Check the browser console for any error messages</li>
+              <li>Open the Network tab and verify the script loaded (should show 200 status)</li>
+              <li>Contact <a href="mailto:devsupport@dejavoo.io" style="color: #64b5f6;">devsupport@dejavoo.io</a> with:
+                <ul style="margin-left: 20px; margin-top: 5px;">
+                  <li>The debug output from "Inspect Global Scope"</li>
+                  <li>Browser console errors (if any)</li>
+                  <li>Request correct initialization code example</li>
+                </ul>
+              </li>
+            </ol>
 
-            <div class="info-box">
-              <h4>🔍 Your Integration Requirements</h4>
-              <ul>
-                <li><strong>SoftPOS</strong>: Tap to pay for iPhone and Android phones/tablets</li>
-                <li><strong>SPIn API</strong>: Reader/terminal support for iPad</li>
-              </ul>
-              <p style="margin-top: 10px;">Make sure to mention these requirements when contacting support.</p>
-            </div>
-
-            <div class="info-box">
-              <h4>💡 Alternative Testing</h4>
-              <p>While waiting for support response:</p>
-              <ul>
-                <li>Test with the <a href="https://simulator.ipostransact.com/" target="_blank" style="color: #64b5f6;">iPOStransact API Simulator</a></li>
-                <li>Review the <a href="https://docs.ipospays.com/freedom-to-design" target="_blank" style="color: #64b5f6;">API documentation</a></li>
-                <li>Check the <a href="https://docs.ipospays.com/freedom-to-design/apidocs" target="_blank" style="color: #64b5f6;">API reference</a></li>
-              </ul>
-            </div>
-
-            <div class="email-template">
-<strong>📋 Suggested Email Template:</strong>
-
-Subject: Freedom to Design Integration - Script Loading Issue
-
-Hi Dejavoo Support Team,
-
-I'm working on integrating the Freedom to Design payment solution and need assistance with the JavaScript library.
-
-<strong>Issue:</strong>
-The FreedomToDesign library is not loading from:
-https://payment.ipospays.com/ftd/v1/freedomtodesign.js
-
-<strong>My Use Case:</strong>
-- Implementing SoftPOS (tap to pay) for iPhone and Android
-- Implementing SPIn API for iPad reader/terminal support
-
-<strong>Questions:</strong>
-1. What is the correct URL to load the FreedomToDesign library?
-2. Does my account have Freedom to Design access enabled?
-3. Can you provide a working code example or demo page?
-4. Are there any authentication requirements before the library loads?
-5. What are the correct parameters for the FreedomToDesign.init() method?
-
-<strong>Current Setup:</strong>
-- Environment: [Sandbox/Production]
-- Auth Token: [Have/Need]
-
-Any guidance or documentation you can provide would be greatly appreciated.
-
-Thank you,
-Brad Jensen
-brad@fintechnav.com
-            </div>
+            <p style="background-color: rgba(201, 161, 95, 0.1); padding: 15px; border-radius: 8px; margin-top: 15px;">
+              <strong>📧 When contacting support, ask:</strong><br>
+              "The freedomtodesign.js script loads successfully but I cannot find the initialization object. 
+              What is the correct global object name and initialization method? Please provide a working code example."
+            </p>
           </div>
         `;
         
-        showConfigStatus('error', 'FreedomToDesign library not available - see details above');
+        showConfigStatus('error', 'Library object not found - see details above');
       }
 
       function handleSuccess(response) {
@@ -648,18 +715,6 @@ brad@fintechnav.com
         statusDiv.textContent = message;
         statusDiv.style.display = 'block';
       }
-
-      // Check library status after page load
-      window.addEventListener('load', function () {
-        setTimeout(function() {
-          if (typeof FreedomToDesign !== 'undefined') {
-            console.log('✅ FreedomToDesign library ready');
-            showLibraryWarning(true);
-          } else {
-            console.warn('⚠️ FreedomToDesign library not available');
-          }
-        }, 1000);
-      });
 
       // Save form values to localStorage
       document.getElementById('authToken').addEventListener('change', function () {
