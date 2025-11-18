@@ -4,23 +4,9 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="referrer" content="strict-origin-when-cross-origin" />
-    <title>Dejavoo Freedom to Design - Card Payment Test</title>
+    <title>Dejavoo Checkout - Test</title>
 
     <style>
-      :root {
-        --color-background: #1a1a1a;
-        --color-background-secondary: #2a2a2a;
-        --color-text: #e0e0e0;
-        --color-primary: #c9a15f;
-        --color-primary-hover: #b08f4f;
-        --color-border: rgba(201, 161, 95, 0.3);
-        --color-success: #4caf50;
-        --color-error: #f44336;
-        --color-warning: #ff9800;
-        --border-radius: 8px;
-        --font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      }
-
       * {
         margin: 0;
         padding: 0;
@@ -28,81 +14,110 @@
       }
 
       body {
-        font-family: var(--font-family);
-        background-color: var(--color-background);
-        color: var(--color-text);
-        padding: 20px;
+        font-family: 'Georgia', 'Times New Roman', serif;
+        background-color: #f8f8f8;
+        color: #333;
         line-height: 1.6;
       }
 
       .container {
-        max-width: 600px;
+        max-width: 1200px;
         margin: 0 auto;
-        background-color: var(--color-background-secondary);
-        border-radius: var(--border-radius);
+        padding: 40px 20px;
+      }
+
+      .header {
+        text-align: center;
+        margin-bottom: 40px;
+        padding-bottom: 20px;
+        border-bottom: 1px solid #ddd;
+      }
+
+      .header h1 {
+        font-size: 1.5rem;
+        font-weight: 400;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        color: #8b7355;
+      }
+
+      .checkout-wrapper {
+        display: flex;
+        gap: 40px;
+        align-items: flex-start;
+      }
+
+      @media (max-width: 968px) {
+        .checkout-wrapper {
+          flex-direction: column;
+        }
+      }
+
+      .checkout-main {
+        flex: 1;
+        background: white;
+        padding: 40px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+
+      .checkout-sidebar {
+        width: 380px;
+        background: white;
         padding: 30px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
       }
 
-      h1 {
-        color: var(--color-primary);
-        margin-bottom: 10px;
-        font-size: 2rem;
-        text-align: center;
+      @media (max-width: 968px) {
+        .checkout-sidebar {
+          width: 100%;
+        }
       }
 
-      .subtitle {
-        text-align: center;
-        color: #888;
-        margin-bottom: 30px;
+      .progress-steps {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 40px;
+        padding-bottom: 20px;
+        border-bottom: 2px solid #f0f0f0;
+      }
+
+      .step {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: #999;
         font-size: 0.9rem;
       }
 
-      .section {
-        margin-bottom: 30px;
-        padding: 20px;
-        background-color: var(--color-background);
-        border-radius: var(--border-radius);
-        border: 1px solid var(--color-border);
+      .step.active {
+        color: #8b7355;
+        font-weight: 600;
       }
 
-      .section h2 {
-        color: var(--color-primary);
-        margin-bottom: 15px;
+      .step-number {
+        display: inline-block;
+        width: 24px;
+        height: 24px;
+        line-height: 24px;
+        text-align: center;
+        border-radius: 50%;
+        background: #f0f0f0;
+        color: #999;
+        font-size: 0.85rem;
+      }
+
+      .step.active .step-number {
+        background: #8b7355;
+        color: white;
+      }
+
+      .section-title {
         font-size: 1.3rem;
-        border-bottom: 2px solid var(--color-border);
-        padding-bottom: 10px;
-      }
-
-      .alert {
-        padding: 15px;
-        border-radius: var(--border-radius);
-        margin-bottom: 20px;
-        font-weight: 500;
-      }
-
-      .alert-info {
-        background-color: rgba(33, 150, 243, 0.2);
-        border: 1px solid #2196f3;
-        color: #2196f3;
-      }
-
-      .alert-warning {
-        background-color: rgba(255, 152, 0, 0.2);
-        border: 1px solid var(--color-warning);
-        color: var(--color-warning);
-      }
-
-      .alert-success {
-        background-color: rgba(76, 175, 80, 0.2);
-        border: 1px solid var(--color-success);
-        color: var(--color-success);
-      }
-
-      .alert-error {
-        background-color: rgba(244, 67, 54, 0.2);
-        border: 1px solid var(--color-error);
-        color: var(--color-error);
+        font-weight: 400;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: #8b7355;
+        margin-bottom: 30px;
       }
 
       .form-group {
@@ -112,125 +127,320 @@
       label {
         display: block;
         margin-bottom: 8px;
-        font-weight: 500;
-        color: var(--color-primary);
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #666;
+      }
+
+      label .required {
+        color: #d9534f;
       }
 
       input[type='text'],
-      input[type='number'] {
+      input[type='email'],
+      input[type='tel'] {
         width: 100%;
         padding: 12px;
-        background-color: var(--color-background-secondary);
-        border: 1px solid var(--color-border);
-        border-radius: var(--border-radius);
-        color: var(--color-text);
-        font-size: 1rem;
-        transition: border-color 0.3s ease;
+        border: 1px solid #ddd;
+        font-size: 0.95rem;
+        font-family: inherit;
+        transition: border-color 0.3s;
       }
 
       input[type='text']:focus,
-      input[type='number']:focus {
+      input[type='email']:focus,
+      input[type='tel']:focus {
         outline: none;
-        border-color: var(--color-primary);
-        box-shadow: 0 0 0 3px rgba(201, 161, 95, 0.1);
+        border-color: #8b7355;
+      }
+
+      .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 15px;
       }
 
       .help-text {
-        font-size: 0.85rem;
-        color: #888;
+        font-size: 0.75rem;
+        color: #999;
         margin-top: 5px;
       }
 
-      button[type='submit'],
+      .security-notice {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px;
+        background: #f9f9f9;
+        border-left: 3px solid #8b7355;
+        margin-bottom: 25px;
+        font-size: 0.85rem;
+        color: #666;
+      }
+
       .btn {
-        background-color: var(--color-primary);
-        color: #1a1a1a;
-        padding: 14px 30px;
+        width: 100%;
+        padding: 16px;
+        background: #8b7355;
+        color: white;
         border: none;
-        border-radius: var(--border-radius);
         font-size: 1rem;
         font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1px;
         cursor: pointer;
-        transition: all 0.3s ease;
-        width: 100%;
-        margin-top: 10px;
+        transition: background 0.3s;
       }
 
-      button[type='submit']:hover,
-      .btn:hover {
-        background-color: var(--color-primary-hover);
-        transform: translateY(-2px);
-        box-shadow: 0 4px 8px rgba(201, 161, 95, 0.3);
+      .btn:hover:not(:disabled) {
+        background: #6f5a43;
       }
 
-      button[type='submit']:disabled,
       .btn:disabled {
-        background-color: #555;
+        background: #ccc;
         cursor: not-allowed;
-        opacity: 0.5;
-        transform: none;
-      }
-
-      .response-data {
-        background-color: var(--color-background);
-        padding: 15px;
-        border-radius: var(--border-radius);
-        margin-top: 15px;
-        font-family: 'Courier New', monospace;
-        font-size: 0.9rem;
-        overflow-x: auto;
-        white-space: pre-wrap;
-        word-break: break-all;
-        max-height: 400px;
-        overflow-y: auto;
-      }
-
-      .config-section {
-        background-color: var(--color-background);
-        padding: 20px;
-        border-radius: var(--border-radius);
-        margin-bottom: 20px;
-        border: 1px solid var(--color-border);
       }
 
       .btn-secondary {
-        background-color: #555;
-        margin-top: 5px;
+        background: white;
+        color: #8b7355;
+        border: 2px solid #8b7355;
       }
 
-      .btn-secondary:hover {
-        background-color: #666;
+      .btn-secondary:hover:not(:disabled) {
+        background: #f9f9f9;
       }
 
-      #results {
+      /* Sidebar Styles */
+      .order-item {
+        display: flex;
+        gap: 15px;
+        margin-bottom: 20px;
+        padding-bottom: 20px;
+        border-bottom: 1px solid #f0f0f0;
+      }
+
+      .order-item:last-child {
+        border-bottom: none;
+      }
+
+      .item-image {
+        width: 60px;
+        height: 60px;
+        background: #f0f0f0;
+        border: 1px solid #ddd;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.7rem;
+        color: #999;
+      }
+
+      .item-details {
+        flex: 1;
+      }
+
+      .item-title {
+        font-size: 0.9rem;
+        font-weight: 600;
+        margin-bottom: 4px;
+        color: #333;
+      }
+
+      .item-subtitle {
+        font-size: 0.8rem;
+        color: #999;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .item-price {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.9rem;
+      }
+
+      .item-quantity {
+        color: #666;
+      }
+
+      .summary-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 12px;
+        font-size: 0.9rem;
+      }
+
+      .summary-row.total {
+        border-top: 2px solid #f0f0f0;
+        padding-top: 15px;
+        margin-top: 15px;
+        font-size: 1.1rem;
+        font-weight: 600;
+      }
+
+      .summary-row .label {
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #666;
+      }
+
+      .summary-row.total .label {
+        color: #333;
+      }
+
+      .savings {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px;
+        background: #f0f9f0;
+        border-left: 3px solid #5cb85c;
+        margin-top: 15px;
+        font-size: 0.85rem;
+        color: #5cb85c;
+      }
+
+      .help-contact {
+        margin-top: 25px;
+        padding-top: 25px;
+        border-top: 1px solid #f0f0f0;
+        text-align: center;
+        font-size: 0.85rem;
+        color: #666;
+      }
+
+      .help-contact a {
+        color: #8b7355;
+        text-decoration: none;
+      }
+
+      .alert {
+        padding: 15px;
+        margin-bottom: 20px;
+        border-radius: 4px;
+      }
+
+      .alert-success {
+        background: #d4edda;
+        border-left: 4px solid #28a745;
+        color: #155724;
+      }
+
+      .alert-error {
+        background: #f8d7da;
+        border-left: 4px solid #dc3545;
+        color: #721c24;
+      }
+
+      .alert-info {
+        background: #d1ecf1;
+        border-left: 4px solid #17a2b8;
+        color: #0c5460;
+      }
+
+      .review-section {
+        background: #f9f9f9;
+        padding: 20px;
+        margin-bottom: 20px;
+        border: 1px solid #e0e0e0;
+      }
+
+      .review-section h3 {
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #8b7355;
+        margin-bottom: 12px;
+      }
+
+      .review-content {
+        font-size: 0.9rem;
+        color: #333;
+        line-height: 1.6;
+      }
+
+      .edit-link {
+        color: #8b7355;
+        text-decoration: none;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        cursor: pointer;
+        border: none;
+        background: none;
+        padding: 0;
+      }
+
+      .edit-link:hover {
+        text-decoration: underline;
+      }
+
+      .processing-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.7);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+      }
+
+      .processing-overlay.active {
+        display: flex;
+      }
+
+      .processing-content {
+        background: white;
+        padding: 40px;
+        border-radius: 8px;
+        text-align: center;
+        max-width: 400px;
+      }
+
+      .spinner {
+        width: 50px;
+        height: 50px;
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid #8b7355;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 20px;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      .step-content {
         display: none;
       }
 
-      .token-display {
-        background-color: rgba(76, 175, 80, 0.1);
-        border: 2px solid var(--color-success);
-        padding: 15px;
-        border-radius: var(--border-radius);
-        margin-top: 15px;
-        word-break: break-all;
+      .step-content.active {
+        display: block;
       }
 
-      .token-display strong {
-        color: var(--color-success);
-      }
-
-      @media (max-width: 768px) {
-        .container {
-          padding: 20px;
-        }
-
-        h1 {
-          font-size: 1.5rem;
-        }
+      .transaction-details {
+        background: #f9f9f9;
+        padding: 20px;
+        margin-top: 20px;
+        border: 1px solid #e0e0e0;
+        font-family: 'Courier New', monospace;
+        font-size: 0.85rem;
       }
     </style>
 
-    <!-- CRITICAL: The script tag needs the security_key attribute with your auth token -->
+    <!-- Dejavoo Freedom to Design Library - SANDBOX -->
     <script
       id="ftd"
       src="https://payment.ipospays.tech/ftd/v1/freedomtodesign.js"
@@ -241,267 +451,262 @@
 
   <body>
     <div class="container">
-      <h1>Dejavoo Card Payment</h1>
-      <p class="subtitle">Freedom to Design Integration</p>
-
-      <!-- Configuration Alert -->
-      <div class="alert alert-warning" id="configAlert">
-        <strong>⚠️ Configuration Required:</strong> Enter your auth token below and click
-        "Update Script" to enable the payment form.
+      <div class="header">
+        <h1>Dejavoo Payment Test</h1>
       </div>
 
-      <!-- Auth Token Configuration -->
-      <div class="config-section">
-        <h2 style="color: var(--color-primary); margin-bottom: 15px; font-size: 1.2rem">
-          🔑 Configuration
-        </h2>
-        <div class="form-group">
-          <label for="authTokenConfig">eComm Auth Token:</label>
-          <input
-            type="text"
-            id="authTokenConfig"
-            placeholder="Enter your Dejavoo auth token"
-          />
-          <div class="help-text">
-            This will be added to the script tag's security_key attribute
+      <div class="checkout-wrapper">
+        <!-- Main Content -->
+        <div class="checkout-main">
+          <!-- Progress Steps -->
+          <div class="progress-steps">
+            <div class="step active" id="step1-indicator">
+              <span class="step-number">1</span>
+              <span>Customer</span>
+            </div>
+            <div class="step" id="step2-indicator">
+              <span class="step-number">2</span>
+              <span>Delivery</span>
+            </div>
+            <div class="step" id="step3-indicator">
+              <span class="step-number">3</span>
+              <span>Payment</span>
+            </div>
+            <div class="step" id="step4-indicator">
+              <span class="step-number">4</span>
+              <span>Review</span>
+            </div>
+          </div>
+
+          <!-- Step 3: Payment -->
+          <div class="step-content active" id="step3">
+            <h2 class="section-title">Payment</h2>
+
+            <div class="security-notice">
+              <span>🔒</span>
+              All transactions are secure and encrypted
+            </div>
+
+            <div id="paymentAlerts"></div>
+
+            <form id="paymentForm">
+              <div class="form-group">
+                <label>Card Number <span class="required">*</span></label>
+                <input
+                  type="text"
+                  id="ccnumber"
+                  placeholder="1234 1234 1234 1234"
+                  maxlength="19"
+                  required
+                />
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Expiry Month <span class="required">*</span></label>
+                  <input type="text" id="ccexpiry" placeholder="MM/YY" maxlength="5" required />
+                </div>
+
+                <div class="form-group">
+                  <label>CVV <span class="required">*</span></label>
+                  <input type="text" id="cccvv" placeholder="123" maxlength="4" required />
+                  <div class="help-text">3-4 digits on back of card</div>
+                </div>
+
+                <div></div>
+              </div>
+
+              <h3 class="section-title" style="margin-top: 40px">Billing</h3>
+
+              <div class="form-group">
+                <label>Name <span class="required">*</span></label>
+                <input type="text" id="billingName" value="Brad Jensen" required />
+              </div>
+
+              <div class="form-group">
+                <label>Address <span class="required">*</span></label>
+                <input type="text" id="billingAddress" value="155 Walthall St SE" required />
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label>City <span class="required">*</span></label>
+                  <input type="text" id="billingCity" value="Atlanta" required />
+                </div>
+
+                <div class="form-group">
+                  <label>State <span class="required">*</span></label>
+                  <input type="text" id="billingState" value="GA" required />
+                </div>
+
+                <div class="form-group">
+                  <label>Zip <span class="required">*</span></label>
+                  <input type="text" id="billingZip" value="30316" required />
+                </div>
+              </div>
+
+              <button type="button" class="btn" onclick="continueToReview()">
+                Continue to Review
+              </button>
+            </form>
+          </div>
+
+          <!-- Step 4: Review -->
+          <div class="step-content" id="step4">
+            <h2 class="section-title">Review</h2>
+
+            <div id="reviewAlerts"></div>
+
+            <div class="review-section">
+              <div style="display: flex; justify-content: space-between; align-items: center">
+                <h3>Customer</h3>
+                <button class="edit-link" onclick="editStep(3)">Edit</button>
+              </div>
+              <div class="review-content" id="reviewCustomer">
+                somm@heavypourwine.com
+              </div>
+            </div>
+
+            <div class="review-section">
+              <div style="display: flex; justify-content: space-between; align-items: center">
+                <h3>Shipping</h3>
+                <button class="edit-link" onclick="editStep(3)">Edit</button>
+              </div>
+              <div class="review-content" id="reviewShipping">
+                Brad Jensen<br />
+                155 Walthall St SE<br />
+                Atlanta GA 30316<br />
+                (404) 881-1898<br />
+                <br />
+                📦 UPS GROUND - <s>$31.93</s> $0.00
+              </div>
+            </div>
+
+            <div class="review-section">
+              <div style="display: flex; justify-content: space-between; align-items: center">
+                <h3>Payment</h3>
+                <button class="edit-link" onclick="editStep(3)">Edit</button>
+              </div>
+              <div class="review-content" id="reviewPayment">
+                <div style="display: flex; align-items: center; gap: 10px">
+                  <img
+                    src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='25' viewBox='0 0 40 25'%3E%3Crect fill='%231434CB' width='40' height='25' rx='3'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dy='.3em' fill='white' font-family='Arial' font-size='10' font-weight='bold'%3EVISA%3C/text%3E%3C/svg%3E"
+                    alt="Visa"
+                    style="height: 20px"
+                  />
+                  <span>Visa .... <span id="last4">****</span></span>
+                </div>
+                <div style="margin-top: 8px">Expiry: <span id="expiryDisplay">**/**</span></div>
+                <div style="margin-top: 8px" id="billingAddressDisplay">
+                  Brad Jensen<br />
+                  155 Walthall St SE<br />
+                  Atlanta GA 30316
+                </div>
+              </div>
+            </div>
+
+            <button type="button" class="btn" onclick="placeOrder()">Place Order</button>
           </div>
         </div>
-        <button class="btn" onclick="updateSecurityKey()">Update Script & Reload Page</button>
-      </div>
 
-      <!-- Payment Form Section -->
-      <div class="section">
-        <h2>💳 Card Payment Form</h2>
+        <!-- Sidebar -->
+        <div class="checkout-sidebar">
+          <div class="order-item">
+            <div class="item-image">
+              <img
+                src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60'%3E%3Crect fill='%23f0f0f0' width='60' height='60'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dy='.3em' fill='%23999' font-size='10'%3EWine%3C/text%3E%3C/svg%3E"
+                alt="Product"
+                style="width: 100%; height: 100%"
+              />
+            </div>
+            <div class="item-details">
+              <div class="item-title">Humboldt Single Vineyard Pinot Pack</div>
+              <div class="item-subtitle">Three-Pack</div>
+              <div class="item-price">
+                <span>$155.00</span>
+                <span class="item-quantity">× 1</span>
+                <span style="margin-left: auto">$155.00</span>
+              </div>
+            </div>
+          </div>
 
-        <div class="alert alert-info">
-          <strong>Test Cards:</strong> Use test card numbers provided by Dejavoo for sandbox
-          testing
+          <div style="margin-top: 30px">
+            <div class="summary-row">
+              <span class="label">Subtotal (3)</span>
+              <span>$155.00</span>
+            </div>
+            <div class="summary-row">
+              <span class="label">Shipping (UPS Ground)</span>
+              <span><s style="color: #999">$31.93</s> $0.00</span>
+            </div>
+            <div class="summary-row">
+              <span class="label">Tax</span>
+              <span>$0.00</span>
+            </div>
+            <div class="summary-row total">
+              <span class="label">Total</span>
+              <span>USD $155.00</span>
+            </div>
+          </div>
+
+          <div class="savings">
+            <span>💰</span>
+            <span>Shipping Included on Humboldt Three-Packs - $31.93 SAVED</span>
+          </div>
+
+          <div class="help-contact">
+            Need help? Call us at<br />
+            <a href="tel:7078201621">(707) 820-1621</a>
+          </div>
         </div>
-
-        <form id="paymentForm">
-          <div class="form-group">
-            <label for="ccnumber">Card Number:</label>
-            <input
-              type="text"
-              id="ccnumber"
-              placeholder="4111 1111 1111 1111"
-              maxlength="19"
-              required
-            />
-            <div class="help-text">16-digit card number</div>
-          </div>
-
-          <div class="form-group">
-            <label for="ccexpiry">Expiry Date:</label>
-            <input type="text" id="ccexpiry" placeholder="MM/YY" maxlength="5" required />
-            <div class="help-text">Format: MM/YY (e.g., 12/25)</div>
-          </div>
-
-          <div class="form-group">
-            <label for="cccvv">CVV:</label>
-            <input type="text" id="cccvv" placeholder="123" maxlength="4" required />
-            <div class="help-text">3 or 4 digit security code</div>
-          </div>
-
-          <button type="submit" id="payButton">Generate Payment Token</button>
-        </form>
       </div>
+    </div>
 
-      <!-- Results Section -->
-      <div class="section" id="results">
-        <h2>📊 Results</h2>
-        <div id="resultMessage"></div>
-        <div id="responseData" class="response-data"></div>
-      </div>
-
-      <!-- Instructions -->
-      <div class="section">
-        <h2>📚 How It Works</h2>
-        <ol style="margin-left: 20px; line-height: 1.8">
-          <li>Enter your auth token above and click "Update Script & Reload Page"</li>
-          <li>Fill in the card details (use test cards for sandbox)</li>
-          <li>Click "Generate Payment Token"</li>
-          <li>The library will call <code>postData()</code> and return a payment token</li>
-          <li>
-            Use the payment token with iPOS Transact API to complete the transaction
-            <div class="help-text">Token expires in 24 hours if unused</div>
-          </li>
-        </ol>
-      </div>
-
-      <!-- Documentation Links -->
-      <div class="section">
-        <h2>🔗 Resources</h2>
-        <ul style="margin-left: 20px; line-height: 1.8">
-          <li>
-            <a
-              href="https://docs.ipospays.com/freedom-to-design"
-              target="_blank"
-              style="color: #64b5f6"
-              >Freedom to Design Docs</a
-            >
-          </li>
-          <li>
-            <a
-              href="https://docs.ipospays.com/freedom-to-design/apidocs"
-              target="_blank"
-              style="color: #64b5f6"
-              >API Documentation</a
-            >
-          </li>
-          <li>
-            <a
-              href="https://simulator.ipostransact.com/"
-              target="_blank"
-              style="color: #64b5f6"
-              >API Simulator</a
-            >
-          </li>
-          <li>Support: <a href="mailto:devsupport@dejavoo.io">devsupport@dejavoo.io</a></li>
-        </ul>
+    <!-- Processing Overlay -->
+    <div class="processing-overlay" id="processingOverlay">
+      <div class="processing-content">
+        <div class="spinner"></div>
+        <h3 style="margin-bottom: 10px; color: #333">Processing Payment...</h3>
+        <p style="color: #666; font-size: 0.9rem" id="processingMessage">
+          Please wait while we process your transaction
+        </p>
       </div>
     </div>
 
     <script>
-      // Update the script tag's security_key attribute
-      function updateSecurityKey() {
-        const authToken = document.getElementById('authTokenConfig').value.trim();
+      // Configuration
+      const MERCHANT_ID = 'YOUR_TPN_HERE'; // Replace with your TPN
+      const API_AUTH_TOKEN = 'YOUR_API_AUTH_TOKEN'; // Replace with your iPOS Transact API token
+      const SANDBOX_API_URL = 'https://uatapi.ipospays.tech/api/v1/transaction'; // Sandbox
+      // const PRODUCTION_API_URL = 'https://api.ipospays.com/api/v1/transaction'; // Production
 
-        if (!authToken) {
-          alert('Please enter your auth token');
-          return;
-        }
+      let currentStep = 3;
+      let paymentTokenId = null;
 
-        // Save to localStorage
-        localStorage.setItem('dejavoo_auth_token', authToken);
-
-        // Update the script tag
-        const scriptTag = document.getElementById('ftd');
-        scriptTag.setAttribute('security_key', authToken);
-
-        alert(
-          'Auth token saved! Reloading page to initialize the library with your credentials...'
-        );
-
-        // Reload the page to reinitialize the script with the new security_key
-        window.location.reload();
-      }
-
-      // Load saved auth token on page load
+      // Load saved auth token
       window.addEventListener('DOMContentLoaded', function () {
         const savedToken = localStorage.getItem('dejavoo_auth_token');
-
         if (savedToken) {
-          // Update the input field
-          document.getElementById('authTokenConfig').value = savedToken;
-
-          // Update the script tag
-          const scriptTag = document.getElementById('ftd');
-          scriptTag.setAttribute('security_key', savedToken);
-
-          // Hide the warning
-          document.getElementById('configAlert').style.display = 'none';
-
+          document.getElementById('ftd').setAttribute('security_key', savedToken);
           console.log('✅ Auth token loaded from localStorage');
         } else {
-          console.log('⚠️ No auth token found - please configure');
+          console.warn('⚠️ No auth token found. Please configure in browser console:');
+          console.warn("localStorage.setItem('dejavoo_auth_token', 'YOUR_TOKEN_HERE')");
+          showAlert(
+            'paymentAlerts',
+            'warning',
+            'No auth token configured. Set it in console: localStorage.setItem("dejavoo_auth_token", "YOUR_TOKEN")'
+          );
         }
       });
 
-      // Handle form submission
-      async function submitCardFunc(event) {
-        event.preventDefault();
-
-        // Check if postData function exists
-        if (typeof postData !== 'function') {
-          const resultMessage = document.getElementById('resultMessage');
-          resultMessage.className = 'alert alert-error';
-          resultMessage.innerHTML = `
-            <strong>❌ Error:</strong> postData() function not found.<br><br>
-            This means the Freedom to Design library did not load properly. Possible causes:<br>
-            <ul style="margin-left: 20px; margin-top: 10px;">
-              <li>Invalid or missing auth token</li>
-              <li>Auth token doesn't have Freedom to Design access</li>
-              <li>Network connectivity issue</li>
-            </ul>
-            <br>Check the browser console for more details.
-          `;
-          document.getElementById('results').style.display = 'block';
-          console.error('postData() function not available');
-          return;
-        }
-
-        // Show loading state
-        const payButton = document.getElementById('payButton');
-        const originalText = payButton.textContent;
-        payButton.disabled = true;
-        payButton.textContent = 'Processing...';
-
-        try {
-          console.log('🔄 Calling postData() to generate payment token...');
-          const data_response = await postData();
-
-          console.log('✅ Payment token generated:', data_response);
-
-          // Show success
-          const resultMessage = document.getElementById('resultMessage');
-          resultMessage.className = 'alert alert-success';
-          resultMessage.innerHTML = `
-            <strong>✅ Payment Token Generated Successfully!</strong>
-          `;
-
-          // Show the token
-          const responseData = document.getElementById('responseData');
-          responseData.innerHTML = `
-            <div class="token-display">
-              <strong>Payment Token ID:</strong><br>
-              <code>${data_response.payment_token_id}</code>
-            </div>
-            <div style="margin-top: 15px;">
-              <strong>Full Response:</strong>
-              <pre>${JSON.stringify(data_response, null, 2)}</pre>
-            </div>
-            <div style="margin-top: 15px; padding: 15px; background-color: rgba(33, 150, 243, 0.1); border-radius: 8px;">
-              <strong>💡 Next Step:</strong><br>
-              Use this payment token with the iPOS Transact API to complete the transaction.<br>
-              <em>Note: Token expires in 24 hours if unused.</em>
-            </div>
-          `;
-
-          document.getElementById('results').style.display = 'block';
-          document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
-        } catch (error) {
-          console.error('❌ Error processing payment:', error);
-
-          const resultMessage = document.getElementById('resultMessage');
-          resultMessage.className = 'alert alert-error';
-          resultMessage.innerHTML = `
-            <strong>❌ Error:</strong> ${error.message || 'Unknown error occurred'}
-          `;
-
-          const responseData = document.getElementById('responseData');
-          responseData.textContent = JSON.stringify(error, null, 2);
-
-          document.getElementById('results').style.display = 'block';
-          document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
-        } finally {
-          payButton.disabled = false;
-          payButton.textContent = originalText;
-        }
-      }
-
-      // Attach event listener to form
-      var payButton = document.getElementById('payButton');
-      document.getElementById('paymentForm').addEventListener('submit', submitCardFunc);
-
-      // Format card number input with spaces
+      // Input formatting
       document.getElementById('ccnumber').addEventListener('input', function (e) {
         let value = e.target.value.replace(/\s/g, '');
         let formattedValue = value.match(/.{1,4}/g)?.join(' ') || value;
         e.target.value = formattedValue;
       });
 
-      // Format expiry date input
       document.getElementById('ccexpiry').addEventListener('input', function (e) {
         let value = e.target.value.replace(/\D/g, '');
         if (value.length >= 2) {
@@ -510,17 +715,210 @@
         e.target.value = value;
       });
 
-      // Only allow numbers in CVV
       document.getElementById('cccvv').addEventListener('input', function (e) {
         e.target.value = e.target.value.replace(/\D/g, '');
       });
 
-      // Log when script loads
-      console.log('✅ Page loaded');
-      console.log(
-        '📌 Checking for postData function...',
-        typeof postData !== 'undefined' ? '✅ Found' : '❌ Not found'
-      );
+      function showAlert(containerId, type, message) {
+        const container = document.getElementById(containerId);
+        const alertClass = type === 'success' ? 'alert-success' : type === 'error' ? 'alert-error' : 'alert-info';
+        container.innerHTML = `<div class="alert ${alertClass}">${message}</div>`;
+        container.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+
+      function setStep(step) {
+        // Update indicators
+        for (let i = 1; i <= 4; i++) {
+          const indicator = document.getElementById(`step${i}-indicator`);
+          if (i <= step) {
+            indicator.classList.add('active');
+          } else {
+            indicator.classList.remove('active');
+          }
+        }
+
+        // Update content
+        document.querySelectorAll('.step-content').forEach((el) => el.classList.remove('active'));
+        const stepEl = document.getElementById(`step${step}`);
+        if (stepEl) {
+          stepEl.classList.add('active');
+          stepEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        currentStep = step;
+      }
+
+      function editStep(step) {
+        setStep(step);
+      }
+
+      function continueToReview() {
+        // Validate form
+        const form = document.getElementById('paymentForm');
+        if (!form.checkValidity()) {
+          form.reportValidity();
+          return;
+        }
+
+        // Update review section
+        const ccnumber = document.getElementById('ccnumber').value.replace(/\s/g, '');
+        const last4 = ccnumber.slice(-4);
+        document.getElementById('last4').textContent = last4;
+        document.getElementById('expiryDisplay').textContent =
+          document.getElementById('ccexpiry').value;
+
+        const billingName = document.getElementById('billingName').value;
+        const billingAddress = document.getElementById('billingAddress').value;
+        const billingCity = document.getElementById('billingCity').value;
+        const billingState = document.getElementById('billingState').value;
+        const billingZip = document.getElementById('billingZip').value;
+
+        document.getElementById('billingAddressDisplay').innerHTML = `
+          ${billingName}<br>
+          ${billingAddress}<br>
+          ${billingCity} ${billingState} ${billingZip}
+        `;
+
+        setStep(4);
+      }
+
+      async function placeOrder() {
+        // Check if postData is available
+        if (typeof postData !== 'function') {
+          showAlert(
+            'reviewAlerts',
+            'error',
+            '❌ Payment library not loaded. Please refresh the page and try again.'
+          );
+          return;
+        }
+
+        // Show processing overlay
+        document.getElementById('processingOverlay').classList.add('active');
+        document.getElementById('processingMessage').textContent =
+          'Creating payment token...';
+
+        try {
+          // Step 1: Generate payment token using Freedom to Design
+          console.log('🔄 Step 1: Generating payment token...');
+          const tokenResponse = await postData();
+          console.log('Token response:', tokenResponse);
+
+          if (tokenResponse.statusCode !== '00' || !tokenResponse.payment_token_id) {
+            throw new Error(tokenResponse.message || 'Failed to generate payment token');
+          }
+
+          paymentTokenId = tokenResponse.payment_token_id;
+          console.log('✅ Payment token generated:', paymentTokenId);
+
+          // Step 2: Process sale using iPOS Transact API
+          document.getElementById('processingMessage').textContent = 'Processing payment...';
+          console.log('🔄 Step 2: Processing sale via iPOS Transact API...');
+
+          const saleResponse = await processSale(paymentTokenId);
+          console.log('Sale response:', saleResponse);
+
+          // Hide processing overlay
+          document.getElementById('processingOverlay').classList.remove('active');
+
+          // Check response
+          if (
+            saleResponse.iposTransactResponse &&
+            saleResponse.iposTransactResponse.responseCode === '200'
+          ) {
+            // Success!
+            showSuccessPage(saleResponse);
+          } else {
+            // Error
+            const errorMsg =
+              saleResponse.iposTransactResponse?.errResponseMessage ||
+              saleResponse.errors?.[0]?.message ||
+              'Transaction failed';
+            showAlert('reviewAlerts', 'error', `❌ ${errorMsg}`);
+          }
+        } catch (error) {
+          console.error('Error processing order:', error);
+          document.getElementById('processingOverlay').classList.remove('active');
+          showAlert('reviewAlerts', 'error', `❌ Error: ${error.message}`);
+        }
+      }
+
+      async function processSale(paymentTokenId) {
+        const billingZip = document.getElementById('billingZip').value;
+        const billingAddress = document.getElementById('billingAddress').value;
+        const streetNo = billingAddress.split(' ')[0]; // Extract street number
+
+        const requestBody = {
+          merchantAuthentication: {
+            merchantId: MERCHANT_ID,
+            transactionReferenceId: 'TEST_' + Date.now(),
+          },
+          transactionRequest: {
+            transactionType: 1, // Sale
+            amount: 15500, // $155.00 in cents
+            paymentTokenId: paymentTokenId,
+            applySteamSettingTipFeeTax: false,
+          },
+          preferences: {
+            eReceipt: true,
+            customerName: document.getElementById('billingName').value,
+            customerEmail: 'somm@heavypourwine.com',
+            customerMobile: '+14048811898',
+          },
+          Avs: {
+            StreetNo: streetNo,
+            Zip: billingZip,
+          },
+        };
+
+        console.log('iPOS Transact API Request:', requestBody);
+
+        const response = await fetch(SANDBOX_API_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            token: API_AUTH_TOKEN,
+          },
+          body: JSON.stringify(requestBody),
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('API Error Response:', errorText);
+          throw new Error(`API request failed: ${response.status} ${response.statusText}`);
+        }
+
+        return await response.json();
+      }
+
+      function showSuccessPage(response) {
+        const transactionData = response.iposTransactResponse;
+
+        document.getElementById('reviewAlerts').innerHTML = `
+          <div class="alert alert-success">
+            <h3 style="margin-bottom: 15px; font-size: 1.3rem">✅ Payment Successful!</h3>
+            <p style="margin-bottom: 10px">Your order has been placed successfully.</p>
+            <p><strong>Transaction ID:</strong> ${transactionData.transactionId || 'N/A'}</p>
+            <p><strong>Amount:</strong> $${(transactionData.totalAmount / 100).toFixed(2)}</p>
+            <p><strong>Approval Code:</strong> ${transactionData.responseApprovalCode || 'N/A'}</p>
+            <p><strong>Payment Token Used:</strong> ${paymentTokenId}</p>
+          </div>
+          <div class="transaction-details">
+            <strong>Full Transaction Response:</strong>
+            <pre>${JSON.stringify(response, null, 2)}</pre>
+          </div>
+        `;
+
+        document.querySelector('#step4 .btn').style.display = 'none';
+      }
+
+      // Log when ready
+      console.log('✅ Checkout page loaded');
+      console.log('📌 Sandbox environment: payment.ipospays.tech');
+      console.log('💡 Configure your credentials:');
+      console.log('   1. Auth Token: localStorage.setItem("dejavoo_auth_token", "YOUR_TOKEN")');
+      console.log('   2. Update MERCHANT_ID in the code');
+      console.log('   3. Update API_AUTH_TOKEN in the code');
     </script>
   </body>
 </html>
