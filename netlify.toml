@@ -5,9 +5,19 @@
 [build.environment]
   NODE_ENV = "production"
 
-[[functions]]
-  # Token refresh function scheduled for 6:00 AM EST daily
-  # EST is UTC-5, EDT is UTC-4
-  # Using 11:00 UTC to hit 6:00 AM EST (adjust if EDT)
-  name = "scheduled-token-refresh"
-  schedule = "0 11 * * *"
+[functions]
+  # Directory for functions
+  directory = "netlify/functions"
+  
+  # Enable scheduled functions
+  node_bundler = "esbuild"
+
+# Scheduled function configuration
+[functions."scheduled-token-refresh"]
+  schedule = "@daily"
+  # Alternatively use cron: schedule = "0 11 * * *"
+
+# You can also specify the schedule as a cron expression
+# For 6:00 AM EST (11:00 AM UTC in winter, 10:00 AM UTC in summer)
+# [functions."scheduled-token-refresh"]
+#   schedule = "0 11 * * *"

@@ -1,12 +1,30 @@
-const schedule = require('node-schedule');
+const fetch = require('node-fetch');
 
 exports.handler = async (event, context) => {
-  // This function runs on a schedule defined in netlify.toml
-  // Scheduled for 6:00 AM EST daily (11:00 AM UTC or 10:00 AM UTC depending on DST)
+  console.log(`🔄 Starting scheduled token refresh at ${new Date().toISOString()}`);
 
   const DEJAVOO_API_KEY = process.env.DEJAVOO_API_KEY;
   const DEJAVOO_SECRET_KEY = process.env.DEJAVOO_SECRET_KEY;
   const DEJAVOO_ENVIRONMENT = process.env.DEJAVOO_ENVIRONMENT || 'sandbox';
+  const NETLIFY_AUTH_TOKEN = process.env.NETLIFY_AUTH_TOKEN;
+  const NETLIFY_SITE_ID = process.env.NETLIFY_SITE_ID;
+
+  // Validate all required variables
+  if (!DEJAVOO_API_KEY || !DEJAVOO_SECRET_KEY) {
+    console.error('❌ Missing Dejavoo API credentials');
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: 'Missing DEJAVOO_API_KEY or DEJAVOO_SECRET_KEY' }),
+    };
+  }
+
+  if (!NETLIFY_AUTH_TOKEN || !NETLIFY_SITE_ID) {
+    console.error('❌ Missing Netlify credentials');
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: 'Missing NETLIFY_AUTH_TOKEN or NETLIFY_SITE_ID' }),
+    };
+  }
 
   // Determine the correct authentication endpoint based on environment
   const AUTH_ENDPOINT =
@@ -14,12 +32,14 @@ exports.handler = async (event, context) => {
       ? 'https://payment.ipospays.tech/api/v3/auth/token'
       : 'https://payment.ipospays.com/api/v3/auth/token';
 
-  console.log(`🔄 Starting scheduled token refresh at ${new Date().toISOString()}`);
   console.log(`📌 Environment: ${DEJAVOO_ENVIRONMENT}`);
+  console.log(`📌 Auth Endpoint: ${AUTH_ENDPOINT}`);
 
   try {
-    // Generate new auth token
-    const response = await fetch(AUTH_ENDPOINT, {
+    // STEP 1: Generate new auth token from Dejavoo
+    console.log('📡 Requesting new token from Dejavoo...');
+
+    const tokenResponse = await fetch(AUTH_ENDPOINT, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -31,55 +51,94 @@ exports.handler = async (event, context) => {
       }),
     });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`❌ Token generation failed: ${response.status} ${response.statusText}`);
+    if (!tokenResponse.ok) {
+      const errorText = await tokenResponse.text();
+      console.error(
+        `❌ Dejavoo token generation failed: ${tokenResponse.status} ${tokenResponse.statusText}`
+      );
       console.error(`Error details: ${errorText}`);
 
       return {
-        statusCode: response.status,
+        statusCode: tokenResponse.status,
         body: JSON.stringify({
-          error: 'Token generation failed',
+          error: 'Dejavoo token generation failed',
+          status: tokenResponse.status,
           details: errorText,
         }),
       };
     }
 
-    const data = await response.json();
-    const newToken = data.token || data.authToken || data.access_token;
+    const tokenData = await tokenResponse.json();
+    const newToken = tokenData.token || tokenData.authToken || tokenData.access_token;
 
     if (!newToken) {
-      console.error('❌ No token found in response:', data);
+      console.error('❌ No token found in Dejavoo response:', tokenData);
       return {
         statusCode: 500,
         body: JSON.stringify({
-          error: 'No token in response',
-          response: data,
+          error: 'No token in Dejavoo response',
+          response: tokenData,
         }),
       };
     }
 
-    console.log('✅ New auth token generated successfully');
-    console.log(`📌 Token preview: ${newToken.substring(0, 20)}...`);
+    console.log('✅ New auth token generated from Dejavoo');
+    console.log(`📌 Token preview: ${newToken.substring(0, 30)}...`);
 
-    // Store the new token in Netlify environment variable
-    // Note: This requires the Netlify API and a personal access token
-    // For now, we'll return the token so you can manually update it
-    // or use Netlify's API to update it programmatically
+    // STEP 2: Update Netlify environment variable with new token
+    console.log('📡 Updating IPOS_API_AUTH_TOKEN in Netlify...');
+
+    const netlifyResponse = await fetch(
+      `https://api.netlify.com/api/v1/sites/${NETLIFY_SITE_ID}/env/IPOS_API_AUTH_TOKEN`,
+      {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${NETLIFY_AUTH_TOKEN}`,
+        },
+        body: JSON.stringify({
+          context: 'all',
+          value: newToken,
+        }),
+      }
+    );
+
+    if (!netlifyResponse.ok) {
+      const errorText = await netlifyResponse.text();
+      console.error(
+        `❌ Netlify API update failed: ${netlifyResponse.status} ${netlifyResponse.statusText}`
+      );
+      console.error(`Error details: ${errorText}`);
+
+      // Even though we got the token, we couldn't update it
+      // Return the token so you can manually update if needed
+      return {
+        statusCode: netlifyResponse.status,
+        body: JSON.stringify({
+          error: 'Netlify update failed but token was generated',
+          status: netlifyResponse.status,
+          details: errorText,
+          newToken: newToken,
+          message: 'Manually update IPOS_API_AUTH_TOKEN with the newToken value',
+        }),
+      };
+    }
+
+    console.log('✅ IPOS_API_AUTH_TOKEN updated successfully in Netlify');
+    console.log('🎉 Token refresh completed successfully');
 
     return {
       statusCode: 200,
       body: JSON.stringify({
         success: true,
-        message: 'Token generated successfully',
-        token: newToken,
-        generatedAt: new Date().toISOString(),
-        expiresIn: data.expiresIn || data.expires_in || '24 hours',
-        note: 'Update IPOS_API_AUTH_TOKEN environment variable with this token',
+        message: 'Token refreshed and updated successfully',
+        timestamp: new Date().toISOString(),
+        environment: DEJAVOO_ENVIRONMENT,
+        expiresIn: '24 hours',
       }),
     };
   } catch (error) {
-    console.error('❌ Error during token refresh:', error);
+    console.error('❌ Unexpected error during token refresh:', error);
     return {
       statusCode: 500,
       body: JSON.stringify({

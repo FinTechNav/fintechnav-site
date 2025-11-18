@@ -1,8 +1,4 @@
-// netlify/functions/get-dejavoo-config.js
-// Returns Dejavoo configuration from environment variables
-
 exports.handler = async (event) => {
-  // Set CORS headers
   const headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type',
@@ -10,16 +6,10 @@ exports.handler = async (event) => {
     'Content-Type': 'application/json',
   };
 
-  // Handle OPTIONS requests (CORS preflight)
   if (event.httpMethod === 'OPTIONS') {
-    return {
-      statusCode: 204,
-      headers,
-      body: '',
-    };
+    return { statusCode: 204, headers, body: '' };
   }
 
-  // Only allow GET requests
   if (event.httpMethod !== 'GET') {
     return {
       statusCode: 405,
@@ -28,43 +18,34 @@ exports.handler = async (event) => {
     };
   }
 
-  try {
-    // Get configuration from environment variables
-    const config = {
-      dejavooAuthToken: process.env.DEJAVOO_AUTH_TOKEN || '',
-      merchantId: process.env.IPOS_MERCHANT_ID || '',
-      apiAuthToken: process.env.IPOS_API_AUTH_TOKEN || '',
-      environment: process.env.DEJAVOO_ENVIRONMENT || 'sandbox', // 'sandbox' or 'production'
-    };
+  const config = {
+    dejavooAuthToken: process.env.DEJAVOO_AUTH_TOKEN || '',
+    merchantId: process.env.IPOS_MERCHANT_ID || '',
+    apiAuthToken: process.env.IPOS_API_AUTH_TOKEN || '', // This gets auto-updated daily
+    environment: process.env.DEJAVOO_ENVIRONMENT || 'sandbox',
+  };
 
-    // Validate that required credentials are present
-    if (!config.dejavooAuthToken || !config.merchantId || !config.apiAuthToken) {
-      return {
-        statusCode: 500,
-        headers,
-        body: JSON.stringify({
-          error: 'Missing configuration',
-          message:
-            'Required environment variables not set. Please configure DEJAVOO_AUTH_TOKEN, IPOS_MERCHANT_ID, and IPOS_API_AUTH_TOKEN in Netlify.',
-        }),
-      };
-    }
-
-    return {
-      statusCode: 200,
-      headers,
-      body: JSON.stringify(config),
-    };
-  } catch (error) {
-    console.error('Error in get-dejavoo-config function:', error);
+  // Validate required credentials
+  if (!config.dejavooAuthToken || !config.merchantId || !config.apiAuthToken) {
+    console.error('❌ Missing configuration:', {
+      hasDejavooAuthToken: !!config.dejavooAuthToken,
+      hasMerchantId: !!config.merchantId,
+      hasApiAuthToken: !!config.apiAuthToken,
+    });
 
     return {
       statusCode: 500,
       headers,
       body: JSON.stringify({
-        error: 'Failed to retrieve configuration',
-        details: error.message,
+        error: 'Missing configuration',
+        message: 'Required environment variables not set in Netlify',
       }),
     };
   }
+
+  return {
+    statusCode: 200,
+    headers,
+    body: JSON.stringify(config),
+  };
 };
