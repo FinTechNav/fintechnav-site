@@ -1,5 +1,3 @@
-const fetch = require('node-fetch');
-
 exports.handler = async (event, context) => {
   console.log(`🔄 Starting scheduled token refresh at ${new Date().toISOString()}`);
 
