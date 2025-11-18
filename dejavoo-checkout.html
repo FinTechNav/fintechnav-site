@@ -440,13 +440,8 @@
       }
     </style>
 
-    <!-- Dejavoo Freedom to Design Library - SANDBOX -->
-    <script
-      id="ftd"
-      src="https://payment.ipospays.tech/ftd/v1/freedomtodesign.js"
-      security_key=""
-      defer
-    ></script>
+    <!-- Dejavoo Freedom to Design Library - Dynamically loaded -->
+    <script id="ftd" defer></script>
   </head>
 
   <body>
@@ -458,6 +453,11 @@
       <div class="checkout-wrapper">
         <!-- Main Content -->
         <div class="checkout-main">
+          <!-- Loading indicator -->
+          <div id="loadingConfig" class="alert alert-info" style="display: none">
+            <span>⏳</span> Loading payment configuration...
+          </div>
+
           <!-- Progress Steps -->
           <div class="progress-steps">
             <div class="step active" id="step1-indicator">
@@ -562,9 +562,7 @@
                 <h3>Customer</h3>
                 <button class="edit-link" onclick="editStep(3)">Edit</button>
               </div>
-              <div class="review-content" id="reviewCustomer">
-                somm@heavypourwine.com
-              </div>
+              <div class="review-content" id="reviewCustomer">somm@heavypourwine.com</div>
             </div>
 
             <div class="review-section">
@@ -674,31 +672,89 @@
     </div>
 
     <script>
-      // Configuration
-      const MERCHANT_ID = '220925279056'; // Replace with your TPN
-      const API_AUTH_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0cG4iOiIyMjA5MjUyNzkwNTYiLCJlbWFpbCI6InNvbW1AaGVhdnlwb3Vyd2luZS5jb20iLCJtZXJjaGFudElkIjoiZGRmYThjODQtZDIwYy00MmE3LWI0MGQtNTI0NWJjZWMzODJhIiwidmVyc2lvbiI6InYyIiwiaWF0IjoxNzYzNDEwNTkxfQ.6EEyaiynshC8rvG8RgTKvSUMnny2hBZc920MOews0fQ'; // Replace with your iPOS Transact API token
-      const SANDBOX_API_URL = 'https://payment.ipospays.tech/api/v2/iposTransact'; // Sandbox V2
-      // const PRODUCTION_API_URL = 'https://payment.ipospays.com/api/v2/iposTransact'; // Production V2
+      // Configuration - will be loaded from Netlify function
+      let MERCHANT_ID = '';
+      let API_AUTH_TOKEN = '';
+      let DEJAVOO_AUTH_TOKEN = '';
+      let ENVIRONMENT = 'sandbox';
+      let API_BASE_URL = '';
 
       let currentStep = 3;
       let paymentTokenId = null;
+      let configLoaded = false;
 
-      // Load saved auth token
-      window.addEventListener('DOMContentLoaded', function () {
-        const savedToken = localStorage.getItem('dejavoo_auth_token');
-        if (savedToken) {
-          document.getElementById('ftd').setAttribute('security_key', savedToken);
-          console.log('✅ Auth token loaded from localStorage');
-        } else {
-          console.warn('⚠️ No auth token found. Please configure in browser console:');
-          console.warn("localStorage.setItem('dejavoo_auth_token', 'YOUR_TOKEN_HERE')");
-          showAlert(
-            'paymentAlerts',
-            'warning',
-            'No auth token configured. Set it in console: localStorage.setItem("dejavoo_auth_token", "YOUR_TOKEN")'
-          );
+      // Load configuration from Netlify function
+      async function loadConfig() {
+        const loadingEl = document.getElementById('loadingConfig');
+        loadingEl.style.display = 'block';
+
+        try {
+          console.log('🔄 Loading configuration from Netlify function...');
+
+          const response = await fetch('/.netlify/functions/get-dejavoo-config');
+
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          }
+
+          const config = await response.json();
+
+          if (config.error) {
+            throw new Error(config.message || config.error);
+          }
+
+          // Set configuration
+          DEJAVOO_AUTH_TOKEN = config.dejavooAuthToken;
+          MERCHANT_ID = config.merchantId;
+          API_AUTH_TOKEN = config.apiAuthToken;
+          ENVIRONMENT = config.environment;
+
+          // Set API URL based on environment
+          const isSandbox = ENVIRONMENT === 'sandbox';
+          API_BASE_URL = isSandbox
+            ? 'https://payment.ipospays.tech/api/v2/iposTransact'
+            : 'https://payment.ipospays.com/api/v2/iposTransact';
+
+          // Load the Dejavoo script with the auth token
+          const ftdScript = document.getElementById('ftd');
+          const scriptUrl = isSandbox
+            ? 'https://payment.ipospays.tech/ftd/v1/freedomtodesign.js'
+            : 'https://payment.ipospays.com/ftd/v1/freedomtodesign.js';
+
+          ftdScript.setAttribute('src', scriptUrl);
+          ftdScript.setAttribute('security_key', DEJAVOO_AUTH_TOKEN);
+
+          // Wait for script to load
+          await new Promise((resolve, reject) => {
+            ftdScript.onload = resolve;
+            ftdScript.onerror = reject;
+          });
+
+          console.log('✅ Configuration loaded successfully');
+          console.log('📌 Environment:', ENVIRONMENT);
+          console.log('📌 Merchant ID:', MERCHANT_ID);
+          console.log('📌 API URL:', API_BASE_URL);
+
+          loadingEl.style.display = 'none';
+          configLoaded = true;
+        } catch (error) {
+          console.error('❌ Error loading configuration:', error);
+          loadingEl.innerHTML = `
+            <div class="alert alert-error">
+              <strong>Configuration Error:</strong> ${error.message}<br><br>
+              Please ensure environment variables are set in Netlify:<br>
+              • DEJAVOO_AUTH_TOKEN<br>
+              • IPOS_MERCHANT_ID<br>
+              • IPOS_API_AUTH_TOKEN<br>
+              • DEJAVOO_ENVIRONMENT (sandbox or production)
+            </div>
+          `;
+          loadingEl.style.display = 'block';
         }
-      });
+      }
+
+      // Load config on page load
+      window.addEventListener('DOMContentLoaded', loadConfig);
 
       // Input formatting
       document.getElementById('ccnumber').addEventListener('input', function (e) {
@@ -721,7 +777,8 @@
 
       function showAlert(containerId, type, message) {
         const container = document.getElementById(containerId);
-        const alertClass = type === 'success' ? 'alert-success' : type === 'error' ? 'alert-error' : 'alert-info';
+        const alertClass =
+          type === 'success' ? 'alert-success' : type === 'error' ? 'alert-error' : 'alert-info';
         container.innerHTML = `<div class="alert ${alertClass}">${message}</div>`;
         container.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
       }
@@ -783,6 +840,16 @@
       }
 
       async function placeOrder() {
+        // Check if configuration is loaded
+        if (!configLoaded) {
+          showAlert(
+            'reviewAlerts',
+            'error',
+            '❌ Configuration not loaded. Please refresh the page.'
+          );
+          return;
+        }
+
         // Check if postData is available
         if (typeof postData !== 'function') {
           showAlert(
@@ -795,8 +862,7 @@
 
         // Show processing overlay
         document.getElementById('processingOverlay').classList.add('active');
-        document.getElementById('processingMessage').textContent =
-          'Creating payment token...';
+        document.getElementById('processingMessage').textContent = 'Creating payment token...';
 
         try {
           // Step 1: Generate payment token using Freedom to Design
@@ -851,7 +917,7 @@
         const requestBody = {
           merchantAuthentication: {
             merchantId: MERCHANT_ID,
-            transactionReferenceId: 'TEST_' + Date.now(),
+            transactionReferenceId: 'TEST' + Date.now(),
           },
           transactionRequest: {
             transactionType: 1, // Sale
@@ -873,7 +939,7 @@
 
         console.log('iPOS Transact API Request:', requestBody);
 
-        const response = await fetch(SANDBOX_API_URL, {
+        const response = await fetch(API_BASE_URL, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -914,11 +980,7 @@
 
       // Log when ready
       console.log('✅ Checkout page loaded');
-      console.log('📌 Sandbox environment: payment.ipospays.tech');
-      console.log('💡 Configure your credentials:');
-      console.log('   1. Auth Token: localStorage.setItem("dejavoo_auth_token", "YOUR_TOKEN")');
-      console.log('   2. Update MERCHANT_ID in the code');
-      console.log('   3. Update API_AUTH_TOKEN in the code');
+      console.log('⏳ Waiting for configuration from Netlify...');
     </script>
   </body>
 </html>
