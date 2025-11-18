@@ -718,8 +718,8 @@
           // Load the Dejavoo script with the auth token
           const ftdScript = document.getElementById('ftd');
           const scriptUrl = isSandbox
-            ? 'https://payment.ipospays.tech/ftd/v1/freedomtodesign.js'
-            : 'https://payment.ipospays.com/ftd/v1/freedomtodesign.js';
+            ? 'https://payment.ipospays.tech/ftd/v3/freedomtodesign.js'
+            : 'https://payment.ipospays.com/ftd/v3/freedomtodesign.js';
 
           ftdScript.setAttribute('src', scriptUrl);
           ftdScript.setAttribute('security_key', DEJAVOO_AUTH_TOKEN);

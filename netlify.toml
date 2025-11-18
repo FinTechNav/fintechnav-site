@@ -4,3 +4,10 @@
 
 [build.environment]
   NODE_ENV = "production"
+
+[[functions]]
+  # Token refresh function scheduled for 6:00 AM EST daily
+  # EST is UTC-5, EDT is UTC-4
+  # Using 11:00 UTC to hit 6:00 AM EST (adjust if EDT)
+  name = "scheduled-token-refresh"
+  schedule = "0 11 * * *"
