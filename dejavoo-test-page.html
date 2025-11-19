@@ -211,15 +211,15 @@
       </div>
     </div>
 
-    <!-- Section 2: iPOS Transact API -->
+    <!-- Section 2: iPOS Transact API - First Transaction -->
     <div class="section">
-      <h2>2️⃣ iPOS Transact API - Process Sale</h2>
+      <h2>2️⃣ iPOS Transact API - First Transaction (Get Reusable Token)</h2>
       
       <form id="saleForm">
         <div class="form-group">
           <label>Payment Token ID</label>
           <input type="text" id="paymentTokenId" placeholder="Paste token from above or enter manually" required>
-          <div class="help-text">UUID format token from Freedom to Design</div>
+          <div class="help-text">UUID format token from Freedom to Design (single-use)</div>
         </div>
 
         <div class="form-group">
@@ -249,14 +249,52 @@
         </div>
 
         <button type="button" onclick="processSale()" id="saleBtn">
-          Process Sale Transaction
+          Process Sale Transaction (Get Card Token)
         </button>
       </form>
 
       <div id="saleResult"></div>
     </div>
 
-    <!-- Section 3: Raw JSON Request/Response -->
+    <!-- Section 3: Stored Card Transaction -->
+    <div class="section">
+      <h2>3️⃣ Stored Card Transaction (Use cardToken)</h2>
+      <p style="margin-bottom: 20px; color: #666; font-size: 14px;">
+        Use the <code>chdToken</code> from Section 2 to charge a stored card. This simulates "card on file" functionality.
+      </p>
+      
+      <form id="storedCardForm">
+        <div class="form-group">
+          <label>Card Token (chdToken)</label>
+          <input type="text" id="cardToken" placeholder="Paste chdToken from Section 2" required>
+          <div class="help-text">Reusable token from previous transaction response</div>
+        </div>
+
+        <div class="form-group">
+          <label>Amount (in cents)</label>
+          <input type="number" id="storedAmount" value="2500" required>
+          <div class="help-text">Example: 2500 = $25.00</div>
+        </div>
+
+        <div class="form-group">
+          <label>Customer Name</label>
+          <input type="text" id="storedCustomerName" value="Test Customer" required>
+        </div>
+
+        <div class="form-group">
+          <label>Customer Email</label>
+          <input type="text" id="storedCustomerEmail" value="test@example.com" required>
+        </div>
+
+        <button type="button" onclick="processStoredCardSale()" id="storedCardBtn">
+          Charge Stored Card
+        </button>
+      </form>
+
+      <div id="storedCardResult"></div>
+    </div>
+
+    <!-- Section 4: Raw JSON Request/Response -->
     <div class="section">
       <h2>📝 Request/Response Logs</h2>
       
@@ -438,8 +476,8 @@
             customerName: document.getElementById('customerName').value,
             customerEmail: document.getElementById('customerEmail').value,
             customerMobile: '+14048811898',
-            requestCardToken: true,  // ✅ Request reusable token
-           },
+            requestCardToken: true,  // Request reusable card token
+          },
           Avs: {
             StreetNo: document.getElementById('streetNo').value,
             Zip: document.getElementById('zip').value,
@@ -460,61 +498,42 @@
         });
 
         const responseData = await response.json();
-
+        
         // Log response
         document.getElementById('iposResponseLog').value = JSON.stringify(responseData, null, 2);
 
         // Handle response
         const transactionData = responseData.iposTransactResponse || responseData.iposhpresponse;
 
-        // Check if we have transaction data
-        if (!transactionData) {
-        // Error response format
-        if (responseData.errors && responseData.errors.length > 0) {
-            const error = responseData.errors[0];
-            resultEl.innerHTML = `
-            <div class="result error">
-                ❌ API Error<br><br>
-                <strong>Field:</strong> ${error.field}<br>
-                <strong>Message:</strong> ${error.message}
-            </div>
-            `;
-        } else {
-            resultEl.innerHTML = `
-            <div class="result error">
-                ❌ Unknown Error<br><br>
-                <pre>${JSON.stringify(responseData, null, 2)}</pre>
-            </div>
-            `;
-        }
-        return;
-        }
-
         if (transactionData.responseCode === '200') {
-        resultEl.innerHTML = `
+          resultEl.innerHTML = `
             <div class="result success">
-            ✅ Transaction Successful!<br><br>
-            <strong>Transaction ID:</strong> ${transactionData.transactionId}<br>
-            <strong>Approval Code:</strong> ${transactionData.responseApprovalCode}<br>
-            <strong>Amount:</strong> $${(transactionData.totalAmount / 100).toFixed(2)}<br>
-            <strong>RRN:</strong> ${transactionData.rrn}<br>
-            <strong>Batch:</strong> ${transactionData.batchNumber}<br>
-            <strong>Invoice:</strong> ${transactionData.transactionNumber}<br><br>
-            ${transactionData.chdToken ? `
-                <div style="background: #fff3cd; padding: 10px; border-radius: 4px; margin-top: 10px;">
-                <strong>💳 Reusable Card Token (chdToken):</strong><br>
-                <code style="word-break: break-all; display: block; margin-top: 5px;">${transactionData.chdToken}</code>
-                <button onclick="navigator.clipboard.writeText('${transactionData.chdToken}')" 
-                        style="margin-top: 10px; background: #28a745; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">
+              ✅ Transaction Successful!<br><br>
+              <strong>Transaction ID:</strong> ${transactionData.transactionId}<br>
+              <strong>Approval Code:</strong> ${transactionData.responseApprovalCode}<br>
+              <strong>Amount:</strong> $${(transactionData.totalAmount / 100).toFixed(2)}<br>
+              <strong>RRN:</strong> ${transactionData.rrn}<br>
+              <strong>Batch:</strong> ${transactionData.batchNumber}<br>
+              <strong>Invoice:</strong> ${transactionData.transactionNumber}
+              ${transactionData.chdToken ? `
+                <div style="background: #fff3cd; border: 2px solid #ffc107; padding: 15px; border-radius: 4px; margin-top: 15px;">
+                  <strong>💳 Reusable Card Token (chdToken):</strong><br>
+                  <code style="word-break: break-all; display: block; margin: 10px 0; background: white; padding: 10px; border-radius: 4px;">${transactionData.chdToken}</code>
+                  <button onclick="copyCardToken('${transactionData.chdToken}')" 
+                          style="background: #28a745; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; margin-right: 10px;">
                     📋 Copy Token
-                </button>
-                <div style="margin-top: 10px; font-size: 12px; color: #666;">
-                    ℹ️ Store this token for future transactions. Use as "cardToken" parameter instead of "paymentTokenId".
+                  </button>
+                  <button onclick="useCardToken('${transactionData.chdToken}')" 
+                          style="background: #007bff; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">
+                    ⬇️ Use in Section 3
+                  </button>
+                  <div style="margin-top: 10px; font-size: 12px; color: #856404;">
+                    ℹ️ Store this token for future transactions. Use as "cardToken" parameter (not "paymentTokenId").
+                  </div>
                 </div>
-                </div>
-            ` : ''}
+              ` : '<div style="margin-top: 10px; color: #856404;">⚠️ No card token returned. Transaction may have been declined or requestCardToken was not set.</div>'}
             </div>
-        `;
+          `;
         } else {
           resultEl.innerHTML = `
             <div class="result error">
@@ -575,6 +594,153 @@
     document.getElementById('cccvv').addEventListener('input', function(e) {
       e.target.value = e.target.value.replace(/\D/g, '');
     });
+
+    // Process stored card sale
+    async function processStoredCardSale() {
+      const resultEl = document.getElementById('storedCardResult');
+      const btn = document.getElementById('storedCardBtn');
+      
+      btn.disabled = true;
+      resultEl.innerHTML = '<div class="result">⏳ Processing stored card transaction...</div>';
+
+      try {
+        const cardToken = document.getElementById('cardToken').value.trim();
+        const amount = parseInt(document.getElementById('storedAmount').value);
+
+        if (!cardToken) {
+          throw new Error('Card Token is required');
+        }
+
+        if (!amount || amount < 1) {
+          throw new Error('Amount must be greater than 0');
+        }
+
+        // Build request - NOTE: Using cardToken instead of paymentTokenId
+        const requestBody = {
+          merchantAuthentication: {
+            merchantId: MERCHANT_ID,
+            transactionReferenceId: 'STORED' + Date.now(),
+          },
+          transactionRequest: {
+            transactionType: 1, // Sale
+            amount: amount,
+            cardToken: cardToken,  // Using cardToken, NOT paymentTokenId
+            applySteamSettingTipFeeTax: false,
+          },
+          preferences: {
+            eReceipt: true,
+            customerName: document.getElementById('storedCustomerName').value,
+            customerEmail: document.getElementById('storedCustomerEmail').value,
+            customerMobile: '+14048811898',
+          },
+          Avs: {
+            StreetNo: '155',
+            Zip: '30316',
+          },
+        };
+
+        // Log request
+        const iposRequestLog = document.getElementById('iposRequestLog');
+        iposRequestLog.value = JSON.stringify(requestBody, null, 2);
+
+        // Make API call
+        const response = await fetch(API_BASE_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'token': API_AUTH_TOKEN,
+          },
+          body: JSON.stringify(requestBody),
+        });
+
+        const responseData = await response.json();
+        
+        // Log response
+        const iposResponseLog = document.getElementById('iposResponseLog');
+        iposResponseLog.value = JSON.stringify(responseData, null, 2);
+
+        // Handle response
+        const transactionData = responseData.iposTransactResponse || responseData.iposhpresponse;
+
+        // Check if we have transaction data
+        if (!transactionData) {
+          // Error response format
+          if (responseData.errors && responseData.errors.length > 0) {
+            const error = responseData.errors[0];
+            resultEl.innerHTML = `
+              <div class="result error">
+                ❌ API Error<br><br>
+                <strong>Field:</strong> ${error.field}<br>
+                <strong>Message:</strong> ${error.message}
+              </div>
+            `;
+          } else {
+            resultEl.innerHTML = `
+              <div class="result error">
+                ❌ Unknown Error<br><br>
+                <pre>${JSON.stringify(responseData, null, 2)}</pre>
+              </div>
+            `;
+          }
+          return;
+        }
+
+        if (transactionData.responseCode === '200') {
+          resultEl.innerHTML = `
+            <div class="result success">
+              ✅ Stored Card Transaction Successful!<br><br>
+              <strong>Transaction ID:</strong> ${transactionData.transactionId}<br>
+              <strong>Approval Code:</strong> ${transactionData.responseApprovalCode}<br>
+              <strong>Amount:</strong> $${(transactionData.totalAmount / 100).toFixed(2)}<br>
+              <strong>RRN:</strong> ${transactionData.rrn}<br>
+              <strong>Batch:</strong> ${transactionData.batchNumber}<br>
+              <strong>Invoice:</strong> ${transactionData.transactionNumber}<br><br>
+              <div style="background: #d4edda; padding: 10px; border-radius: 4px; margin-top: 10px;">
+                ✅ Successfully charged stored card token!<br>
+                This demonstrates repeat transactions using saved payment method.
+              </div>
+            </div>
+          `;
+        } else {
+          resultEl.innerHTML = `
+            <div class="result error">
+              ❌ Transaction Failed<br><br>
+              <strong>Response Code:</strong> ${transactionData.responseCode}<br>
+              <strong>Error Message:</strong> ${transactionData.errResponseMessage || transactionData.responseMessage}<br>
+              <strong>Error Code:</strong> ${transactionData.errResponseCode || 'N/A'}
+            </div>
+          `;
+        }
+
+      } catch (error) {
+        console.error('Stored card sale error:', error);
+        resultEl.innerHTML = `<div class="result error">❌ Error: ${error.message}</div>`;
+        const iposResponseLog = document.getElementById('iposResponseLog');
+        iposResponseLog.value = `Error: ${error.message}`;
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    // Copy card token to clipboard
+    function copyCardToken(token) {
+      navigator.clipboard.writeText(token).then(() => {
+        alert('Card token copied to clipboard!');
+      }).catch(err => {
+        console.error('Copy failed:', err);
+        alert('Failed to copy token');
+      });
+    }
+
+    // Use card token in Section 3
+    function useCardToken(token) {
+      document.getElementById('cardToken').value = token;
+      document.getElementById('cardToken').scrollIntoView({ behavior: 'smooth', block: 'center' });
+      document.getElementById('cardToken').style.background = '#fff3cd';
+      setTimeout(() => {
+        document.getElementById('cardToken').style.background = '';
+      }, 1000);
+    }
 
     // Load configuration on page load
     window.addEventListener('DOMContentLoaded', loadConfig);
