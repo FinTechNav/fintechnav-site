@@ -887,21 +887,23 @@
           // Hide processing overlay
           document.getElementById('processingOverlay').classList.remove('active');
 
-          // Check response
-          if (
-            saleResponse.iposTransactResponse &&
-            saleResponse.iposTransactResponse.responseCode === '200'
-          ) {
+          // Check response - handle both response formats
+          const transactionData = saleResponse.iposTransactResponse || saleResponse.iposhpresponse;
+
+          if (transactionData && transactionData.responseCode === '200') {
             // Success!
             showSuccessPage(saleResponse);
           } else {
             // Error
             const errorMsg =
-              saleResponse.iposTransactResponse?.errResponseMessage ||
+              transactionData?.errResponseMessage ||
               saleResponse.errors?.[0]?.message ||
               'Transaction failed';
             showAlert('reviewAlerts', 'error', `❌ ${errorMsg}`);
           }
+
+
+
         } catch (error) {
           console.error('Error processing order:', error);
           document.getElementById('processingOverlay').classList.remove('active');
@@ -958,7 +960,7 @@
       }
 
       function showSuccessPage(response) {
-        const transactionData = response.iposTransactResponse;
+        const transactionData = response.iposTransactResponse || response.iposhpresponse;
 
         document.getElementById('reviewAlerts').innerHTML = `
           <div class="alert alert-success">
