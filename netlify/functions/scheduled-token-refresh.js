@@ -24,7 +24,6 @@ exports.handler = async (event, context) => {
     };
   }
 
-  // CORRECT endpoint from documentation
   const AUTH_ENDPOINT =
     DEJAVOO_ENVIRONMENT === 'sandbox'
       ? 'https://auth.ipospays.tech/v1/authenticate-token'
@@ -35,18 +34,18 @@ exports.handler = async (event, context) => {
 
   try {
     // STEP 1: Generate new auth token from Dejavoo
+    // IMPORTANT: Send credentials in HEADERS, not body (per Manuel's instruction)
     console.log('📡 Requesting new token from Dejavoo...');
 
     const tokenResponse = await fetch(AUTH_ENDPOINT, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
         apiKey: DEJAVOO_API_KEY,
         secretKey: DEJAVOO_SECRET_KEY,
         scope: 'PaymentTokenization',
-      }),
+      },
+      body: JSON.stringify({}), // Empty body since everything is in headers
     });
 
     if (!tokenResponse.ok) {
@@ -123,8 +122,6 @@ exports.handler = async (event, context) => {
       );
       console.error(`Error details: ${errorText}`);
 
-      // Even though we got the token, we couldn't update it
-      // Return the token so you can manually update if needed
       return {
         statusCode: netlifyResponse.status,
         body: JSON.stringify({
