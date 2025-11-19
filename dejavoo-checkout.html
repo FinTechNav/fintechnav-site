@@ -712,8 +712,8 @@
           // Set API URL based on environment
           const isSandbox = ENVIRONMENT === 'sandbox';
           API_BASE_URL = isSandbox
-            ? 'https://payment.ipospays.tech/api/v3/iposTransact'
-            : 'https://payment.ipospays.com/api/v3/iposTransact';
+            ? 'https://payment.ipospays.tech/api/v2/iposTransact'
+            : 'https://payment.ipospays.com/api/v2/iposTransact';
 
           // Load the Dejavoo script with the auth token
           const ftdScript = document.getElementById('ftd');
