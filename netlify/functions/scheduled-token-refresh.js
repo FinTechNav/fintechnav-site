@@ -34,7 +34,6 @@ exports.handler = async (event, context) => {
 
   try {
     // STEP 1: Generate new auth token from Dejavoo
-    // IMPORTANT: Send credentials in HEADERS, not body (per Manuel's instruction)
     console.log('📡 Requesting new token from Dejavoo...');
 
     const tokenResponse = await fetch(AUTH_ENDPOINT, {
@@ -45,7 +44,7 @@ exports.handler = async (event, context) => {
         secretKey: DEJAVOO_SECRET_KEY,
         scope: 'PaymentTokenization',
       },
-      body: JSON.stringify({}), // Empty body since everything is in headers
+      body: JSON.stringify({}),
     });
 
     if (!tokenResponse.ok) {
@@ -67,7 +66,6 @@ exports.handler = async (event, context) => {
 
     const tokenData = await tokenResponse.json();
 
-    // Check response code
     if (tokenData.responseCode !== '00') {
       console.error('❌ Dejavoo returned error:', tokenData);
       return {
@@ -97,11 +95,43 @@ exports.handler = async (event, context) => {
     console.log(`📌 Token preview: ${newToken.substring(0, 30)}...`);
     console.log(`📌 Created: ${new Date(parseInt(tokenData.createdDt)).toISOString()}`);
 
-    // STEP 2: Update Netlify environment variable with new token
+    // STEP 2: Get account slug from site info
+    console.log('📡 Getting Netlify account slug...');
+
+    const siteResponse = await fetch(`https://api.netlify.com/api/v1/sites/${NETLIFY_SITE_ID}`, {
+      headers: {
+        Authorization: `Bearer ${NETLIFY_AUTH_TOKEN}`,
+      },
+    });
+
+    if (!siteResponse.ok) {
+      const errorText = await siteResponse.text();
+      console.error(`❌ Failed to get site info: ${siteResponse.status}`);
+      console.error(`Error details: ${errorText}`);
+
+      return {
+        statusCode: siteResponse.status,
+        body: JSON.stringify({
+          error: 'Failed to get Netlify site info',
+          status: siteResponse.status,
+          details: errorText,
+          newToken: newToken,
+          message:
+            'Token generated but could not update automatically. Manually update IPOS_API_AUTH_TOKEN',
+        }),
+      };
+    }
+
+    const siteData = await siteResponse.json();
+    const accountSlug = siteData.account_slug;
+
+    console.log(`✅ Account slug: ${accountSlug}`);
+
+    // STEP 3: Update Netlify environment variable with new token
     console.log('📡 Updating IPOS_API_AUTH_TOKEN in Netlify...');
 
     const netlifyResponse = await fetch(
-      `https://api.netlify.com/api/v1/sites/${NETLIFY_SITE_ID}/env/IPOS_API_AUTH_TOKEN`,
+      `https://api.netlify.com/api/v1/accounts/${accountSlug}/env/IPOS_API_AUTH_TOKEN`,
       {
         method: 'PATCH',
         headers: {
