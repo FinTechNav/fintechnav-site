@@ -2,7 +2,7 @@ const fiskaData = {
   company: {
     name: 'Fiska',
     url: 'https://fiska.com/',
-    date: 'April 2019 - Present',
+    date: 'April 2019 - October 2025',
     role: 'VP Product',
     linkedContent: {
       developerPortal: 'https://fiska.com/developers/',
@@ -16,5 +16,5 @@ const fiskaData = {
     'Grew our monthly payment processing volume by 213% (while keeping those response times lightning fast)',
   ],
   conclusion:
-    'Fiska a small startup environment where I got to be both a strategic product leader and hands-on technical implementer – sometimes holding strategy sessions in the morning and answering integration questions from ISVs in the afternoon!',
+    'Fiska is a small startup environment where I got to be both a strategic product leader and hands-on technical implementer – sometimes holding strategy sessions in the morning and answering integration questions from ISVs in the afternoon!',
 };
