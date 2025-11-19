@@ -438,7 +438,8 @@
             customerName: document.getElementById('customerName').value,
             customerEmail: document.getElementById('customerEmail').value,
             customerMobile: '+14048811898',
-          },
+            requestCardToken: true,  // ✅ Request reusable token
+           },
           Avs: {
             StreetNo: document.getElementById('streetNo').value,
             Zip: document.getElementById('zip').value,
@@ -490,17 +491,30 @@
         }
 
         if (transactionData.responseCode === '200') {
-          resultEl.innerHTML = `
+        resultEl.innerHTML = `
             <div class="result success">
-              ✅ Transaction Successful!<br><br>
-              <strong>Transaction ID:</strong> ${transactionData.transactionId}<br>
-              <strong>Approval Code:</strong> ${transactionData.responseApprovalCode}<br>
-              <strong>Amount:</strong> $${(transactionData.totalAmount / 100).toFixed(2)}<br>
-              <strong>RRN:</strong> ${transactionData.rrn}<br>
-              <strong>Batch:</strong> ${transactionData.batchNumber}<br>
-              <strong>Invoice:</strong> ${transactionData.transactionNumber}
+            ✅ Transaction Successful!<br><br>
+            <strong>Transaction ID:</strong> ${transactionData.transactionId}<br>
+            <strong>Approval Code:</strong> ${transactionData.responseApprovalCode}<br>
+            <strong>Amount:</strong> $${(transactionData.totalAmount / 100).toFixed(2)}<br>
+            <strong>RRN:</strong> ${transactionData.rrn}<br>
+            <strong>Batch:</strong> ${transactionData.batchNumber}<br>
+            <strong>Invoice:</strong> ${transactionData.transactionNumber}<br><br>
+            ${transactionData.chdToken ? `
+                <div style="background: #fff3cd; padding: 10px; border-radius: 4px; margin-top: 10px;">
+                <strong>💳 Reusable Card Token (chdToken):</strong><br>
+                <code style="word-break: break-all; display: block; margin-top: 5px;">${transactionData.chdToken}</code>
+                <button onclick="navigator.clipboard.writeText('${transactionData.chdToken}')" 
+                        style="margin-top: 10px; background: #28a745; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">
+                    📋 Copy Token
+                </button>
+                <div style="margin-top: 10px; font-size: 12px; color: #666;">
+                    ℹ️ Store this token for future transactions. Use as "cardToken" parameter instead of "paymentTokenId".
+                </div>
+                </div>
+            ` : ''}
             </div>
-          `;
+        `;
         } else {
           resultEl.innerHTML = `
             <div class="result error">
