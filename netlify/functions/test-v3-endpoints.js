@@ -5,6 +5,7 @@ exports.handler = async (event) => {
   const endpoints = [
     'https://payment.ipospays.tech/api/v3/auth/token',
     'https://payment.ipospays.tech/api/v3/auth',
+    'https://auth.ipospays.tech/v1/authenticate-token',
     'https://payment.ipospays.tech/api/v3/token',
     'https://payment.ipospays.tech/api/v3/authenticate',
     'https://payment.ipospays.tech/api/v3/generate-token',
