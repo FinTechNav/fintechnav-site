@@ -459,12 +459,35 @@
         });
 
         const responseData = await response.json();
-        
+
         // Log response
         document.getElementById('iposResponseLog').value = JSON.stringify(responseData, null, 2);
 
         // Handle response
         const transactionData = responseData.iposTransactResponse || responseData.iposhpresponse;
+
+        // Check if we have transaction data
+        if (!transactionData) {
+        // Error response format
+        if (responseData.errors && responseData.errors.length > 0) {
+            const error = responseData.errors[0];
+            resultEl.innerHTML = `
+            <div class="result error">
+                ❌ API Error<br><br>
+                <strong>Field:</strong> ${error.field}<br>
+                <strong>Message:</strong> ${error.message}
+            </div>
+            `;
+        } else {
+            resultEl.innerHTML = `
+            <div class="result error">
+                ❌ Unknown Error<br><br>
+                <pre>${JSON.stringify(responseData, null, 2)}</pre>
+            </div>
+            `;
+        }
+        return;
+        }
 
         if (transactionData.responseCode === '200') {
           resultEl.innerHTML = `
