@@ -18,34 +18,58 @@ exports.handler = async (event) => {
     };
   }
 
-  const config = {
-    dejavooAuthToken: process.env.DEJAVOO_AUTH_TOKEN || '',
-    merchantId: process.env.IPOS_MERCHANT_ID || '',
-    apiAuthToken: process.env.IPOS_API_AUTH_TOKEN || '', // This gets auto-updated daily
-    environment: process.env.DEJAVOO_ENVIRONMENT || 'sandbox',
-  };
+  try {
+    // Get fresh auth token dynamically
+    const protocol = event.headers.host.includes('localhost') ? 'http' : 'https';
+    const tokenResponse = await fetch(
+      `${protocol}://${event.headers.host}/.netlify/functions/get-auth-token`
+    );
 
-  // Validate required credentials
-  if (!config.dejavooAuthToken || !config.merchantId || !config.apiAuthToken) {
-    console.error('❌ Missing configuration:', {
-      hasDejavooAuthToken: !!config.dejavooAuthToken,
-      hasMerchantId: !!config.merchantId,
-      hasApiAuthToken: !!config.apiAuthToken,
-    });
+    if (!tokenResponse.ok) {
+      const errorText = await tokenResponse.text();
+      return {
+        statusCode: tokenResponse.status,
+        headers,
+        body: JSON.stringify({
+          error: 'Failed to get auth token',
+          details: errorText,
+        }),
+      };
+    }
 
+    const tokenData = await tokenResponse.json();
+
+    const config = {
+      dejavooAuthToken: process.env.DEJAVOO_AUTH_TOKEN || '',
+      merchantId: process.env.IPOS_MERCHANT_ID || '',
+      apiAuthToken: tokenData.token, // Fresh token generated on every request
+      environment: process.env.DEJAVOO_ENVIRONMENT || 'sandbox',
+    };
+
+    if (!config.dejavooAuthToken || !config.merchantId || !config.apiAuthToken) {
+      return {
+        statusCode: 500,
+        headers,
+        body: JSON.stringify({
+          error: 'Missing configuration',
+          message: 'Required environment variables not set',
+        }),
+      };
+    }
+
+    return {
+      statusCode: 200,
+      headers,
+      body: JSON.stringify(config),
+    };
+  } catch (error) {
     return {
       statusCode: 500,
       headers,
       body: JSON.stringify({
-        error: 'Missing configuration',
-        message: 'Required environment variables not set in Netlify',
+        error: 'Configuration fetch failed',
+        message: error.message,
       }),
     };
   }
-
-  return {
-    statusCode: 200,
-    headers,
-    body: JSON.stringify(config),
-  };
 };
