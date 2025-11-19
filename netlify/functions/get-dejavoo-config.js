@@ -18,58 +18,28 @@ exports.handler = async (event) => {
     };
   }
 
-  try {
-    // Get fresh auth token dynamically
-    const protocol = event.headers.host.includes('localhost') ? 'http' : 'https';
-    const tokenResponse = await fetch(
-      `${protocol}://${event.headers.host}/.netlify/functions/get-auth-token`
-    );
+  // For V2 endpoint, use the portal-generated token
+  const config = {
+    dejavooAuthToken: process.env.DEJAVOO_AUTH_TOKEN || '', // V2 portal token for Freedom to Design
+    merchantId: process.env.IPOS_MERCHANT_ID || '',
+    apiAuthToken: process.env.DEJAVOO_AUTH_TOKEN || '', // Use SAME V2 portal token for transactions
+    environment: process.env.DEJAVOO_ENVIRONMENT || 'sandbox',
+  };
 
-    if (!tokenResponse.ok) {
-      const errorText = await tokenResponse.text();
-      return {
-        statusCode: tokenResponse.status,
-        headers,
-        body: JSON.stringify({
-          error: 'Failed to get auth token',
-          details: errorText,
-        }),
-      };
-    }
-
-    const tokenData = await tokenResponse.json();
-
-    const config = {
-      dejavooAuthToken: process.env.DEJAVOO_AUTH_TOKEN || '',
-      merchantId: process.env.IPOS_MERCHANT_ID || '',
-      apiAuthToken: tokenData.token, // Fresh token generated on every request
-      environment: process.env.DEJAVOO_ENVIRONMENT || 'sandbox',
-    };
-
-    if (!config.dejavooAuthToken || !config.merchantId || !config.apiAuthToken) {
-      return {
-        statusCode: 500,
-        headers,
-        body: JSON.stringify({
-          error: 'Missing configuration',
-          message: 'Required environment variables not set',
-        }),
-      };
-    }
-
-    return {
-      statusCode: 200,
-      headers,
-      body: JSON.stringify(config),
-    };
-  } catch (error) {
+  if (!config.dejavooAuthToken || !config.merchantId || !config.apiAuthToken) {
     return {
       statusCode: 500,
       headers,
       body: JSON.stringify({
-        error: 'Configuration fetch failed',
-        message: error.message,
+        error: 'Missing configuration',
+        message: 'Required environment variables not set',
       }),
     };
   }
+
+  return {
+    statusCode: 200,
+    headers,
+    body: JSON.stringify(config),
+  };
 };
