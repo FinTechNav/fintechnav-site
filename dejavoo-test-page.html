@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dejavoo API Test Page</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f5f5;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 30px;
+      color: #333;
+    }
+
+    .section {
+      background: white;
+      padding: 30px;
+      margin-bottom: 30px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .section h2 {
+      margin-bottom: 20px;
+      color: #444;
+      border-bottom: 2px solid #007bff;
+      padding-bottom: 10px;
+    }
+
+    .form-group {
+      margin-bottom: 15px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+      color: #555;
+    }
+
+    input[type="text"],
+    input[type="number"],
+    textarea {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+
+    textarea {
+      min-height: 100px;
+      font-family: 'Courier New', monospace;
+    }
+
+    button {
+      background: #007bff;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      margin-right: 10px;
+    }
+
+    button:hover {
+      background: #0056b3;
+    }
+
+    button:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+
+    .result {
+      background: #f8f9fa;
+      border: 1px solid #dee2e6;
+      border-radius: 4px;
+      padding: 15px;
+      margin-top: 20px;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+
+    .success {
+      background: #d4edda;
+      border-color: #c3e6cb;
+      color: #155724;
+    }
+
+    .error {
+      background: #f8d7da;
+      border-color: #f5c6cb;
+      color: #721c24;
+    }
+
+    .token-display {
+      background: #fff3cd;
+      border: 2px solid #ffc107;
+      padding: 15px;
+      margin: 15px 0;
+      border-radius: 4px;
+    }
+
+    .token-display h3 {
+      margin-bottom: 10px;
+      color: #856404;
+    }
+
+    .token-value {
+      font-family: 'Courier New', monospace;
+      background: white;
+      padding: 10px;
+      border-radius: 4px;
+      word-break: break-all;
+      font-size: 14px;
+      margin-bottom: 10px;
+    }
+
+    .copy-btn {
+      background: #28a745;
+      font-size: 14px;
+      padding: 8px 16px;
+    }
+
+    .copy-btn:hover {
+      background: #218838;
+    }
+
+    .help-text {
+      font-size: 12px;
+      color: #666;
+      margin-top: 5px;
+    }
+
+    .config-status {
+      background: #d1ecf1;
+      border: 1px solid #bee5eb;
+      color: #0c5460;
+      padding: 15px;
+      border-radius: 4px;
+      margin-bottom: 20px;
+    }
+  </style>
+
+  <!-- Dejavoo Freedom to Design Library -->
+  <script id="ftd" defer></script>
+</head>
+<body>
+  <div class="container">
+    <h1>🧪 Dejavoo API Test Page</h1>
+
+    <div class="config-status" id="configStatus">
+      ⏳ Loading configuration...
+    </div>
+
+    <!-- Section 1: Freedom to Design Tokenization -->
+    <div class="section">
+      <h2>1️⃣ Freedom to Design - Card Tokenization</h2>
+      
+      <form id="ftdForm">
+        <div class="form-group">
+          <label>Card Number</label>
+          <input type="text" id="ccnumber" placeholder="4111 1111 1111 1111" maxlength="19" required>
+          <div class="help-text">Test: 4111 1111 1111 1111</div>
+        </div>
+
+        <div class="form-group">
+          <label>Expiry (MM/YY)</label>
+          <input type="text" id="ccexpiry" placeholder="12/25" maxlength="5" required>
+          <div class="help-text">Any future date</div>
+        </div>
+
+        <div class="form-group">
+          <label>CVV</label>
+          <input type="text" id="cccvv" placeholder="999" maxlength="4" required>
+          <div class="help-text">Use 999 for approval in sandbox</div>
+        </div>
+
+        <button type="button" onclick="generateToken()" id="tokenizeBtn">
+          Generate Payment Token
+        </button>
+      </form>
+
+      <div id="tokenResult"></div>
+
+      <div id="tokenDisplay" style="display: none;" class="token-display">
+        <h3>✅ Payment Token Generated</h3>
+        <div class="token-value" id="tokenValue"></div>
+        <button class="copy-btn" onclick="copyToken()">📋 Copy Token</button>
+        <button class="copy-btn" onclick="useToken()">⬇️ Use in Sale Below</button>
+      </div>
+    </div>
+
+    <!-- Section 2: iPOS Transact API -->
+    <div class="section">
+      <h2>2️⃣ iPOS Transact API - Process Sale</h2>
+      
+      <form id="saleForm">
+        <div class="form-group">
+          <label>Payment Token ID</label>
+          <input type="text" id="paymentTokenId" placeholder="Paste token from above or enter manually" required>
+          <div class="help-text">UUID format token from Freedom to Design</div>
+        </div>
+
+        <div class="form-group">
+          <label>Amount (in cents)</label>
+          <input type="number" id="amount" value="1000" required>
+          <div class="help-text">Example: 1000 = $10.00</div>
+        </div>
+
+        <div class="form-group">
+          <label>Customer Name</label>
+          <input type="text" id="customerName" value="Test Customer" required>
+        </div>
+
+        <div class="form-group">
+          <label>Customer Email</label>
+          <input type="text" id="customerEmail" value="test@example.com" required>
+        </div>
+
+        <div class="form-group">
+          <label>Street Number (for AVS)</label>
+          <input type="text" id="streetNo" value="155" required>
+        </div>
+
+        <div class="form-group">
+          <label>ZIP Code (for AVS)</label>
+          <input type="text" id="zip" value="30316" required>
+        </div>
+
+        <button type="button" onclick="processSale()" id="saleBtn">
+          Process Sale Transaction
+        </button>
+      </form>
+
+      <div id="saleResult"></div>
+    </div>
+
+    <!-- Section 3: Raw JSON Request/Response -->
+    <div class="section">
+      <h2>📝 Request/Response Logs</h2>
+      
+      <h3 style="margin-bottom: 10px;">Last FTD Request</h3>
+      <textarea id="ftdRequestLog" readonly></textarea>
+
+      <h3 style="margin: 20px 0 10px 0;">Last FTD Response</h3>
+      <textarea id="ftdResponseLog" readonly></textarea>
+
+      <h3 style="margin: 20px 0 10px 0;">Last iPOS Request</h3>
+      <textarea id="iposRequestLog" readonly></textarea>
+
+      <h3 style="margin: 20px 0 10px 0;">Last iPOS Response</h3>
+      <textarea id="iposResponseLog" readonly></textarea>
+    </div>
+  </div>
+
+  <script>
+    // Configuration
+    let MERCHANT_ID = '';
+    let API_AUTH_TOKEN = '';
+    let DEJAVOO_AUTH_TOKEN = '';
+    let ENVIRONMENT = 'sandbox';
+    let API_BASE_URL = '';
+    let currentToken = '';
+
+    // Load configuration on page load
+    async function loadConfig() {
+      const statusEl = document.getElementById('configStatus');
+      
+      try {
+        const response = await fetch('/.netlify/functions/get-dejavoo-config');
+        
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        const config = await response.json();
+
+        if (config.error) {
+          throw new Error(config.message || config.error);
+        }
+
+        // Set configuration
+        DEJAVOO_AUTH_TOKEN = config.dejavooAuthToken;
+        MERCHANT_ID = config.merchantId;
+        API_AUTH_TOKEN = config.apiAuthToken;
+        ENVIRONMENT = config.environment;
+
+        // Set API URL
+        const isSandbox = ENVIRONMENT === 'sandbox';
+        API_BASE_URL = isSandbox
+          ? 'https://payment.ipospays.tech/api/v2/iposTransact'
+          : 'https://payment.ipospays.com/api/v2/iposTransact';
+
+        // Load FTD script
+        const ftdScript = document.getElementById('ftd');
+        const scriptUrl = isSandbox
+          ? 'https://payment.ipospays.tech/ftd/v1/freedomtodesign.js'
+          : 'https://payment.ipospays.com/ftd/v1/freedomtodesign.js';
+
+        ftdScript.setAttribute('src', scriptUrl);
+        ftdScript.setAttribute('security_key', DEJAVOO_AUTH_TOKEN);
+
+        // Wait for script to load
+        await new Promise((resolve, reject) => {
+          ftdScript.onload = resolve;
+          ftdScript.onerror = reject;
+        });
+
+        statusEl.innerHTML = `✅ Configuration loaded successfully<br>
+          Environment: <strong>${ENVIRONMENT}</strong><br>
+          Merchant ID: <strong>${MERCHANT_ID}</strong><br>
+          API URL: <strong>${API_BASE_URL}</strong>`;
+        statusEl.style.background = '#d4edda';
+        statusEl.style.borderColor = '#c3e6cb';
+        statusEl.style.color = '#155724';
+
+      } catch (error) {
+        console.error('Configuration error:', error);
+        statusEl.innerHTML = `❌ Configuration Error: ${error.message}<br>
+          Please check Netlify environment variables.`;
+        statusEl.style.background = '#f8d7da';
+        statusEl.style.borderColor = '#f5c6cb';
+        statusEl.style.color = '#721c24';
+      }
+    }
+
+    // Generate payment token using Freedom to Design
+    async function generateToken() {
+      const resultEl = document.getElementById('tokenResult');
+      const btn = document.getElementById('tokenizeBtn');
+      
+      btn.disabled = true;
+      resultEl.innerHTML = '<div class="result">⏳ Generating payment token...</div>';
+
+      try {
+        // Check if postData is available
+        if (typeof postData !== 'function') {
+          throw new Error('Freedom to Design library not loaded. Please refresh the page.');
+        }
+
+        // Log request (FTD reads from form directly)
+        const requestLog = {
+          ccnumber: document.getElementById('ccnumber').value,
+          ccexpiry: document.getElementById('ccexpiry').value,
+          cccvv: document.getElementById('cccvv').value.replace(/./g, '*')
+        };
+        document.getElementById('ftdRequestLog').value = JSON.stringify(requestLog, null, 2);
+
+        // Call postData() - global function from Freedom to Design
+        const response = await postData();
+        
+        // Log response
+        document.getElementById('ftdResponseLog').value = JSON.stringify(response, null, 2);
+
+        if (response.statusCode !== '00' || !response.payment_token_id) {
+          throw new Error(response.message || 'Failed to generate payment token');
+        }
+
+        // Display token
+        currentToken = response.payment_token_id;
+        document.getElementById('tokenValue').textContent = currentToken;
+        document.getElementById('tokenDisplay').style.display = 'block';
+
+        resultEl.innerHTML = `
+          <div class="result success">
+            ✅ Success!<br><br>
+            <strong>Payment Token ID:</strong><br>
+            ${response.payment_token_id}<br><br>
+            <strong>Masked Card:</strong> ${response.ccNumber}<br>
+            <strong>Expiry:</strong> ${response.ccExpiry}
+          </div>
+        `;
+
+      } catch (error) {
+        console.error('Tokenization error:', error);
+        resultEl.innerHTML = `<div class="result error">❌ Error: ${error.message}</div>`;
+        document.getElementById('ftdResponseLog').value = `Error: ${error.message}`;
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    // Process sale transaction
+    async function processSale() {
+      const resultEl = document.getElementById('saleResult');
+      const btn = document.getElementById('saleBtn');
+      
+      btn.disabled = true;
+      resultEl.innerHTML = '<div class="result">⏳ Processing sale transaction...</div>';
+
+      try {
+        const paymentTokenId = document.getElementById('paymentTokenId').value.trim();
+        const amount = parseInt(document.getElementById('amount').value);
+
+        if (!paymentTokenId) {
+          throw new Error('Payment Token ID is required');
+        }
+
+        if (!amount || amount < 1) {
+          throw new Error('Amount must be greater than 0');
+        }
+
+        // Build request
+        const requestBody = {
+          merchantAuthentication: {
+            merchantId: MERCHANT_ID,
+            transactionReferenceId: 'TEST' + Date.now(),
+          },
+          transactionRequest: {
+            transactionType: 1, // Sale
+            amount: amount,
+            paymentTokenId: paymentTokenId,
+            applySteamSettingTipFeeTax: false,
+          },
+          preferences: {
+            eReceipt: true,
+            customerName: document.getElementById('customerName').value,
+            customerEmail: document.getElementById('customerEmail').value,
+            customerMobile: '+14048811898',
+          },
+          Avs: {
+            StreetNo: document.getElementById('streetNo').value,
+            Zip: document.getElementById('zip').value,
+          },
+        };
+
+        // Log request
+        document.getElementById('iposRequestLog').value = JSON.stringify(requestBody, null, 2);
+
+        // Make API call
+        const response = await fetch(API_BASE_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'token': API_AUTH_TOKEN,
+          },
+          body: JSON.stringify(requestBody),
+        });
+
+        const responseData = await response.json();
+        
+        // Log response
+        document.getElementById('iposResponseLog').value = JSON.stringify(responseData, null, 2);
+
+        // Handle response
+        const transactionData = responseData.iposTransactResponse || responseData.iposhpresponse;
+
+        if (transactionData.responseCode === '200') {
+          resultEl.innerHTML = `
+            <div class="result success">
+              ✅ Transaction Successful!<br><br>
+              <strong>Transaction ID:</strong> ${transactionData.transactionId}<br>
+              <strong>Approval Code:</strong> ${transactionData.responseApprovalCode}<br>
+              <strong>Amount:</strong> $${(transactionData.totalAmount / 100).toFixed(2)}<br>
+              <strong>RRN:</strong> ${transactionData.rrn}<br>
+              <strong>Batch:</strong> ${transactionData.batchNumber}<br>
+              <strong>Invoice:</strong> ${transactionData.transactionNumber}
+            </div>
+          `;
+        } else {
+          resultEl.innerHTML = `
+            <div class="result error">
+              ❌ Transaction Failed<br><br>
+              <strong>Response Code:</strong> ${transactionData.responseCode}<br>
+              <strong>Error Message:</strong> ${transactionData.errResponseMessage || transactionData.responseMessage}<br>
+              <strong>Error Code:</strong> ${transactionData.errResponseCode || 'N/A'}
+            </div>
+          `;
+        }
+
+      } catch (error) {
+        console.error('Sale error:', error);
+        resultEl.innerHTML = `<div class="result error">❌ Error: ${error.message}</div>`;
+        document.getElementById('iposResponseLog').value = `Error: ${error.message}`;
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    // Copy token to clipboard
+    function copyToken() {
+      navigator.clipboard.writeText(currentToken).then(() => {
+        alert('Token copied to clipboard!');
+      }).catch(err => {
+        console.error('Copy failed:', err);
+        alert('Failed to copy token');
+      });
+    }
+
+    // Use token in sale form
+    function useToken() {
+      document.getElementById('paymentTokenId').value = currentToken;
+      document.getElementById('paymentTokenId').scrollIntoView({ behavior: 'smooth', block: 'center' });
+      document.getElementById('paymentTokenId').style.background = '#fff3cd';
+      setTimeout(() => {
+        document.getElementById('paymentTokenId').style.background = '';
+      }, 1000);
+    }
+
+    // Format card number input
+    document.getElementById('ccnumber').addEventListener('input', function(e) {
+      let value = e.target.value.replace(/\s/g, '');
+      let formatted = value.match(/.{1,4}/g)?.join(' ') || value;
+      e.target.value = formatted;
+    });
+
+    // Format expiry input
+    document.getElementById('ccexpiry').addEventListener('input', function(e) {
+      let value = e.target.value.replace(/\D/g, '');
+      if (value.length >= 2) {
+        value = value.substring(0, 2) + '/' + value.substring(2, 4);
+      }
+      e.target.value = value;
+    });
+
+    // Format CVV input
+    document.getElementById('cccvv').addEventListener('input', function(e) {
+      e.target.value = e.target.value.replace(/\D/g, '');
+    });
+
+    // Load configuration on page load
+    window.addEventListener('DOMContentLoaded', loadConfig);
+  </script>
+</body>
+</html>
