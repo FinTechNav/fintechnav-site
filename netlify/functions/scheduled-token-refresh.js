@@ -24,11 +24,11 @@ exports.handler = async (event, context) => {
     };
   }
 
-  // Determine the correct authentication endpoint based on environment
+  // CORRECT endpoint from documentation
   const AUTH_ENDPOINT =
     DEJAVOO_ENVIRONMENT === 'sandbox'
-      ? 'https://payment.ipospays.tech/api/v3/auth/token'
-      : 'https://payment.ipospays.com/api/v3/auth/token';
+      ? 'https://auth.ipospays.tech/v1/authenticate-token'
+      : 'https://auth.ipospays.com/v1/authenticate-token';
 
   console.log(`📌 Environment: ${DEJAVOO_ENVIRONMENT}`);
   console.log(`📌 Auth Endpoint: ${AUTH_ENDPOINT}`);
@@ -67,7 +67,21 @@ exports.handler = async (event, context) => {
     }
 
     const tokenData = await tokenResponse.json();
-    const newToken = tokenData.token || tokenData.authToken || tokenData.access_token;
+
+    // Check response code
+    if (tokenData.responseCode !== '00') {
+      console.error('❌ Dejavoo returned error:', tokenData);
+      return {
+        statusCode: 400,
+        body: JSON.stringify({
+          error: 'Dejavoo API error',
+          errorCode: tokenData.errorCode,
+          errorMessage: tokenData.errorMessage,
+        }),
+      };
+    }
+
+    const newToken = tokenData.token;
 
     if (!newToken) {
       console.error('❌ No token found in Dejavoo response:', tokenData);
@@ -82,6 +96,7 @@ exports.handler = async (event, context) => {
 
     console.log('✅ New auth token generated from Dejavoo');
     console.log(`📌 Token preview: ${newToken.substring(0, 30)}...`);
+    console.log(`📌 Created: ${new Date(parseInt(tokenData.createdDt)).toISOString()}`);
 
     // STEP 2: Update Netlify environment variable with new token
     console.log('📡 Updating IPOS_API_AUTH_TOKEN in Netlify...');
@@ -133,6 +148,7 @@ exports.handler = async (event, context) => {
         timestamp: new Date().toISOString(),
         environment: DEJAVOO_ENVIRONMENT,
         expiresIn: '24 hours',
+        tokenCreated: new Date(parseInt(tokenData.createdDt)).toISOString(),
       }),
     };
   } catch (error) {
