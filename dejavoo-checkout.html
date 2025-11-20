@@ -1,1277 +1,1222 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dejavoo Payment Checkout</title>
-  
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
+    <title>Dejavoo Checkout</title>
 
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-      color: #e0e0e0;
-      min-height: 100vh;
-      padding: 20px;
-    }
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
 
-    .container {
-      max-width: 600px;
-      margin: 0 auto;
-      background: rgba(255, 255, 255, 0.05);
-      border-radius: 16px;
-      padding: 40px;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-      backdrop-filter: blur(10px);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-    }
+      body {
+        font-family: 'Georgia', 'Times New Roman', serif;
+        background-color: #f8f8f8;
+        color: #333;
+        line-height: 1.6;
+      }
 
-    h1 {
-      color: #4a9eff;
-      margin-bottom: 10px;
-      font-size: 2rem;
-    }
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 40px 20px;
+      }
 
-    .subtitle {
-      color: #a0a0a0;
-      margin-bottom: 30px;
-      font-size: 0.95rem;
-    }
+      .header {
+        text-align: center;
+        margin-bottom: 40px;
+        padding-bottom: 20px;
+        border-bottom: 1px solid #ddd;
+      }
 
-    .step-indicator {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 40px;
-      padding: 0 20px;
-    }
+      .header h1 {
+        font-size: 1.5rem;
+        font-weight: 400;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        color: #8b7355;
+      }
 
-    .step {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      flex: 1;
-      position: relative;
-    }
+      .checkout-wrapper {
+        display: flex;
+        gap: 40px;
+        align-items: flex-start;
+      }
 
-    .step:not(:last-child)::after {
-      content: '';
-      position: absolute;
-      top: 20px;
-      left: 60%;
-      right: -40%;
-      height: 2px;
-      background: rgba(255, 255, 255, 0.2);
-      z-index: 0;
-    }
+      @media (max-width: 968px) {
+        .checkout-wrapper {
+          flex-direction: column;
+        }
+      }
 
-    .step.active:not(:last-child)::after {
-      background: #4a9eff;
-    }
+      .checkout-main {
+        flex: 1;
+        background: white;
+        padding: 40px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
 
-    .step-number {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      background: rgba(255, 255, 255, 0.1);
-      border: 2px solid rgba(255, 255, 255, 0.2);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: bold;
-      margin-bottom: 8px;
-      z-index: 1;
-      position: relative;
-    }
+      .checkout-sidebar {
+        width: 380px;
+        background: white;
+        padding: 30px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
 
-    .step.active .step-number {
-      background: #4a9eff;
-      border-color: #4a9eff;
-      color: #fff;
-    }
+      @media (max-width: 968px) {
+        .checkout-sidebar {
+          width: 100%;
+        }
+      }
 
-    .step.completed .step-number {
-      background: #28a745;
-      border-color: #28a745;
-      color: #fff;
-    }
+      .progress-steps {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 40px;
+        padding-bottom: 20px;
+        border-bottom: 2px solid #f0f0f0;
+      }
 
-    .step-label {
-      font-size: 0.85rem;
-      color: #a0a0a0;
-      text-align: center;
-    }
+      .step {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: #999;
+        font-size: 0.9rem;
+      }
 
-    .step.active .step-label {
-      color: #4a9eff;
-      font-weight: 500;
-    }
+      .step.active {
+        color: #8b7355;
+        font-weight: 600;
+      }
 
-    .page {
-      display: none;
-    }
+      .step-number {
+        display: inline-block;
+        width: 24px;
+        height: 24px;
+        line-height: 24px;
+        text-align: center;
+        border-radius: 50%;
+        background: #f0f0f0;
+        color: #999;
+        font-size: 0.85rem;
+      }
 
-    .page.active {
-      display: block;
-      animation: fadeIn 0.3s ease-in;
-    }
+      .step.active .step-number {
+        background: #8b7355;
+        color: white;
+      }
 
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
+      .section-title {
+        font-size: 1.3rem;
+        font-weight: 400;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: #8b7355;
+        margin-bottom: 30px;
+      }
 
-    .form-group {
-      margin-bottom: 24px;
-    }
+      .form-group {
+        margin-bottom: 20px;
+      }
 
-    label {
-      display: block;
-      margin-bottom: 8px;
-      color: #c0c0c0;
-      font-size: 0.9rem;
-      font-weight: 500;
-    }
+      label {
+        display: block;
+        margin-bottom: 8px;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #666;
+      }
 
-    select, input {
-      width: 100%;
-      padding: 12px 16px;
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      border-radius: 8px;
-      color: #e0e0e0;
-      font-size: 1rem;
-      transition: all 0.3s ease;
-    }
+      label .required {
+        color: #d9534f;
+      }
 
-    select:focus, input:focus {
-      outline: none;
-      border-color: #4a9eff;
-      background: rgba(255, 255, 255, 0.08);
-      box-shadow: 0 0 0 3px rgba(74, 158, 255, 0.1);
-    }
+      input[type='text'],
+      input[type='email'],
+      input[type='tel'],
+      select {
+        width: 100%;
+        padding: 12px;
+        border: 1px solid #ddd;
+        font-size: 0.95rem;
+        font-family: inherit;
+        transition: border-color 0.3s;
+      }
 
-    select option {
-      background: #1a1a2e;
-      color: #e0e0e0;
-    }
+      input[type='text']:focus,
+      input[type='email']:focus,
+      input[type='tel']:focus,
+      select:focus {
+        outline: none;
+        border-color: #8b7355;
+      }
 
-    .input-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
-    }
+      .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 15px;
+      }
 
-    .input-row-3 {
-      display: grid;
-      grid-template-columns: 2fr 1fr 1fr;
-      gap: 16px;
-    }
+      .help-text {
+        font-size: 0.75rem;
+        color: #999;
+        margin-top: 5px;
+      }
 
-    .help-text {
-      font-size: 0.85rem;
-      color: #888;
-      margin-top: 6px;
-    }
+      .security-notice {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px;
+        background: #f9f9f9;
+        border-left: 3px solid #8b7355;
+        margin-bottom: 25px;
+        font-size: 0.85rem;
+        color: #666;
+      }
 
-    .saved-cards {
-      margin-bottom: 24px;
-    }
+      .btn {
+        width: 100%;
+        padding: 16px;
+        background: #8b7355;
+        color: white;
+        border: none;
+        font-size: 1rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        cursor: pointer;
+        transition: background 0.3s;
+      }
 
-    .card-option {
-      background: rgba(255, 255, 255, 0.03);
-      border: 2px solid rgba(255, 255, 255, 0.1);
-      border-radius: 12px;
-      padding: 16px;
-      margin-bottom: 12px;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
+      .btn:hover:not(:disabled) {
+        background: #6f5a43;
+      }
 
-    .card-option:hover {
-      background: rgba(255, 255, 255, 0.05);
-      border-color: rgba(74, 158, 255, 0.5);
-    }
+      .btn:disabled {
+        background: #ccc;
+        cursor: not-allowed;
+      }
 
-    .card-option.selected {
-      border-color: #4a9eff;
-      background: rgba(74, 158, 255, 0.1);
-    }
+      .btn-secondary {
+        background: white;
+        color: #8b7355;
+        border: 2px solid #8b7355;
+      }
 
-    .card-option input[type="radio"] {
-      width: 20px;
-      height: 20px;
-      margin: 0;
-    }
+      .btn-secondary:hover:not(:disabled) {
+        background: #f9f9f9;
+      }
 
-    .card-info {
-      flex: 1;
-    }
+      /* Sidebar Styles */
+      .order-item {
+        display: flex;
+        gap: 15px;
+        margin-bottom: 20px;
+        padding-bottom: 20px;
+        border-bottom: 1px solid #f0f0f0;
+      }
 
-    .card-brand {
-      font-weight: 600;
-      color: #4a9eff;
-      font-size: 0.95rem;
-    }
+      .order-item:last-child {
+        border-bottom: none;
+      }
 
-    .card-details {
-      color: #a0a0a0;
-      font-size: 0.85rem;
-      margin-top: 4px;
-    }
+      .item-image {
+        width: 60px;
+        height: 60px;
+        background: #f0f0f0;
+        border: 1px solid #ddd;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.7rem;
+        color: #999;
+      }
 
-    .new-card-option {
-      border-style: dashed;
-      justify-content: center;
-      color: #4a9eff;
-      font-weight: 500;
-    }
+      .item-details {
+        flex: 1;
+      }
 
-    .checkbox-group {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-top: 16px;
-      padding: 16px;
-      background: rgba(74, 158, 255, 0.05);
-      border-radius: 8px;
-      border: 1px solid rgba(74, 158, 255, 0.2);
-    }
+      .item-title {
+        font-size: 0.9rem;
+        font-weight: 600;
+        margin-bottom: 4px;
+        color: #333;
+      }
 
-    .checkbox-group input[type="checkbox"] {
-      width: 20px;
-      height: 20px;
-      margin: 0;
-    }
+      .item-subtitle {
+        font-size: 0.8rem;
+        color: #999;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
 
-    .checkbox-group label {
-      margin: 0;
-      color: #c0c0c0;
-      font-size: 0.9rem;
-    }
+      .item-price {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.9rem;
+      }
 
-    .button-group {
-      display: flex;
-      gap: 16px;
-      margin-top: 32px;
-    }
+      .item-quantity {
+        color: #666;
+      }
 
-    button {
-      flex: 1;
-      padding: 14px 24px;
-      border: none;
-      border-radius: 8px;
-      font-size: 1rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.3s ease;
-    }
+      .summary-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 12px;
+        font-size: 0.9rem;
+      }
 
-    .btn-primary {
-      background: linear-gradient(135deg, #4a9eff 0%, #357abd 100%);
-      color: white;
-    }
+      .summary-row.total {
+        border-top: 2px solid #f0f0f0;
+        padding-top: 15px;
+        margin-top: 15px;
+        font-size: 1.1rem;
+        font-weight: 600;
+      }
 
-    .btn-primary:hover:not(:disabled) {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(74, 158, 255, 0.4);
-    }
+      .summary-row .label {
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #666;
+      }
 
-    .btn-secondary {
-      background: rgba(255, 255, 255, 0.05);
-      color: #c0c0c0;
-      border: 1px solid rgba(255, 255, 255, 0.2);
-    }
+      .summary-row.total .label {
+        color: #333;
+      }
 
-    .btn-secondary:hover:not(:disabled) {
-      background: rgba(255, 255, 255, 0.08);
-      border-color: rgba(255, 255, 255, 0.3);
-    }
+      .savings {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px;
+        background: #f0f9f0;
+        border-left: 3px solid #5cb85c;
+        margin-top: 15px;
+        font-size: 0.85rem;
+        color: #5cb85c;
+      }
 
-    button:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
+      .help-contact {
+        margin-top: 25px;
+        padding-top: 25px;
+        border-top: 1px solid #f0f0f0;
+        text-align: center;
+        font-size: 0.85rem;
+        color: #666;
+      }
 
-    .loading {
-      display: none;
-      text-align: center;
-      padding: 40px;
-    }
+      .help-contact a {
+        color: #8b7355;
+        text-decoration: none;
+      }
 
-    .loading.active {
-      display: block;
-    }
+      .alert {
+        padding: 15px;
+        margin-bottom: 20px;
+        border-radius: 4px;
+      }
 
-    .spinner {
-      border: 3px solid rgba(255, 255, 255, 0.1);
-      border-top: 3px solid #4a9eff;
-      border-radius: 50%;
-      width: 50px;
-      height: 50px;
-      animation: spin 1s linear infinite;
-      margin: 0 auto 20px;
-    }
+      .alert-success {
+        background: #d4edda;
+        border-left: 4px solid #28a745;
+        color: #155724;
+      }
 
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
+      .alert-error {
+        background: #f8d7da;
+        border-left: 4px solid #dc3545;
+        color: #721c24;
+      }
 
-    .success-message {
-      background: rgba(40, 167, 69, 0.1);
-      border: 1px solid rgba(40, 167, 69, 0.3);
-      border-radius: 8px;
-      padding: 20px;
-      margin-top: 20px;
-      text-align: center;
-    }
+      .alert-info {
+        background: #d1ecf1;
+        border-left: 4px solid #17a2b8;
+        color: #0c5460;
+      }
 
-    .success-icon {
-      font-size: 3rem;
-      margin-bottom: 10px;
-    }
+      .review-section {
+        background: #f9f9f9;
+        padding: 20px;
+        margin-bottom: 20px;
+        border: 1px solid #e0e0e0;
+      }
 
-    .error-message {
-      background: rgba(220, 53, 69, 0.1);
-      border: 1px solid rgba(220, 53, 69, 0.3);
-      border-radius: 8px;
-      padding: 16px;
-      margin-top: 16px;
-      color: #ff6b6b;
-    }
+      .review-section h3 {
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #8b7355;
+        margin-bottom: 12px;
+      }
 
-    .info-section {
-      background: rgba(255, 255, 255, 0.03);
-      border-radius: 8px;
-      padding: 20px;
-      margin-top: 24px;
-    }
+      .review-content {
+        font-size: 0.9rem;
+        color: #333;
+        line-height: 1.6;
+      }
 
-    .info-row {
-      display: flex;
-      justify-content: space-between;
-      padding: 10px 0;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    }
+      .edit-link {
+        color: #8b7355;
+        text-decoration: none;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        cursor: pointer;
+        border: none;
+        background: none;
+        padding: 0;
+      }
 
-    .info-row:last-child {
-      border-bottom: none;
-      font-weight: 600;
-      font-size: 1.1rem;
-      color: #4a9eff;
-    }
+      .edit-link:hover {
+        text-decoration: underline;
+      }
 
-    .info-label {
-      color: #a0a0a0;
-    }
+      .processing-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.7);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+      }
 
-    .info-value {
-      color: #e0e0e0;
-    }
+      .processing-overlay.active {
+        display: flex;
+      }
 
-    #new-card-form {
-      display: none;
-      margin-top: 20px;
-      padding-top: 20px;
-      border-top: 1px solid rgba(255, 255, 255, 0.1);
-    }
+      .processing-content {
+        background: white;
+        padding: 40px;
+        border-radius: 8px;
+        text-align: center;
+        max-width: 400px;
+      }
 
-    #new-card-form.active {
-      display: block;
-    }
+      .spinner {
+        width: 50px;
+        height: 50px;
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid #8b7355;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 20px;
+      }
 
-    /* Hidden Freedom to Design iframe */
-    #ftd {
-      display: none;
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <h1>🛒 Checkout</h1>
-    <p class="subtitle">Complete your purchase securely</p>
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
 
-    <!-- Step Indicator -->
-    <div class="step-indicator">
-      <div class="step active" id="step-1-indicator">
-        <div class="step-number">1</div>
-        <div class="step-label">Customer</div>
+      .step-content {
+        display: none;
+      }
+
+      .step-content.active {
+        display: block;
+      }
+
+      .transaction-details {
+        background: #f9f9f9;
+        padding: 20px;
+        margin-top: 20px;
+        border: 1px solid #e0e0e0;
+        font-family: 'Courier New', monospace;
+        font-size: 0.85rem;
+      }
+
+      .customer-info-box {
+        background: #f9f9f9;
+        padding: 15px;
+        margin-top: 15px;
+        border: 1px solid #e0e0e0;
+      }
+
+      .saved-cards {
+        margin-top: 20px;
+      }
+
+      .card-option {
+        background: #f9f9f9;
+        border: 2px solid #ddd;
+        padding: 15px;
+        margin-bottom: 12px;
+        cursor: pointer;
+        transition: all 0.3s;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .card-option:hover {
+        border-color: #8b7355;
+        background: #fff;
+      }
+
+      .card-option.selected {
+        border-color: #8b7355;
+        background: #fff;
+      }
+
+      .card-option input[type='radio'] {
+        width: 18px;
+        height: 18px;
+      }
+
+      .checkbox-label {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 15px;
+        background: #f0f9f0;
+        border: 1px solid #d4edda;
+        margin-top: 20px;
+        cursor: pointer;
+      }
+
+      .checkbox-label input[type='checkbox'] {
+        width: 18px;
+        height: 18px;
+      }
+    </style>
+
+    <!-- Dejavoo Freedom to Design Library - Dynamically loaded -->
+    <script id="ftd" defer></script>
+  </head>
+
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>Checkout</h1>
       </div>
-      <div class="step" id="step-2-indicator">
-        <div class="step-number">2</div>
-        <div class="step-label">Payment</div>
-      </div>
-      <div class="step" id="step-3-indicator">
-        <div class="step-number">3</div>
-        <div class="step-label">Review</div>
+
+      <div class="checkout-wrapper">
+        <!-- Main Content -->
+        <div class="checkout-main">
+          <!-- Loading indicator -->
+          <div id="loadingConfig" class="alert alert-info" style="display: none">
+            <span>⏳</span> Loading payment configuration...
+          </div>
+
+          <!-- Progress Steps -->
+          <div class="progress-steps">
+            <div class="step active" id="step1-indicator">
+              <span class="step-number">1</span>
+              <span>Customer</span>
+            </div>
+            <div class="step" id="step2-indicator">
+              <span class="step-number">2</span>
+              <span>Payment</span>
+            </div>
+            <div class="step" id="step3-indicator">
+              <span class="step-number">3</span>
+              <span>Review</span>
+            </div>
+          </div>
+
+          <!-- Step 1: Customer Selection -->
+          <div class="step-content active" id="step1">
+            <h2 class="section-title">Select Customer</h2>
+
+            <div id="customerAlerts"></div>
+
+            <div class="form-group">
+              <label>Customer <span class="required">*</span></label>
+              <select id="customerSelect" onchange="handleCustomerChange()">
+                <option value="">-- Select Customer --</option>
+                <option value="guest">🎫 Checkout as Guest</option>
+              </select>
+            </div>
+
+            <div id="customerInfoBox" class="customer-info-box" style="display: none">
+              <strong>Customer Details:</strong>
+              <div id="customerInfo" style="margin-top: 10px"></div>
+            </div>
+
+            <button type="button" class="btn" id="continueToPayment" onclick="continueToPayment()" disabled>
+              Continue to Payment
+            </button>
+          </div>
+
+          <!-- Step 2: Payment -->
+          <div class="step-content" id="step2">
+            <h2 class="section-title">Payment</h2>
+
+            <div class="security-notice">
+              <span>🔒</span>
+              All transactions are secure and encrypted
+            </div>
+
+            <div id="paymentAlerts"></div>
+
+            <!-- Saved Cards Section -->
+            <div id="savedCardsSection" style="display: none">
+              <h3 style="font-size: 0.9rem; margin-bottom: 15px; color: #666">SAVED PAYMENT METHODS</h3>
+              <div id="savedCardsList" class="saved-cards"></div>
+            </div>
+
+            <!-- CVV for saved card -->
+            <div id="savedCardCvv" style="display: none">
+              <div class="form-group">
+                <label>CVV <span class="required">*</span></label>
+                <input type="text" id="savedCvv" placeholder="123" maxlength="4" />
+                <div class="help-text">Security code required for saved cards</div>
+              </div>
+            </div>
+
+            <!-- New Card Form -->
+            <div id="newCardForm">
+              <h3 style="font-size: 0.9rem; margin-bottom: 15px; color: #666" id="newCardHeading">CARD DETAILS</h3>
+              
+              <form id="paymentForm">
+                <div class="form-group">
+                  <label>Card Number <span class="required">*</span></label>
+                  <input
+                    type="text"
+                    id="ccnumber"
+                    placeholder="1234 1234 1234 1234"
+                    maxlength="19"
+                    required
+                  />
+                </div>
+
+                <div class="form-row">
+                  <div class="form-group">
+                    <label>Expiry Month <span class="required">*</span></label>
+                    <input type="text" id="ccexpiry" placeholder="MM/YY" maxlength="5" required />
+                  </div>
+
+                  <div class="form-group">
+                    <label>CVV <span class="required">*</span></label>
+                    <input type="text" id="cccvv" placeholder="123" maxlength="4" required />
+                    <div class="help-text">3-4 digits on back</div>
+                  </div>
+
+                  <div></div>
+                </div>
+
+                <h3 class="section-title" style="margin-top: 30px; font-size: 1rem">Billing</h3>
+
+                <div class="form-group">
+                  <label>Name <span class="required">*</span></label>
+                  <input type="text" id="billingName" required />
+                </div>
+
+                <div class="form-group">
+                  <label>Address <span class="required">*</span></label>
+                  <input type="text" id="billingAddress" required />
+                </div>
+
+                <div class="form-row">
+                  <div class="form-group">
+                    <label>City <span class="required">*</span></label>
+                    <input type="text" id="billingCity" required />
+                  </div>
+
+                  <div class="form-group">
+                    <label>State <span class="required">*</span></label>
+                    <input type="text" id="billingState" maxlength="2" required />
+                  </div>
+
+                  <div class="form-group">
+                    <label>Zip <span class="required">*</span></label>
+                    <input type="text" id="billingZip" required />
+                  </div>
+                </div>
+
+                <!-- Save card option (for returning customers) -->
+                <div id="saveCardOption" style="display: none">
+                  <label class="checkbox-label">
+                    <input type="checkbox" id="saveCardCheckbox" checked />
+                    <span>💾 Save this card for future purchases</span>
+                  </label>
+                </div>
+              </form>
+            </div>
+
+            <button type="button" class="btn" style="margin-top: 20px" onclick="continueToReview()">
+              Continue to Review
+            </button>
+          </div>
+
+          <!-- Step 3: Review -->
+          <div class="step-content" id="step3">
+            <h2 class="section-title">Review</h2>
+
+            <div id="reviewAlerts"></div>
+
+            <div class="review-section">
+              <div style="display: flex; justify-content: space-between; align-items: center">
+                <h3>Customer</h3>
+                <button class="edit-link" onclick="editStep(1)">Edit</button>
+              </div>
+              <div class="review-content" id="reviewCustomer"></div>
+            </div>
+
+            <div class="review-section">
+              <div style="display: flex; justify-content: space-between; align-items: center">
+                <h3>Payment</h3>
+                <button class="edit-link" onclick="editStep(2)">Edit</button>
+              </div>
+              <div class="review-content" id="reviewPayment"></div>
+            </div>
+
+            <div class="review-section">
+              <div style="display: flex; justify-content: space-between; align-items: center">
+                <h3>Billing Address</h3>
+                <button class="edit-link" onclick="editStep(2)">Edit</button>
+              </div>
+              <div class="review-content" id="reviewBilling"></div>
+            </div>
+
+            <button type="button" class="btn" onclick="placeOrder()">Place Order</button>
+          </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="checkout-sidebar">
+          <div class="order-item">
+            <div class="item-image">
+              <img
+                src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60'%3E%3Crect fill='%23f0f0f0' width='60' height='60'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dy='.3em' fill='%23999' font-size='10'%3EWine%3C/text%3E%3C/svg%3E"
+                alt="Product"
+                style="width: 100%; height: 100%"
+              />
+            </div>
+            <div class="item-details">
+              <div class="item-title">Humboldt Single Vineyard Pinot Pack</div>
+              <div class="item-subtitle">Three-Pack</div>
+              <div class="item-price">
+                <span>$155.00</span>
+                <span class="item-quantity">× 1</span>
+                <span style="margin-left: auto">$155.00</span>
+              </div>
+            </div>
+          </div>
+
+          <div style="margin-top: 30px">
+            <div class="summary-row">
+              <span class="label">Subtotal (3)</span>
+              <span>$155.00</span>
+            </div>
+            <div class="summary-row">
+              <span class="label">Shipping (UPS Ground)</span>
+              <span><s style="color: #999">$31.93</s> $0.00</span>
+            </div>
+            <div class="summary-row">
+              <span class="label">Tax</span>
+              <span>$0.00</span>
+            </div>
+            <div class="summary-row total">
+              <span class="label">Total</span>
+              <span>USD $155.00</span>
+            </div>
+          </div>
+
+          <div class="savings">
+            <span>💰</span>
+            <span>Shipping Included on Humboldt Three-Packs - $31.93 SAVED</span>
+          </div>
+
+          <div class="help-contact">
+            Need help? Call us at<br />
+            <a href="tel:7078201621">(707) 820-1621</a>
+          </div>
+        </div>
       </div>
     </div>
 
-    <!-- Page 1: Customer Selection -->
-    <div id="page-1" class="page active">
-      <h2 style="color: #4a9eff; margin-bottom: 20px;">Select Customer</h2>
-      
-      <div class="form-group">
-        <label for="customer-select">Choose a customer or checkout as guest</label>
-        <select id="customer-select">
-          <option value="">-- Select a customer --</option>
-          <option value="guest">🎫 Checkout as Guest</option>
-        </select>
-      </div>
-
-      <div id="customer-info" class="info-section" style="display: none;">
-        <h3 style="color: #4a9eff; margin-bottom: 16px;">Customer Information</h3>
-        <div class="info-row">
-          <span class="info-label">Name:</span>
-          <span class="info-value" id="display-name"></span>
-        </div>
-        <div class="info-row">
-          <span class="info-label">Email:</span>
-          <span class="info-value" id="display-email"></span>
-        </div>
-        <div class="info-row">
-          <span class="info-label">Address:</span>
-          <span class="info-value" id="display-address"></span>
-        </div>
-      </div>
-
-      <div class="button-group">
-        <button class="btn-primary" onclick="nextToPayment()" id="continue-to-payment" disabled>
-          Continue to Payment →
-        </button>
+    <!-- Processing Overlay -->
+    <div class="processing-overlay" id="processingOverlay">
+      <div class="processing-content">
+        <div class="spinner"></div>
+        <h3 style="margin-bottom: 10px; color: #333">Processing Payment...</h3>
+        <p style="color: #666; font-size: 0.9rem" id="processingMessage">
+          Please wait while we process your transaction
+        </p>
       </div>
     </div>
 
-    <!-- Page 2: Payment Information -->
-    <div id="page-2" class="page">
-      <h2 style="color: #4a9eff; margin-bottom: 20px;">Payment Information</h2>
+    <script>
+      // Configuration
+      let MERCHANT_ID = '';
+      let API_AUTH_TOKEN = '';
+      let DEJAVOO_AUTH_TOKEN = '';
+      let ENVIRONMENT = 'sandbox';
+      let API_BASE_URL = '';
 
-      <!-- Saved Cards Section (for returning customers) -->
-      <div id="saved-cards-section" style="display: none;">
-        <h3 style="color: #c0c0c0; margin-bottom: 16px; font-size: 1rem;">Saved Payment Methods</h3>
-        <div id="saved-cards-list" class="saved-cards"></div>
-      </div>
+      let currentStep = 1;
+      let selectedCustomer = null;
+      let savedCards = [];
+      let selectedPaymentMethod = 'new'; // 'new' or token_id
+      let paymentTokenId = null;
+      let reusableToken = null;
+      let configLoaded = false;
 
-      <!-- CVV for Saved Card -->
-      <div id="saved-card-cvv" style="display: none;">
-        <div class="form-group">
-          <label for="saved-cvv">Security Code (CVV)</label>
-          <input type="text" id="saved-cvv" maxlength="4" placeholder="123" autocomplete="off">
-          <div class="help-text">Required for security - not stored with your card</div>
-        </div>
-      </div>
+      // Load configuration
+      async function loadConfig() {
+        const loadingEl = document.getElementById('loadingConfig');
+        loadingEl.style.display = 'block';
 
-      <!-- New Card Form -->
-      <div id="new-card-form">
-        <h3 style="color: #c0c0c0; margin-bottom: 16px; font-size: 1rem;" id="new-card-heading">Payment Details</h3>
-        
-        <div class="form-group">
-          <label for="card-number">Card Number</label>
-          <input type="text" id="card-number" maxlength="19" placeholder="4111 1111 1111 1111" autocomplete="cc-number">
-          <div class="help-text">Test: 4111 1111 1111 1111</div>
-        </div>
-
-        <div class="input-row-3">
-          <div class="form-group">
-            <label for="expiry-month">Expiry Month</label>
-            <input type="text" id="expiry-month" maxlength="2" placeholder="12" autocomplete="cc-exp-month">
-          </div>
-          <div class="form-group">
-            <label for="expiry-year">Year</label>
-            <input type="text" id="expiry-year" maxlength="4" placeholder="2025" autocomplete="cc-exp-year">
-          </div>
-          <div class="form-group">
-            <label for="cvv">CVV</label>
-            <input type="text" id="cvv" maxlength="4" placeholder="999" autocomplete="cc-csc">
-          </div>
-        </div>
-
-        <!-- Billing Information (for guest checkout) -->
-        <div id="billing-info-section">
-          <h3 style="color: #c0c0c0; margin-bottom: 16px; margin-top: 24px; font-size: 1rem;">Billing Information</h3>
+        try {
+          console.log('🔄 Loading configuration...');
+          const response = await fetch('/.netlify/functions/get-dejavoo-config');
           
-          <div class="form-group">
-            <label for="billing-name">Cardholder Name</label>
-            <input type="text" id="billing-name" placeholder="John Doe" autocomplete="cc-name">
-          </div>
-
-          <div class="form-group">
-            <label for="billing-street">Street Address</label>
-            <input type="text" id="billing-street" placeholder="123 Main Street" autocomplete="street-address">
-          </div>
-
-          <div class="input-row">
-            <div class="form-group">
-              <label for="billing-city">City</label>
-              <input type="text" id="billing-city" placeholder="Springfield" autocomplete="address-level2">
-            </div>
-            <div class="form-group">
-              <label for="billing-state">State</label>
-              <input type="text" id="billing-state" maxlength="2" placeholder="IL" autocomplete="address-level1">
-            </div>
-          </div>
-
-          <div class="input-row">
-            <div class="form-group">
-              <label for="billing-zip">ZIP Code</label>
-              <input type="text" id="billing-zip" maxlength="10" placeholder="62704" autocomplete="postal-code">
-            </div>
-            <div class="form-group">
-              <label for="billing-country">Country</label>
-              <input type="text" id="billing-country" value="USA" autocomplete="country-name">
-            </div>
-          </div>
-        </div>
-
-        <!-- Save Card Checkbox (for returning customers with new card) -->
-        <div id="save-card-option" style="display: none;">
-          <div class="checkbox-group">
-            <input type="checkbox" id="save-card" checked>
-            <label for="save-card">💾 Save this card for future purchases</label>
-          </div>
-        </div>
-      </div>
-
-      <div class="button-group">
-        <button class="btn-secondary" onclick="backToCustomer()">
-          ← Back
-        </button>
-        <button class="btn-primary" onclick="nextToReview()" id="continue-to-review">
-          Review Order →
-        </button>
-      </div>
-    </div>
-
-    <!-- Page 3: Review and Confirm -->
-    <div id="page-3" class="page">
-      <h2 style="color: #4a9eff; margin-bottom: 20px;">Review Your Order</h2>
-
-      <div class="info-section">
-        <h3 style="color: #c0c0c0; margin-bottom: 16px;">Order Summary</h3>
-        <div class="info-row">
-          <span class="info-label">Customer:</span>
-          <span class="info-value" id="review-customer"></span>
-        </div>
-        <div class="info-row">
-          <span class="info-label">Payment Method:</span>
-          <span class="info-value" id="review-payment"></span>
-        </div>
-        <div class="info-row">
-          <span class="info-label">Billing Address:</span>
-          <span class="info-value" id="review-billing"></span>
-        </div>
-        <div class="info-row">
-          <span class="info-label">Amount:</span>
-          <span class="info-value">$155.00</span>
-        </div>
-      </div>
-
-      <div class="button-group">
-        <button class="btn-secondary" onclick="backToPayment()">
-          ← Back
-        </button>
-        <button class="btn-primary" onclick="processPayment()" id="process-payment-btn">
-          Complete Purchase ($155.00)
-        </button>
-      </div>
-    </div>
-
-    <!-- Loading State -->
-    <div id="loading" class="loading">
-      <div class="spinner"></div>
-      <p style="color: #a0a0a0;">Processing your payment...</p>
-    </div>
-
-    <!-- Success Page -->
-    <div id="success-page" class="page">
-      <div class="success-message">
-        <div class="success-icon">✅</div>
-        <h2 style="color: #28a745; margin-bottom: 10px;">Payment Successful!</h2>
-        <p style="color: #a0a0a0; margin-bottom: 20px;">Your transaction has been completed.</p>
-        
-        <div class="info-section" style="text-align: left;">
-          <div class="info-row">
-            <span class="info-label">Transaction ID:</span>
-            <span class="info-value" id="success-transaction-id"></span>
-          </div>
-          <div class="info-row">
-            <span class="info-label">Amount:</span>
-            <span class="info-value" id="success-amount"></span>
-          </div>
-          <div class="info-row">
-            <span class="info-label">Status:</span>
-            <span class="info-value" style="color: #28a745;">Approved</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Hidden iframe for Freedom to Design -->
-  <iframe id="ftd" name="ftd"></iframe>
-
-  <!-- Freedom to Design Script (loaded dynamically) -->
-  <script id="ftd-script"></script>
-
-  <script>
-    // ============================================
-    // GLOBAL STATE
-    // ============================================
-    let MERCHANT_ID = '';
-    let API_AUTH_TOKEN = '';
-    let DEJAVOO_AUTH_TOKEN = '';
-    let ENVIRONMENT = 'sandbox';
-    let API_BASE_URL = '';
-
-    let selectedCustomer = null;
-    let savedCards = [];
-    let selectedPaymentMethod = 'new'; // 'new' or token_id
-    let paymentTokenId = null;
-    let reusableToken = null;
-
-    // ============================================
-    // INITIALIZATION
-    // ============================================
-    document.addEventListener('DOMContentLoaded', async function() {
-      console.log('🚀 Initializing checkout page...');
-      await loadConfig();
-      await loadCustomers();
-    });
-
-    async function loadConfig() {
-      try {
-        console.log('📡 Loading Dejavoo configuration...');
-        const response = await fetch('/.netlify/functions/get-dejavoo-config');
-        
-        if (!response.ok) {
-          throw new Error(`Config load failed: ${response.status}`);
-        }
-
-        const config = await response.json();
-        
-        DEJAVOO_AUTH_TOKEN = config.dejavooAuthToken;
-        MERCHANT_ID = config.merchantId;
-        API_AUTH_TOKEN = config.apiAuthToken;
-        ENVIRONMENT = config.environment;
-        
-        API_BASE_URL = ENVIRONMENT === 'sandbox'
-          ? 'https://payment.ipospays.tech/api/v2/iposTransact'
-          : 'https://payment.ipospays.com/api/v2/iposTransact';
-        
-        console.log('✅ Configuration loaded successfully');
-        console.log('📌 Environment:', ENVIRONMENT);
-        console.log('📌 Merchant ID:', MERCHANT_ID);
-
-        // Load Freedom to Design script
-        const ftdScript = document.getElementById('ftd-script');
-        const scriptUrl = ENVIRONMENT === 'sandbox'
-          ? 'https://payments.ipospays.tech/FreedomtoDesignAuthorize/ftdjs'
-          : 'https://payments.ipospays.com/FreedomtoDesignAuthorize/ftdjs';
-        
-        ftdScript.src = scriptUrl;
-        console.log('✅ Freedom to Design script loaded');
-      } catch (error) {
-        console.error('❌ Configuration load failed:', error);
-        alert('Failed to load payment configuration. Please refresh the page.');
-      }
-    }
-
-    async function loadCustomers() {
-      try {
-        console.log('👥 Loading customer list...');
-        const response = await fetch('/.netlify/functions/get-customers');
-        
-        if (!response.ok) {
-          throw new Error(`Customers load failed: ${response.status}`);
-        }
-
-        const customers = await response.json();
-        console.log('✅ Loaded', customers.length, 'customers');
-
-        const select = document.getElementById('customer-select');
-        customers.forEach(customer => {
-          const option = document.createElement('option');
-          option.value = customer.customer_id;
-          option.textContent = customer.customer_name;
-          option.dataset.customer = JSON.stringify(customer);
-          select.appendChild(option);
-        });
-
-        select.addEventListener('change', handleCustomerChange);
-      } catch (error) {
-        console.error('❌ Failed to load customers:', error);
-      }
-    }
-
-    // ============================================
-    // PAGE 1: CUSTOMER SELECTION
-    // ============================================
-    function handleCustomerChange() {
-      const select = document.getElementById('customer-select');
-      const selectedOption = select.options[select.selectedIndex];
-      const continueBtn = document.getElementById('continue-to-payment');
-      const customerInfo = document.getElementById('customer-info');
-
-      if (!selectedOption.value) {
-        continueBtn.disabled = true;
-        customerInfo.style.display = 'none';
-        selectedCustomer = null;
-        return;
-      }
-
-      continueBtn.disabled = false;
-
-      if (selectedOption.value === 'guest') {
-        console.log('🎫 Guest checkout selected');
-        selectedCustomer = {
-          customer_id: null,
-          customer_name: 'Guest',
-          email: '',
-          billing_street: '',
-          billing_city: '',
-          billing_state: '',
-          billing_zip: '',
-          billing_country: 'USA'
-        };
-        customerInfo.style.display = 'none';
-      } else {
-        selectedCustomer = JSON.parse(selectedOption.dataset.customer);
-        console.log('👤 Customer selected:', selectedCustomer.customer_name);
-        
-        document.getElementById('display-name').textContent = selectedCustomer.customer_name;
-        document.getElementById('display-email').textContent = selectedCustomer.email;
-        document.getElementById('display-address').textContent = 
-          `${selectedCustomer.billing_street}, ${selectedCustomer.billing_city}, ${selectedCustomer.billing_state} ${selectedCustomer.billing_zip}`;
-        
-        customerInfo.style.display = 'block';
-      }
-    }
-
-    async function nextToPayment() {
-      if (!selectedCustomer) {
-        alert('Please select a customer or choose guest checkout');
-        return;
-      }
-
-      console.log('➡️ Moving to payment page...');
-
-      // Update step indicators
-      document.getElementById('step-1-indicator').classList.remove('active');
-      document.getElementById('step-1-indicator').classList.add('completed');
-      document.getElementById('step-2-indicator').classList.add('active');
-
-      // Show page 2
-      document.getElementById('page-1').classList.remove('active');
-      document.getElementById('page-2').classList.add('active');
-
-      // Configure payment page based on customer
-      if (selectedCustomer.customer_id) {
-        // Returning customer - load saved cards
-        await loadSavedCards(selectedCustomer.customer_id);
-        
-        // Pre-fill billing info
-        document.getElementById('billing-name').value = selectedCustomer.customer_name;
-        document.getElementById('billing-street').value = selectedCustomer.billing_street;
-        document.getElementById('billing-city').value = selectedCustomer.billing_city;
-        document.getElementById('billing-state').value = selectedCustomer.billing_state;
-        document.getElementById('billing-zip').value = selectedCustomer.billing_zip;
-        document.getElementById('billing-country').value = selectedCustomer.billing_country;
-
-        // Show save card option
-        document.getElementById('save-card-option').style.display = 'block';
-      } else {
-        // Guest checkout - clear all fields
-        clearPaymentForm();
-        document.getElementById('saved-cards-section').style.display = 'none';
-        document.getElementById('new-card-form').classList.add('active');
-        document.getElementById('save-card-option').style.display = 'none';
-      }
-    }
-
-    async function loadSavedCards(customerId) {
-      try {
-        console.log('💳 Loading saved payment methods...');
-        const response = await fetch(`/.netlify/functions/get-payment-tokens?customer_id=${customerId}`);
-        
-        if (!response.ok) {
-          console.warn('⚠️ No saved cards found');
-          savedCards = [];
-          showNewCardForm();
-          return;
-        }
-
-        savedCards = await response.json();
-        console.log('✅ Loaded', savedCards.length, 'saved cards');
-
-        if (savedCards.length > 0) {
-          displaySavedCards();
-        } else {
-          showNewCardForm();
-        }
-      } catch (error) {
-        console.error('❌ Failed to load saved cards:', error);
-        showNewCardForm();
-      }
-    }
-
-    function displaySavedCards() {
-      const savedCardsSection = document.getElementById('saved-cards-section');
-      const savedCardsList = document.getElementById('saved-cards-list');
-      
-      savedCardsList.innerHTML = '';
-
-      // Add saved cards
-      savedCards.forEach(card => {
-        const cardOption = document.createElement('div');
-        cardOption.className = 'card-option';
-        cardOption.innerHTML = `
-          <input type="radio" name="payment-method" value="${card.token_id}" id="card-${card.token_id}">
-          <div class="card-info">
-            <div class="card-brand">${card.card_type || 'Card'}</div>
-            <div class="card-details">•••• ${card.card_last_four} | Expires ${card.expiry_month}/${card.expiry_year}</div>
-          </div>
-        `;
-        cardOption.onclick = () => selectSavedCard(card.token_id);
-        savedCardsList.appendChild(cardOption);
-      });
-
-      // Add "new card" option
-      const newCardOption = document.createElement('div');
-      newCardOption.className = 'card-option new-card-option';
-      newCardOption.innerHTML = `
-        <input type="radio" name="payment-method" value="new" id="card-new">
-        <div>➕ Use a different card</div>
-      `;
-      newCardOption.onclick = () => selectNewCard();
-      savedCardsList.appendChild(newCardOption);
-
-      savedCardsSection.style.display = 'block';
-      
-      // Select first card by default
-      selectSavedCard(savedCards[0].token_id);
-    }
-
-    function selectSavedCard(tokenId) {
-      selectedPaymentMethod = tokenId;
-      
-      // Update UI
-      document.querySelectorAll('.card-option').forEach(el => el.classList.remove('selected'));
-      event.currentTarget.classList.add('selected');
-      document.getElementById(`card-${tokenId}`).checked = true;
-
-      // Show CVV input, hide new card form
-      document.getElementById('saved-card-cvv').style.display = 'block';
-      document.getElementById('new-card-form').classList.remove('active');
-
-      console.log('💳 Selected saved card:', tokenId);
-    }
-
-    function selectNewCard() {
-      selectedPaymentMethod = 'new';
-      
-      // Update UI
-      document.querySelectorAll('.card-option').forEach(el => el.classList.remove('selected'));
-      event.currentTarget.classList.add('selected');
-      document.getElementById('card-new').checked = true;
-
-      // Hide CVV input, show new card form
-      document.getElementById('saved-card-cvv').style.display = 'none';
-      document.getElementById('new-card-form').classList.add('active');
-      document.getElementById('new-card-heading').textContent = 'Enter New Card Details';
-
-      console.log('➕ Selected new card entry');
-    }
-
-    function showNewCardForm() {
-      document.getElementById('saved-cards-section').style.display = 'none';
-      document.getElementById('new-card-form').classList.add('active');
-      document.getElementById('new-card-heading').textContent = 'Payment Details';
-    }
-
-    function clearPaymentForm() {
-      document.getElementById('card-number').value = '';
-      document.getElementById('expiry-month').value = '';
-      document.getElementById('expiry-year').value = '';
-      document.getElementById('cvv').value = '';
-      document.getElementById('billing-name').value = '';
-      document.getElementById('billing-street').value = '';
-      document.getElementById('billing-city').value = '';
-      document.getElementById('billing-state').value = '';
-      document.getElementById('billing-zip').value = '';
-      document.getElementById('billing-country').value = 'USA';
-      document.getElementById('saved-cvv').value = '';
-    }
-
-    // ============================================
-    // PAGE 2: PAYMENT INFO → PAGE 3: REVIEW
-    // ============================================
-    function nextToReview() {
-      // Validate payment information
-      if (selectedPaymentMethod === 'new') {
-        if (!validateNewCardForm()) {
-          return;
-        }
-      } else {
-        const cvv = document.getElementById('saved-cvv').value;
-        if (!cvv || cvv.length < 3) {
-          alert('Please enter the CVV for your saved card');
-          return;
-        }
-      }
-
-      console.log('➡️ Moving to review page...');
-
-      // Update step indicators
-      document.getElementById('step-2-indicator').classList.remove('active');
-      document.getElementById('step-2-indicator').classList.add('completed');
-      document.getElementById('step-3-indicator').classList.add('active');
-
-      // Populate review page
-      populateReview();
-
-      // Show page 3
-      document.getElementById('page-2').classList.remove('active');
-      document.getElementById('page-3').classList.add('active');
-    }
-
-    function validateNewCardForm() {
-      const cardNumber = document.getElementById('card-number').value.replace(/\s/g, '');
-      const expiryMonth = document.getElementById('expiry-month').value;
-      const expiryYear = document.getElementById('expiry-year').value;
-      const cvv = document.getElementById('cvv').value;
-      const billingName = document.getElementById('billing-name').value;
-      const billingStreet = document.getElementById('billing-street').value;
-      const billingCity = document.getElementById('billing-city').value;
-      const billingState = document.getElementById('billing-state').value;
-      const billingZip = document.getElementById('billing-zip').value;
-
-      if (!cardNumber || cardNumber.length < 13) {
-        alert('Please enter a valid card number');
-        return false;
-      }
-
-      if (!expiryMonth || parseInt(expiryMonth) < 1 || parseInt(expiryMonth) > 12) {
-        alert('Please enter a valid expiry month (01-12)');
-        return false;
-      }
-
-      if (!expiryYear || expiryYear.length !== 4) {
-        alert('Please enter a valid 4-digit expiry year');
-        return false;
-      }
-
-      if (!cvv || cvv.length < 3) {
-        alert('Please enter a valid CVV');
-        return false;
-      }
-
-      if (!billingName || !billingStreet || !billingCity || !billingState || !billingZip) {
-        alert('Please fill in all billing information fields');
-        return false;
-      }
-
-      return true;
-    }
-
-    function populateReview() {
-      // Customer info
-      document.getElementById('review-customer').textContent = selectedCustomer.customer_name;
-
-      // Payment method
-      let paymentText = '';
-      if (selectedPaymentMethod === 'new') {
-        const cardNumber = document.getElementById('card-number').value;
-        const lastFour = cardNumber.replace(/\s/g, '').slice(-4);
-        paymentText = `New card ending in ${lastFour}`;
-      } else {
-        const card = savedCards.find(c => c.token_id === selectedPaymentMethod);
-        paymentText = `${card.card_type} •••• ${card.card_last_four}`;
-      }
-      document.getElementById('review-payment').textContent = paymentText;
-
-      // Billing address
-      const street = document.getElementById('billing-street').value;
-      const city = document.getElementById('billing-city').value;
-      const state = document.getElementById('billing-state').value;
-      const zip = document.getElementById('billing-zip').value;
-      document.getElementById('review-billing').textContent = `${street}, ${city}, ${state} ${zip}`;
-    }
-
-    // ============================================
-    // NAVIGATION FUNCTIONS
-    // ============================================
-    function backToCustomer() {
-      document.getElementById('step-2-indicator').classList.remove('active');
-      document.getElementById('step-1-indicator').classList.remove('completed');
-      document.getElementById('step-1-indicator').classList.add('active');
-      
-      document.getElementById('page-2').classList.remove('active');
-      document.getElementById('page-1').classList.add('active');
-    }
-
-    function backToPayment() {
-      document.getElementById('step-3-indicator').classList.remove('active');
-      document.getElementById('step-2-indicator').classList.remove('completed');
-      document.getElementById('step-2-indicator').classList.add('active');
-      
-      document.getElementById('page-3').classList.remove('active');
-      document.getElementById('page-2').classList.add('active');
-    }
-
-    // ============================================
-    // PAYMENT PROCESSING
-    // ============================================
-    async function processPayment() {
-      console.log('💳 Starting payment process...');
-      
-      // Show loading
-      document.getElementById('page-3').style.display = 'none';
-      document.getElementById('loading').classList.add('active');
-
-      try {
-        // Step 1: Get or generate payment token
-        if (selectedPaymentMethod === 'new') {
-          await generatePaymentToken();
-        } else {
-          // Use existing token
-          const card = savedCards.find(c => c.token_id === selectedPaymentMethod);
-          reusableToken = card.reusable_token;
-          console.log('✅ Using saved payment token');
-        }
-
-        // Step 2: Process transaction
-        await processTransaction();
-
-        // Step 3: Save new card if applicable
-        if (selectedPaymentMethod === 'new' && selectedCustomer.customer_id && document.getElementById('save-card').checked) {
-          await savePaymentToken();
-        }
-
-        // Show success
-        showSuccess();
-
-      } catch (error) {
-        console.error('❌ Payment failed:', error);
-        document.getElementById('loading').classList.remove('active');
-        document.getElementById('page-3').style.display = 'block';
-        
-        const errorDiv = document.createElement('div');
-        errorDiv.className = 'error-message';
-        errorDiv.textContent = `Payment failed: ${error.message}`;
-        document.getElementById('page-3').insertBefore(errorDiv, document.querySelector('.button-group'));
-      }
-    }
-
-    async function generatePaymentToken() {
-      return new Promise((resolve, reject) => {
-        console.log('🔐 Generating payment token...');
-
-        const cardNumber = document.getElementById('card-number').value.replace(/\s/g, '');
-        const expiryMonth = document.getElementById('expiry-month').value.padStart(2, '0');
-        const expiryYear = document.getElementById('expiry-year').value;
-        const cvv = document.getElementById('cvv').value;
-
-        const tokenRequest = {
-          authToken: DEJAVOO_AUTH_TOKEN,
-          merchantId: MERCHANT_ID,
-          ccnumber: cardNumber,
-          ccexpiry: `${expiryMonth}${expiryYear}`,
-          cccvv: cvv
-        };
-
-        window.freedomtopay(tokenRequest, function(response) {
-          console.log('📨 Token response:', response);
-
-          if (response.paymentTokenId) {
-            paymentTokenId = response.paymentTokenId;
-            console.log('✅ Payment token generated:', paymentTokenId);
-            resolve();
-          } else {
-            reject(new Error(response.responseMessage || 'Token generation failed'));
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
           }
-        });
-      });
-    }
 
-    async function processTransaction() {
-      console.log('💰 Processing transaction...');
+          const config = await response.json();
+          
+          DEJAVOO_AUTH_TOKEN = config.dejavooAuthToken;
+          MERCHANT_ID = config.merchantId;
+          API_AUTH_TOKEN = config.apiAuthToken;
+          ENVIRONMENT = config.environment;
 
-      const billingStreet = document.getElementById('billing-street').value;
-      const billingCity = document.getElementById('billing-city').value;
-      const billingState = document.getElementById('billing-state').value;
-      const billingZip = document.getElementById('billing-zip').value;
+          const isSandbox = ENVIRONMENT === 'sandbox';
+          API_BASE_URL = isSandbox
+            ? 'https://payment.ipospays.tech/api/v2/iposTransact'
+            : 'https://payment.ipospays.com/api/v2/iposTransact';
 
-      const transactionData = {
-        authToken: API_AUTH_TOKEN,
-        merchantId: MERCHANT_ID,
-        merchantTransactionId: 'TEST' + Date.now(),
-        firstName: selectedCustomer.customer_name.split(' ')[0],
-        lastName: selectedCustomer.customer_name.split(' ').slice(1).join(' '),
-        address: billingStreet,
-        city: billingCity,
-        state: billingState,
-        zipCode: billingZip,
-        amount: '155.00'
-      };
+          const ftdScript = document.getElementById('ftd');
+          const scriptUrl = isSandbox
+            ? 'https://payment.ipospays.tech/ftd/v1/freedomtodesign.js'
+            : 'https://payment.ipospays.com/ftd/v1/freedomtodesign.js';
 
-      // Use appropriate token
-      if (selectedPaymentMethod === 'new') {
-        transactionData.paymentTokenId = paymentTokenId;
-      } else {
-        transactionData.paymentTokenId = reusableToken;
-        transactionData.cvv = document.getElementById('saved-cvv').value;
-      }
+          ftdScript.setAttribute('src', scriptUrl);
+          ftdScript.setAttribute('security_key', DEJAVOO_AUTH_TOKEN);
 
-      console.log('📤 Sending transaction request...');
+          await new Promise((resolve, reject) => {
+            ftdScript.onload = resolve;
+            ftdScript.onerror = reject;
+          });
 
-      const response = await fetch(API_BASE_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(transactionData)
-      });
+          console.log('✅ Configuration loaded');
+          loadingEl.style.display = 'none';
+          configLoaded = true;
 
-      const result = await response.json();
-      console.log('📨 Transaction response:', result);
-
-      if (result.responseCode !== '00') {
-        throw new Error(result.responseMessage || 'Transaction failed');
-      }
-
-      // Store reusable token for new cards
-      if (selectedPaymentMethod === 'new' && result.paymentTokenId) {
-        reusableToken = result.paymentTokenId;
-      }
-
-      // Save transaction to database
-      await saveTransaction(result);
-
-      console.log('✅ Transaction approved!');
-    }
-
-    async function savePaymentToken() {
-      try {
-        console.log('💾 Saving payment token...');
-
-        const cardNumber = document.getElementById('card-number').value.replace(/\s/g, '');
-        const lastFour = cardNumber.slice(-4);
-        const cardType = getCardType(cardNumber);
-        const expiryMonth = document.getElementById('expiry-month').value.padStart(2, '0');
-        const expiryYear = document.getElementById('expiry-year').value;
-
-        const tokenData = {
-          customer_id: selectedCustomer.customer_id,
-          payment_token_id: paymentTokenId,
-          reusable_token: reusableToken,
-          card_last_four: lastFour,
-          card_type: cardType,
-          expiry_month: expiryMonth,
-          expiry_year: expiryYear
-        };
-
-        const response = await fetch('/.netlify/functions/save-payment-token', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(tokenData)
-        });
-
-        if (response.ok) {
-          console.log('✅ Payment token saved');
-        } else {
-          console.warn('⚠️ Failed to save payment token');
+          // Load customers
+          await loadCustomers();
+        } catch (error) {
+          console.error('❌ Configuration error:', error);
+          loadingEl.innerHTML = `<div class="alert alert-error">Configuration Error: ${error.message}</div>`;
         }
-      } catch (error) {
-        console.error('❌ Error saving token:', error);
       }
-    }
 
-    async function saveTransaction(transactionResult) {
-      try {
-        const transactionData = {
-          customer_id: selectedCustomer.customer_id,
-          dejavoo_reference_id: transactionResult.transactionId || transactionResult.merchantTransactionId,
-          amount: 155.00,
-          status: 'approved',
-          response_code: transactionResult.responseCode,
-          response_message: transactionResult.responseMessage,
-          card_last_four: transactionResult.last4 || document.getElementById('card-number').value.slice(-4),
-          card_type: transactionResult.cardType
-        };
+      // Load customers
+      async function loadCustomers() {
+        try {
+          const response = await fetch('/.netlify/functions/get-customers');
+          if (!response.ok) throw new Error('Failed to load customers');
+          
+          const customers = await response.json();
+          const select = document.getElementById('customerSelect');
+          
+          customers.forEach(customer => {
+            const option = document.createElement('option');
+            option.value = customer.customer_id;
+            option.textContent = customer.customer_name;
+            option.dataset.customer = JSON.stringify(customer);
+            select.appendChild(option);
+          });
 
-        await fetch('/.netlify/functions/save-transaction', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(transactionData)
+          console.log('✅ Loaded customers');
+        } catch (error) {
+          console.error('❌ Failed to load customers:', error);
+          showAlert('customerAlerts', 'error', 'Unable to load customer list');
+        }
+      }
+
+      // Handle customer selection
+      function handleCustomerChange() {
+        const select = document.getElementById('customerSelect');
+        const continueBtn = document.getElementById('continueToPayment');
+        const infoBox = document.getElementById('customerInfoBox');
+        const infoDiv = document.getElementById('customerInfo');
+
+        if (!select.value) {
+          continueBtn.disabled = true;
+          infoBox.style.display = 'none';
+          selectedCustomer = null;
+          return;
+        }
+
+        continueBtn.disabled = false;
+
+        if (select.value === 'guest') {
+          selectedCustomer = { customer_id: null, customer_name: 'Guest' };
+          infoBox.style.display = 'none';
+        } else {
+          const option = select.options[select.selectedIndex];
+          selectedCustomer = JSON.parse(option.dataset.customer);
+          
+          infoDiv.innerHTML = `
+            <strong>${selectedCustomer.customer_name}</strong><br>
+            ${selectedCustomer.email}<br>
+            ${selectedCustomer.billing_street}<br>
+            ${selectedCustomer.billing_city}, ${selectedCustomer.billing_state} ${selectedCustomer.billing_zip}
+          `;
+          infoBox.style.display = 'block';
+        }
+      }
+
+      // Continue to payment
+      async function continueToPayment() {
+        if (!selectedCustomer) return;
+
+        setStep(2);
+
+        if (selectedCustomer.customer_id) {
+          // Load saved cards and pre-fill billing
+          await loadSavedCards(selectedCustomer.customer_id);
+          document.getElementById('billingName').value = selectedCustomer.customer_name;
+          document.getElementById('billingAddress').value = selectedCustomer.billing_street;
+          document.getElementById('billingCity').value = selectedCustomer.billing_city;
+          document.getElementById('billingState').value = selectedCustomer.billing_state;
+          document.getElementById('billingZip').value = selectedCustomer.billing_zip;
+          document.getElementById('saveCardOption').style.display = 'block';
+        } else {
+          // Guest - clear form
+          document.getElementById('savedCardsSection').style.display = 'none';
+          document.getElementById('newCardForm').style.display = 'block';
+          document.getElementById('saveCardOption').style.display = 'none';
+        }
+      }
+
+      // Load saved cards
+      async function loadSavedCards(customerId) {
+        try {
+          const response = await fetch(`/.netlify/functions/get-payment-tokens?customer_id=${customerId}`);
+          if (!response.ok) throw new Error('No saved cards');
+          
+          savedCards = await response.json();
+          
+          if (savedCards.length > 0) {
+            displaySavedCards();
+          } else {
+            document.getElementById('savedCardsSection').style.display = 'none';
+            document.getElementById('newCardForm').style.display = 'block';
+          }
+        } catch (error) {
+          console.log('No saved cards found');
+          document.getElementById('savedCardsSection').style.display = 'none';
+          document.getElementById('newCardForm').style.display = 'block';
+        }
+      }
+
+      // Display saved cards
+      function displaySavedCards() {
+        const section = document.getElementById('savedCardsSection');
+        const list = document.getElementById('savedCardsList');
+        list.innerHTML = '';
+
+        savedCards.forEach(card => {
+          const div = document.createElement('div');
+          div.className = 'card-option';
+          div.innerHTML = `
+            <input type="radio" name="payment-method" value="${card.token_id}" id="card-${card.token_id}">
+            <div>
+              <strong>${card.card_type || 'Card'} •••• ${card.card_last_four}</strong><br>
+              <small style="color: #999">Expires ${card.expiry_month}/${card.expiry_year}</small>
+            </div>
+          `;
+          div.onclick = () => selectSavedCard(card.token_id);
+          list.appendChild(div);
         });
 
-        console.log('✅ Transaction saved to database');
-      } catch (error) {
-        console.error('⚠️ Failed to save transaction:', error);
+        // Add new card option
+        const newDiv = document.createElement('div');
+        newDiv.className = 'card-option';
+        newDiv.innerHTML = `
+          <input type="radio" name="payment-method" value="new" id="card-new">
+          <div><strong>➕ Use a different card</strong></div>
+        `;
+        newDiv.onclick = () => selectNewCard();
+        list.appendChild(newDiv);
+
+        section.style.display = 'block';
+        selectSavedCard(savedCards[0].token_id);
       }
-    }
 
-    function getCardType(cardNumber) {
-      const num = cardNumber.replace(/\s/g, '');
-      if (/^4/.test(num)) return 'Visa';
-      if (/^5[1-5]/.test(num)) return 'Mastercard';
-      if (/^3[47]/.test(num)) return 'American Express';
-      if (/^6(?:011|5)/.test(num)) return 'Discover';
-      return 'Unknown';
-    }
-
-    function showSuccess() {
-      document.getElementById('loading').classList.remove('active');
-      document.getElementById('success-page').classList.add('active');
-      
-      document.getElementById('success-transaction-id').textContent = 'TEST' + Date.now();
-      document.getElementById('success-amount').textContent = '$155.00';
-    }
-
-    // ============================================
-    // AUTO-FORMATTING
-    // ============================================
-    document.getElementById('card-number').addEventListener('input', function(e) {
-      let value = e.target.value.replace(/\s/g, '');
-      let formattedValue = value.match(/.{1,4}/g)?.join(' ') || value;
-      e.target.value = formattedValue;
-    });
-
-    document.getElementById('expiry-month').addEventListener('input', function(e) {
-      let value = e.target.value.replace(/\D/g, '');
-      if (value.length > 0 && parseInt(value) > 12) {
-        value = '12';
+      // Select saved card
+      function selectSavedCard(tokenId) {
+        selectedPaymentMethod = tokenId;
+        document.querySelectorAll('.card-option').forEach(el => el.classList.remove('selected'));
+        event.currentTarget.classList.add('selected');
+        document.getElementById(`card-${tokenId}`).checked = true;
+        document.getElementById('savedCardCvv').style.display = 'block';
+        document.getElementById('newCardForm').style.display = 'none';
       }
-      e.target.value = value;
-    });
 
-    document.getElementById('expiry-year').addEventListener('input', function(e) {
-      e.target.value = e.target.value.replace(/\D/g, '');
-    });
+      // Select new card
+      function selectNewCard() {
+        selectedPaymentMethod = 'new';
+        document.querySelectorAll('.card-option').forEach(el => el.classList.remove('selected'));
+        event.currentTarget.classList.add('selected');
+        document.getElementById('card-new').checked = true;
+        document.getElementById('savedCardCvv').style.display = 'none';
+        document.getElementById('newCardForm').style.display = 'block';
+        document.getElementById('newCardHeading').textContent = 'NEW CARD DETAILS';
+      }
 
-    document.getElementById('cvv').addEventListener('input', function(e) {
-      e.target.value = e.target.value.replace(/\D/g, '');
-    });
+      // Continue to review
+      function continueToReview() {
+        // Validate
+        if (selectedPaymentMethod === 'new') {
+          const form = document.getElementById('paymentForm');
+          if (!form.checkValidity()) {
+            form.reportValidity();
+            return;
+          }
+        } else {
+          if (!document.getElementById('savedCvv').value) {
+            alert('Please enter CVV');
+            return;
+          }
+        }
 
-    document.getElementById('saved-cvv').addEventListener('input', function(e) {
-      e.target.value = e.target.value.replace(/\D/g, '');
-    });
+        // Update review
+        document.getElementById('reviewCustomer').textContent = selectedCustomer.customer_name;
+        
+        if (selectedPaymentMethod === 'new') {
+          const ccnumber = document.getElementById('ccnumber').value.replace(/\s/g, '');
+          const last4 = ccnumber.slice(-4);
+          document.getElementById('reviewPayment').textContent = `New card ending in ${last4}`;
+        } else {
+          const card = savedCards.find(c => c.token_id === selectedPaymentMethod);
+          document.getElementById('reviewPayment').textContent = `${card.card_type} •••• ${card.card_last_four}`;
+        }
 
-    document.getElementById('billing-state').addEventListener('input', function(e) {
-      e.target.value = e.target.value.toUpperCase().replace(/[^A-Z]/g, '');
-    });
+        const name = document.getElementById('billingName').value;
+        const address = document.getElementById('billingAddress').value;
+        const city = document.getElementById('billingCity').value;
+        const state = document.getElementById('billingState').value;
+        const zip = document.getElementById('billingZip').value;
+        
+        document.getElementById('reviewBilling').innerHTML = `${name}<br>${address}<br>${city}, ${state} ${zip}`;
 
-    document.getElementById('billing-zip').addEventListener('input', function(e) {
-      e.target.value = e.target.value.replace(/[^\d-]/g, '');
-    });
-  </script>
-</body>
+        setStep(3);
+      }
+
+      // Place order
+      async function placeOrder() {
+        if (!configLoaded || typeof postData !== 'function') {
+          showAlert('reviewAlerts', 'error', 'Payment system not ready');
+          return;
+        }
+
+        document.getElementById('processingOverlay').classList.add('active');
+        document.getElementById('processingMessage').textContent = 'Creating payment token...';
+
+        try {
+          // Generate or use token
+          if (selectedPaymentMethod === 'new') {
+            const tokenResponse = await postData();
+            if (tokenResponse.statusCode !== '00') throw new Error('Token generation failed');
+            paymentTokenId = tokenResponse.payment_token_id;
+          } else {
+            const card = savedCards.find(c => c.token_id === selectedPaymentMethod);
+            reusableToken = card.reusable_token;
+          }
+
+          // Process transaction
+          document.getElementById('processingMessage').textContent = 'Processing payment...';
+          const saleResponse = await processSale();
+
+          document.getElementById('processingOverlay').classList.remove('active');
+
+          if (saleResponse.iposTransactResponse?.responseCode === '200') {
+            // Save token if needed
+            if (selectedPaymentMethod === 'new' && selectedCustomer.customer_id && document.getElementById('saveCardCheckbox').checked) {
+              await savePaymentToken(saleResponse);
+            }
+            
+            // Save transaction
+            await saveTransaction(saleResponse);
+            
+            showSuccessPage(saleResponse);
+          } else {
+            showAlert('reviewAlerts', 'error', 'Transaction failed');
+          }
+        } catch (error) {
+          console.error('Error:', error);
+          document.getElementById('processingOverlay').classList.remove('active');
+          showAlert('reviewAlerts', 'error', error.message);
+        }
+      }
+
+      // Process sale
+      async function processSale() {
+        const billingZip = document.getElementById('billingZip').value;
+        const billingAddress = document.getElementById('billingAddress').value;
+        const streetNo = billingAddress.split(' ')[0];
+
+        const requestBody = {
+          merchantAuthentication: {
+            merchantId: MERCHANT_ID,
+            transactionReferenceId: 'TEST' + Date.now(),
+          },
+          transactionRequest: {
+            transactionType: 1,
+            amount: 15500,
+            paymentTokenId: selectedPaymentMethod === 'new' ? paymentTokenId : reusableToken,
+            applySteamSettingTipFeeTax: false,
+          },
+          preferences: {
+            eReceipt: true,
+            customerName: document.getElementById('billingName').value,
+            customerEmail: selectedCustomer.email || 'guest@example.com',
+            customerMobile: '+14048811898',
+          },
+          Avs: {
+            StreetNo: streetNo,
+            Zip: billingZip,
+          },
+        };
+
+        if (selectedPaymentMethod !== 'new') {
+          requestBody.transactionRequest.cvv = document.getElementById('savedCvv').value;
+        }
+
+        const response = await fetch(API_BASE_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            token: API_AUTH_TOKEN,
+          },
+          body: JSON.stringify(requestBody),
+        });
+
+        if (!response.ok) throw new Error('API request failed');
+        return await response.json();
+      }
+
+      // Save token
+      async function savePaymentToken(saleResponse) {
+        try {
+          const ccnumber = document.getElementById('ccnumber').value.replace(/\s/g, '');
+          const lastFour = ccnumber.slice(-4);
+          const cardType = getCardType(ccnumber);
+          const expiry = document.getElementById('ccexpiry').value.split('/');
+
+          await fetch('/.netlify/functions/save-payment-token', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              customer_id: selectedCustomer.customer_id,
+              payment_token_id: paymentTokenId,
+              reusable_token: saleResponse.iposTransactResponse.paymentTokenId,
+              card_last_four: lastFour,
+              card_type: cardType,
+              expiry_month: expiry[0],
+              expiry_year: '20' + expiry[1]
+            })
+          });
+        } catch (error) {
+          console.error('Failed to save token:', error);
+        }
+      }
+
+      // Save transaction
+      async function saveTransaction(saleResponse) {
+        try {
+          await fetch('/.netlify/functions/save-transaction', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              customer_id: selectedCustomer.customer_id,
+              dejavoo_reference_id: saleResponse.iposTransactResponse.transactionId,
+              amount: 155.00,
+              status: 'approved',
+              response_code: saleResponse.iposTransactResponse.responseCode,
+              response_message: saleResponse.iposTransactResponse.responseMessage
+            })
+          });
+        } catch (error) {
+          console.error('Failed to save transaction:', error);
+        }
+      }
+
+      // Helper functions
+      function getCardType(cardNumber) {
+        if (/^4/.test(cardNumber)) return 'Visa';
+        if (/^5[1-5]/.test(cardNumber)) return 'Mastercard';
+        if (/^3[47]/.test(cardNumber)) return 'American Express';
+        if (/^6(?:011|5)/.test(cardNumber)) return 'Discover';
+        return 'Card';
+      }
+
+      function showAlert(containerId, type, message) {
+        const container = document.getElementById(containerId);
+        const alertClass = type === 'success' ? 'alert-success' : 'alert-error';
+        container.innerHTML = `<div class="alert ${alertClass}">${message}</div>`;
+      }
+
+      function setStep(step) {
+        for (let i = 1; i <= 3; i++) {
+          const indicator = document.getElementById(`step${i}-indicator`);
+          indicator.classList.toggle('active', i <= step);
+        }
+
+        document.querySelectorAll('.step-content').forEach(el => el.classList.remove('active'));
+        document.getElementById(`step${step}`).classList.add('active');
+        currentStep = step;
+        window.scrollTo(0, 0);
+      }
+
+      function editStep(step) {
+        setStep(step);
+      }
+
+      function showSuccessPage(response) {
+        const data = response.iposTransactResponse;
+        showAlert('reviewAlerts', 'success', `
+          <h3 style="margin-bottom: 15px">✅ Payment Successful!</h3>
+          <p><strong>Transaction ID:</strong> ${data.transactionId}</p>
+          <p><strong>Amount:</strong> $${(data.totalAmount / 100).toFixed(2)}</p>
+          <p><strong>Approval Code:</strong> ${data.responseApprovalCode}</p>
+        `);
+        document.querySelector('#step3 .btn').style.display = 'none';
+      }
+
+      // Input formatting
+      document.getElementById('ccnumber').addEventListener('input', function(e) {
+        let value = e.target.value.replace(/\s/g, '');
+        e.target.value = value.match(/.{1,4}/g)?.join(' ') || value;
+      });
+
+      document.getElementById('ccexpiry').addEventListener('input', function(e) {
+        let value = e.target.value.replace(/\D/g, '');
+        if (value.length >= 2) value = value.substring(0, 2) + '/' + value.substring(2, 4);
+        e.target.value = value;
+      });
+
+      document.getElementById('cccvv').addEventListener('input', function(e) {
+        e.target.value = e.target.value.replace(/\D/g, '');
+      });
+
+      document.getElementById('savedCvv').addEventListener('input', function(e) {
+        e.target.value = e.target.value.replace(/\D/g, '');
+      });
+
+      // Initialize
+      window.addEventListener('DOMContentLoaded', loadConfig);
+    </script>
+  </body>
 </html>
