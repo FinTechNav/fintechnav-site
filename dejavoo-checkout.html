@@ -899,19 +899,29 @@
       // Load saved cards
       async function loadSavedCards(customerId) {
         try {
+          console.log('📡 Loading saved cards for customer:', customerId);
           const response = await fetch(`/.netlify/functions/get-payment-tokens?customer_id=${customerId}`);
-          if (!response.ok) throw new Error('No saved cards');
+          
+          console.log('Response status:', response.status);
+          
+          if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Error response:', errorText);
+            throw new Error('No saved cards');
+          }
           
           savedCards = await response.json();
+          console.log('✅ Loaded saved cards:', savedCards);
           
           if (savedCards.length > 0) {
             displaySavedCards();
           } else {
+            console.log('No cards in array, showing new card form');
             document.getElementById('savedCardsSection').style.display = 'none';
             document.getElementById('newCardForm').style.display = 'block';
           }
         } catch (error) {
-          console.log('No saved cards found');
+          console.error('❌ Failed to load saved cards:', error);
           document.getElementById('savedCardsSection').style.display = 'none';
           document.getElementById('newCardForm').style.display = 'block';
         }
@@ -1188,7 +1198,7 @@
           const cardType = getCardType(ccnumber);
           const expiry = document.getElementById('ccexpiry').value.split('/');
 
-          await fetch('/.netlify/functions/save-payment-token', {
+          const response = await fetch('/.netlify/functions/save-payment-token', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -1201,10 +1211,16 @@
               expiry_year: '20' + expiry[1]
             })
           });
-          
-          console.log('✅ Card token saved:', transactionData.chdToken);
+
+          if (response.ok) {
+            console.log('✅ Card token saved:', transactionData.chdToken);
+          } else if (response.status === 409) {
+            console.log('ℹ️ Card token already exists (duplicate)');
+          } else {
+            console.warn('⚠️ Failed to save card token:', response.status);
+          }
         } catch (error) {
-          console.error('Failed to save token:', error);
+          console.error('❌ Error saving token:', error);
         }
       }
 
