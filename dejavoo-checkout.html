@@ -943,7 +943,7 @@
               <small style="color: #999">Expires ${card.expiry_month}/${card.expiry_year}</small>
             </div>
           `;
-          div.onclick = () => selectSavedCard(card.token_id);
+          div.onclick = function() { selectSavedCard(card.token_id, this); };
           list.appendChild(div);
         });
 
@@ -954,7 +954,7 @@
           <input type="radio" name="payment-method" value="new" id="card-new">
           <div><strong>➕ Use a different card</strong></div>
         `;
-        newDiv.onclick = () => selectNewCard();
+        newDiv.onclick = function() { selectNewCard(this); };
         list.appendChild(newDiv);
 
         section.style.display = 'block';
@@ -962,24 +962,42 @@
       }
 
       // Select saved card
-      function selectSavedCard(tokenId) {
+      function selectSavedCard(tokenId, clickedElement) {
         selectedPaymentMethod = tokenId;
         document.querySelectorAll('.card-option').forEach(el => el.classList.remove('selected'));
-        event.currentTarget.classList.add('selected');
+        
+        // If called from a click event, highlight the clicked element
+        if (clickedElement) {
+          clickedElement.classList.add('selected');
+        } else {
+          // If called programmatically, find and highlight the element
+          const cardElement = document.getElementById(`card-${tokenId}`)?.closest('.card-option');
+          if (cardElement) cardElement.classList.add('selected');
+        }
+        
         document.getElementById(`card-${tokenId}`).checked = true;
         document.getElementById('savedCardCvv').style.display = 'block';
         document.getElementById('newCardForm').style.display = 'none';
+        console.log('💳 Selected saved card:', tokenId);
       }
 
       // Select new card
-      function selectNewCard() {
+      function selectNewCard(clickedElement) {
         selectedPaymentMethod = 'new';
         document.querySelectorAll('.card-option').forEach(el => el.classList.remove('selected'));
-        event.currentTarget.classList.add('selected');
+        
+        if (clickedElement) {
+          clickedElement.classList.add('selected');
+        } else {
+          const newCardElement = document.getElementById('card-new')?.closest('.card-option');
+          if (newCardElement) newCardElement.classList.add('selected');
+        }
+        
         document.getElementById('card-new').checked = true;
         document.getElementById('savedCardCvv').style.display = 'none';
         document.getElementById('newCardForm').style.display = 'block';
         document.getElementById('newCardHeading').textContent = 'NEW CARD DETAILS';
+        console.log('➕ Selected new card entry');
       }
 
       // Continue to review
