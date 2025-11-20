@@ -592,60 +592,57 @@
                     id="ccnumber"
                     placeholder="1234 1234 1234 1234"
                     maxlength="19"
-                    required
                   />
                 </div>
 
-                <div class="form-row">
+                <div class="form-row" style="grid-template-columns: 1fr 1fr;">
                   <div class="form-group">
                     <label>Expiry Month <span class="required">*</span></label>
-                    <input type="text" id="ccexpiry" placeholder="MM/YY" maxlength="5" required />
+                    <input type="text" id="ccexpiry" placeholder="MM/YY" maxlength="5" />
                   </div>
 
                   <div class="form-group">
                     <label>CVV <span class="required">*</span></label>
-                    <input type="text" id="cccvv" placeholder="123" maxlength="4" required />
+                    <input type="text" id="cccvv" placeholder="123" maxlength="4" />
                     <div class="help-text">3-4 digits on back</div>
                   </div>
+                </div>
 
-                  <div></div>
+                <!-- Save card option (for returning customers) - moved here -->
+                <div id="saveCardOption" style="display: none; margin-bottom: 30px;">
+                  <label class="checkbox-label">
+                    <input type="checkbox" id="saveCardCheckbox" checked />
+                    <span>Save this card for future purchases</span>
+                  </label>
                 </div>
 
                 <h3 class="section-title" style="margin-top: 30px; font-size: 1rem">Billing</h3>
 
                 <div class="form-group">
                   <label>Name <span class="required">*</span></label>
-                  <input type="text" id="billingName" required />
+                  <input type="text" id="billingName" />
                 </div>
 
                 <div class="form-group">
                   <label>Address <span class="required">*</span></label>
-                  <input type="text" id="billingAddress" required />
+                  <input type="text" id="billingAddress" />
                 </div>
 
                 <div class="form-row">
                   <div class="form-group">
                     <label>City <span class="required">*</span></label>
-                    <input type="text" id="billingCity" required />
+                    <input type="text" id="billingCity" />
                   </div>
 
                   <div class="form-group">
                     <label>State <span class="required">*</span></label>
-                    <input type="text" id="billingState" maxlength="2" required />
+                    <input type="text" id="billingState" maxlength="2" />
                   </div>
 
                   <div class="form-group">
                     <label>Zip <span class="required">*</span></label>
-                    <input type="text" id="billingZip" required />
+                    <input type="text" id="billingZip" />
                   </div>
-                </div>
-
-                <!-- Save card option (for returning customers) -->
-                <div id="saveCardOption" style="display: none">
-                  <label class="checkbox-label">
-                    <input type="checkbox" id="saveCardCheckbox" checked />
-                    <span>💾 Save this card for future purchases</span>
-                  </label>
                 </div>
               </form>
             </div>
@@ -979,14 +976,61 @@
       function continueToReview() {
         // Validate
         if (selectedPaymentMethod === 'new') {
-          const form = document.getElementById('paymentForm');
-          if (!form.checkValidity()) {
-            form.reportValidity();
+          // Check each field explicitly
+          const ccnumber = document.getElementById('ccnumber').value.trim();
+          const ccexpiry = document.getElementById('ccexpiry').value.trim();
+          const cccvv = document.getElementById('cccvv').value.trim();
+          const billingName = document.getElementById('billingName').value.trim();
+          const billingAddress = document.getElementById('billingAddress').value.trim();
+          const billingCity = document.getElementById('billingCity').value.trim();
+          const billingState = document.getElementById('billingState').value.trim();
+          const billingZip = document.getElementById('billingZip').value.trim();
+
+          if (!ccnumber || ccnumber.replace(/\s/g, '').length < 13) {
+            alert('Please enter a valid card number');
+            document.getElementById('ccnumber').focus();
+            return;
+          }
+          if (!ccexpiry || ccexpiry.length < 4) {
+            alert('Please enter expiry date (MM/YY)');
+            document.getElementById('ccexpiry').focus();
+            return;
+          }
+          if (!cccvv || cccvv.length < 3) {
+            alert('Please enter CVV (3-4 digits)');
+            document.getElementById('cccvv').focus();
+            return;
+          }
+          if (!billingName) {
+            alert('Please enter cardholder name');
+            document.getElementById('billingName').focus();
+            return;
+          }
+          if (!billingAddress) {
+            alert('Please enter billing address');
+            document.getElementById('billingAddress').focus();
+            return;
+          }
+          if (!billingCity) {
+            alert('Please enter city');
+            document.getElementById('billingCity').focus();
+            return;
+          }
+          if (!billingState || billingState.length !== 2) {
+            alert('Please enter 2-letter state code');
+            document.getElementById('billingState').focus();
+            return;
+          }
+          if (!billingZip) {
+            alert('Please enter ZIP code');
+            document.getElementById('billingZip').focus();
             return;
           }
         } else {
-          if (!document.getElementById('savedCvv').value) {
-            alert('Please enter CVV');
+          const savedCvv = document.getElementById('savedCvv').value.trim();
+          if (!savedCvv || savedCvv.length < 3) {
+            alert('Please enter CVV for saved card');
+            document.getElementById('savedCvv').focus();
             return;
           }
         }
