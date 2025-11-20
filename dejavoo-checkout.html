@@ -1167,18 +1167,27 @@
       // Save transaction
       async function saveTransaction(saleResponse) {
         try {
+          const transactionData = saleResponse.iposTransactResponse || saleResponse.iposhpresponse;
+          
+          if (!transactionData) {
+            console.warn('No transaction data to save');
+            return;
+          }
+
           await fetch('/.netlify/functions/save-transaction', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               customer_id: selectedCustomer.customer_id,
-              dejavoo_reference_id: saleResponse.iposTransactResponse.transactionId,
+              dejavoo_reference_id: transactionData.transactionId,
               amount: 155.00,
               status: 'approved',
-              response_code: saleResponse.iposTransactResponse.responseCode,
-              response_message: saleResponse.iposTransactResponse.responseMessage
+              response_code: transactionData.responseCode,
+              response_message: transactionData.responseMessage || transactionData.errResponseMessage
             })
           });
+          
+          console.log('✅ Transaction saved to database');
         } catch (error) {
           console.error('Failed to save transaction:', error);
         }
