@@ -1041,7 +1041,21 @@
 
           document.getElementById('processingOverlay').classList.remove('active');
 
-          if (saleResponse.iposTransactResponse?.responseCode === '200') {
+          // Check response - handle both response formats
+          const transactionData = saleResponse.iposTransactResponse || saleResponse.iposhpresponse;
+          
+          if (!transactionData) {
+            // API error format
+            if (saleResponse.errors && saleResponse.errors.length > 0) {
+              const error = saleResponse.errors[0];
+              showAlert('reviewAlerts', 'error', `API Error: ${error.message}`);
+            } else {
+              showAlert('reviewAlerts', 'error', 'Unknown error occurred');
+            }
+            return;
+          }
+
+          if (transactionData.responseCode === '200') {
             // Save token if needed
             if (selectedPaymentMethod === 'new' && selectedCustomer.customer_id && document.getElementById('saveCardCheckbox').checked) {
               await savePaymentToken(saleResponse);
@@ -1052,7 +1066,8 @@
             
             showSuccessPage(saleResponse);
           } else {
-            showAlert('reviewAlerts', 'error', 'Transaction failed');
+            const errorMsg = transactionData.errResponseMessage || transactionData.responseMessage || 'Transaction failed';
+            showAlert('reviewAlerts', 'error', `❌ ${errorMsg}`);
           }
         } catch (error) {
           console.error('Error:', error);
@@ -1075,7 +1090,6 @@
           transactionRequest: {
             transactionType: 1,
             amount: 15500,
-            paymentTokenId: selectedPaymentMethod === 'new' ? paymentTokenId : reusableToken,
             applySteamSettingTipFeeTax: false,
           },
           preferences: {
@@ -1090,9 +1104,16 @@
           },
         };
 
-        if (selectedPaymentMethod !== 'new') {
+        // Use paymentTokenId for new cards, cardToken for saved cards
+        if (selectedPaymentMethod === 'new') {
+          requestBody.transactionRequest.paymentTokenId = paymentTokenId;
+          requestBody.preferences.requestCardToken = true; // Request reusable token
+        } else {
+          requestBody.transactionRequest.cardToken = reusableToken; // Use cardToken, not paymentTokenId
           requestBody.transactionRequest.cvv = document.getElementById('savedCvv').value;
         }
+
+        console.log('iPOS Transact Request:', requestBody);
 
         const response = await fetch(API_BASE_URL, {
           method: 'POST',
@@ -1110,6 +1131,14 @@
       // Save token
       async function savePaymentToken(saleResponse) {
         try {
+          const transactionData = saleResponse.iposTransactResponse || saleResponse.iposhpresponse;
+          
+          // Use chdToken from response as the reusable token
+          if (!transactionData.chdToken) {
+            console.warn('No chdToken in response - cannot save card');
+            return;
+          }
+
           const ccnumber = document.getElementById('ccnumber').value.replace(/\s/g, '');
           const lastFour = ccnumber.slice(-4);
           const cardType = getCardType(ccnumber);
@@ -1121,13 +1150,15 @@
             body: JSON.stringify({
               customer_id: selectedCustomer.customer_id,
               payment_token_id: paymentTokenId,
-              reusable_token: saleResponse.iposTransactResponse.paymentTokenId,
+              reusable_token: transactionData.chdToken, // Store the chdToken
               card_last_four: lastFour,
               card_type: cardType,
               expiry_month: expiry[0],
               expiry_year: '20' + expiry[1]
             })
           });
+          
+          console.log('✅ Card token saved:', transactionData.chdToken);
         } catch (error) {
           console.error('Failed to save token:', error);
         }
@@ -1185,12 +1216,13 @@
       }
 
       function showSuccessPage(response) {
-        const data = response.iposTransactResponse;
+        const data = response.iposTransactResponse || response.iposhpresponse;
         showAlert('reviewAlerts', 'success', `
           <h3 style="margin-bottom: 15px">✅ Payment Successful!</h3>
           <p><strong>Transaction ID:</strong> ${data.transactionId}</p>
           <p><strong>Amount:</strong> $${(data.totalAmount / 100).toFixed(2)}</p>
           <p><strong>Approval Code:</strong> ${data.responseApprovalCode}</p>
+          ${data.chdToken ? '<p style="margin-top: 10px; color: #856404;">💳 Card saved for future use</p>' : ''}
         `);
         document.querySelector('#step3 .btn').style.display = 'none';
       }
