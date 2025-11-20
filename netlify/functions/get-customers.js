@@ -32,9 +32,7 @@ exports.handler = async (event, context) => {
 
   const client = new Client({
     connectionString: process.env.DATABASE_URL,
-    ssl: {
-      rejectUnauthorized: false, // Required for most hosted PostgreSQL
-    },
+    ssl: false, // Disable SSL for servers that don't support it
   });
 
   try {

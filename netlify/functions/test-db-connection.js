@@ -45,9 +45,7 @@ exports.handler = async (event, context) => {
 
   const client = new Client({
     connectionString: process.env.DATABASE_URL,
-    ssl: {
-      rejectUnauthorized: false,
-    },
+    ssl: false, // Your server doesn't support SSL
     connectionTimeoutMillis: 5000, // 5 second timeout
   });
 
