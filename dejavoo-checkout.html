@@ -937,14 +937,25 @@
           };
 
           console.log('🚀 Calling initializeGooglePay...');
+          console.log('   Function exists:', typeof window.initializeGooglePay);
+          console.log('   Function toString:', window.initializeGooglePay.toString().substring(0, 500));
           console.log('   transactionInfo:', transactionInfo);
           console.log('   merchantId:', merchantId);
           console.log('   Mode:', Mode);
           
-          // Initialize Google Pay - function provided by gpay-ftd.js
-          window.initializeGooglePay(transactionInfo, merchantId, Mode, buttonStyles, goolePayFelids);
-          googlePayInitialized = true;
-          console.log('✅ Google Pay initialized');
+          // Wrap in try-catch to capture SDK errors
+          try {
+            // Initialize Google Pay - function provided by gpay-ftd.js
+            window.initializeGooglePay(transactionInfo, merchantId, Mode, buttonStyles, goolePayFelids);
+            googlePayInitialized = true;
+            console.log('✅ Google Pay initialized');
+          } catch (sdkError) {
+            console.error('💥 SDK threw error:', sdkError);
+            console.error('   Error name:', sdkError.name);
+            console.error('   Error message:', sdkError.message);
+            console.error('   Error stack:', sdkError.stack);
+            throw sdkError;
+          }
         } catch (error) {
           console.error('❌ Google Pay initialization error:', error);
           console.error('   Error stack:', error.stack);
