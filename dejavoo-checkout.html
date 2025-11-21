@@ -525,7 +525,7 @@
     <!-- Dejavoo Freedom to Design Library - Dynamically loaded -->
     <script id="ftd" defer></script>
     <!-- Google Pay SDK - Script tag must exist in DOM before SDK loads -->
-    <script id="gpay-ftd"></script>
+    <script id="gpayftd"></script>
   </head>
 
   <body>
@@ -842,7 +842,7 @@
           });
 
           // Configure Google Pay SDK using existing script tag
-          const gpayScript = document.getElementById('gpay-ftd');
+          const gpayScript = document.getElementById('gpayftd');
           const gpayUrl = isSandbox
             ? 'https://payment.ipospays.tech/ftd/v1/gpay-ftd.js'
             : 'https://payment.ipospays.com/ftd/v1/gpay-ftd.js';
@@ -890,7 +890,7 @@
           window.security_key = DEJAVOO_AUTH_TOKEN;
           
           // Check script tag
-          const gpayScriptTag = document.getElementById('gpay-ftd');
+          const gpayScriptTag = document.getElementById('gpayftd');
           console.log('📜 Google Pay script tag found:', !!gpayScriptTag);
           if (gpayScriptTag) {
             console.log('  - security_key attribute:', gpayScriptTag.getAttribute('security_key'));
