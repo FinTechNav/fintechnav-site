@@ -884,10 +884,26 @@
         }
 
         try {
+          console.log('🔧 Setting up Google Pay...');
+          console.log('📍 DEJAVOO_AUTH_TOKEN:', DEJAVOO_AUTH_TOKEN ? 'Present (length: ' + DEJAVOO_AUTH_TOKEN.length + ')' : 'MISSING');
+          
+          // Check script tag
+          const gpayScriptTag = document.getElementById('gpay-ftd');
+          console.log('📜 Google Pay script tag found:', !!gpayScriptTag);
+          if (gpayScriptTag) {
+            console.log('  - security_key attribute:', gpayScriptTag.getAttribute('security_key'));
+            console.log('  - src:', gpayScriptTag.getAttribute('src'));
+          }
+          
           // Set security key on button container
           const buttonContainer = document.getElementById('ipospays-gpay-btn');
-          buttonContainer.setAttribute('data-security-key', DEJAVOO_AUTH_TOKEN);
-          buttonContainer.setAttribute('security_key', DEJAVOO_AUTH_TOKEN);
+          console.log('🎯 Button container found:', !!buttonContainer);
+          
+          if (buttonContainer) {
+            buttonContainer.setAttribute('data-security-key', DEJAVOO_AUTH_TOKEN);
+            buttonContainer.setAttribute('security_key', DEJAVOO_AUTH_TOKEN);
+            console.log('  - Set security_key on button container');
+          }
 
           const transactionInfo = {
             countryCode: "US",
@@ -916,12 +932,18 @@
             requestShipping: false,
           };
 
+          console.log('🚀 Calling initializeGooglePay...');
+          console.log('   transactionInfo:', transactionInfo);
+          console.log('   merchantId:', merchantId);
+          console.log('   Mode:', Mode);
+          
           // Initialize Google Pay - function provided by gpay-ftd.js
           window.initializeGooglePay(transactionInfo, merchantId, Mode, buttonStyles, goolePayFelids);
           googlePayInitialized = true;
           console.log('✅ Google Pay initialized');
         } catch (error) {
           console.error('❌ Google Pay initialization error:', error);
+          console.error('   Error stack:', error.stack);
         }
       }
 
