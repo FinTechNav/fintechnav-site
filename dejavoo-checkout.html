@@ -841,7 +841,7 @@
             ftdScript.onerror = reject;
           });
 
-          // Load Google Pay SDK - set attributes first, then load
+          // Load Google Pay SDK - don't block on errors
           const gpayScript = document.getElementById('gpay-ftd');
           const gpayUrl = isSandbox
             ? 'https://payment.ipospays.tech/ftd/v1/gpay-ftd.js'
@@ -851,13 +851,13 @@
           gpayScript.setAttribute('security_key', DEJAVOO_AUTH_TOKEN);
           gpayScript.setAttribute('src', gpayUrl);
 
-          await new Promise((resolve, reject) => {
-            gpayScript.onload = () => {
-              console.log('✅ Google Pay SDK loaded');
-              resolve();
-            };
-            gpayScript.onerror = reject;
-          });
+          // Don't await - let it load in background
+          gpayScript.onload = () => {
+            console.log('✅ Google Pay SDK loaded');
+          };
+          gpayScript.onerror = (error) => {
+            console.warn('⚠️ Google Pay SDK failed to load:', error);
+          };
 
           console.log('✅ Configuration loaded');
           loadingEl.style.display = 'none';
