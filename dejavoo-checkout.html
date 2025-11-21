@@ -853,8 +853,8 @@
         }
       }
 
-      // Initialize Google Pay
-      function initializeGooglePay() {
+      // Setup Google Pay
+      function setupGooglePay() {
         if (!configLoaded || googlePayInitialized) return;
 
         try {
@@ -886,8 +886,8 @@
           };
 
           // Initialize Google Pay - function provided by gpay-ftd.js
-          if (typeof initializeGooglePay === 'function') {
-            initializeGooglePay(transactionInfo, merchantId, Mode, buttonStyles, goolePayFelids);
+          if (typeof window.initializeGooglePay === 'function') {
+            window.initializeGooglePay(transactionInfo, merchantId, Mode, buttonStyles, goolePayFelids);
             googlePayInitialized = true;
             console.log('✅ Google Pay initialized');
           } else {
@@ -975,8 +975,8 @@
 
         setStep(2);
         
-        // Initialize Google Pay when entering payment step
-        initializeGooglePay();
+        // Setup Google Pay when entering payment step
+        setupGooglePay();
 
         if (selectedCustomer.customer_id) {
           // Load saved cards and pre-fill billing
