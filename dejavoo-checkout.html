@@ -886,12 +886,17 @@
           console.log('🔧 Setting up Google Pay...');
           console.log('📍 DEJAVOO_AUTH_TOKEN:', DEJAVOO_AUTH_TOKEN ? 'Present (length: ' + DEJAVOO_AUTH_TOKEN.length + ')' : 'MISSING');
           
+          // Try setting security_key as global variable
+          window.security_key = DEJAVOO_AUTH_TOKEN;
+          
           // Check script tag
           const gpayScriptTag = document.getElementById('gpay-ftd');
           console.log('📜 Google Pay script tag found:', !!gpayScriptTag);
           if (gpayScriptTag) {
             console.log('  - security_key attribute:', gpayScriptTag.getAttribute('security_key'));
             console.log('  - src:', gpayScriptTag.getAttribute('src'));
+            // Force set it again right before init
+            gpayScriptTag.setAttribute('security_key', DEJAVOO_AUTH_TOKEN);
           }
           
           // Set security key on button container
