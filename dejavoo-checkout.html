@@ -524,8 +524,8 @@
 
     <!-- Dejavoo Freedom to Design Library - Dynamically loaded -->
     <script id="ftd" defer></script>
-    <!-- Google Pay SDK - Dynamically loaded -->
-    <script id="gpay-ftd" defer></script>
+    <!-- Google Pay SDK - Loaded with placeholder -->
+    <script id="gpay-ftd" src="" security_key="" defer></script>
   </head>
 
   <body>
@@ -841,17 +841,21 @@
             ftdScript.onerror = reject;
           });
 
-          // Load Google Pay SDK
+          // Load Google Pay SDK - set attributes first, then load
           const gpayScript = document.getElementById('gpay-ftd');
           const gpayUrl = isSandbox
             ? 'https://payment.ipospays.tech/ftd/v1/gpay-ftd.js'
             : 'https://payment.ipospays.com/ftd/v1/gpay-ftd.js';
           
-          gpayScript.setAttribute('src', gpayUrl);
+          // Set security_key BEFORE setting src
           gpayScript.setAttribute('security_key', DEJAVOO_AUTH_TOKEN);
+          gpayScript.setAttribute('src', gpayUrl);
 
           await new Promise((resolve, reject) => {
-            gpayScript.onload = resolve;
+            gpayScript.onload = () => {
+              console.log('✅ Google Pay SDK loaded');
+              resolve();
+            };
             gpayScript.onerror = reject;
           });
 
