@@ -494,10 +494,38 @@
         width: 18px;
         height: 18px;
       }
+
+      .payment-divider {
+        display: flex;
+        align-items: center;
+        margin: 30px 0;
+        color: #999;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .payment-divider::before,
+      .payment-divider::after {
+        content: '';
+        flex: 1;
+        height: 1px;
+        background: #ddd;
+      }
+
+      .payment-divider span {
+        padding: 0 15px;
+      }
+
+      #ipospays-gpay-btn {
+        margin: 20px 0;
+      }
     </style>
 
     <!-- Dejavoo Freedom to Design Library - Dynamically loaded -->
     <script id="ftd" defer></script>
+    <!-- Google Pay SDK -->
+    <script src="https://payment.ipospays.tech/ftd/v1/gpay-ftd.js"></script>
   </head>
 
   <body>
@@ -565,6 +593,13 @@
 
             <div id="paymentAlerts"></div>
 
+            <!-- Google Pay Button -->
+            <div id="ipospays-gpay-btn"></div>
+
+            <div class="payment-divider">
+              <span>Or pay with card</span>
+            </div>
+
             <!-- Saved Cards Section -->
             <div id="savedCardsSection" style="display: none">
               <h3 style="font-size: 0.9rem; margin-bottom: 15px; color: #666">SAVED PAYMENT METHODS</h3>
@@ -608,7 +643,7 @@
                   </div>
                 </div>
 
-                <!-- Save card option (for returning customers) - moved here -->
+                <!-- Save card option (for returning customers) -->
                 <div id="saveCardOption" style="display: none; margin-bottom: 30px;">
                   <label class="checkbox-label">
                     <input type="checkbox" id="saveCardCheckbox" checked />
@@ -761,10 +796,12 @@
       let currentStep = 1;
       let selectedCustomer = null;
       let savedCards = [];
-      let selectedPaymentMethod = 'new'; // 'new' or token_id
+      let selectedPaymentMethod = 'new'; // 'new', 'googlepay', or token_id
       let paymentTokenId = null;
       let reusableToken = null;
       let configLoaded = false;
+      let googlePayInitialized = false;
+      let googlePayData = null;
 
       // Load configuration
       async function loadConfig() {
@@ -814,6 +851,65 @@
           console.error('❌ Configuration error:', error);
           loadingEl.innerHTML = `<div class="alert alert-error">Configuration Error: ${error.message}</div>`;
         }
+      }
+
+      // Initialize Google Pay
+      function initializeGooglePay() {
+        if (!configLoaded || googlePayInitialized) return;
+
+        try {
+          const transactionInfo = {
+            countryCode: "US",
+            currencyCode: "USD",
+            totalPriceStatus: "FINAL",
+            totalPrice: "155.00",
+            totalPriceLabel: "Total",
+          };
+
+          const merchantId = "N/A"; // Use "N/A" for TEST mode
+          const Mode = ENVIRONMENT === 'sandbox' ? "TEST" : "PRODUCTION";
+
+          const buttonStyles = {
+            buttonColor: "default",
+            buttonType: "buy",
+            buttonRadius: 4,
+            buttonLocale: "en",
+            buttonHeight: "48px",
+            buttonWidth: "100%",
+          };
+
+          const goolePayFelids = {
+            requestBillingAddress: true,
+            requestPayerEmail: true,
+            requestPayerPhone: false,
+            requestShipping: false,
+          };
+
+          // Initialize Google Pay - function provided by gpay-ftd.js
+          if (typeof initializeGooglePay === 'function') {
+            initializeGooglePay(transactionInfo, merchantId, Mode, buttonStyles, goolePayFelids);
+            googlePayInitialized = true;
+            console.log('✅ Google Pay initialized');
+          } else {
+            console.warn('⚠️ Google Pay SDK not loaded');
+          }
+        } catch (error) {
+          console.error('❌ Google Pay initialization error:', error);
+        }
+      }
+
+      // Callback for Google Pay - called by Google Pay SDK
+      function getPaymentInfo(paymentData) {
+        console.log("📱 Google Pay Payment Data received");
+        googlePayData = paymentData;
+        selectedPaymentMethod = 'googlepay';
+        
+        // Auto-advance to review
+        document.getElementById('reviewCustomer').textContent = selectedCustomer.customer_name;
+        document.getElementById('reviewPayment').textContent = 'Google Pay';
+        document.getElementById('reviewBilling').innerHTML = 'Google Pay (billing address from wallet)';
+        
+        setStep(3);
       }
 
       // Load customers
@@ -878,6 +974,9 @@
         if (!selectedCustomer) return;
 
         setStep(2);
+        
+        // Initialize Google Pay when entering payment step
+        initializeGooglePay();
 
         if (selectedCustomer.customer_id) {
           // Load saved cards and pre-fill billing
@@ -966,11 +1065,9 @@
         selectedPaymentMethod = tokenId;
         document.querySelectorAll('.card-option').forEach(el => el.classList.remove('selected'));
         
-        // If called from a click event, highlight the clicked element
         if (clickedElement) {
           clickedElement.classList.add('selected');
         } else {
-          // If called programmatically, find and highlight the element
           const cardElement = document.getElementById(`card-${tokenId}`)?.closest('.card-option');
           if (cardElement) cardElement.classList.add('selected');
         }
@@ -1004,7 +1101,6 @@
       function continueToReview() {
         // Validate
         if (selectedPaymentMethod === 'new') {
-          // Check each field explicitly
           const ccnumber = document.getElementById('ccnumber').value.trim();
           const ccexpiry = document.getElementById('ccexpiry').value.trim();
           const cccvv = document.getElementById('cccvv').value.trim();
@@ -1054,7 +1150,7 @@
             document.getElementById('billingZip').focus();
             return;
           }
-        } else {
+        } else if (selectedPaymentMethod !== 'googlepay') {
           const savedCvv = document.getElementById('savedCvv').value.trim();
           if (!savedCvv || savedCvv.length < 3) {
             alert('Please enter CVV for saved card');
@@ -1070,54 +1166,70 @@
           const ccnumber = document.getElementById('ccnumber').value.replace(/\s/g, '');
           const last4 = ccnumber.slice(-4);
           document.getElementById('reviewPayment').textContent = `New card ending in ${last4}`;
+        } else if (selectedPaymentMethod === 'googlepay') {
+          document.getElementById('reviewPayment').textContent = 'Google Pay';
         } else {
           const card = savedCards.find(c => c.token_id === selectedPaymentMethod);
           document.getElementById('reviewPayment').textContent = `${card.card_type} •••• ${card.card_last_four}`;
         }
 
-        const name = document.getElementById('billingName').value;
-        const address = document.getElementById('billingAddress').value;
-        const city = document.getElementById('billingCity').value;
-        const state = document.getElementById('billingState').value;
-        const zip = document.getElementById('billingZip').value;
-        
-        document.getElementById('reviewBilling').innerHTML = `${name}<br>${address}<br>${city}, ${state} ${zip}`;
+        if (selectedPaymentMethod !== 'googlepay') {
+          const name = document.getElementById('billingName').value;
+          const address = document.getElementById('billingAddress').value;
+          const city = document.getElementById('billingCity').value;
+          const state = document.getElementById('billingState').value;
+          const zip = document.getElementById('billingZip').value;
+          
+          document.getElementById('reviewBilling').innerHTML = `${name}<br>${address}<br>${city}, ${state} ${zip}`;
+        } else {
+          document.getElementById('reviewBilling').innerHTML = 'Google Pay (billing address from wallet)';
+        }
 
         setStep(3);
       }
 
       // Place order
       async function placeOrder() {
-        if (!configLoaded || typeof postData !== 'function') {
+        if (!configLoaded) {
           showAlert('reviewAlerts', 'error', 'Payment system not ready');
           return;
         }
 
         document.getElementById('processingOverlay').classList.add('active');
-        document.getElementById('processingMessage').textContent = 'Creating payment token...';
+        document.getElementById('processingMessage').textContent = 'Processing payment...';
 
         try {
-          // Generate or use token
-          if (selectedPaymentMethod === 'new') {
-            const tokenResponse = await postData();
-            if (tokenResponse.statusCode !== '00') throw new Error('Token generation failed');
-            paymentTokenId = tokenResponse.payment_token_id;
-          } else {
-            const card = savedCards.find(c => c.token_id === selectedPaymentMethod);
-            reusableToken = card.reusable_token;
-          }
+          let saleResponse;
 
-          // Process transaction
-          document.getElementById('processingMessage').textContent = 'Processing payment...';
-          const saleResponse = await processSale();
+          if (selectedPaymentMethod === 'googlepay') {
+            // Process Google Pay transaction
+            saleResponse = await processGooglePaySale();
+          } else {
+            // Generate or use token for card payment
+            if (selectedPaymentMethod === 'new') {
+              if (typeof postData !== 'function') {
+                throw new Error('Payment tokenization not available');
+              }
+              document.getElementById('processingMessage').textContent = 'Creating payment token...';
+              const tokenResponse = await postData();
+              if (tokenResponse.statusCode !== '00') throw new Error('Token generation failed');
+              paymentTokenId = tokenResponse.payment_token_id;
+            } else {
+              const card = savedCards.find(c => c.token_id === selectedPaymentMethod);
+              reusableToken = card.reusable_token;
+            }
+
+            // Process card transaction
+            document.getElementById('processingMessage').textContent = 'Processing payment...';
+            saleResponse = await processSale();
+          }
 
           document.getElementById('processingOverlay').classList.remove('active');
 
-          // Check response - handle both response formats
+          // Check response
           const transactionData = saleResponse.iposTransactResponse || saleResponse.iposhpresponse;
           
           if (!transactionData) {
-            // API error format
             if (saleResponse.errors && saleResponse.errors.length > 0) {
               const error = saleResponse.errors[0];
               showAlert('reviewAlerts', 'error', `API Error: ${error.message}`);
@@ -1146,6 +1258,43 @@
           document.getElementById('processingOverlay').classList.remove('active');
           showAlert('reviewAlerts', 'error', error.message);
         }
+      }
+
+      // Process Google Pay sale
+      async function processGooglePaySale() {
+        const requestBody = {
+          merchantAuthentication: {
+            merchantId: MERCHANT_ID,
+            transactionReferenceId: 'GPAY' + Date.now(),
+          },
+          transactionRequest: {
+            transactionType: 1,
+            amount: 15500,
+            sourceType: "GOOGLE-FTD"
+          },
+          preferences: {
+            eReceipt: true,
+            customerName: selectedCustomer.customer_name,
+            customerEmail: selectedCustomer.email || 'guest@example.com',
+            customerMobile: selectedCustomer.customer_phone || '',
+            requestPaymentToken: false
+          },
+          googlePayData: googlePayData
+        };
+
+        console.log('iPOS Transact Request (Google Pay):', requestBody);
+
+        const response = await fetch(API_BASE_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            token: API_AUTH_TOKEN,
+          },
+          body: JSON.stringify(requestBody),
+        });
+
+        if (!response.ok) throw new Error('API request failed');
+        return await response.json();
       }
 
       // Process sale
@@ -1179,9 +1328,9 @@
         // Use paymentTokenId for new cards, cardToken for saved cards
         if (selectedPaymentMethod === 'new') {
           requestBody.transactionRequest.paymentTokenId = paymentTokenId;
-          requestBody.preferences.requestCardToken = true; // Request reusable token
+          requestBody.preferences.requestCardToken = true;
         } else {
-          requestBody.transactionRequest.cardToken = reusableToken; // Use cardToken, not paymentTokenId
+          requestBody.transactionRequest.cardToken = reusableToken;
           requestBody.transactionRequest.cvv = document.getElementById('savedCvv').value;
         }
 
@@ -1205,7 +1354,6 @@
         try {
           const transactionData = saleResponse.iposTransactResponse || saleResponse.iposhpresponse;
           
-          // Use chdToken from response as the reusable token
           if (!transactionData.chdToken) {
             console.warn('No chdToken in response - cannot save card');
             return;
@@ -1222,7 +1370,7 @@
             body: JSON.stringify({
               customer_id: selectedCustomer.customer_id,
               payment_token_id: paymentTokenId,
-              reusable_token: transactionData.chdToken, // Store the chdToken
+              reusable_token: transactionData.chdToken,
               card_last_four: lastFour,
               card_type: cardType,
               expiry_month: expiry[0],
@@ -1304,12 +1452,14 @@
 
       function showSuccessPage(response) {
         const data = response.iposTransactResponse || response.iposhpresponse;
+        const paymentMethod = selectedPaymentMethod === 'googlepay' ? 'Google Pay' : 'Card';
         showAlert('reviewAlerts', 'success', `
           <h3 style="margin-bottom: 15px">✅ Payment Successful!</h3>
+          <p><strong>Payment Method:</strong> ${paymentMethod}</p>
           <p><strong>Transaction ID:</strong> ${data.transactionId}</p>
           <p><strong>Amount:</strong> $${(data.totalAmount / 100).toFixed(2)}</p>
           <p><strong>Approval Code:</strong> ${data.responseApprovalCode}</p>
-          ${data.chdToken ? '<p style="margin-top: 10px; color: #856404;">💳 Card saved for future use</p>' : ''}
+          ${data.chdToken && selectedPaymentMethod !== 'googlepay' ? '<p style="margin-top: 10px; color: #856404;">💳 Card saved for future use</p>' : ''}
         `);
         document.querySelector('#step3 .btn').style.display = 'none';
       }
