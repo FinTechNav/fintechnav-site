@@ -1349,16 +1349,19 @@
           transactionRequest: {
             transactionType: 1,
             amount: 15500,
-            sourceType: "GOOGLE-FTD"
+            applySteamSettingTipFeeTax: false
           },
           preferences: {
             eReceipt: true,
             customerName: selectedCustomer.customer_name,
             customerEmail: selectedCustomer.email || 'guest@example.com',
-            customerMobile: selectedCustomer.customer_phone || '',
-            requestPaymentToken: false
+            customerMobile: selectedCustomer.customer_phone || ''
           },
-          googlePayData: googlePayData
+          Avs: {
+            StreetNo: "155",
+            Zip: "30316"
+          },
+          GooglePay: googlePayData  // At root level, not inside transactionRequest
         };
 
         console.log('📤 iPOS Transact Request (Google Pay):');
