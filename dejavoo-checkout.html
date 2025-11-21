@@ -524,8 +524,6 @@
 
     <!-- Dejavoo Freedom to Design Library - Dynamically loaded -->
     <script id="ftd" defer></script>
-    <!-- Google Pay SDK - Loaded with placeholder -->
-    <script id="gpay-ftd" src="" security_key="" defer></script>
   </head>
 
   <body>
@@ -841,23 +839,24 @@
             ftdScript.onerror = reject;
           });
 
-          // Load Google Pay SDK - don't block on errors
-          const gpayScript = document.getElementById('gpay-ftd');
+          // Create and load Google Pay SDK dynamically
+          const gpayScript = document.createElement('script');
+          gpayScript.id = 'gpay-ftd';
           const gpayUrl = isSandbox
             ? 'https://payment.ipospays.tech/ftd/v1/gpay-ftd.js'
             : 'https://payment.ipospays.com/ftd/v1/gpay-ftd.js';
           
-          // Set security_key BEFORE setting src
           gpayScript.setAttribute('security_key', DEJAVOO_AUTH_TOKEN);
-          gpayScript.setAttribute('src', gpayUrl);
-
-          // Don't await - let it load in background
+          gpayScript.src = gpayUrl;
+          
           gpayScript.onload = () => {
             console.log('✅ Google Pay SDK loaded');
           };
           gpayScript.onerror = (error) => {
             console.warn('⚠️ Google Pay SDK failed to load:', error);
           };
+          
+          document.head.appendChild(gpayScript);
 
           console.log('✅ Configuration loaded');
           loadingEl.style.display = 'none';
@@ -874,6 +873,13 @@
       // Setup Google Pay
       function setupGooglePay() {
         if (!configLoaded || googlePayInitialized) return;
+
+        // Wait a bit for SDK to load if not ready yet
+        if (typeof window.initializeGooglePay !== 'function') {
+          console.log('⏳ Waiting for Google Pay SDK...');
+          setTimeout(setupGooglePay, 500);
+          return;
+        }
 
         try {
           const transactionInfo = {
@@ -904,13 +910,9 @@
           };
 
           // Initialize Google Pay - function provided by gpay-ftd.js
-          if (typeof window.initializeGooglePay === 'function') {
-            window.initializeGooglePay(transactionInfo, merchantId, Mode, buttonStyles, goolePayFelids);
-            googlePayInitialized = true;
-            console.log('✅ Google Pay initialized');
-          } else {
-            console.warn('⚠️ Google Pay SDK not loaded');
-          }
+          window.initializeGooglePay(transactionInfo, merchantId, Mode, buttonStyles, goolePayFelids);
+          googlePayInitialized = true;
+          console.log('✅ Google Pay initialized');
         } catch (error) {
           console.error('❌ Google Pay initialization error:', error);
         }
