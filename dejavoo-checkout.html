@@ -524,6 +524,8 @@
 
     <!-- Dejavoo Freedom to Design Library - Dynamically loaded -->
     <script id="ftd" defer></script>
+    <!-- Google Pay SDK - Script tag must exist in DOM before SDK loads -->
+    <script id="gpay-ftd"></script>
   </head>
 
   <body>
@@ -839,15 +841,16 @@
             ftdScript.onerror = reject;
           });
 
-          // Create and load Google Pay SDK dynamically
-          const gpayScript = document.createElement('script');
+          // Configure Google Pay SDK using existing script tag
+          const gpayScript = document.getElementById('gpay-ftd');
           const gpayUrl = isSandbox
             ? 'https://payment.ipospays.tech/ftd/v1/gpay-ftd.js'
             : 'https://payment.ipospays.com/ftd/v1/gpay-ftd.js';
           
-          // Set id and security_key BEFORE appending to DOM
-          gpayScript.id = 'gpay-ftd';
+          // Set security_key attribute FIRST
           gpayScript.setAttribute('security_key', DEJAVOO_AUTH_TOKEN);
+          // Then set src to load the script
+          gpayScript.src = gpayUrl;
           
           gpayScript.onload = () => {
             console.log('✅ Google Pay SDK loaded');
@@ -855,10 +858,6 @@
           gpayScript.onerror = (error) => {
             console.warn('⚠️ Google Pay SDK failed to load:', error);
           };
-          
-          // Append to DOM first, then set src to trigger load
-          document.head.appendChild(gpayScript);
-          gpayScript.setAttribute('src', gpayUrl);
 
           console.log('✅ Configuration loaded');
           loadingEl.style.display = 'none';
