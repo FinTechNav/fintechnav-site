@@ -1326,14 +1326,11 @@
             console.error("   Full transaction data:", transactionData);
             showAlert('reviewAlerts', 'error', `❌ ${errorMsg}`);
           }
-            
-            showSuccessPage(saleResponse);
-          } else {
-            const errorMsg = transactionData.errResponseMessage || transactionData.responseMessage || 'Transaction failed';
-            showAlert('reviewAlerts', 'error', `❌ ${errorMsg}`);
-          }
         } catch (error) {
-          console.error('Error:', error);
+          console.error('💥 Error in placeOrder:', error);
+          console.error('   Error name:', error.name);
+          console.error('   Error message:', error.message);
+          console.error('   Error stack:', error.stack);
           document.getElementById('processingOverlay').classList.remove('active');
           showAlert('reviewAlerts', 'error', error.message);
         }
