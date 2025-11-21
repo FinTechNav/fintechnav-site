@@ -592,7 +592,7 @@
             <div id="paymentAlerts"></div>
 
             <!-- Google Pay Button -->
-            <div id="ipospays-gpay-btn"></div>
+            <div id="ipospays-gpay-btn" data-security-key=""></div>
 
             <div class="payment-divider">
               <span>Or pay with card</span>
@@ -841,13 +841,13 @@
 
           // Create and load Google Pay SDK dynamically
           const gpayScript = document.createElement('script');
-          gpayScript.id = 'gpay-ftd';
           const gpayUrl = isSandbox
             ? 'https://payment.ipospays.tech/ftd/v1/gpay-ftd.js'
             : 'https://payment.ipospays.com/ftd/v1/gpay-ftd.js';
           
+          // Set id and security_key BEFORE appending to DOM
+          gpayScript.id = 'gpay-ftd';
           gpayScript.setAttribute('security_key', DEJAVOO_AUTH_TOKEN);
-          gpayScript.src = gpayUrl;
           
           gpayScript.onload = () => {
             console.log('✅ Google Pay SDK loaded');
@@ -856,7 +856,9 @@
             console.warn('⚠️ Google Pay SDK failed to load:', error);
           };
           
+          // Append to DOM first, then set src to trigger load
           document.head.appendChild(gpayScript);
+          gpayScript.setAttribute('src', gpayUrl);
 
           console.log('✅ Configuration loaded');
           loadingEl.style.display = 'none';
@@ -882,6 +884,11 @@
         }
 
         try {
+          // Set security key on button container
+          const buttonContainer = document.getElementById('ipospays-gpay-btn');
+          buttonContainer.setAttribute('data-security-key', DEJAVOO_AUTH_TOKEN);
+          buttonContainer.setAttribute('security_key', DEJAVOO_AUTH_TOKEN);
+
           const transactionInfo = {
             countryCode: "US",
             currencyCode: "USD",
