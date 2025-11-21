@@ -937,6 +937,10 @@
       // Callback for Google Pay - called by Google Pay SDK
       function getPaymentInfo(paymentData) {
         console.log("📱 Google Pay Payment Data received");
+        console.log("📦 Full paymentData object:", paymentData);
+        console.log("📦 PaymentData type:", typeof paymentData);
+        console.log("📦 PaymentData keys:", Object.keys(paymentData));
+        
         googlePayData = paymentData;
         selectedPaymentMethod = 'googlepay';
         
@@ -945,6 +949,7 @@
         document.getElementById('reviewPayment').textContent = 'Google Pay';
         document.getElementById('reviewBilling').innerHTML = 'Google Pay (billing address from wallet)';
         
+        console.log("✅ Moving to review step (step 3)");
         setStep(3);
       }
 
@@ -1226,6 +1231,10 @@
 
       // Place order
       async function placeOrder() {
+        console.log("🚀 placeOrder() called");
+        console.log("   selectedPaymentMethod:", selectedPaymentMethod);
+        console.log("   configLoaded:", configLoaded);
+        
         if (!configLoaded) {
           showAlert('reviewAlerts', 'error', 'Payment system not ready');
           return;
@@ -1238,9 +1247,12 @@
           let saleResponse;
 
           if (selectedPaymentMethod === 'googlepay') {
+            console.log("💳 Processing Google Pay transaction");
             // Process Google Pay transaction
             saleResponse = await processGooglePaySale();
+            console.log("✅ Google Pay sale completed, response:", saleResponse);
           } else {
+            console.log("💳 Processing card payment");
             // Generate or use token for card payment
             if (selectedPaymentMethod === 'new') {
               if (typeof postData !== 'function') {
@@ -1248,41 +1260,72 @@
               }
               document.getElementById('processingMessage').textContent = 'Creating payment token...';
               const tokenResponse = await postData();
+              console.log("🎫 Token response:", tokenResponse);
               if (tokenResponse.statusCode !== '00') throw new Error('Token generation failed');
               paymentTokenId = tokenResponse.payment_token_id;
             } else {
               const card = savedCards.find(c => c.token_id === selectedPaymentMethod);
               reusableToken = card.reusable_token;
+              console.log("💳 Using saved card token:", reusableToken);
             }
 
             // Process card transaction
             document.getElementById('processingMessage').textContent = 'Processing payment...';
             saleResponse = await processSale();
+            console.log("✅ Card sale completed, response:", saleResponse);
           }
 
           document.getElementById('processingOverlay').classList.remove('active');
 
+          console.log("🔍 Analyzing response structure...");
+          console.log("   Response keys:", Object.keys(saleResponse));
+          
           // Check response
           const transactionData = saleResponse.iposTransactResponse || saleResponse.iposhpresponse;
           
+          console.log("🔍 Transaction data found:", !!transactionData);
+          if (transactionData) {
+            console.log("   Transaction data keys:", Object.keys(transactionData));
+            console.log("   Response code:", transactionData.responseCode);
+            console.log("   Response message:", transactionData.responseMessage || transactionData.errResponseMessage);
+          }
+          
           if (!transactionData) {
+            console.error("❌ No transaction data in response");
             if (saleResponse.errors && saleResponse.errors.length > 0) {
               const error = saleResponse.errors[0];
+              console.error("   API Error:", error);
               showAlert('reviewAlerts', 'error', `API Error: ${error.message}`);
             } else {
+              console.error("   Unknown error format:", saleResponse);
               showAlert('reviewAlerts', 'error', 'Unknown error occurred');
             }
             return;
           }
 
+          console.log("🎯 Response code check:", transactionData.responseCode, "=== '200'?", transactionData.responseCode === '200');
+          
           if (transactionData.responseCode === '200') {
+            console.log("✅ Transaction approved!");
+            
             // Save token if needed
             if (selectedPaymentMethod === 'new' && selectedCustomer.customer_id && document.getElementById('saveCardCheckbox').checked) {
+              console.log("💾 Saving payment token...");
               await savePaymentToken(saleResponse);
             }
             
             // Save transaction
+            console.log("💾 Saving transaction to database...");
             await saveTransaction(saleResponse);
+            
+            console.log("🎉 Showing success page");
+            showSuccessPage(saleResponse);
+          } else {
+            const errorMsg = transactionData.errResponseMessage || transactionData.responseMessage || 'Transaction failed';
+            console.error("❌ Transaction declined:", errorMsg);
+            console.error("   Full transaction data:", transactionData);
+            showAlert('reviewAlerts', 'error', `❌ ${errorMsg}`);
+          }
             
             showSuccessPage(saleResponse);
           } else {
@@ -1298,6 +1341,9 @@
 
       // Process Google Pay sale
       async function processGooglePaySale() {
+        console.log("💳 Processing Google Pay sale...");
+        console.log("📦 Using googlePayData:", googlePayData);
+        
         const requestBody = {
           merchantAuthentication: {
             merchantId: MERCHANT_ID,
@@ -1318,19 +1364,41 @@
           googlePayData: googlePayData
         };
 
-        console.log('iPOS Transact Request (Google Pay):', requestBody);
+        console.log('📤 iPOS Transact Request (Google Pay):');
+        console.log('  - API URL:', API_BASE_URL);
+        console.log('  - Merchant ID:', MERCHANT_ID);
+        console.log('  - Transaction Reference:', requestBody.merchantAuthentication.transactionReferenceId);
+        console.log('  - Amount:', requestBody.transactionRequest.amount);
+        console.log('  - Full request body:', JSON.stringify(requestBody, null, 2));
 
-        const response = await fetch(API_BASE_URL, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            token: API_AUTH_TOKEN,
-          },
-          body: JSON.stringify(requestBody),
-        });
+        try {
+          const response = await fetch(API_BASE_URL, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              token: API_AUTH_TOKEN,
+            },
+            body: JSON.stringify(requestBody),
+          });
 
-        if (!response.ok) throw new Error('API request failed');
-        return await response.json();
+          console.log('📥 API Response Status:', response.status, response.statusText);
+          console.log('📥 API Response Headers:', Object.fromEntries(response.headers.entries()));
+
+          if (!response.ok) {
+            const errorText = await response.text();
+            console.error('❌ API request failed:', errorText);
+            throw new Error('API request failed: ' + response.status);
+          }
+
+          const responseData = await response.json();
+          console.log('📥 API Response Data:', responseData);
+          console.log('📥 Response keys:', Object.keys(responseData));
+          
+          return responseData;
+        } catch (error) {
+          console.error('💥 Error in processGooglePaySale:', error);
+          throw error;
+        }
       }
 
       // Process sale
