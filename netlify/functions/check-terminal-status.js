@@ -79,8 +79,30 @@ exports.handler = async (event, context) => {
       JSON.stringify(Object.fromEntries(response.headers.entries()), null, 2)
     );
 
-    const data = await response.json();
-    console.log('✅ SPIN API response data:', JSON.stringify(data, null, 2));
+    // Get raw response text first
+    const responseText = await response.text();
+    console.log('📨 SPIN API raw response (first 500 chars):', responseText.substring(0, 500));
+
+    // Try to parse as JSON
+    let data;
+    try {
+      data = JSON.parse(responseText);
+      console.log('✅ SPIN API response data:', JSON.stringify(data, null, 2));
+    } catch (parseError) {
+      console.error('❌ Failed to parse response as JSON');
+      console.error('Response was HTML or invalid JSON:', responseText.substring(0, 1000));
+      return {
+        statusCode: 500,
+        headers,
+        body: JSON.stringify({
+          success: false,
+          error: 'SPIN API returned invalid response',
+          details:
+            'API returned HTML instead of JSON. This may indicate wrong endpoint or authentication issue.',
+          responsePreview: responseText.substring(0, 500),
+        }),
+      };
+    }
 
     return {
       statusCode: 200,
