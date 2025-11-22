@@ -146,6 +146,8 @@ const App = {
 
     if (screen === 'customers') {
       await CustomersScreen.load();
+    } else if (screen === 'products') {
+      await ProductsScreen.init();
     }
   },
 
