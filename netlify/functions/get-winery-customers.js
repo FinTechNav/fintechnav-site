@@ -9,11 +9,7 @@ exports.handler = async (event, context) => {
   };
 
   if (event.httpMethod === 'OPTIONS') {
-    return {
-      statusCode: 200,
-      headers,
-      body: '',
-    };
+    return { statusCode: 200, headers, body: '' };
   }
 
   if (event.httpMethod !== 'GET') {
@@ -41,25 +37,24 @@ exports.handler = async (event, context) => {
 
   try {
     await client.connect();
-    console.log('✅ Connected to database');
 
     const result = await client.query(
       `
       SELECT 
-        id,
-        email,
-        name,
-        phone,
-        created_at
-      FROM customers
-      WHERE winery_id = $1
-        AND deleted_at IS NULL
-      ORDER BY name ASC
+        c.id,
+        c.email,
+        c.name,
+        c.phone,
+        c.created_at
+      FROM customers c
+      INNER JOIN customer_wineries cw ON c.id = cw.customer_id
+      WHERE cw.winery_id = $1
+        AND c.deleted_at IS NULL
+        AND cw.deleted_at IS NULL
+      ORDER BY c.name ASC
     `,
       [wineryId]
     );
-
-    console.log(`✅ Retrieved ${result.rows.length} customers for winery ${wineryId}`);
 
     return {
       statusCode: 200,
@@ -71,7 +66,6 @@ exports.handler = async (event, context) => {
     };
   } catch (error) {
     console.error('❌ Database error:', error);
-
     return {
       statusCode: 500,
       headers,
