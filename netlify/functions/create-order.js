@@ -1,0 +1,140 @@
+const { Client } = require('pg');
+
+exports.handler = async (event, context) => {
+  const headers = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Content-Type': 'application/json',
+  };
+
+  if (event.httpMethod === 'OPTIONS') {
+    return { statusCode: 200, headers, body: '' };
+  }
+
+  if (event.httpMethod !== 'POST') {
+    return {
+      statusCode: 405,
+      headers,
+      body: JSON.stringify({ error: 'Method not allowed' }),
+    };
+  }
+
+  const {
+    winery_id,
+    customer_id,
+    employee_id,
+    customer_name,
+    is_guest,
+    order_source,
+    subtotal,
+    tax,
+    total,
+    items,
+  } = JSON.parse(event.body);
+
+  const client = new Client({
+    connectionString: process.env.DATABASE_URL,
+    ssl: false,
+  });
+
+  try {
+    await client.connect();
+    await client.query('BEGIN');
+
+    // Generate order number
+    const orderNumberResult = await client.query("SELECT nextval('order_number_seq') as order_num");
+    const orderNumber = 'ORD-' + orderNumberResult.rows[0].order_num;
+
+    // Create order
+    const orderResult = await client.query(
+      `
+      INSERT INTO orders (
+        winery_id, 
+        customer_id, 
+        employee_id, 
+        customer_name, 
+        is_guest, 
+        order_source, 
+        order_number,
+        subtotal, 
+        tax, 
+        total, 
+        status
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+      RETURNING id, order_number
+      `,
+      [
+        winery_id,
+        customer_id,
+        employee_id,
+        customer_name,
+        is_guest,
+        order_source,
+        orderNumber,
+        subtotal,
+        tax,
+        total,
+        'completed',
+      ]
+    );
+
+    const orderId = orderResult.rows[0].id;
+
+    // Create order items
+    for (const item of items) {
+      await client.query(
+        `
+        INSERT INTO order_items (
+          order_id, 
+          product_id, 
+          product_name, 
+          product_sku, 
+          vintage, 
+          varietal, 
+          quantity, 
+          unit_price, 
+          line_total
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        `,
+        [
+          orderId,
+          item.product_id,
+          item.product_name,
+          item.product_sku,
+          item.vintage,
+          item.varietal,
+          item.quantity,
+          item.unit_price,
+          item.line_total,
+        ]
+      );
+    }
+
+    await client.query('COMMIT');
+
+    return {
+      statusCode: 200,
+      headers,
+      body: JSON.stringify({
+        success: true,
+        order_id: orderId,
+        order_number: orderNumber,
+      }),
+    };
+  } catch (error) {
+    await client.query('ROLLBACK');
+    console.error('Database error:', error);
+    return {
+      statusCode: 500,
+      headers,
+      body: JSON.stringify({
+        success: false,
+        error: 'Failed to create order',
+        details: error.message,
+      }),
+    };
+  } finally {
+    await client.end();
+  }
+};

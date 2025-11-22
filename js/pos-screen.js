@@ -3,10 +3,14 @@ const POSScreen = {
   products: [],
   cart: [],
   TAX_RATE: 0.0775,
+  selectedCustomer: null,
+  customers: [],
 
   async init() {
     await this.loadProducts();
+    await this.loadCustomers();
     this.renderProducts();
+    this.renderCustomerSelector();
     this.setupPayButton();
   },
 
@@ -26,6 +30,40 @@ const POSScreen = {
       console.error('Failed to load products:', error);
       this.products = [];
     }
+  },
+
+  async loadCustomers() {
+    if (!App.currentWinery) return;
+
+    try {
+      const response = await fetch(
+        `/.netlify/functions/get-winery-customers?winery_id=${App.currentWinery.id}`
+      );
+      const data = await response.json();
+
+      if (data.success) {
+        this.customers = data.customers;
+      }
+    } catch (error) {
+      console.error('Failed to load customers:', error);
+      this.customers = [];
+    }
+  },
+
+  renderCustomerSelector() {
+    const container = document.getElementById('customerSelector');
+    if (!container) return;
+
+    const options = [
+      '<option value="">Guest Checkout</option>',
+      ...this.customers.map((c) => `<option value="${c.id}">${c.name || c.email}</option>`),
+    ];
+
+    container.innerHTML = options.join('');
+  },
+
+  selectCustomer(customerId) {
+    this.selectedCustomer = customerId ? this.customers.find((c) => c.id === customerId) : null;
   },
 
   renderProducts() {
@@ -125,28 +163,80 @@ const POSScreen = {
   },
 
   setupPayButton() {
-    document.getElementById('payButton').addEventListener('click', async () => {
-      if (this.cart.length === 0) return;
+    const payButton = document.getElementById('payButton');
+    if (payButton._hasListener) return;
 
-      const subtotal = this.cart.reduce(
-        (sum, item) => sum + parseFloat(item.price) * item.quantity,
-        0
-      );
-      const tax = subtotal * this.TAX_RATE;
-      const total = subtotal + tax;
-
-      alert(
-        `Order placed!\nTotal: $${total.toFixed(2)}\n\nOrder will be saved to database in next phase.`
-      );
-
-      this.cart = [];
-      this.renderCart();
-      this.updateTotals();
+    payButton.addEventListener('click', async () => {
+      await this.processOrder();
     });
+    payButton._hasListener = true;
+  },
+
+  async processOrder() {
+    if (this.cart.length === 0) return;
+
+    const subtotal = this.cart.reduce(
+      (sum, item) => sum + parseFloat(item.price) * item.quantity,
+      0
+    );
+    const tax = subtotal * this.TAX_RATE;
+    const total = subtotal + tax;
+
+    const orderData = {
+      winery_id: App.currentWinery.id,
+      customer_id: this.selectedCustomer?.id || null,
+      employee_id: App.currentUser.id,
+      customer_name: this.selectedCustomer?.name || this.selectedCustomer?.email || 'Guest',
+      is_guest: !this.selectedCustomer,
+      order_source: 'pos',
+      subtotal: subtotal,
+      tax: tax,
+      total: total,
+      items: this.cart.map((item) => ({
+        product_id: item.id,
+        product_name: item.name,
+        product_sku: item.sku,
+        vintage: item.vintage,
+        varietal: item.varietal,
+        quantity: item.quantity,
+        unit_price: parseFloat(item.price),
+        line_total: parseFloat(item.price) * item.quantity,
+      })),
+    };
+
+    try {
+      const response = await fetch('/.netlify/functions/create-order', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(orderData),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        alert(`Order #${data.order_number} placed successfully!\nTotal: $${total.toFixed(2)}`);
+
+        this.cart = [];
+        this.selectedCustomer = null;
+        document.getElementById('customerSelector').value = '';
+        this.renderCart();
+        this.updateTotals();
+      } else {
+        alert('Failed to create order: ' + data.error);
+      }
+    } catch (error) {
+      console.error('Failed to create order:', error);
+      alert('Failed to create order');
+    }
   },
 
   reset() {
     this.cart = [];
+    this.selectedCustomer = null;
+    const selector = document.getElementById('customerSelector');
+    if (selector) selector.value = '';
     this.renderCart();
     this.updateTotals();
   },

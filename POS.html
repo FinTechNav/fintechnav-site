@@ -102,6 +102,12 @@
                         <h2>Current Order</h2>
                         <div class="customer-name" id="cartWineryName">Jensen Family Winery</div>
                     </div>
+                    <div style="padding: 15px; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
+                        <label style="display: block; color: #95a5a6; font-size: 12px; margin-bottom: 8px;">Customer</label>
+                        <select id="customerSelector" onchange="POSScreen.selectCustomer(this.value)" style="width: 100%; padding: 10px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 6px; color: #e8e8e8; font-size: 14px;">
+                            <option value="">Guest Checkout</option>
+                        </select>
+                    </div>
                     <div class="cart-items" id="cartItems">
                         <div class="empty-cart">Add items to start order</div>
                     </div>
@@ -186,15 +192,19 @@
                     </div>
                 </div>
             </div>
-            <!-- Placeholder Screens -->
-            <div id="ordersScreen" class="placeholder-screen" style="display: none;">
-                <div class="placeholder-content">
-                    <div class="placeholder-icon">📋</div>
+            <div id="ordersScreen" class="settings-screen" style="display: none;">
+                <div class="settings-header">
                     <h2>Orders</h2>
-                    <p>Order history and management coming soon</p>
+                    <p>View and manage orders</p>
+                </div>
+
+                <div class="settings-section">
+                    <div id="ordersContainer">
+                        <p style="text-align: center; color: #95a5a6;">Loading orders...</p>
+                    </div>
                 </div>
             </div>
-
+            <!-- Placeholder Screens -->
             <div id="clubScreen" class="placeholder-screen" style="display: none;">
                 <div class="placeholder-content">
                     <div class="placeholder-icon">⭐</div>
