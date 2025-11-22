@@ -70,7 +70,6 @@ exports.handler = async (event, context) => {
       ReferenceId: referenceId || `POS${Date.now()}`,
       InvoiceNumber: invoiceNumber,
       PrintReceipt: printReceipt ? 'Yes' : 'No',
-      GetReceipt: getReceipt ? 'Yes' : 'No',
       CaptureSignature: captureSignature,
       GetExtendedData: true,
       Tpn: tpn,
