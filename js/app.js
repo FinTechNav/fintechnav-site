@@ -150,6 +150,8 @@ const App = {
       await ProductsScreen.init();
     } else if (screen === 'orders') {
       await OrdersScreen.load();
+    } else if (screen === 'settings') {
+      await SettingsScreen.init();
     }
   },
 
@@ -171,10 +173,6 @@ function navigateTo(screen) {
 
 function logout() {
   App.logout();
-}
-
-function checkTerminalStatus() {
-  SettingsScreen.checkTerminalStatus();
 }
 
 // Initialize app when DOM is ready
