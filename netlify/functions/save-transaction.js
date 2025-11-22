@@ -36,7 +36,8 @@ exports.handler = async (event, context) => {
     };
   }
 
-  const requiredFields = ['winery_id', 'amount', 'status', 'transaction_type', 'payment_method'];
+  // Validate required fields
+  const requiredFields = ['dejavoo_reference_id', 'amount', 'status'];
 
   for (const field of requiredFields) {
     if (!transactionData[field]) {
@@ -57,65 +58,44 @@ exports.handler = async (event, context) => {
     await client.connect();
     console.log('✅ Connected to database');
 
+    // Insert the transaction
     const result = await client.query(
       `
-      INSERT INTO transactions (
-        winery_id,
+      INSERT INTO dejavoo_transactions (
         customer_id,
+        dejavoo_reference_id,
         amount,
         currency,
-        transaction_type,
-        payment_method,
         status,
-        payment_method_id,
-        terminal_id,
-        employee_id,
-        order_number,
-        receipt_number,
-        dejavoo_request,
-        dejavoo_response,
-        notes,
-        metadata
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
-      RETURNING id, created_at, updated_at
+        response_code,
+        response_message,
+        card_last_four,
+        card_type,
+        processed_at
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, CURRENT_TIMESTAMP)
+      RETURNING transaction_id, created_at, processed_at
     `,
       [
-        transactionData.winery_id,
-        transactionData.customer_id || null,
+        transactionData.customer_id ? parseInt(transactionData.customer_id) : null,
+        transactionData.dejavoo_reference_id,
         transactionData.amount,
         transactionData.currency || 'USD',
-        transactionData.transaction_type,
-        transactionData.payment_method,
         transactionData.status,
-        transactionData.payment_method_id || null,
-        transactionData.terminal_id || null,
-        transactionData.employee_id || null,
-        transactionData.order_number || null,
-        transactionData.receipt_number || null,
-        transactionData.dejavoo_request ? JSON.stringify(transactionData.dejavoo_request) : null,
-        transactionData.dejavoo_response ? JSON.stringify(transactionData.dejavoo_response) : null,
-        transactionData.notes || null,
-        transactionData.metadata ? JSON.stringify(transactionData.metadata) : null,
+        transactionData.response_code || null,
+        transactionData.response_message || null,
+        transactionData.card_last_four || null,
+        transactionData.card_type || null,
       ]
     );
 
     console.log('✅ Transaction saved:', result.rows[0]);
 
-    if (transactionData.payment_method_id) {
-      await client.query('UPDATE payment_methods SET updated_at = NOW() WHERE id = $1', [
-        transactionData.payment_method_id,
-      ]);
-      console.log('✅ Updated payment method timestamp');
-    }
-
     return {
-      statusCode: 201,
+      statusCode: 200,
       headers,
       body: JSON.stringify({
         success: true,
-        transaction_id: result.rows[0].id,
-        created_at: result.rows[0].created_at,
-        updated_at: result.rows[0].updated_at,
+        transaction: result.rows[0],
       }),
     };
   } catch (error) {
