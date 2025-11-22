@@ -112,7 +112,10 @@ const SettingsScreen = {
     const terminal = this.terminals.find((t) => t.id === terminalId);
     const resultDiv = document.getElementById(`terminalStatusResult-${terminalId}`);
 
+    console.log('🔍 Terminal lookup:', { terminalId, found: !!terminal });
+
     if (!terminal) {
+      console.error('❌ Terminal not found');
       resultDiv.innerHTML = `
                 <div style="padding: 15px; background: rgba(231, 76, 60, 0.1); border: 1px solid rgba(231, 76, 60, 0.3); border-radius: 6px;">
                     <h4 style="color: #e74c3c; margin-bottom: 8px;">Error</h4>
@@ -122,11 +125,30 @@ const SettingsScreen = {
       return;
     }
 
+    console.log('📋 Terminal details:', {
+      id: terminal.id,
+      register_id: terminal.register_id,
+      auth_key: terminal.auth_key ? '***' + terminal.auth_key.slice(-4) : 'missing',
+      tpn: terminal.tpn,
+    });
+
     resultDiv.innerHTML = `
             <div style="padding: 15px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 6px;">
                 <h4 style="color: #f39c12; margin-bottom: 8px;">Checking terminal status...</h4>
             </div>
         `;
+
+    const requestBody = {
+      register_id: terminal.register_id,
+      auth_key: terminal.auth_key,
+      tpn: terminal.tpn,
+    };
+
+    console.log('📤 Sending request to Netlify function:', {
+      register_id: requestBody.register_id,
+      auth_key: requestBody.auth_key ? '***' + requestBody.auth_key.slice(-4) : 'missing',
+      tpn: requestBody.tpn,
+    });
 
     try {
       const response = await fetch('/.netlify/functions/check-terminal-status', {
@@ -134,14 +156,12 @@ const SettingsScreen = {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          register_id: terminal.register_id,
-          auth_key: terminal.auth_key,
-          tpn: terminal.tpn,
-        }),
+        body: JSON.stringify(requestBody),
       });
 
+      console.log('📨 Response status:', response.status);
       const result = await response.json();
+      console.log('📨 Response data:', result);
 
       if (result.success) {
         resultDiv.innerHTML = `
@@ -151,14 +171,16 @@ const SettingsScreen = {
                     </div>
                 `;
       } else {
+        console.error('❌ Request failed:', result);
         resultDiv.innerHTML = `
                     <div style="padding: 15px; background: rgba(231, 76, 60, 0.1); border: 1px solid rgba(231, 76, 60, 0.3); border-radius: 6px;">
                         <h4 style="color: #e74c3c; margin-bottom: 8px;">Error</h4>
-                        <pre style="color: #e8e8e8; white-space: pre-wrap; font-size: 12px;">${result.error}</pre>
+                        <pre style="color: #e8e8e8; white-space: pre-wrap; font-size: 12px;">${result.error}\n\nDetails: ${result.details || 'None'}</pre>
                     </div>
                 `;
       }
     } catch (error) {
+      console.error('❌ Fetch error:', error);
       resultDiv.innerHTML = `
                 <div style="padding: 15px; background: rgba(231, 76, 60, 0.1); border: 1px solid rgba(231, 76, 60, 0.3); border-radius: 6px;">
                     <h4 style="color: #e74c3c; margin-bottom: 8px;">Connection Error</h4>
