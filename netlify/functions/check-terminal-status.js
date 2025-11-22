@@ -54,85 +54,67 @@ exports.handler = async (event, context) => {
     };
   }
 
-  // SPIN REST API expects JSON POST to /spin/api.php
-  const spinRequest = {
-    Status: {
-      RegisterId: register_id,
-      AuthKey: auth_key,
-      TPN: tpn,
-    },
-  };
+  // Build XML request for SPIN API Status check
+  const xmlRequest = `<request><AuthKey>${auth_key}</AuthKey><RegisterId>${register_id}</RegisterId><TPN>${tpn}</TPN></request>`;
 
-  console.log('📤 Sending POST to SPIN REST API:', JSON.stringify(spinRequest, null, 2));
+  // Build URL with XML as query parameter
+  const url = `https://spinpos.net/spin/cgi.html?Status=${encodeURIComponent(xmlRequest)}`;
+
+  console.log('📤 Sending GET to SPIN API with XML:', xmlRequest);
+  console.log('📤 Full URL:', url);
 
   try {
-    const response = await fetch('https://spinpos.net/spin/api.php', {
-      method: 'POST',
+    const response = await fetch(url, {
+      method: 'GET',
       headers: {
-        'Content-Type': 'application/json',
+        Accept: 'text/html,application/xhtml+xml,application/xml',
       },
-      body: JSON.stringify(spinRequest),
     });
 
     console.log('📨 SPIN API response status:', response.status);
-    console.log(
-      '📨 SPIN API response headers:',
-      JSON.stringify(Object.fromEntries(response.headers.entries()), null, 2)
-    );
 
     const responseText = await response.text();
     console.log('📨 SPIN API raw response:', responseText);
 
-    let data;
-    try {
-      data = JSON.parse(responseText);
-      console.log('✅ SPIN API response data:', JSON.stringify(data, null, 2));
-    } catch (parseError) {
-      // Response might be XML, try to parse it
-      console.log('⚠️ Response is not JSON, checking if XML...');
+    // Parse XML response
+    if (responseText.includes('<response>')) {
+      // Extract values from XML
+      const messageMatch = responseText.match(/<Message>(.*?)<\/Message>/);
+      const resultCodeMatch = responseText.match(/<ResultCode>(.*?)<\/ResultCode>/);
+      const respMsgMatch = responseText.match(/<RespMSG>(.*?)<\/RespMSG>/);
+      const registerIdMatch = responseText.match(/<RegisterId>(.*?)<\/RegisterId>/);
+      const tpnMatch = responseText.match(/<TPN>(.*?)<\/TPN>/);
 
-      if (responseText.includes('<response>')) {
-        // Parse XML response
-        const messageMatch = responseText.match(/<Message>(.*?)<\/Message>/);
-        const resultCodeMatch = responseText.match(/<ResultCode>(.*?)<\/ResultCode>/);
-        const respMsgMatch = responseText.match(/<RespMSG>(.*?)<\/RespMSG>/);
+      const parsedResponse = {
+        message: messageMatch ? messageMatch[1] : null,
+        resultCode: resultCodeMatch ? resultCodeMatch[1] : null,
+        responseMessage: respMsgMatch ? respMsgMatch[1] : null,
+        registerId: registerIdMatch ? registerIdMatch[1] : null,
+        tpn: tpnMatch ? tpnMatch[1] : null,
+      };
 
-        return {
-          statusCode: 500,
-          headers,
-          body: JSON.stringify({
-            success: false,
-            error: 'SPIN API returned error',
-            details: {
-              message: messageMatch ? messageMatch[1] : 'Unknown',
-              resultCode: resultCodeMatch ? resultCodeMatch[1] : 'Unknown',
-              responseMessage: respMsgMatch ? respMsgMatch[1] : 'Unknown',
-            },
-            rawResponse: responseText,
-          }),
-        };
-      }
+      console.log('✅ Parsed XML response:', JSON.stringify(parsedResponse, null, 2));
 
+      return {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify({
+          success: true,
+          data: parsedResponse,
+          rawXml: responseText,
+        }),
+      };
+    } else {
       return {
         statusCode: 500,
         headers,
         body: JSON.stringify({
           success: false,
-          error: 'SPIN API returned invalid response',
-          details: 'Unable to parse response as JSON or XML',
+          error: 'SPIN API returned unexpected format',
           responsePreview: responseText.substring(0, 500),
         }),
       };
     }
-
-    return {
-      statusCode: 200,
-      headers,
-      body: JSON.stringify({
-        success: true,
-        data: data,
-      }),
-    };
   } catch (error) {
     console.error('❌ SPIN API error:', error);
     console.error('Error stack:', error.stack);
