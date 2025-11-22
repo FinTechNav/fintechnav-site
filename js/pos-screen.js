@@ -182,6 +182,130 @@ const POSScreen = {
     const tax = subtotal * this.TAX_RATE;
     const total = subtotal + tax;
 
+    // Check if winery has a terminal configured
+    const terminalConfig = await this.getTerminalConfig();
+
+    if (terminalConfig && terminalConfig.tpn) {
+      console.log('✅ Terminal configured, processing via terminal');
+      await this.processTerminalSale(terminalConfig, subtotal, tax, total);
+    } else {
+      console.log('ℹ️ No terminal configured, saving order without payment');
+      await this.saveOrderWithoutPayment(subtotal, tax, total);
+    }
+  },
+
+  async getTerminalConfig() {
+    try {
+      if (!App.currentWinery) {
+        console.error('No winery selected');
+        return null;
+      }
+
+      console.log('🔍 Fetching terminal config for winery:', App.currentWinery.id);
+
+      const response = await fetch(
+        `/.netlify/functions/get-winery-config?winery_id=${App.currentWinery.id}`
+      );
+
+      if (!response.ok) {
+        console.error('Failed to fetch winery config:', response.status);
+        return null;
+      }
+
+      const data = await response.json();
+      console.log('📋 Winery config:', data);
+
+      // Check if terminal config exists
+      if (
+        data.config &&
+        data.config.card_present_tpn &&
+        data.config.card_present_register_id &&
+        data.config.card_present_auth_key
+      ) {
+        return {
+          tpn: data.config.card_present_tpn,
+          registerId: data.config.card_present_register_id,
+          authkey: data.config.card_present_auth_key,
+        };
+      }
+
+      console.log('ℹ️ No terminal configuration found for winery');
+      return null;
+    } catch (error) {
+      console.error('❌ Error fetching terminal config:', error);
+      return null;
+    }
+  },
+
+  async processTerminalSale(terminalConfig, subtotal, tax, total) {
+    console.log('🏪 Processing terminal sale...');
+    console.log('  - Amount:', total);
+    console.log('  - Terminal TPN:', terminalConfig.tpn);
+
+    // Show processing overlay
+    this.showProcessingOverlay('Processing payment on terminal...');
+
+    try {
+      const referenceId = `POS${Date.now()}`;
+
+      const response = await fetch('/.netlify/functions/process-terminal-sale', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          amount: total,
+          tipAmount: 0,
+          tpn: terminalConfig.tpn,
+          authkey: terminalConfig.authkey,
+          registerId: terminalConfig.registerId,
+          referenceId: referenceId,
+          captureSignature: false,
+          getReceipt: true,
+          printReceipt: false,
+        }),
+      });
+
+      const result = await response.json();
+      console.log('📥 Terminal sale response:', result);
+
+      this.hideProcessingOverlay();
+
+      if (result.success && result.data) {
+        const transactionData = result.data;
+
+        // Check if transaction was approved
+        if (
+          transactionData.ResponseCode === '00' ||
+          transactionData.ResponseCode === '0' ||
+          transactionData.Message === 'Approved'
+        ) {
+          console.log('✅ Transaction approved');
+
+          // Save order to database
+          await this.saveOrderWithPayment(subtotal, tax, total, transactionData, referenceId);
+        } else {
+          console.error('❌ Transaction declined or error');
+          alert(
+            `Payment failed: ${transactionData.Message || 'Unknown error'}\n\nPlease try again or use a different payment method.`
+          );
+        }
+      } else {
+        console.error('❌ Terminal sale failed:', result.error);
+        alert(
+          `Terminal error: ${result.error || 'Unknown error'}\n\nPlease check terminal connection and try again.`
+        );
+      }
+    } catch (error) {
+      console.error('💥 Error processing terminal sale:', error);
+      this.hideProcessingOverlay();
+      alert(
+        'Failed to process payment on terminal.\n\nPlease check terminal connection and try again.'
+      );
+    }
+  },
+
+  async saveOrderWithPayment(subtotal, tax, total, transactionData, referenceId) {
     const orderData = {
       winery_id: App.currentWinery.id,
       customer_id: this.selectedCustomer?.id || null,
@@ -192,6 +316,9 @@ const POSScreen = {
       subtotal: subtotal,
       tax: tax,
       total: total,
+      payment_status: 'paid',
+      payment_method: 'card_present',
+      payment_reference: referenceId,
       items: this.cart.map((item) => ({
         product_id: item.id,
         product_name: item.name,
@@ -216,19 +343,97 @@ const POSScreen = {
       const data = await response.json();
 
       if (data.success) {
-        alert(`Order #${data.order_number} placed successfully!\nTotal: $${total.toFixed(2)}`);
+        alert(
+          `Order #${data.order_number} completed successfully!\n\nTotal: $${total.toFixed(2)}\nPayment: Approved\nAuth Code: ${transactionData.AuthCode || 'N/A'}`
+        );
 
-        this.cart = [];
-        this.selectedCustomer = null;
-        document.getElementById('customerSelector').value = '';
-        this.renderCart();
-        this.updateTotals();
+        this.reset();
+      } else {
+        alert('Payment successful but failed to save order: ' + data.error);
+      }
+    } catch (error) {
+      console.error('Failed to create order:', error);
+      alert('Payment successful but failed to save order');
+    }
+  },
+
+  async saveOrderWithoutPayment(subtotal, tax, total) {
+    const orderData = {
+      winery_id: App.currentWinery.id,
+      customer_id: this.selectedCustomer?.id || null,
+      employee_id: App.currentUser.id,
+      customer_name: this.selectedCustomer?.name || this.selectedCustomer?.email || 'Guest',
+      is_guest: !this.selectedCustomer,
+      order_source: 'pos',
+      subtotal: subtotal,
+      tax: tax,
+      total: total,
+      payment_status: 'pending',
+      items: this.cart.map((item) => ({
+        product_id: item.id,
+        product_name: item.name,
+        product_sku: item.sku,
+        vintage: item.vintage,
+        varietal: item.varietal,
+        quantity: item.quantity,
+        unit_price: parseFloat(item.price),
+        line_total: parseFloat(item.price) * item.quantity,
+      })),
+    };
+
+    try {
+      const response = await fetch('/.netlify/functions/create-order', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(orderData),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        alert(
+          `Order #${data.order_number} placed successfully!\nTotal: $${total.toFixed(2)}\n\n(No payment terminal configured)`
+        );
+        this.reset();
       } else {
         alert('Failed to create order: ' + data.error);
       }
     } catch (error) {
       console.error('Failed to create order:', error);
       alert('Failed to create order');
+    }
+  },
+
+  showProcessingOverlay(message = 'Processing...') {
+    let overlay = document.getElementById('processingOverlay');
+
+    if (!overlay) {
+      overlay = document.createElement('div');
+      overlay.id = 'processingOverlay';
+      overlay.className = 'processing-overlay';
+      overlay.innerHTML = `
+        <div class="processing-content">
+          <div class="spinner"></div>
+          <h3 id="processingMessage">${message}</h3>
+          <p style="color: #666; margin-top: 10px; font-size: 0.9rem;">
+            Please wait...
+          </p>
+        </div>
+      `;
+      document.body.appendChild(overlay);
+    } else {
+      document.getElementById('processingMessage').textContent = message;
+    }
+
+    overlay.classList.add('active');
+  },
+
+  hideProcessingOverlay() {
+    const overlay = document.getElementById('processingOverlay');
+    if (overlay) {
+      overlay.classList.remove('active');
     }
   },
 
