@@ -1,10 +1,7 @@
 // netlify/functions/get-customers.js
-// Retrieves all active customers from the database
-
 const { Client } = require('pg');
 
 exports.handler = async (event, context) => {
-  // CORS headers
   const headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type',
@@ -12,7 +9,6 @@ exports.handler = async (event, context) => {
     'Content-Type': 'application/json',
   };
 
-  // Handle OPTIONS request for CORS
   if (event.httpMethod === 'OPTIONS') {
     return {
       statusCode: 200,
@@ -21,7 +17,6 @@ exports.handler = async (event, context) => {
     };
   }
 
-  // Only allow GET requests
   if (event.httpMethod !== 'GET') {
     return {
       statusCode: 405,
@@ -30,29 +25,58 @@ exports.handler = async (event, context) => {
     };
   }
 
+  const wineryId = event.queryStringParameters?.winery_id;
+
   const client = new Client({
     connectionString: process.env.DATABASE_URL,
-    ssl: false, // Disable SSL for servers that don't support it
+    ssl: false,
   });
 
   try {
     await client.connect();
     console.log('✅ Connected to database');
 
-    // Query all customers
-    const result = await client.query(`
-      SELECT 
-        customer_id,
-        customer_name,
-        email,
-        billing_street,
-        billing_city,
-        billing_state,
-        billing_zip,
-        billing_country
-      FROM dejavoo_customers
-      ORDER BY customer_name ASC
-    `);
+    let query;
+    let params = [];
+
+    if (wineryId) {
+      query = `
+        SELECT 
+          c.id,
+          c.email,
+          c.name,
+          c.phone,
+          c.version,
+          c.created_at,
+          c.updated_at,
+          cw.loyalty_points,
+          cw.discount_tier,
+          cw.preferred_payment_method_id
+        FROM customers c
+        INNER JOIN customer_wineries cw ON c.id = cw.customer_id
+        WHERE cw.winery_id = $1
+          AND c.deleted_at IS NULL
+          AND cw.deleted_at IS NULL
+        ORDER BY c.name ASC
+      `;
+      params = [wineryId];
+    } else {
+      query = `
+        SELECT 
+          id,
+          email,
+          name,
+          phone,
+          version,
+          created_at,
+          updated_at
+        FROM customers
+        WHERE deleted_at IS NULL
+        ORDER BY name ASC
+      `;
+    }
+
+    const result = await client.query(query, params);
 
     console.log(`✅ Retrieved ${result.rows.length} customers`);
 

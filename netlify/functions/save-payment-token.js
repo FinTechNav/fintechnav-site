@@ -1,10 +1,7 @@
 // netlify/functions/save-payment-token.js
-// Saves a new payment token for a customer
-
 const { Client } = require('pg');
 
 exports.handler = async (event, context) => {
-  // CORS headers
   const headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type',
@@ -12,7 +9,6 @@ exports.handler = async (event, context) => {
     'Content-Type': 'application/json',
   };
 
-  // Handle OPTIONS request for CORS
   if (event.httpMethod === 'OPTIONS') {
     return {
       statusCode: 200,
@@ -21,7 +17,6 @@ exports.handler = async (event, context) => {
     };
   }
 
-  // Only allow POST requests
   if (event.httpMethod !== 'POST') {
     return {
       statusCode: 405,
@@ -41,15 +36,12 @@ exports.handler = async (event, context) => {
     };
   }
 
-  // Validate required fields
   const requiredFields = [
     'customer_id',
-    'payment_token_id',
-    'reusable_token',
+    'payment_token',
+    'card_fingerprint',
     'card_last_four',
-    'card_type',
-    'expiry_month',
-    'expiry_year',
+    'card_brand',
   ];
 
   for (const field of requiredFields) {
@@ -71,41 +63,48 @@ exports.handler = async (event, context) => {
     await client.connect();
     console.log('✅ Connected to database');
 
-    // Check if this is the customer's first card
     const existingCards = await client.query(
-      'SELECT COUNT(*) as count FROM dejavoo_payment_tokens WHERE customer_id = $1 AND is_active = TRUE',
+      'SELECT COUNT(*) as count FROM payment_methods WHERE customer_id = $1 AND is_active = TRUE',
       [tokenData.customer_id]
     );
 
     const isFirstCard = existingCards.rows[0].count === '0';
 
-    // Insert the new payment token
     const result = await client.query(
       `
-      INSERT INTO dejavoo_payment_tokens (
+      INSERT INTO payment_methods (
         customer_id,
-        payment_token_id,
+        payment_type,
+        provider,
+        payment_token,
         reusable_token,
+        card_fingerprint,
         card_last_four,
-        card_type,
-        expiry_month,
-        expiry_year,
+        card_brand,
+        card_exp_month,
+        card_exp_year,
+        cardholder_name,
+        billing_address,
         is_default,
-        is_active,
-        last_used_at
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, CURRENT_TIMESTAMP)
-      RETURNING token_id, created_at
+        is_active
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+      RETURNING id, created_at
     `,
       [
         tokenData.customer_id,
-        tokenData.payment_token_id,
-        tokenData.reusable_token,
+        tokenData.payment_type || 'card',
+        tokenData.provider || 'dejavoo',
+        tokenData.payment_token,
+        tokenData.reusable_token || null,
+        tokenData.card_fingerprint,
         tokenData.card_last_four,
-        tokenData.card_type,
-        tokenData.expiry_month,
-        tokenData.expiry_year,
-        isFirstCard, // First card is automatically default
-        true, // is_active
+        tokenData.card_brand,
+        tokenData.card_exp_month || null,
+        tokenData.card_exp_year || null,
+        tokenData.cardholder_name || null,
+        tokenData.billing_address ? JSON.stringify(tokenData.billing_address) : null,
+        isFirstCard,
+        true,
       ]
     );
 
@@ -116,20 +115,19 @@ exports.handler = async (event, context) => {
       headers,
       body: JSON.stringify({
         success: true,
-        token_id: result.rows[0].token_id,
+        payment_method_id: result.rows[0].id,
         created_at: result.rows[0].created_at,
       }),
     };
   } catch (error) {
     console.error('❌ Database error:', error);
 
-    // Check for duplicate token error
     if (error.code === '23505') {
       return {
         statusCode: 409,
         headers,
         body: JSON.stringify({
-          error: 'This payment token already exists',
+          error: 'This payment method already exists for this customer',
           details: error.detail,
         }),
       };

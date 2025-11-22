@@ -1,10 +1,7 @@
 // netlify/functions/get-payment-tokens.js
-// Retrieves saved payment tokens for a specific customer
-
 const { Client } = require('pg');
 
 exports.handler = async (event, context) => {
-  // CORS headers
   const headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type',
@@ -12,7 +9,6 @@ exports.handler = async (event, context) => {
     'Content-Type': 'application/json',
   };
 
-  // Handle OPTIONS request for CORS
   if (event.httpMethod === 'OPTIONS') {
     return {
       statusCode: 200,
@@ -21,7 +17,6 @@ exports.handler = async (event, context) => {
     };
   }
 
-  // Only allow GET requests
   if (event.httpMethod !== 'GET') {
     return {
       statusCode: 405,
@@ -30,7 +25,6 @@ exports.handler = async (event, context) => {
     };
   }
 
-  // Get customer_id from query parameters
   const customerId = event.queryStringParameters?.customer_id;
 
   if (!customerId) {
@@ -50,28 +44,32 @@ exports.handler = async (event, context) => {
     await client.connect();
     console.log('✅ Connected to database');
 
-    // Query active payment tokens for this customer
     const result = await client.query(
       `
       SELECT 
-        token_id,
-        payment_token_id,
+        id,
+        payment_type,
+        provider,
         reusable_token,
+        card_fingerprint,
         card_last_four,
-        card_type,
-        expiry_month,
-        expiry_year,
+        card_brand,
+        card_exp_month,
+        card_exp_year,
+        cardholder_name,
         is_default,
-        last_used_at
-      FROM dejavoo_payment_tokens
+        created_at,
+        updated_at
+      FROM payment_methods
       WHERE customer_id = $1 
         AND is_active = TRUE
-      ORDER BY is_default DESC, last_used_at DESC NULLS LAST
+        AND deleted_at IS NULL
+      ORDER BY is_default DESC, updated_at DESC
     `,
       [customerId]
     );
 
-    console.log(`✅ Retrieved ${result.rows.length} payment tokens for customer ${customerId}`);
+    console.log(`✅ Retrieved ${result.rows.length} payment methods for customer ${customerId}`);
 
     return {
       statusCode: 200,
@@ -85,7 +83,7 @@ exports.handler = async (event, context) => {
       statusCode: 500,
       headers,
       body: JSON.stringify({
-        error: 'Failed to retrieve payment tokens',
+        error: 'Failed to retrieve payment methods',
         details: error.message,
       }),
     };
