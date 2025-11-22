@@ -309,8 +309,8 @@ const POSScreen = {
         if (responseCode === '00' || responseCode === '0' || message === 'Approved') {
           console.log('✅ Transaction approved');
 
-          // Save order to database
-          await this.saveOrderWithPayment(subtotal, tax, total, responseData, referenceId);
+          // Save order to database - pass COMPLETE transactionData, not just responseData
+          await this.saveOrderWithPayment(subtotal, tax, total, transactionData, referenceId);
         } else {
           console.error('❌ Transaction declined or error');
           console.error('❌ Full response:', JSON.stringify(transactionData, null, 2));
@@ -400,12 +400,17 @@ const POSScreen = {
           }),
         });
 
+        console.log('📥 Terminal transaction response status:', terminalTxnResponse.status);
+
         const terminalTxnData = await terminalTxnResponse.json();
+        console.log('📥 Terminal transaction response data:', terminalTxnData);
 
         if (terminalTxnData.success) {
           console.log('✅ Terminal transaction saved:', terminalTxnData.transaction_id);
         } else {
-          console.warn('⚠️ Failed to save terminal transaction:', terminalTxnData.error);
+          console.error('⚠️ Failed to save terminal transaction:', terminalTxnData);
+          console.error('⚠️ Error details:', terminalTxnData.details);
+          console.error('⚠️ Error code:', terminalTxnData.code);
         }
 
         alert(
