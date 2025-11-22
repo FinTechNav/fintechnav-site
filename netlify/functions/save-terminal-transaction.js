@@ -30,7 +30,9 @@ exports.handler = async (event, context) => {
     console.log('  - order_id:', order_id);
     console.log('  - winery_id:', winery_id);
     console.log('  - customer_id:', customer_id);
+    console.log('  - employee_id:', employee_id);
     console.log('  - transactionData keys:', Object.keys(transactionData));
+    console.log('  - transactionData:', JSON.stringify(transactionData, null, 2));
 
     // Validate required parameters
     if (!winery_id || !transactionData) {
@@ -50,7 +52,9 @@ exports.handler = async (event, context) => {
       ssl: false,
     });
 
+    console.log('🔌 Connecting to database...');
     await client.connect();
+    console.log('✅ Database connected');
 
     // Extract data from SPIN response
     const generalResponse = transactionData.GeneralResponse || {};
@@ -59,15 +63,26 @@ exports.handler = async (event, context) => {
     const emvData = transactionData.EMVData || {};
     const extendedData = transactionData.ExtendedDataByApplication || {};
 
+    console.log('📦 Extracted data structures:');
+    console.log('  - generalResponse:', Object.keys(generalResponse));
+    console.log('  - amounts:', Object.keys(amounts));
+    console.log('  - cardData:', Object.keys(cardData));
+    console.log('  - emvData:', Object.keys(emvData));
+    console.log('  - extendedData keys:', Object.keys(extendedData));
+
     // Get the first entry type and application data
     const appKey = Object.keys(extendedData)[0];
     const appData = appKey ? extendedData[appKey] : {};
+
+    console.log('📱 Application data from:', appKey);
+    console.log('  - appData keys:', Object.keys(appData));
 
     // Parse transaction datetime
     let transactionDatetime = null;
     if (appData.DateTime) {
       // Format: "2025-11-2214:13:19" - needs parsing
       const dateStr = appData.DateTime;
+      console.log('📅 Parsing datetime:', dateStr);
       // Extract: YYYY-MM-DDTHH:MM:SS
       const year = dateStr.substring(0, 4);
       const month = dateStr.substring(5, 7);
@@ -76,7 +91,15 @@ exports.handler = async (event, context) => {
       const minute = dateStr.substring(12, 14);
       const second = dateStr.substring(15, 17);
       transactionDatetime = `${year}-${month}-${day} ${hour}:${minute}:${second}`;
+      console.log('📅 Parsed datetime:', transactionDatetime);
     }
+
+    console.log('🔢 Preparing values for insert...');
+    console.log('  - Reference ID:', transactionData.ReferenceId);
+    console.log('  - Total Amount:', amounts.TotalAmount);
+    console.log('  - Auth Code:', transactionData.AuthCode);
+    console.log('  - Card Type:', cardData.CardType);
+    console.log('  - iPOS Token:', transactionData.IPosToken);
 
     // Insert transaction record
     const insertQuery = `
@@ -253,6 +276,16 @@ exports.handler = async (event, context) => {
       JSON.stringify(extendedData),
     ];
 
+    console.log('📝 Executing INSERT query...');
+    console.log('  - Query has', values.length, 'parameters');
+    console.log('  - Sample values:', {
+      reference_id: values[5],
+      total_amount: values[17],
+      auth_code: values[30],
+      card_type: values[31],
+      ipos_token: values[44],
+    });
+
     const result = await client.query(insertQuery, values);
     const transactionId = result.rows[0].id;
 
@@ -270,7 +303,18 @@ exports.handler = async (event, context) => {
     };
   } catch (error) {
     console.error('❌ Error saving terminal transaction:', error);
+    console.error('Error name:', error.name);
+    console.error('Error message:', error.message);
     console.error('Error stack:', error.stack);
+
+    // If it's a database error, log additional details
+    if (error.code) {
+      console.error('Database error code:', error.code);
+      console.error('Database error detail:', error.detail);
+      console.error('Database error hint:', error.hint);
+      console.error('Database error position:', error.position);
+    }
+
     return {
       statusCode: 500,
       headers,
@@ -278,6 +322,7 @@ exports.handler = async (event, context) => {
         success: false,
         error: 'Failed to save terminal transaction',
         details: error.message,
+        code: error.code,
       }),
     };
   }
