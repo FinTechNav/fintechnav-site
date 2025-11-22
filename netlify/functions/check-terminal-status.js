@@ -54,21 +54,24 @@ exports.handler = async (event, context) => {
     };
   }
 
-  // Build URL with query parameters for GET request
-  const url = new URL('https://spinpos.net/spin/cgi.html');
-  url.searchParams.append('registerid', register_id);
-  url.searchParams.append('authkey', auth_key);
-  url.searchParams.append('tpn', tpn);
-  url.searchParams.append('type', 'Status');
+  // SPIN REST API expects JSON POST to /spin/api.php
+  const spinRequest = {
+    Status: {
+      RegisterId: register_id,
+      AuthKey: auth_key,
+      TPN: tpn,
+    },
+  };
 
-  console.log('📤 Sending GET to SPIN API:', url.toString());
+  console.log('📤 Sending POST to SPIN REST API:', JSON.stringify(spinRequest, null, 2));
 
   try {
-    const response = await fetch(url.toString(), {
-      method: 'GET',
+    const response = await fetch('https://spinpos.net/spin/api.php', {
+      method: 'POST',
       headers: {
-        Accept: 'application/json',
+        'Content-Type': 'application/json',
       },
+      body: JSON.stringify(spinRequest),
     });
 
     console.log('📨 SPIN API response status:', response.status);
@@ -77,26 +80,46 @@ exports.handler = async (event, context) => {
       JSON.stringify(Object.fromEntries(response.headers.entries()), null, 2)
     );
 
-    // Get raw response text first
     const responseText = await response.text();
-    console.log('📨 SPIN API raw response (first 500 chars):', responseText.substring(0, 500));
+    console.log('📨 SPIN API raw response:', responseText);
 
-    // Try to parse as JSON
     let data;
     try {
       data = JSON.parse(responseText);
       console.log('✅ SPIN API response data:', JSON.stringify(data, null, 2));
     } catch (parseError) {
-      console.error('❌ Failed to parse response as JSON');
-      console.error('Response was HTML or invalid JSON:', responseText.substring(0, 1000));
+      // Response might be XML, try to parse it
+      console.log('⚠️ Response is not JSON, checking if XML...');
+
+      if (responseText.includes('<response>')) {
+        // Parse XML response
+        const messageMatch = responseText.match(/<Message>(.*?)<\/Message>/);
+        const resultCodeMatch = responseText.match(/<ResultCode>(.*?)<\/ResultCode>/);
+        const respMsgMatch = responseText.match(/<RespMSG>(.*?)<\/RespMSG>/);
+
+        return {
+          statusCode: 500,
+          headers,
+          body: JSON.stringify({
+            success: false,
+            error: 'SPIN API returned error',
+            details: {
+              message: messageMatch ? messageMatch[1] : 'Unknown',
+              resultCode: resultCodeMatch ? resultCodeMatch[1] : 'Unknown',
+              responseMessage: respMsgMatch ? respMsgMatch[1] : 'Unknown',
+            },
+            rawResponse: responseText,
+          }),
+        };
+      }
+
       return {
         statusCode: 500,
         headers,
         body: JSON.stringify({
           success: false,
           error: 'SPIN API returned invalid response',
-          details:
-            'API returned HTML instead of JSON. This may indicate wrong endpoint or authentication issue.',
+          details: 'Unable to parse response as JSON or XML',
           responsePreview: responseText.substring(0, 500),
         }),
       };
