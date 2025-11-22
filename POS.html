@@ -63,7 +63,7 @@
                 <div class="left-panel">
                     <div class="header">
                         <h1>Heavy Pour Wine</h1>
-                        <p>Jensen Family Winery - Point of Sale</p>
+                        <p><span id="currentWineryName">Jensen Family Winery</span> - Point of Sale</p>
                     </div>
                     <div class="products-grid" id="productsGrid"></div>
                 </div>
@@ -71,7 +71,7 @@
                 <div class="right-panel">
                     <div class="cart-header">
                         <h2>Current Order</h2>
-                        <div class="customer-name">Jensen Family Winery</div>
+                        <div class="customer-name" id="cartWineryName">Jensen Family Winery</div>
                     </div>
                     <div class="cart-items" id="cartItems">
                         <div class="empty-cart">Add items to start order</div>
@@ -102,6 +102,16 @@
                 </div>
 
                 <div class="settings-section">
+                    <h3>Select Winery</h3>
+                    <div class="form-group">
+                        <label>Active Winery</label>
+                        <select id="winerySelect" onchange="changeWinery()">
+                            <option value="">Loading wineries...</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="settings-section">
                     <h3>Payment Terminal Status</h3>
                     
                     <div class="form-group">
@@ -125,15 +135,21 @@
                 </div>
             </div>
 
-            <!-- Placeholder Screens -->
-            <div id="customersScreen" class="placeholder-screen" style="display: none;">
-                <div class="placeholder-content">
-                    <div class="placeholder-icon">👥</div>
+            <!-- Customers Screen -->
+            <div id="customersScreen" class="settings-screen" style="display: none;">
+                <div class="settings-header">
                     <h2>Customers</h2>
-                    <p>Customer management coming soon</p>
+                    <p id="customersWineryName">Jensen Family Winery</p>
+                </div>
+
+                <div class="settings-section">
+                    <div id="customersList">
+                        <p style="text-align: center; color: #95a5a6;">Loading customers...</p>
+                    </div>
                 </div>
             </div>
 
+            <!-- Placeholder Screens -->
             <div id="ordersScreen" class="placeholder-screen" style="display: none;">
                 <div class="placeholder-content">
                     <div class="placeholder-icon">📋</div>
@@ -210,14 +226,102 @@
         let cart = [];
         const TAX_RATE = 0.0775;
         let currentScreen = 'pos';
+        let currentWinery = null;
+        let wineries = [];
+
+        async function loadWineries() {
+            try {
+                const response = await fetch('/.netlify/functions/get-wineries');
+                const data = await response.json();
+                
+                if (data.success && data.wineries.length > 0) {
+                    wineries = data.wineries;
+                    
+                    currentWinery = wineries.find(w => w.name === 'Jensen Family Winery') || wineries[0];
+                    
+                    const select = document.getElementById('winerySelect');
+                    select.innerHTML = wineries.map(w => 
+                        `<option value="${w.id}" ${w.id === currentWinery.id ? 'selected' : ''}>${w.name}</option>`
+                    ).join('');
+                    
+                    updateWineryDisplay();
+                }
+            } catch (error) {
+                console.error('Failed to load wineries:', error);
+            }
+        }
+
+        function updateWineryDisplay() {
+            if (currentWinery) {
+                document.getElementById('currentWineryName').textContent = currentWinery.name;
+                document.getElementById('cartWineryName').textContent = currentWinery.name;
+                document.getElementById('customersWineryName').textContent = currentWinery.name;
+            }
+        }
+
+        async function changeWinery() {
+            const select = document.getElementById('winerySelect');
+            const wineryId = select.value;
+            currentWinery = wineries.find(w => w.id === wineryId);
+            updateWineryDisplay();
+            
+            if (currentScreen === 'customers') {
+                await loadCustomers();
+            }
+        }
+
+        async function loadCustomers() {
+            const customersList = document.getElementById('customersList');
+            
+            if (!currentWinery) {
+                customersList.innerHTML = '<p style="text-align: center; color: #95a5a6;">Please select a winery</p>';
+                return;
+            }
+            
+            customersList.innerHTML = '<p style="text-align: center; color: #95a5a6;">Loading customers...</p>';
+            
+            try {
+                const response = await fetch(`/.netlify/functions/get-winery-customers?winery_id=${currentWinery.id}`);
+                const data = await response.json();
+                
+                if (data.success && data.customers.length > 0) {
+                    const tableHtml = `
+                        <table class="data-table" style="width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr style="background: rgba(255, 255, 255, 0.05); border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
+                                    <th style="padding: 12px; text-align: left; color: #f39c12;">Name</th>
+                                    <th style="padding: 12px; text-align: left; color: #f39c12;">Email</th>
+                                    <th style="padding: 12px; text-align: left; color: #f39c12;">Phone</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${data.customers.map(c => `
+                                    <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.05);">
+                                        <td style="padding: 12px; color: #e8e8e8;">${c.name || 'N/A'}</td>
+                                        <td style="padding: 12px; color: #95a5a6;">${c.email}</td>
+                                        <td style="padding: 12px; color: #95a5a6;">${c.phone || 'N/A'}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                        <p style="margin-top: 15px; color: #95a5a6; font-size: 14px;">Total: ${data.customers.length} customer${data.customers.length !== 1 ? 's' : ''}</p>
+                    `;
+                    customersList.innerHTML = tableHtml;
+                } else {
+                    customersList.innerHTML = '<p style="text-align: center; color: #95a5a6;">No customers found for this winery</p>';
+                }
+            } catch (error) {
+                customersList.innerHTML = '<p style="text-align: center; color: #e74c3c;">Failed to load customers</p>';
+                console.error('Failed to load customers:', error);
+            }
+        }
 
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
             sidebar.classList.toggle('expanded');
         }
 
-        function navigateTo(screen) {
-            // Hide all screens
+        async function navigateTo(screen) {
             document.getElementById('posScreen').style.display = 'none';
             document.getElementById('settingsScreen').style.display = 'none';
             document.getElementById('customersScreen').style.display = 'none';
@@ -226,20 +330,21 @@
             document.getElementById('clubScreen').style.display = 'none';
             document.getElementById('reportsScreen').style.display = 'none';
 
-            // Remove active class from all menu items
             document.querySelectorAll('.menu-item').forEach(item => {
                 item.classList.remove('active');
             });
 
-            // Show selected screen and activate menu item
             currentScreen = screen;
             const screenElement = document.getElementById(screen + 'Screen');
             if (screenElement) {
                 screenElement.style.display = screen === 'pos' ? 'flex' : 'block';
             }
 
-            // Add active class to clicked menu item
             event.currentTarget.classList.add('active');
+
+            if (screen === 'customers') {
+                await loadCustomers();
+            }
         }
 
         function renderProducts() {
@@ -391,6 +496,7 @@
 
         // Initialize
         renderProducts();
+        loadWineries();
 
         // Service Worker Registration
         if ('serviceWorker' in navigator) {
