@@ -579,3 +579,91 @@ body {
         max-height: 400px;
     }
 }
+.login-screen {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.login-container {
+    max-width: 800px;
+    width: 100%;
+}
+
+.login-header {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.login-header h1 {
+    font-size: 42px;
+    color: #f39c12;
+    margin-bottom: 10px;
+}
+
+.login-header p {
+    font-size: 18px;
+    color: #95a5a6;
+}
+
+.login-section {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 30px;
+    margin-bottom: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.login-section h3 {
+    color: #e8e8e8;
+    margin-bottom: 20px;
+    font-size: 20px;
+}
+
+.selection-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 15px;
+}
+
+.selection-card {
+    background: rgba(255, 255, 255, 0.08);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 30px 20px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-align: center;
+}
+
+.selection-card:hover {
+    background: rgba(243, 156, 18, 0.15);
+    border-color: #f39c12;
+    transform: translateY(-2px);
+}
+
+.selection-card.selected {
+    background: rgba(243, 156, 18, 0.2);
+    border-color: #f39c12;
+}
+
+.selection-icon {
+    font-size: 48px;
+    margin-bottom: 15px;
+}
+
+.selection-name {
+    font-size: 16px;
+    font-weight: 600;
+    color: #e8e8e8;
+    margin-bottom: 5px;
+}
+
+.selection-role {
+    font-size: 12px;
+    color: #95a5a6;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}

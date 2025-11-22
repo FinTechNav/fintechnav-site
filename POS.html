@@ -12,7 +12,31 @@
     <link rel="stylesheet" href="pos-styles.css">
 </head>
 <body>
-    <div class="app-container">
+    <!-- Login Screen -->
+    <div id="loginScreen" class="login-screen">
+        <div class="login-container">
+            <div class="login-header">
+                <h1>Heavy Pour Wine</h1>
+                <p>Point of Sale System</p>
+            </div>
+
+            <div class="login-section">
+                <h3>Select Winery</h3>
+                <div id="winerySelection" class="selection-grid">
+                    <p style="text-align: center; color: #95a5a6;">Loading wineries...</p>
+                </div>
+            </div>
+
+            <div class="login-section" id="userSection" style="display: none;">
+                <h3>Select User</h3>
+                <div id="userSelection" class="selection-grid">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div class="app-container" id="appContainer" style="display: none;">
         <div class="sidebar" id="sidebar">
             <div class="menu-toggle" onclick="toggleSidebar()">
                 <div class="hamburger">
@@ -54,6 +78,10 @@
                     <div class="menu-icon">⚙️</div>
                     <div class="menu-label">Settings</div>
                 </div>
+                <div class="menu-item" onclick="logout()">
+                    <div class="menu-icon">🚪</div>
+                    <div class="menu-label">Logout</div>
+                </div>
             </div>
         </div>
 
@@ -64,6 +92,7 @@
                     <div class="header">
                         <h1>Heavy Pour Wine</h1>
                         <p><span id="currentWineryName">Jensen Family Winery</span> - Point of Sale</p>
+                        <p style="font-size: 12px; color: #95a5a6; margin-top: 5px;">User: <span id="currentUserName"></span></p>
                     </div>
                     <div class="products-grid" id="productsGrid"></div>
                 </div>
@@ -102,13 +131,9 @@
                 </div>
 
                 <div class="settings-section">
-                    <h3>Select Winery</h3>
-                    <div class="form-group">
-                        <label>Active Winery</label>
-                        <select id="winerySelect" onchange="changeWinery()">
-                            <option value="">Loading wineries...</option>
-                        </select>
-                    </div>
+                    <h3>Current Session</h3>
+                    <p style="color: #95a5a6; margin-bottom: 10px;">Winery: <span id="settingsWineryName" style="color: #f39c12;"></span></p>
+                    <p style="color: #95a5a6; margin-bottom: 20px;">User: <span id="settingsUserName" style="color: #f39c12;"></span></p>
                 </div>
 
                 <div class="settings-section">
@@ -227,7 +252,9 @@
         const TAX_RATE = 0.0775;
         let currentScreen = 'pos';
         let currentWinery = null;
+        let currentUser = null;
         let wineries = [];
+        let users = [];
 
         async function loadWineries() {
             try {
@@ -236,38 +263,96 @@
                 
                 if (data.success && data.wineries.length > 0) {
                     wineries = data.wineries;
-                    
-                    currentWinery = wineries.find(w => w.name === 'Jensen Family Winery') || wineries[0];
-                    
-                    const select = document.getElementById('winerySelect');
-                    select.innerHTML = wineries.map(w => 
-                        `<option value="${w.id}" ${w.id === currentWinery.id ? 'selected' : ''}>${w.name}</option>`
-                    ).join('');
-                    
-                    updateWineryDisplay();
+                    renderWinerySelection();
                 }
             } catch (error) {
                 console.error('Failed to load wineries:', error);
+                document.getElementById('winerySelection').innerHTML = '<p style="text-align: center; color: #e74c3c;">Failed to load wineries</p>';
             }
+        }
+
+        function renderWinerySelection() {
+            const container = document.getElementById('winerySelection');
+            container.innerHTML = wineries.map(w => `
+                <div class="selection-card" onclick="selectWinery('${w.id}')">
+                    <div class="selection-icon">🍷</div>
+                    <div class="selection-name">${w.name}</div>
+                </div>
+            `).join('');
+        }
+
+        async function selectWinery(wineryId) {
+            currentWinery = wineries.find(w => w.id === wineryId);
+            
+            document.querySelectorAll('.selection-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            event.currentTarget.classList.add('selected');
+
+            await loadUsers(wineryId);
+            document.getElementById('userSection').style.display = 'block';
+        }
+
+        async function loadUsers(wineryId) {
+            try {
+                const response = await fetch(`/.netlify/functions/get-winery-users?winery_id=${wineryId}`);
+                const data = await response.json();
+                
+                if (data.success && data.users.length > 0) {
+                    users = data.users;
+                    renderUserSelection();
+                }
+            } catch (error) {
+                console.error('Failed to load users:', error);
+                document.getElementById('userSelection').innerHTML = '<p style="text-align: center; color: #e74c3c;">Failed to load users</p>';
+            }
+        }
+
+        function renderUserSelection() {
+            const container = document.getElementById('userSelection');
+            container.innerHTML = users.map(u => `
+                <div class="selection-card" onclick="selectUser('${u.id}')">
+                    <div class="selection-icon">👤</div>
+                    <div class="selection-name">${u.first_name} ${u.last_name}</div>
+                    <div class="selection-role">${u.role}</div>
+                </div>
+            `).join('');
+        }
+
+        function selectUser(userId) {
+            currentUser = users.find(u => u.id === userId);
+            
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('appContainer').style.display = 'flex';
+            
+            updateWineryDisplay();
+            renderProducts();
         }
 
         function updateWineryDisplay() {
-            if (currentWinery) {
+            if (currentWinery && currentUser) {
+                const userName = `${currentUser.first_name} ${currentUser.last_name}`;
                 document.getElementById('currentWineryName').textContent = currentWinery.name;
+                document.getElementById('currentUserName').textContent = userName;
                 document.getElementById('cartWineryName').textContent = currentWinery.name;
                 document.getElementById('customersWineryName').textContent = currentWinery.name;
+                document.getElementById('settingsWineryName').textContent = currentWinery.name;
+                document.getElementById('settingsUserName').textContent = userName;
             }
         }
 
-        async function changeWinery() {
-            const select = document.getElementById('winerySelect');
-            const wineryId = select.value;
-            currentWinery = wineries.find(w => w.id === wineryId);
-            updateWineryDisplay();
+        function logout() {
+            currentWinery = null;
+            currentUser = null;
+            users = [];
+            cart = [];
             
-            if (currentScreen === 'customers') {
-                await loadCustomers();
-            }
+            document.getElementById('appContainer').style.display = 'none';
+            document.getElementById('loginScreen').style.display = 'flex';
+            document.getElementById('userSection').style.display = 'none';
+            
+            renderCart();
+            updateTotals();
         }
 
         async function loadCustomers() {
@@ -495,7 +580,6 @@
         }
 
         // Initialize
-        renderProducts();
         loadWineries();
 
         // Service Worker Registration
