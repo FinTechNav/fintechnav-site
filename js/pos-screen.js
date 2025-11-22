@@ -204,32 +204,39 @@ const POSScreen = {
       console.log('🔍 Fetching terminal config for winery:', App.currentWinery.id);
 
       const response = await fetch(
-        `/.netlify/functions/get-winery-config?winery_id=${App.currentWinery.id}`
+        `/.netlify/functions/get-winery-terminals?winery_id=${App.currentWinery.id}`
       );
 
       if (!response.ok) {
-        console.error('Failed to fetch winery config:', response.status);
+        console.error('Failed to fetch winery terminals:', response.status);
         return null;
       }
 
       const data = await response.json();
-      console.log('📋 Winery config:', data);
+      console.log('📋 Winery terminals:', data);
 
-      // Check if terminal config exists
+      if (!data.success || !data.terminals || data.terminals.length === 0) {
+        console.log('ℹ️ No terminals found for winery');
+        return null;
+      }
+
+      // Find card_present terminal
+      const cardPresentTerminal = data.terminals.find((t) => t.terminal_type === 'card_present');
+
       if (
-        data.config &&
-        data.config.card_present_tpn &&
-        data.config.card_present_register_id &&
-        data.config.card_present_auth_key
+        cardPresentTerminal &&
+        cardPresentTerminal.tpn &&
+        cardPresentTerminal.register_id &&
+        cardPresentTerminal.auth_key
       ) {
         return {
-          tpn: data.config.card_present_tpn,
-          registerId: data.config.card_present_register_id,
-          authkey: data.config.card_present_auth_key,
+          tpn: cardPresentTerminal.tpn,
+          registerId: cardPresentTerminal.register_id,
+          authkey: cardPresentTerminal.auth_key,
         };
       }
 
-      console.log('ℹ️ No terminal configuration found for winery');
+      console.log('ℹ️ No card_present terminal configuration found for winery');
       return null;
     } catch (error) {
       console.error('❌ Error fetching terminal config:', error);
