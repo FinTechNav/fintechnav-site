@@ -31,7 +31,7 @@ exports.handler = async (event, context) => {
     return {
       statusCode: 400,
       headers,
-      body: JSON.stringify({ error: 'customer_id parameter is required' }),
+      body: JSON.stringify({ error: 'customer_id is required' }),
     };
   }
 
@@ -47,29 +47,24 @@ exports.handler = async (event, context) => {
     const result = await client.query(
       `
       SELECT 
-        id,
-        payment_type,
-        provider,
+        token_id,
+        payment_token_id,
         reusable_token,
-        card_fingerprint,
         card_last_four,
-        card_brand,
-        card_exp_month,
-        card_exp_year,
-        cardholder_name,
+        card_type,
+        expiry_month,
+        expiry_year,
         is_default,
-        created_at,
-        updated_at
-      FROM payment_methods
-      WHERE customer_id = $1 
+        last_used_at
+      FROM dejavoo_payment_tokens
+      WHERE customer_id = $1
         AND is_active = TRUE
-        AND deleted_at IS NULL
-      ORDER BY is_default DESC, updated_at DESC
-    `,
-      [customerId]
+      ORDER BY is_default DESC, last_used_at DESC NULLS LAST
+      `,
+      [parseInt(customerId)]
     );
 
-    console.log(`✅ Retrieved ${result.rows.length} payment methods for customer ${customerId}`);
+    console.log(`✅ Retrieved ${result.rows.length} payment tokens`);
 
     return {
       statusCode: 200,
