@@ -110,6 +110,11 @@ const SettingsScreen = {
 
   async checkTerminalStatus(terminalId) {
     const terminal = this.terminals.find((t) => t.id === terminalId);
+
+    console.log('🔍 RAW terminal object:', terminal);
+    console.log('🔍 RAW auth_key value:', terminal?.auth_key);
+    console.log('🔍 auth_key length:', terminal?.auth_key?.length);
+
     const resultDiv = document.getElementById(`terminalStatusResult-${terminalId}`);
 
     console.log('🔍 Terminal lookup:', { terminalId, found: !!terminal });
