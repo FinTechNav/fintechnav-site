@@ -53,7 +53,7 @@ const SettingsScreen = {
                         </div>
                         <div>
                             <span style="color: #95a5a6; font-size: 12px;">Auth Token:</span>
-                            <div style="color: #e8e8e8; font-family: monospace; margin-top: 4px;">${cardNotPresent.ftd_auth_token ? '••••••••' + cardNotPresent.ftd_auth_token.slice(-8) : 'Not configured'}</div>
+                            <div style="color: #e8e8e8; font-family: monospace; margin-top: 4px; font-size: 11px; word-break: break-all;">${cardNotPresent.ftd_auth_token ? '••••••••' + cardNotPresent.ftd_auth_token.slice(-8) : 'Not configured'}</div>
                         </div>
                         <div>
                             <span style="color: #95a5a6; font-size: 12px;">Environment:</span>
@@ -114,48 +114,55 @@ const SettingsScreen = {
 
     if (!terminal) {
       resultDiv.innerHTML = `
-                <div class="status-result error">
-                    <h4>Error</h4>
-                    <pre>Terminal not found</pre>
+                <div style="padding: 15px; background: rgba(231, 76, 60, 0.1); border: 1px solid rgba(231, 76, 60, 0.3); border-radius: 6px;">
+                    <h4 style="color: #e74c3c; margin-bottom: 8px;">Error</h4>
+                    <pre style="color: #e8e8e8; white-space: pre-wrap; font-size: 12px;">Terminal not found</pre>
                 </div>
             `;
       return;
     }
 
     resultDiv.innerHTML = `
-            <div class="status-result">
-                <h4>Checking terminal status...</h4>
+            <div style="padding: 15px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 6px;">
+                <h4 style="color: #f39c12; margin-bottom: 8px;">Checking terminal status...</h4>
             </div>
         `;
 
     try {
-      const response = await fetch('https://spinpos.net:443/spin/api.php', {
+      const response = await fetch('/.netlify/functions/check-terminal-status', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          Status: {
-            RegisterId: terminal.register_id,
-            AuthKey: terminal.auth_key,
-            TPN: terminal.tpn,
-          },
+          register_id: terminal.register_id,
+          auth_key: terminal.auth_key,
+          tpn: terminal.tpn,
         }),
       });
 
-      const data = await response.json();
+      const result = await response.json();
 
-      resultDiv.innerHTML = `
-                <div class="status-result success">
-                    <h4>Terminal Status Response</h4>
-                    <pre>${JSON.stringify(data, null, 2)}</pre>
-                </div>
-            `;
+      if (result.success) {
+        resultDiv.innerHTML = `
+                    <div style="padding: 15px; background: rgba(46, 204, 113, 0.1); border: 1px solid rgba(46, 204, 113, 0.3); border-radius: 6px;">
+                        <h4 style="color: #2ecc71; margin-bottom: 8px;">Terminal Status Response</h4>
+                        <pre style="color: #e8e8e8; white-space: pre-wrap; font-size: 12px; max-height: 300px; overflow-y: auto;">${JSON.stringify(result.data, null, 2)}</pre>
+                    </div>
+                `;
+      } else {
+        resultDiv.innerHTML = `
+                    <div style="padding: 15px; background: rgba(231, 76, 60, 0.1); border: 1px solid rgba(231, 76, 60, 0.3); border-radius: 6px;">
+                        <h4 style="color: #e74c3c; margin-bottom: 8px;">Error</h4>
+                        <pre style="color: #e8e8e8; white-space: pre-wrap; font-size: 12px;">${result.error}</pre>
+                    </div>
+                `;
+      }
     } catch (error) {
       resultDiv.innerHTML = `
-                <div class="status-result error">
-                    <h4>Connection Error</h4>
-                    <pre>${error.message}</pre>
+                <div style="padding: 15px; background: rgba(231, 76, 60, 0.1); border: 1px solid rgba(231, 76, 60, 0.3); border-radius: 6px;">
+                    <h4 style="color: #e74c3c; margin-bottom: 8px;">Connection Error</h4>
+                    <pre style="color: #e8e8e8; white-space: pre-wrap; font-size: 12px;">${error.message}</pre>
                 </div>
             `;
     }
