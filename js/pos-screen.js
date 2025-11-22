@@ -275,26 +275,47 @@ const POSScreen = {
 
       const result = await response.json();
       console.log('📥 Terminal sale response:', result);
+      console.log('📥 Response structure:', {
+        success: result.success,
+        hasData: !!result.data,
+        dataKeys: result.data ? Object.keys(result.data) : [],
+        fullData: JSON.stringify(result.data, null, 2),
+      });
 
       this.hideProcessingOverlay();
 
       if (result.success && result.data) {
         const transactionData = result.data;
 
+        console.log('🔍 Checking transaction data:', {
+          hasGeneralResponse: !!transactionData.GeneralResponse,
+          generalResponse: JSON.stringify(transactionData.GeneralResponse, null, 2),
+          responseCode: transactionData.ResponseCode,
+          message: transactionData.Message,
+        });
+
         // Check if transaction was approved
-        if (
-          transactionData.ResponseCode === '00' ||
-          transactionData.ResponseCode === '0' ||
-          transactionData.Message === 'Approved'
-        ) {
+        // SPIN API may return data in GeneralResponse object
+        const responseData = transactionData.GeneralResponse || transactionData;
+        const responseCode = responseData.ResponseCode || transactionData.ResponseCode;
+        const message = responseData.Message || transactionData.Message;
+
+        console.log('🔍 Extracted values:', {
+          responseCode,
+          message,
+          authCode: responseData.AuthCode || transactionData.AuthCode,
+        });
+
+        if (responseCode === '00' || responseCode === '0' || message === 'Approved') {
           console.log('✅ Transaction approved');
 
           // Save order to database
-          await this.saveOrderWithPayment(subtotal, tax, total, transactionData, referenceId);
+          await this.saveOrderWithPayment(subtotal, tax, total, responseData, referenceId);
         } else {
           console.error('❌ Transaction declined or error');
+          console.error('❌ Full response:', JSON.stringify(transactionData, null, 2));
           alert(
-            `Payment failed: ${transactionData.Message || 'Unknown error'}\n\nPlease try again or use a different payment method.`
+            `Payment failed: ${message || 'Unknown error'}\n\nResponse Code: ${responseCode || 'N/A'}\n\nPlease try again or use a different payment method.`
           );
         }
       } else {
