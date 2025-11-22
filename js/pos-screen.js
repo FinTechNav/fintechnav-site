@@ -1,61 +1,50 @@
 // POS Screen functionality
 const POSScreen = {
-  products: [
-    {
-      id: 1,
-      name: 'Cabernet Sauvignon',
-      vintage: 2019,
-      varietal: 'Cabernet Sauvignon',
-      price: 65.0,
-    },
-    {
-      id: 2,
-      name: 'Pinot Noir',
-      vintage: 2020,
-      varietal: 'Pinot Noir',
-      price: 55.0,
-    },
-    {
-      id: 3,
-      name: 'Chardonnay',
-      vintage: 2021,
-      varietal: 'Chardonnay',
-      price: 45.0,
-    },
-    {
-      id: 4,
-      name: 'Merlot',
-      vintage: 2019,
-      varietal: 'Merlot',
-      price: 50.0,
-    },
-    {
-      id: 5,
-      name: 'Zinfandel',
-      vintage: 2020,
-      varietal: 'Zinfandel',
-      price: 48.0,
-    },
-  ],
-
+  products: [],
   cart: [],
   TAX_RATE: 0.0775,
 
-  init() {
+  async init() {
+    await this.loadProducts();
     this.renderProducts();
     this.setupPayButton();
   },
 
+  async loadProducts() {
+    if (!App.currentWinery) return;
+
+    try {
+      const response = await fetch(
+        `/.netlify/functions/get-pos-products?winery_id=${App.currentWinery.id}`
+      );
+      const data = await response.json();
+
+      if (data.success) {
+        this.products = data.products;
+      }
+    } catch (error) {
+      console.error('Failed to load products:', error);
+      this.products = [];
+    }
+  },
+
   renderProducts() {
     const grid = document.getElementById('productsGrid');
+
+    if (this.products.length === 0) {
+      grid.innerHTML =
+        '<p style="text-align: center; color: #95a5a6; padding: 40px;">No products available for sale</p>';
+      return;
+    }
+
     grid.innerHTML = this.products
       .map(
         (product) => `
             <div class="product-card" onclick="POSScreen.addToCart(${product.id})">
                 <div class="wine-icon">🍷</div>
                 <div class="product-name">${product.name}</div>
-                <div class="product-vintage">${product.vintage} ${product.varietal}</div>
-                <div class="product-price">$${product.price.toFixed(2)}</div>
+                <div class="product-vintage">${product.vintage} - ${product.varietal}</div>
+                <div class="product-price">$${parseFloat(product.price).toFixed(2)}</div>
             </div>
         `
       )
@@ -115,7 +104,7 @@ const POSScreen = {
                     <div class="qty-display">${item.quantity}</div>
                     <div class="qty-btn" onclick="POSScreen.updateQuantity(${item.id}, 1)">+</div>
                 </div>
-                <div class="cart-item-price">$${(item.price * item.quantity).toFixed(2)}</div>
+                <div class="cart-item-price">$${(parseFloat(item.price) * item.quantity).toFixed(2)}</div>
             </div>
         `
       )
@@ -123,7 +112,10 @@ const POSScreen = {
   },
 
   updateTotals() {
-    const subtotal = this.cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    const subtotal = this.cart.reduce(
+      (sum, item) => sum + parseFloat(item.price) * item.quantity,
+      0
+    );
     const tax = subtotal * this.TAX_RATE;
     const total = subtotal + tax;
 
@@ -136,7 +128,10 @@ const POSScreen = {
     document.getElementById('payButton').addEventListener('click', async () => {
       if (this.cart.length === 0) return;
 
-      const subtotal = this.cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+      const subtotal = this.cart.reduce(
+        (sum, item) => sum + parseFloat(item.price) * item.quantity,
+        0
+      );
       const tax = subtotal * this.TAX_RATE;
       const total = subtotal + tax;
 
