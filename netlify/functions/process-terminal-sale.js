@@ -78,9 +78,24 @@ exports.handler = async (event, context) => {
       Authkey: authkey,
       ExternalReceipt: '',
       Cart: {
-        Amounts: [],
+        Amounts: [
+          {
+            Name: 'Subtotal',
+            Value: parseFloat(amount),
+          },
+        ],
         CashPrices: [],
-        Items: [],
+        Items: [
+          {
+            Name: 'POS Transaction',
+            Price: parseFloat(amount),
+            UnitPrice: parseFloat(amount),
+            Quantity: 1,
+            AdditionalInfo: '',
+            CustomInfos: [],
+            Modifiers: [],
+          },
+        ],
       },
       CallbackInfo: {
         Url: '',
