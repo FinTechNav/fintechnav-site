@@ -347,6 +347,15 @@ const POSScreen = {
       payment_status: 'paid',
       payment_method: 'card_present',
       payment_reference: referenceId,
+      payment_auth_code:
+        transactionData.AuthCode || transactionData.GeneralResponse?.Message || null,
+      payment_response_message: transactionData.GeneralResponse?.DetailedMessage || null,
+      card_type: transactionData.CardData?.CardType || null,
+      card_last_4: transactionData.CardData?.Last4 || null,
+      transaction_amount: parseFloat(transactionData.Amounts?.TotalAmount || total),
+      transaction_tip: parseFloat(transactionData.Amounts?.TipAmount || 0),
+      transaction_fee: parseFloat(transactionData.Amounts?.FeeAmount || 0),
+      payment_processed_at: new Date().toISOString(),
       items: this.cart.map((item) => ({
         product_id: item.id,
         product_name: item.name,
@@ -360,6 +369,7 @@ const POSScreen = {
     };
 
     try {
+      console.log('💾 Saving order with payment...');
       const response = await fetch('/.netlify/functions/create-order', {
         method: 'POST',
         headers: {
@@ -371,6 +381,33 @@ const POSScreen = {
       const data = await response.json();
 
       if (data.success) {
+        console.log('✅ Order saved:', data.order_number);
+
+        // Now save the complete terminal transaction
+        console.log('💾 Saving terminal transaction...');
+        const terminalTxnResponse = await fetch('/.netlify/functions/save-terminal-transaction', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            order_id: data.order_id,
+            winery_id: App.currentWinery.id,
+            customer_id: this.selectedCustomer?.id || null,
+            employee_id: App.currentUser.id,
+            terminal_id: null, // Could be added later if you track which terminal was used
+            transactionData: transactionData,
+          }),
+        });
+
+        const terminalTxnData = await terminalTxnResponse.json();
+
+        if (terminalTxnData.success) {
+          console.log('✅ Terminal transaction saved:', terminalTxnData.transaction_id);
+        } else {
+          console.warn('⚠️ Failed to save terminal transaction:', terminalTxnData.error);
+        }
+
         alert(
           `Order #${data.order_number} completed successfully!\n\nTotal: $${total.toFixed(2)}\nPayment: Approved\nAuth Code: ${transactionData.AuthCode || 'N/A'}`
         );
