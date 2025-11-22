@@ -58,7 +58,7 @@ exports.handler = async (event, context) => {
   const xmlRequest = `<request><AuthKey>${auth_key}</AuthKey><RegisterId>${register_id}</RegisterId><TPN>${tpn}</TPN></request>`;
 
   // Build URL with XML as query parameter
-  const url = `https://spinpos.net/spin/cgi.html?TerminalStatus=${encodeURIComponent(xmlRequest)}`;
+  const url = `https://test.spinpos.net/spin/cgi.html?TerminalStatus=${encodeURIComponent(xmlRequest)}`;
 
   console.log('📤 Sending GET to SPIN API with XML:', xmlRequest);
   console.log('📤 Full URL:', url);
