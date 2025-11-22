@@ -54,20 +54,19 @@ exports.handler = async (event, context) => {
     };
   }
 
-  // Build XML request for SPIN API Status check - note the query parameter is "TerminalStatus" not "Status"
-  const xmlRequest = `<request><AuthKey>${auth_key}</AuthKey><RegisterId>${register_id}</RegisterId><TPN>${tpn}</TPN></request>`;
+  // Build URL with query parameters
+  const url = new URL('https://test.spinpos.net/v2/Common/TerminalStatus');
+  url.searchParams.append('request.tpn', tpn);
+  url.searchParams.append('request.registerId', register_id);
+  url.searchParams.append('request.authkey', auth_key);
 
-  // Build URL with XML as query parameter
-  const url = `https://test.spin.spinpos.net/spin/cgi.html?Status=${encodeURIComponent(xmlRequest)}`;
-
-  console.log('📤 Sending GET to SPIN API with XML:', xmlRequest);
-  console.log('📤 Full URL:', url);
+  console.log('📤 Sending GET to SPIN Terminal Status API:', url.toString());
 
   try {
-    const response = await fetch(url, {
+    const response = await fetch(url.toString(), {
       method: 'GET',
       headers: {
-        Accept: 'text/html,application/xhtml+xml,application/xml',
+        Accept: 'application/json',
       },
     });
 
@@ -76,41 +75,26 @@ exports.handler = async (event, context) => {
     const responseText = await response.text();
     console.log('📨 SPIN API raw response:', responseText);
 
-    // Parse XML response
-    if (responseText.includes('<response>')) {
-      // Extract values from XML
-      const messageMatch = responseText.match(/<Message>(.*?)<\/Message>/);
-      const resultCodeMatch = responseText.match(/<ResultCode>(.*?)<\/ResultCode>/);
-      const respMsgMatch = responseText.match(/<RespMSG>(.*?)<\/RespMSG>/);
-      const registerIdMatch = responseText.match(/<RegisterId>(.*?)<\/RegisterId>/);
-      const tpnMatch = responseText.match(/<TPN>(.*?)<\/TPN>/);
-
-      const parsedResponse = {
-        message: messageMatch ? messageMatch[1] : null,
-        resultCode: resultCodeMatch ? resultCodeMatch[1] : null,
-        responseMessage: respMsgMatch ? respMsgMatch[1] : null,
-        registerId: registerIdMatch ? registerIdMatch[1] : null,
-        tpn: tpnMatch ? tpnMatch[1] : null,
-      };
-
-      console.log('✅ Parsed XML response:', JSON.stringify(parsedResponse, null, 2));
+    let data;
+    try {
+      data = JSON.parse(responseText);
+      console.log('✅ SPIN API response data:', JSON.stringify(data, null, 2));
 
       return {
         statusCode: 200,
         headers,
         body: JSON.stringify({
-          success: parsedResponse.resultCode === '0',
-          data: parsedResponse,
-          rawXml: responseText,
+          success: true,
+          data: data,
         }),
       };
-    } else {
+    } catch (parseError) {
       return {
         statusCode: 500,
         headers,
         body: JSON.stringify({
           success: false,
-          error: 'SPIN API returned unexpected format',
+          error: 'SPIN API returned invalid response',
           responsePreview: responseText.substring(0, 500),
         }),
       };
