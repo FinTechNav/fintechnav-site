@@ -80,17 +80,18 @@ exports.handler = async (event, context) => {
     // Parse transaction datetime
     let transactionDatetime = null;
     if (appData.DateTime) {
-      // Format: "2025-11-2214:36:22" - YYYY-MM-DDHH:MM:SS (no separator between day and hour)
+      // Format: "2025-11-2214:36:22"
+      // Position: 0123456789012345678
+      //           YYYY-MM-DDHH:MM:SS
       const dateStr = appData.DateTime;
       console.log('📅 Parsing datetime:', dateStr);
 
-      // Extract parts: "2025-11-2214:36:22"
-      const year = dateStr.substring(0, 4); // "2025"
-      const month = dateStr.substring(5, 7); // "11"
-      const day = dateStr.substring(7, 9); // "22"
-      const hour = dateStr.substring(9, 11); // "14"
-      const minute = dateStr.substring(12, 14); // "36"
-      const second = dateStr.substring(15, 17); // "22"
+      const year = dateStr.substring(0, 4); // positions 0-3: "2025"
+      const month = dateStr.substring(5, 7); // positions 5-6: "11"
+      const day = dateStr.substring(8, 10); // positions 8-9: "22"
+      const hour = dateStr.substring(10, 12); // positions 10-11: "14"
+      const minute = dateStr.substring(13, 15); // positions 13-14: "36"
+      const second = dateStr.substring(16, 18); // positions 16-17: "22"
 
       transactionDatetime = `${year}-${month}-${day} ${hour}:${minute}:${second}`;
       console.log('📅 Parsed datetime:', transactionDatetime);
