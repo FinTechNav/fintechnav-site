@@ -54,23 +54,21 @@ exports.handler = async (event, context) => {
     };
   }
 
-  const spinRequest = {
-    Status: {
-      RegisterId: register_id,
-      AuthKey: auth_key,
-      TPN: tpn,
-    },
-  };
+  // Build URL with query parameters for GET request
+  const url = new URL('https://spinpos.net/spin/cgi.html');
+  url.searchParams.append('registerid', register_id);
+  url.searchParams.append('authkey', auth_key);
+  url.searchParams.append('tpn', tpn);
+  url.searchParams.append('type', 'Status');
 
-  console.log('📤 Sending to SPIN API:', JSON.stringify(spinRequest, null, 2));
+  console.log('📤 Sending GET to SPIN API:', url.toString());
 
   try {
-    const response = await fetch('https://spinpos.net/spin/cgi.html', {
-      method: 'POST',
+    const response = await fetch(url.toString(), {
+      method: 'GET',
       headers: {
-        'Content-Type': 'application/json',
+        Accept: 'application/json',
       },
-      body: JSON.stringify(spinRequest),
     });
 
     console.log('📨 SPIN API response status:', response.status);
