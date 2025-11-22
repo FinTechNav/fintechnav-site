@@ -65,7 +65,7 @@ exports.handler = async (event, context) => {
   console.log('📤 Sending to SPIN API:', JSON.stringify(spinRequest, null, 2));
 
   try {
-    const response = await fetch('https://spinpos.net:443/spin/api.php', {
+    const response = await fetch('https://spinpos.net/spin/cgi.html', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
