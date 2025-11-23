@@ -43,12 +43,23 @@ exports.handler = async (event, context) => {
         p.price,
         p.sku,
         p.description,
-        p.category
+        p.category,
+        p.wine_color,
+        p.image_url,
+        p.bottle_volume,
+        p.short_description,
+        p.tags,
+        p.available_quantity,
+        p.track_inventory,
+        p.online_status,
+        p.inventory_status
       FROM products p
       INNER JOIN winery_products wp ON p.id = wp.product_id
       WHERE wp.winery_id = $1
         AND wp.is_active = true
         AND p.deleted_at IS NULL
+        AND p.online_status = 'available'
+        AND p.inventory_status = 'available'
         AND p.name LIKE $2
       ORDER BY p.name ASC, p.vintage DESC
     `,
