@@ -35,6 +35,7 @@ exports.handler = async (event, context) => {
       captureSignature = false,
       getReceipt = true,
       printReceipt = false,
+      cartItems = [],
     } = body;
 
     console.log('📊 Request parameters:');
@@ -46,6 +47,7 @@ exports.handler = async (event, context) => {
     console.log('  - authkey:', authkey ? `✓ ${authkey}` : '✗ missing');
     console.log('  - registerId:', registerId ? `✓ ${registerId}` : '✗ missing');
     console.log('  - referenceId:', referenceId);
+    console.log('  - cartItems:', cartItems.length, 'items');
 
     // Validate required parameters
     if (!amount || !tpn || !authkey || !registerId) {
@@ -78,6 +80,36 @@ exports.handler = async (event, context) => {
       cartAmounts.push({ Name: 'Total', Value: parseFloat(amount) });
     }
 
+    // Build Cart.Items array from cart items if provided
+    let cartItemsArray = [];
+    if (cartItems && cartItems.length > 0) {
+      console.log('📦 Building items from cart:', cartItems);
+      cartItemsArray = cartItems.map((item) => ({
+        Name: item.name || 'Item',
+        Price: parseFloat(item.price) * item.quantity,
+        UnitPrice: parseFloat(item.price),
+        Quantity: item.quantity,
+        AdditionalInfo: item.vintage && item.varietal ? `${item.vintage} ${item.varietal}` : '',
+        CustomInfos: [],
+        Modifiers: [],
+      }));
+    } else {
+      // Fallback to generic item if no cart items provided
+      cartItemsArray = [
+        {
+          Name: 'POS Transaction',
+          Price: parseFloat(amount),
+          UnitPrice: parseFloat(amount),
+          Quantity: 1,
+          AdditionalInfo: '',
+          CustomInfos: [],
+          Modifiers: [],
+        },
+      ];
+    }
+
+    console.log('🛒 Cart items to send:', JSON.stringify(cartItemsArray, null, 2));
+
     // Build SPIN API Sale request
     const saleRequest = {
       Amount: parseFloat(amount),
@@ -95,17 +127,7 @@ exports.handler = async (event, context) => {
       Cart: {
         Amounts: cartAmounts,
         CashPrices: [],
-        Items: [
-          {
-            Name: 'POS Transaction',
-            Price: parseFloat(amount),
-            UnitPrice: parseFloat(amount),
-            Quantity: 1,
-            AdditionalInfo: '',
-            CustomInfos: [],
-            Modifiers: [],
-          },
-        ],
+        Items: cartItemsArray,
       },
       CallbackInfo: {
         Url: '',
