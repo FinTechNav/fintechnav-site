@@ -262,26 +262,26 @@ const POSScreen = {
       this.showProcessingOverlay('Processing payment on terminal...');
 
       const saleRequest = {
-        Amount: parseFloat(total.toFixed(2)),
-        TipAmount: 0,
-        Cart: {
-          Amounts: [
-            { Name: 'Subtotal', Value: parseFloat(subtotal.toFixed(2)) },
-            { Name: 'Tax', Value: parseFloat(tax.toFixed(2)) },
-            { Name: 'Total', Value: parseFloat(total.toFixed(2)) },
+        amount: parseFloat(total.toFixed(2)),
+        tipAmount: 0,
+        cart: {
+          amounts: [
+            { name: 'Subtotal', value: parseFloat(subtotal.toFixed(2)) },
+            { name: 'Tax', value: parseFloat(tax.toFixed(2)) },
+            { name: 'Total', value: parseFloat(total.toFixed(2)) },
           ],
-          Items: this.cart.map((item) => ({
-            Name: item.name,
-            Price: parseFloat(item.price),
-            Quantity: item.quantity,
+          items: this.cart.map((item) => ({
+            name: item.name,
+            price: parseFloat(item.price),
+            quantity: item.quantity,
           })),
         },
-        PaymentType: 'Credit',
-        ReferenceId: referenceId,
-        PrintReceipt: 'No',
-        Tpn: terminal.tpn,
-        RegisterId: terminal.registerId,
-        Authkey: terminal.authkey,
+        paymentType: 'Credit',
+        referenceId: referenceId,
+        printReceipt: 'No',
+        tpn: terminal.tpn,
+        registerId: terminal.registerId,
+        authkey: terminal.authkey,
       };
 
       console.log('📤 Sale request:', JSON.stringify(saleRequest, null, 2));
