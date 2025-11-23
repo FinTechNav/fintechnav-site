@@ -4,6 +4,11 @@ const ProductsScreen = {
   selectedProductIds: new Set(),
   editingProduct: null,
   showingDetails: false,
+  searchTerm: '',
+  filterType: 'all',
+  filterStatus: 'all',
+  sortBy: 'name',
+  sortOrder: 'asc',
 
   async init() {
     await this.loadProducts();
@@ -30,10 +35,76 @@ const ProductsScreen = {
     }
   },
 
+  getFilteredAndSortedProducts() {
+    let filtered = [...this.products];
+
+    // Apply search filter
+    if (this.searchTerm) {
+      const term = this.searchTerm.toLowerCase();
+      filtered = filtered.filter(
+        (p) =>
+          p.name.toLowerCase().includes(term) ||
+          (p.sku && p.sku.toLowerCase().includes(term)) ||
+          (p.varietal && p.varietal.toLowerCase().includes(term)) ||
+          (p.wine_region && p.wine_region.toLowerCase().includes(term))
+      );
+    }
+
+    // Apply type filter
+    if (this.filterType !== 'all') {
+      filtered = filtered.filter((p) => p.type === this.filterType);
+    }
+
+    // Apply status filter
+    if (this.filterStatus === 'active') {
+      filtered = filtered.filter((p) => this.selectedProductIds.has(p.id));
+    } else if (this.filterStatus === 'inactive') {
+      filtered = filtered.filter((p) => !this.selectedProductIds.has(p.id));
+    }
+
+    // Apply sorting
+    filtered.sort((a, b) => {
+      let aVal, bVal;
+
+      switch (this.sortBy) {
+        case 'name':
+          aVal = a.name.toLowerCase();
+          bVal = b.name.toLowerCase();
+          break;
+        case 'price':
+          aVal = parseFloat(a.price || 0);
+          bVal = parseFloat(b.price || 0);
+          break;
+        case 'stock':
+          aVal = parseInt(a.available_quantity || 0);
+          bVal = parseInt(b.available_quantity || 0);
+          break;
+        case 'type':
+          aVal = a.type || '';
+          bVal = b.type || '';
+          break;
+        case 'vintage':
+          aVal = parseInt(a.vintage || 0);
+          bVal = parseInt(b.vintage || 0);
+          break;
+        default:
+          return 0;
+      }
+
+      if (aVal < bVal) return this.sortOrder === 'asc' ? -1 : 1;
+      if (aVal > bVal) return this.sortOrder === 'asc' ? 1 : -1;
+      return 0;
+    });
+
+    return filtered;
+  },
+
   renderProducts() {
     const container = document.getElementById('productsContainer');
 
     if (!container) return;
+
+    const filtered = this.getFilteredAndSortedProducts();
 
     if (this.products.length === 0) {
       container.innerHTML =
@@ -42,18 +113,56 @@ const ProductsScreen = {
     }
 
     const tableHtml = `
-            <div style="margin-bottom: 20px; display: flex; gap: 10px; align-items: center;">
-                <button class="btn" onclick="ProductsScreen.saveSelection()">Save POS Selection</button>
-                <button class="btn" onclick="ProductsScreen.showAddProduct()" style="background: #27ae60;">Add New Product</button>
-                <span style="margin-left: 15px; color: #95a5a6;">
-                    ${this.selectedProductIds.size} of ${this.products.length} products selected for POS
-                </span>
+            <div style="margin-bottom: 20px;">
+                <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 15px;">
+                    <input type="text" 
+                        placeholder="Search products..." 
+                        value="${this.searchTerm}"
+                        onkeyup="ProductsScreen.handleSearch(this.value)"
+                        style="flex: 1; min-width: 250px; padding: 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.05); color: #e8e8e8;">
+                    
+                    <select onchange="ProductsScreen.handleFilterType(this.value)" 
+                        style="padding: 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.05); color: #e8e8e8;">
+                        <option value="all" ${this.filterType === 'all' ? 'selected' : ''}>All Types</option>
+                        <option value="wine" ${this.filterType === 'wine' ? 'selected' : ''}>Wine Only</option>
+                        <option value="merchandise" ${this.filterType === 'merchandise' ? 'selected' : ''}>Merchandise Only</option>
+                    </select>
+                    
+                    <select onchange="ProductsScreen.handleFilterStatus(this.value)" 
+                        style="padding: 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.05); color: #e8e8e8;">
+                        <option value="all" ${this.filterStatus === 'all' ? 'selected' : ''}>All Products</option>
+                        <option value="active" ${this.filterStatus === 'active' ? 'selected' : ''}>Active for POS</option>
+                        <option value="inactive" ${this.filterStatus === 'inactive' ? 'selected' : ''}>Inactive</option>
+                    </select>
+                    
+                    <select onchange="ProductsScreen.handleSort(this.value)" 
+                        style="padding: 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.05); color: #e8e8e8;">
+                        <option value="name" ${this.sortBy === 'name' ? 'selected' : ''}>Sort by Name</option>
+                        <option value="price" ${this.sortBy === 'price' ? 'selected' : ''}>Sort by Price</option>
+                        <option value="stock" ${this.sortBy === 'stock' ? 'selected' : ''}>Sort by Stock</option>
+                        <option value="type" ${this.sortBy === 'type' ? 'selected' : ''}>Sort by Type</option>
+                        <option value="vintage" ${this.sortBy === 'vintage' ? 'selected' : ''}>Sort by Vintage</option>
+                    </select>
+                    
+                    <button onclick="ProductsScreen.toggleSortOrder()" 
+                        style="padding: 10px 15px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.05); color: #e8e8e8; cursor: pointer;">
+                        ${this.sortOrder === 'asc' ? '↑ Asc' : '↓ Desc'}
+                    </button>
+                </div>
+                
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <button class="btn" onclick="ProductsScreen.saveSelection()">Save POS Selection</button>
+                    <button class="btn" onclick="ProductsScreen.showAddProduct()" style="background: #27ae60;">Add New Product</button>
+                    <span style="margin-left: 15px; color: #95a5a6;">
+                        Showing ${filtered.length} of ${this.products.length} products | ${this.selectedProductIds.size} active for POS
+                    </span>
+                </div>
             </div>
             <table class="data-table" style="width: 100%; border-collapse: collapse;">
                 <thead>
                     <tr style="background: rgba(255, 255, 255, 0.05); border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
                         <th style="padding: 12px; text-align: center; color: #f39c12; width: 60px;">POS</th>
-                        <th style="padding: 12px; text-align: left; color: #f39c12;">Wine Name</th>
+                        <th style="padding: 12px; text-align: left; color: #f39c12;">Product Name</th>
                         <th style="padding: 12px; text-align: left; color: #f39c12;">Vintage</th>
                         <th style="padding: 12px; text-align: left; color: #f39c12;">Varietal</th>
                         <th style="padding: 12px; text-align: left; color: #f39c12;">Type</th>
@@ -64,9 +173,12 @@ const ProductsScreen = {
                     </tr>
                 </thead>
                 <tbody>
-                    ${this.products
-                      .map(
-                        (p) => `
+                    ${
+                      filtered.length === 0
+                        ? '<tr><td colspan="9" style="padding: 40px; text-align: center; color: #95a5a6;">No products match your filters</td></tr>'
+                        : filtered
+                            .map(
+                              (p) => `
                         <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.05);">
                             <td style="padding: 12px; text-align: center;">
                                 <input type="checkbox" 
@@ -109,13 +221,39 @@ const ProductsScreen = {
                             </td>
                         </tr>
                     `
-                      )
-                      .join('')}
+                            )
+                            .join('')
+                    }
                 </tbody>
             </table>
         `;
 
     container.innerHTML = tableHtml;
+  },
+
+  handleSearch(value) {
+    this.searchTerm = value;
+    this.renderProducts();
+  },
+
+  handleFilterType(value) {
+    this.filterType = value;
+    this.renderProducts();
+  },
+
+  handleFilterStatus(value) {
+    this.filterStatus = value;
+    this.renderProducts();
+  },
+
+  handleSort(value) {
+    this.sortBy = value;
+    this.renderProducts();
+  },
+
+  toggleSortOrder() {
+    this.sortOrder = this.sortOrder === 'asc' ? 'desc' : 'asc';
+    this.renderProducts();
   },
 
   getTypeColor(wineColor) {
