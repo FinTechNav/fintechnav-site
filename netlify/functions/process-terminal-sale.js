@@ -145,6 +145,13 @@ exports.handler = async (event, context) => {
 
     console.log('🛒 Cart items to send:', JSON.stringify(cartItemsArray, null, 2));
 
+    // Build CashPrices array to match cart items (for terminal display)
+    // This prevents $0.00 from showing under each item
+    const cashPrices = cartItemsArray.map((item) => ({
+      Name: item.Name,
+      Value: item.Price,
+    }));
+
     // Build SPIN API Sale request
     const saleRequest = {
       Amount: parseFloat(amount),
@@ -161,7 +168,7 @@ exports.handler = async (event, context) => {
       ExternalReceipt: '',
       Cart: {
         Amounts: cartAmounts,
-        CashPrices: [],
+        CashPrices: cashPrices,
         Items: cartItemsArray,
       },
       CallbackInfo: {
