@@ -244,34 +244,57 @@ const POSScreen = {
     }
   },
 
-  async processTerminalSale(terminalConfig, subtotal, tax, total) {
-    console.log('🏪 Processing terminal sale...');
-    console.log('  - Amount:', total);
-    console.log('  - Terminal TPN:', terminalConfig.tpn);
-
-    // Show processing overlay
-    this.showProcessingOverlay('Processing payment on terminal...');
-
+  async processTerminalSale(terminal, subtotal, tax, total) {
     try {
       const referenceId = `POS${Date.now()}`;
+
+      console.log('🔄 Processing terminal sale...');
+      console.log('  Terminal Config:', {
+        tpn: terminal.tpn,
+        registerId: terminal.registerId,
+      });
+      console.log('  Amounts:', {
+        subtotal: subtotal.toFixed(2),
+        tax: tax.toFixed(2),
+        total: total.toFixed(2),
+      });
+
+      this.showProcessingOverlay('Processing payment on terminal...');
+
+      const saleRequest = {
+        Amount: parseFloat(total.toFixed(2)),
+        TipAmount: 0,
+        Cart: {
+          Amounts: [
+            { Name: 'Subtotal', Value: parseFloat(subtotal.toFixed(2)) },
+            { Name: 'Tax', Value: parseFloat(tax.toFixed(2)) },
+            { Name: 'Total', Value: parseFloat(total.toFixed(2)) },
+          ],
+          Items: this.cart.map((item) => ({
+            Name: item.name,
+            Price: parseFloat(item.price),
+            Quantity: item.quantity,
+          })),
+        },
+        PaymentType: 'Credit',
+        ReferenceId: referenceId,
+        PrintReceipt: 'No',
+        Tpn: terminal.tpn,
+        RegisterId: terminal.registerId,
+        Authkey: terminal.authkey,
+      };
+
+      console.log('📤 Sale request:', JSON.stringify(saleRequest, null, 2));
 
       const response = await fetch('/.netlify/functions/process-terminal-sale', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          amount: total,
-          tipAmount: 0,
-          tpn: terminalConfig.tpn,
-          authkey: terminalConfig.authkey,
-          registerId: terminalConfig.registerId,
-          referenceId: referenceId,
-          captureSignature: false,
-          getReceipt: true,
-          printReceipt: false,
-        }),
+        body: JSON.stringify(saleRequest),
       });
+
+      console.log('📥 Response status:', response.status);
 
       const result = await response.json();
       console.log('📥 Terminal sale response:', result);
