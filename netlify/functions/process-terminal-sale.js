@@ -139,6 +139,28 @@ exports.handler = async (event, context) => {
       data = JSON.parse(responseText);
       console.log('✅ SPIN API response data:', JSON.stringify(data, null, 2));
 
+      // Add our original subtotal and tax to the response
+      // This ensures we can save accurate tax data to the database
+      if (subtotal !== undefined && tax !== undefined) {
+        console.log('📊 Adding original subtotal and tax to response:', {
+          subtotal: parseFloat(subtotal),
+          tax: parseFloat(tax),
+        });
+
+        // Add to the Amounts object if it exists
+        if (data.Amounts) {
+          data.Amounts.Subtotal = parseFloat(subtotal);
+          data.Amounts.TaxAmount = parseFloat(tax);
+        } else {
+          data.Amounts = {
+            TotalAmount: parseFloat(amount),
+            Subtotal: parseFloat(subtotal),
+            TaxAmount: parseFloat(tax),
+            TipAmount: parseFloat(tipAmount),
+          };
+        }
+      }
+
       return {
         statusCode: 200,
         headers,
