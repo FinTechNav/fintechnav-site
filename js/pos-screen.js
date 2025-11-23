@@ -274,6 +274,7 @@ const POSScreen = {
           captureSignature: false,
           getReceipt: true,
           printReceipt: false,
+          cartItems: this.cart,
         }),
       });
 
