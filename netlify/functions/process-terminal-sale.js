@@ -24,6 +24,8 @@ exports.handler = async (event, context) => {
     const body = JSON.parse(event.body);
     const {
       amount,
+      subtotal,
+      tax,
       tipAmount = 0,
       tpn,
       authkey,
@@ -37,6 +39,8 @@ exports.handler = async (event, context) => {
 
     console.log('📊 Request parameters:');
     console.log('  - amount:', amount);
+    console.log('  - subtotal:', subtotal);
+    console.log('  - tax:', tax);
     console.log('  - tipAmount:', tipAmount);
     console.log('  - tpn:', tpn ? `✓ ${tpn}` : '✗ missing');
     console.log('  - authkey:', authkey ? `✓ ${authkey}` : '✗ missing');
@@ -62,6 +66,18 @@ exports.handler = async (event, context) => {
       };
     }
 
+    // Build Cart.Amounts array - include subtotal and tax if provided, otherwise just total
+    const cartAmounts = [];
+    if (subtotal !== undefined && tax !== undefined) {
+      cartAmounts.push(
+        { Name: 'Subtotal', Value: parseFloat(subtotal) },
+        { Name: 'Tax', Value: parseFloat(tax) },
+        { Name: 'Total', Value: parseFloat(amount) }
+      );
+    } else {
+      cartAmounts.push({ Name: 'Total', Value: parseFloat(amount) });
+    }
+
     // Build SPIN API Sale request
     const saleRequest = {
       Amount: parseFloat(amount),
@@ -77,12 +93,7 @@ exports.handler = async (event, context) => {
       Authkey: authkey,
       ExternalReceipt: '',
       Cart: {
-        Amounts: [
-          {
-            Name: 'Subtotal',
-            Value: parseFloat(amount),
-          },
-        ],
+        Amounts: cartAmounts,
         CashPrices: [],
         Items: [
           {
@@ -107,6 +118,7 @@ exports.handler = async (event, context) => {
     console.log('  - Amount:', saleRequest.Amount);
     console.log('  - TipAmount:', saleRequest.TipAmount);
     console.log('  - ReferenceId:', saleRequest.ReferenceId);
+    console.log('  - Cart.Amounts:', JSON.stringify(saleRequest.Cart.Amounts, null, 2));
 
     const response = await fetch('https://test.spinpos.net/v2/Payment/Sale', {
       method: 'POST',
