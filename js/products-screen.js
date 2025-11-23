@@ -81,8 +81,8 @@ const ProductsScreen = {
                             <td style="padding: 12px; color: #95a5a6;">${p.vintage || '-'}</td>
                             <td style="padding: 12px; color: #95a5a6;">${p.varietal || '-'}</td>
                             <td style="padding: 12px; color: #95a5a6;">
-                                <span style="background: ${this.getTypeColor(p.wine_color)}; padding: 2px 8px; border-radius: 4px; font-size: 0.85em;">
-                                    ${p.wine_color || p.category || 'Wine'}
+                                <span style="background: ${this.getTypeColor(p.wine_color || p.product_category || p.type)}; padding: 2px 8px; border-radius: 4px; font-size: 0.85em;">
+                                    ${p.wine_color || p.product_category || p.type || 'Product'}
                                 </span>
                             </td>
                             <td style="padding: 12px; text-align: right; color: #f39c12; font-weight: 600;">
@@ -126,6 +126,11 @@ const ProductsScreen = {
       Sparkling: 'rgba(255, 215, 0, 0.6)',
       Fortified: 'rgba(139, 69, 19, 0.6)',
       Dessert: 'rgba(184, 134, 11, 0.6)',
+      Stemware: 'rgba(70, 130, 180, 0.6)',
+      Decanter: 'rgba(72, 61, 139, 0.6)',
+      Provisions: 'rgba(107, 142, 35, 0.6)',
+      Accessories: 'rgba(105, 105, 105, 0.6)',
+      merchandise: 'rgba(128, 128, 128, 0.6)',
     };
     return colors[wineColor] || 'rgba(128, 128, 128, 0.6)';
   },
@@ -170,6 +175,9 @@ const ProductsScreen = {
     const product = this.products.find((p) => p.id === productId);
     if (!product) return;
 
+    const isWine = product.type === 'wine';
+    const isMerchandise = product.type === 'merchandise';
+
     const modal = document.createElement('div');
     modal.style.cssText = `
       position: fixed;
@@ -187,7 +195,7 @@ const ProductsScreen = {
     modal.innerHTML = `
       <div style="background: #2c3e50; padding: 30px; border-radius: 12px; max-width: 800px; max-height: 80vh; overflow-y: auto; color: #e8e8e8;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-          <h2 style="color: #f39c12; margin: 0;">Product Details</h2>
+          <h2 style="color: #f39c12; margin: 0;">${isWine ? 'Wine' : 'Product'} Details</h2>
           <button onclick="this.closest('div[style*=fixed]').remove()" 
             style="background: #e74c3c; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">
             Close
@@ -200,10 +208,26 @@ const ProductsScreen = {
             <p><strong>Name:</strong> ${product.name}</p>
             <p><strong>SKU:</strong> ${product.sku || 'N/A'}</p>
             <p><strong>Barcode:</strong> ${product.barcode || 'N/A'}</p>
-            <p><strong>Type:</strong> ${product.type || 'wine'}</p>
-            <p><strong>Wine Color:</strong> ${product.wine_color || product.category || 'N/A'}</p>
-            <p><strong>Vintage:</strong> ${product.vintage || 'N/A'}</p>
-            <p><strong>Varietal:</strong> ${product.varietal || 'N/A'}</p>
+            <p><strong>Type:</strong> ${product.type || 'product'}</p>
+            ${
+              isWine
+                ? `
+              <p><strong>Wine Color:</strong> ${product.wine_color || 'N/A'}</p>
+              <p><strong>Vintage:</strong> ${product.vintage || 'N/A'}</p>
+              <p><strong>Varietal:</strong> ${product.varietal || 'N/A'}</p>
+            `
+                : ''
+            }
+            ${
+              isMerchandise
+                ? `
+              <p><strong>Category:</strong> ${product.product_category || product.category || 'N/A'}</p>
+              <p><strong>Material:</strong> ${product.material || 'N/A'}</p>
+              <p><strong>Dimensions:</strong> ${product.dimensions || 'N/A'}</p>
+              <p><strong>Manufacturer:</strong> ${product.manufacturer || 'N/A'}</p>
+            `
+                : ''
+            }
           </div>
           
           <div>
@@ -216,6 +240,9 @@ const ProductsScreen = {
             <p><strong>Reorder Point:</strong> ${product.reorder_point || 0}</p>
           </div>
           
+          ${
+            isWine
+              ? `
           <div>
             <h3 style="color: #f39c12;">Wine Characteristics</h3>
             <p><strong>Region:</strong> ${product.wine_region || 'N/A'}</p>
@@ -228,6 +255,9 @@ const ProductsScreen = {
             <p><strong>Fruit Intensity:</strong> ${product.fruit_intensity || 'N/A'}</p>
             <p><strong>Bottle Size:</strong> ${product.bottle_volume || 750}ml</p>
           </div>
+          `
+              : ''
+          }
           
           <div>
             <h3 style="color: #f39c12;">Status & Settings</h3>

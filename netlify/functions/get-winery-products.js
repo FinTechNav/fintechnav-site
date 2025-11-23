@@ -33,83 +33,60 @@ exports.handler = async (event, context) => {
     const wineryResult = await client.query('SELECT name FROM wineries WHERE id = $1', [wineryId]);
     const wineryName = wineryResult.rows[0]?.name;
 
-    const result = await client.query(
+    // Get wine products
+    const wineResult = await client.query(
       `
       SELECT 
-        p.id,
-        p.name,
-        p.vintage,
-        p.varietal,
-        p.price,
-        p.sku,
-        p.description,
-        p.category,
-        p.track_inventory,
-        p.supply_price,
-        p.average_cost,
-        p.brand_id,
-        p.type,
-        p.supplier_id,
-        p.tags,
-        p.image_url,
-        p.created_at,
-        p.updated_at,
-        p.version,
-        p.barcode,
-        p.weight,
-        p.has_variants,
-        p.variant_parent_id,
-        p.variant_name,
-        p.variant_attribute_values,
-        p.variant_definitions,
-        p.variant_options,
-        p.reorder_point,
-        p.restock_level,
-        p.loyalty_value,
-        p.serial_numbers,
-        p.components,
-        p.product_codes,
-        p.tagline,
-        p.url_key,
-        p.short_description,
-        p.full_description,
-        p.available_date,
-        p.online_status,
-        p.inventory_status,
-        p.wine_color,
-        p.origin_country,
-        p.wine_region,
-        p.appellation,
-        p.body_weight,
-        p.sweetness_level,
-        p.acidity_level,
-        p.tannin_level,
-        p.fruit_intensity,
-        p.producer_id,
-        p.display_template,
-        p.bottle_volume,
-        p.category_id,
-        p.product_groups,
-        p.original_price,
-        p.cogs,
-        p.tax_category,
-        p.ships_direct,
-        p.backorder_policy,
-        p.available_quantity,
-        p.allocated_quantity,
-        p.committed_quantity,
-        p.custom_attributes,
-        p.visibility,
+        p.*,
+        wp_data.vintage,
+        wp_data.varietal,
+        wp_data.wine_color,
+        wp_data.wine_region,
+        wp_data.appellation,
+        wp_data.body_weight,
+        wp_data.sweetness_level,
+        wp_data.acidity_level,
+        wp_data.tannin_level,
+        wp_data.fruit_intensity,
+        wp_data.bottle_volume,
+        wp_data.producer_id,
         wp.is_active as is_active_for_pos,
         wp.price as winery_price
       FROM products p
+      LEFT JOIN wine_products wp_data ON p.id = wp_data.product_id
       LEFT JOIN winery_products wp ON p.id = wp.product_id AND wp.winery_id = $1
       WHERE p.deleted_at IS NULL
+        AND p.type = 'wine'
         AND p.name LIKE $2
-      ORDER BY p.name ASC, p.vintage DESC
+      ORDER BY p.name ASC, wp_data.vintage DESC
     `,
       [wineryId, wineryName + '%']
     );
+
+    // Get merchandise products
+    const merchResult = await client.query(
+      `
+      SELECT 
+        p.*,
+        mp.material,
+        mp.dimensions,
+        mp.manufacturer,
+        mp.country_of_origin,
+        mp.product_category,
+        wp.is_active as is_active_for_pos,
+        wp.price as winery_price
+      FROM products p
+      LEFT JOIN merchandise_products mp ON p.id = mp.product_id
+      LEFT JOIN winery_products wp ON p.id = wp.product_id AND wp.winery_id = $1
+      WHERE p.deleted_at IS NULL
+        AND p.type = 'merchandise'
+        AND p.name LIKE $2
+      ORDER BY p.name ASC
+    `,
+      [wineryId, wineryName + '%']
+    );
+
+    const result = { rows: [...wineResult.rows, ...merchResult.rows] };
 
     return {
       statusCode: 200,
