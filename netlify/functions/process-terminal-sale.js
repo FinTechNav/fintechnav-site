@@ -84,15 +84,50 @@ exports.handler = async (event, context) => {
     let cartItemsArray = [];
     if (cartItems && cartItems.length > 0) {
       console.log('📦 Building items from cart:', cartItems);
-      cartItemsArray = cartItems.map((item) => ({
-        Name: item.name || 'Item',
-        Price: parseFloat(item.price) * item.quantity,
-        UnitPrice: parseFloat(item.price),
-        Quantity: item.quantity,
-        AdditionalInfo: item.vintage && item.varietal ? `${item.vintage} ${item.varietal}` : '',
-        CustomInfos: [],
-        Modifiers: [],
-      }));
+      cartItemsArray = cartItems.map((item) => {
+        let itemName = '';
+
+        // Priority 1: Use vintage + varietal if both are available and not null
+        if (item.vintage && item.varietal && item.vintage !== 'null' && item.varietal !== 'null') {
+          itemName = `${item.vintage} ${item.varietal}`;
+        }
+        // Priority 2: Use just varietal if available
+        else if (item.varietal && item.varietal !== 'null') {
+          itemName = item.varietal;
+        }
+        // Priority 3: Use product name, removing winery name if present
+        else if (item.name) {
+          itemName = item.name;
+          // Try to remove winery name from beginning (e.g., "Jensen Family Winery Bordeaux" -> "Bordeaux")
+          const wineryPatterns = [
+            /^Jensen Family Winery\s+/i,
+            /^Smith Vineyards\s+/i,
+            // Add more winery patterns as needed
+          ];
+          for (const pattern of wineryPatterns) {
+            itemName = itemName.replace(pattern, '');
+          }
+        }
+        // Priority 4: Fallback
+        else {
+          itemName = 'Wine';
+        }
+
+        // Truncate name if too long (terminal display limit ~25 chars)
+        if (itemName.length > 25) {
+          itemName = itemName.substring(0, 22) + '...';
+        }
+
+        return {
+          Name: itemName,
+          Price: parseFloat(item.price) * item.quantity,
+          UnitPrice: parseFloat(item.price),
+          Quantity: item.quantity,
+          AdditionalInfo: '',
+          CustomInfos: [],
+          Modifiers: [],
+        };
+      });
     } else {
       // Fallback to generic item if no cart items provided
       cartItemsArray = [
