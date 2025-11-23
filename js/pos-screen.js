@@ -244,57 +244,38 @@ const POSScreen = {
     }
   },
 
-  async processTerminalSale(terminal, subtotal, tax, total) {
+  async processTerminalSale(terminalConfig, subtotal, tax, total) {
+    console.log('🏪 Processing terminal sale...');
+    console.log('  - Subtotal:', subtotal);
+    console.log('  - Tax:', tax);
+    console.log('  - Total:', total);
+    console.log('  - Terminal TPN:', terminalConfig.tpn);
+
+    // Show processing overlay
+    this.showProcessingOverlay('Processing payment on terminal...');
+
     try {
       const referenceId = `POS${Date.now()}`;
-
-      console.log('🔄 Processing terminal sale...');
-      console.log('  Terminal Config:', {
-        tpn: terminal.tpn,
-        registerId: terminal.registerId,
-      });
-      console.log('  Amounts:', {
-        subtotal: subtotal.toFixed(2),
-        tax: tax.toFixed(2),
-        total: total.toFixed(2),
-      });
-
-      this.showProcessingOverlay('Processing payment on terminal...');
-
-      const saleRequest = {
-        amount: parseFloat(total.toFixed(2)),
-        tipAmount: 0,
-        cart: {
-          amounts: [
-            { name: 'Subtotal', value: parseFloat(subtotal.toFixed(2)) },
-            { name: 'Tax', value: parseFloat(tax.toFixed(2)) },
-            { name: 'Total', value: parseFloat(total.toFixed(2)) },
-          ],
-          items: this.cart.map((item) => ({
-            name: item.name,
-            price: parseFloat(item.price),
-            quantity: item.quantity,
-          })),
-        },
-        paymentType: 'Credit',
-        referenceId: referenceId,
-        printReceipt: 'No',
-        tpn: terminal.tpn,
-        registerId: terminal.registerId,
-        authkey: terminal.authkey,
-      };
-
-      console.log('📤 Sale request:', JSON.stringify(saleRequest, null, 2));
 
       const response = await fetch('/.netlify/functions/process-terminal-sale', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(saleRequest),
+        body: JSON.stringify({
+          amount: total,
+          subtotal: subtotal,
+          tax: tax,
+          tipAmount: 0,
+          tpn: terminalConfig.tpn,
+          authkey: terminalConfig.authkey,
+          registerId: terminalConfig.registerId,
+          referenceId: referenceId,
+          captureSignature: false,
+          getReceipt: true,
+          printReceipt: false,
+        }),
       });
-
-      console.log('📥 Response status:', response.status);
 
       const result = await response.json();
       console.log('📥 Terminal sale response:', result);
