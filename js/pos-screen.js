@@ -167,20 +167,113 @@ const POSScreen = {
     if (payButton._hasListener) return;
 
     payButton.addEventListener('click', async () => {
-      await this.processOrder();
+      await this.showPaymentMethodModal();
     });
     payButton._hasListener = true;
   },
 
-  async processOrder() {
-    if (this.cart.length === 0) return;
+  showPaymentMethodModal() {
+    const { subtotal, tax, total } = this.calculateTotals();
 
+    const modal = document.createElement('div');
+    modal.id = 'paymentMethodModal';
+    modal.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+    `;
+
+    modal.innerHTML = `
+      <div style="background: #2c3e50; padding: 40px; border-radius: 12px; max-width: 500px; width: 90%; color: #e8e8e8;">
+        <h2 style="color: #f39c12; margin-bottom: 30px; text-align: center;">Select Payment Method</h2>
+        
+        <div style="display: grid; gap: 15px; margin-bottom: 30px;">
+          <button class="payment-method-btn" onclick="POSScreen.selectPaymentMethod('card')" style="
+            padding: 20px;
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+          " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 20px rgba(52, 152, 219, 0.4)'" onmouseout="this.style.transform=''; this.style.boxShadow=''">
+            💳 Credit/Debit Card
+          </button>
+          
+          <button class="payment-method-btn" onclick="POSScreen.selectPaymentMethod('cash')" style="
+            padding: 20px;
+            background: linear-gradient(135deg, #27ae60, #229954);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+          " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 20px rgba(39, 174, 96, 0.4)'" onmouseout="this.style.transform=''; this.style.boxShadow=''">
+            💵 Cash
+          </button>
+        </div>
+        
+        <div style="text-align: center; margin-top: 20px;">
+          <div style="font-size: 14px; color: #95a5a6; margin-bottom: 10px;">Total Amount</div>
+          <div style="font-size: 32px; color: #f39c12; font-weight: 700;">$${total.toFixed(2)}</div>
+        </div>
+        
+        <button onclick="POSScreen.closePaymentMethodModal()" style="
+          width: 100%;
+          padding: 12px;
+          background: rgba(255, 255, 255, 0.1);
+          border: 1px solid rgba(255, 255, 255, 0.2);
+          border-radius: 8px;
+          color: #e8e8e8;
+          font-size: 14px;
+          cursor: pointer;
+          margin-top: 20px;
+        ">Cancel</button>
+      </div>
+    `;
+
+    document.body.appendChild(modal);
+  },
+
+  closePaymentMethodModal() {
+    const modal = document.getElementById('paymentMethodModal');
+    if (modal) modal.remove();
+  },
+
+  selectPaymentMethod(method) {
+    this.closePaymentMethodModal();
+    if (method === 'card') {
+      this.processOrder();
+    } else if (method === 'cash') {
+      this.processCashPayment();
+    }
+  },
+
+  calculateTotals() {
     const subtotal = this.cart.reduce(
       (sum, item) => sum + parseFloat(item.price) * item.quantity,
       0
     );
     const tax = subtotal * this.TAX_RATE;
     const total = subtotal + tax;
+    return { subtotal, tax, total };
+  },
+
+  async processOrder() {
+    if (this.cart.length === 0) return;
+
+    const { subtotal, tax, total } = this.calculateTotals();
 
     // Check if winery has a terminal configured
     const terminalConfig = await this.getTerminalConfig();
@@ -418,11 +511,14 @@ const POSScreen = {
           console.error('⚠️ Error code:', terminalTxnData.code);
         }
 
-        alert(
-          `Order #${data.order_number} completed successfully!\n\nTotal: $${total.toFixed(2)}\nPayment: Approved\nAuth Code: ${transactionData.AuthCode || 'N/A'}`
-        );
-
-        this.reset();
+        this.showPaymentReceivedScreen({
+          orderNumber: data.order_number,
+          total: total,
+          paymentMethod: 'Credit/Debit',
+          authCode: transactionData.AuthCode || 'N/A',
+          cardType: transactionData.CardData?.CardType || 'Card',
+          cardLast4: transactionData.CardData?.Last4 || '****',
+        });
       } else {
         alert('Payment successful but failed to save order: ' + data.error);
       }
@@ -519,5 +615,380 @@ const POSScreen = {
     if (selector) selector.value = '';
     this.renderCart();
     this.updateTotals();
+  },
+
+  processCashPayment() {
+    const { subtotal, tax, total } = this.calculateTotals();
+
+    const modal = document.createElement('div');
+    modal.id = 'cashPaymentModal';
+    modal.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.85);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+    `;
+
+    const quickAmounts = [
+      total,
+      Math.ceil(total / 5) * 5,
+      Math.ceil(total / 10) * 10,
+      Math.ceil(total / 20) * 20,
+    ];
+
+    modal.innerHTML = `
+      <div style="background: #2c3e50; padding: 40px; border-radius: 12px; max-width: 600px; width: 90%; color: #e8e8e8;">
+        <h2 style="color: #f39c12; margin-bottom: 10px; text-align: center;">Amount to Pay</h2>
+        <div style="text-align: center; font-size: 48px; color: #f39c12; font-weight: 700; margin-bottom: 30px;">$${total.toFixed(2)}</div>
+        
+        <h3 style="color: #e8e8e8; margin-bottom: 15px; text-align: center;">Amount given by customer</h3>
+        
+        <input type="text" id="cashAmountInput" value="0.00" style="
+          width: 100%;
+          padding: 20px;
+          font-size: 32px;
+          text-align: center;
+          background: rgba(0,0,0,0.3);
+          border: 2px solid rgba(243, 156, 18, 0.5);
+          border-radius: 8px;
+          color: #f39c12;
+          font-weight: 700;
+          margin-bottom: 20px;
+        " />
+        
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px;">
+          ${quickAmounts
+            .map(
+              (amount) => `
+            <button onclick="POSScreen.setCashAmount(${amount.toFixed(2)})" style="
+              padding: 15px;
+              background: rgba(52, 152, 219, 0.2);
+              border: 1px solid rgba(52, 152, 219, 0.5);
+              border-radius: 8px;
+              color: #3498db;
+              font-size: 16px;
+              font-weight: 600;
+              cursor: pointer;
+              transition: all 0.3s ease;
+            " onmouseover="this.style.background='rgba(52, 152, 219, 0.3)'" onmouseout="this.style.background='rgba(52, 152, 219, 0.2)'">
+              $${amount.toFixed(2)}
+            </button>
+          `
+            )
+            .join('')}
+        </div>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+          <button onclick="POSScreen.completeCashPayment()" style="
+            padding: 15px;
+            background: linear-gradient(135deg, #27ae60, #229954);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+          ">Complete Payment</button>
+          
+          <button onclick="POSScreen.closeCashPaymentModal()" style="
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            color: #e8e8e8;
+            font-size: 18px;
+            cursor: pointer;
+          ">Cancel</button>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    // Focus the input
+    setTimeout(() => {
+      const input = document.getElementById('cashAmountInput');
+      if (input) {
+        input.select();
+        input.addEventListener('input', (e) => {
+          let value = e.target.value.replace(/[^\d.]/g, '');
+          const parts = value.split('.');
+          if (parts.length > 2) {
+            value = parts[0] + '.' + parts.slice(1).join('');
+          }
+          e.target.value = value;
+        });
+      }
+    }, 100);
+  },
+
+  setCashAmount(amount) {
+    const input = document.getElementById('cashAmountInput');
+    if (input) {
+      input.value = amount.toFixed(2);
+    }
+  },
+
+  closeCashPaymentModal() {
+    const modal = document.getElementById('cashPaymentModal');
+    if (modal) modal.remove();
+  },
+
+  async completeCashPayment() {
+    const input = document.getElementById('cashAmountInput');
+    const cashGiven = parseFloat(input?.value || 0);
+    const { subtotal, tax, total } = this.calculateTotals();
+
+    if (cashGiven < total) {
+      alert(
+        `Insufficient cash. Need $${total.toFixed(2)} but only received $${cashGiven.toFixed(2)}`
+      );
+      return;
+    }
+
+    this.closeCashPaymentModal();
+
+    // Save order with cash payment
+    await this.saveOrderWithCash(subtotal, tax, total, cashGiven);
+  },
+
+  async saveOrderWithCash(subtotal, tax, total, cashGiven) {
+    const orderData = {
+      winery_id: App.currentWinery.id,
+      customer_id: this.selectedCustomer?.id || null,
+      employee_id: App.currentUser.id,
+      customer_name: this.selectedCustomer?.name || this.selectedCustomer?.email || 'Guest',
+      is_guest: !this.selectedCustomer,
+      order_source: 'pos',
+      subtotal: subtotal,
+      tax: tax,
+      total: total,
+      payment_status: 'paid',
+      payment_method: 'cash',
+      payment_reference: `CASH${Date.now()}`,
+      transaction_amount: total,
+      payment_processed_at: new Date().toISOString(),
+      items: this.cart.map((item) => ({
+        product_id: item.id,
+        product_name: item.name,
+        product_sku: item.sku,
+        vintage: item.vintage,
+        varietal: item.varietal,
+        quantity: item.quantity,
+        unit_price: parseFloat(item.price),
+        line_total: parseFloat(item.price) * item.quantity,
+      })),
+    };
+
+    try {
+      const response = await fetch('/.netlify/functions/create-order', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(orderData),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        const change = cashGiven - total;
+        this.showCashChangeScreen({
+          orderNumber: data.order_number,
+          total: total,
+          cashGiven: cashGiven,
+          change: change,
+        });
+      } else {
+        alert('Failed to save order: ' + data.error);
+      }
+    } catch (error) {
+      console.error('Failed to create order:', error);
+      alert('Failed to create order');
+    }
+  },
+
+  showCashChangeScreen({ orderNumber, total, cashGiven, change }) {
+    const modal = document.createElement('div');
+    modal.id = 'cashChangeModal';
+    modal.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.85);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+    `;
+
+    const changeMessage =
+      change > 0
+        ? `<div style="font-size: 64px; color: #27ae60; font-weight: 700; margin: 20px 0;">$${change.toFixed(2)}</div>
+           <div style="font-size: 24px; color: #95a5a6; margin-bottom: 30px;">Change Due</div>`
+        : '<div style="font-size: 48px; color: #27ae60; font-weight: 700; margin: 30px 0;">Exact Payment</div>';
+
+    modal.innerHTML = `
+      <div style="background: #2c3e50; padding: 50px; border-radius: 12px; max-width: 600px; width: 90%; color: #e8e8e8; text-align: center;">
+        <div style="font-size: 64px; margin-bottom: 20px;">💵</div>
+        <h2 style="color: #f39c12; margin-bottom: 30px; font-size: 36px;">Payment Received</h2>
+        
+        ${changeMessage}
+        
+        <div style="background: rgba(255, 255, 255, 0.05); padding: 25px; border-radius: 8px; margin-bottom: 30px;">
+          <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+            <span style="color: #95a5a6;">Order Number:</span>
+            <span style="color: #f39c12; font-weight: 700;">#${orderNumber}</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+            <span style="color: #95a5a6;">Total:</span>
+            <span style="color: #e8e8e8; font-weight: 600;">$${total.toFixed(2)}</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+            <span style="color: #95a5a6;">Cash Given:</span>
+            <span style="color: #e8e8e8; font-weight: 600;">$${cashGiven.toFixed(2)}</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; padding-top: 10px; border-top: 1px solid rgba(255, 255, 255, 0.1);">
+            <span style="color: #95a5a6;">Change:</span>
+            <span style="color: #27ae60; font-weight: 700; font-size: 20px;">$${change.toFixed(2)}</span>
+          </div>
+        </div>
+        
+        <button onclick="POSScreen.closeCashChangeScreen()" style="
+          width: 100%;
+          padding: 18px;
+          background: linear-gradient(135deg, #27ae60, #229954);
+          border: none;
+          border-radius: 8px;
+          color: white;
+          font-size: 20px;
+          font-weight: 700;
+          cursor: pointer;
+        ">Done (ESC)</button>
+      </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    // Auto-close if enabled
+    this.scheduleAutoClose(modal);
+
+    // ESC key handler
+    const escHandler = (e) => {
+      if (e.key === 'Escape') {
+        this.closeCashChangeScreen();
+        document.removeEventListener('keydown', escHandler);
+      }
+    };
+    document.addEventListener('keydown', escHandler);
+  },
+
+  closeCashChangeScreen() {
+    const modal = document.getElementById('cashChangeModal');
+    if (modal) modal.remove();
+    this.reset();
+  },
+
+  showPaymentReceivedScreen({ orderNumber, total, paymentMethod, authCode, cardType, cardLast4 }) {
+    const modal = document.createElement('div');
+    modal.id = 'paymentReceivedModal';
+    modal.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.85);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+    `;
+
+    modal.innerHTML = `
+      <div style="background: #2c3e50; padding: 50px; border-radius: 12px; max-width: 600px; width: 90%; color: #e8e8e8; text-align: center;">
+        <div style="font-size: 64px; margin-bottom: 20px;">✓</div>
+        <h2 style="color: #27ae60; margin-bottom: 10px; font-size: 36px;">Payment Received</h2>
+        <div style="font-size: 18px; color: #95a5a6; margin-bottom: 30px;">Transaction Approved</div>
+        
+        <div style="background: rgba(255, 255, 255, 0.05); padding: 25px; border-radius: 8px; margin-bottom: 30px;">
+          <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+            <span style="color: #95a5a6;">Order Number:</span>
+            <span style="color: #f39c12; font-weight: 700;">#${orderNumber}</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+            <span style="color: #95a5a6;">Payment Method:</span>
+            <span style="color: #e8e8e8; font-weight: 600;">${paymentMethod}</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+            <span style="color: #95a5a6;">Card:</span>
+            <span style="color: #e8e8e8; font-weight: 600;">${cardType} ****${cardLast4}</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+            <span style="color: #95a5a6;">Amount:</span>
+            <span style="color: #e8e8e8; font-weight: 600;">$${total.toFixed(2)}</span>
+          </div>
+          <div style="display: flex; justify-content: space-between;">
+            <span style="color: #95a5a6;">Auth Code:</span>
+            <span style="color: #e8e8e8; font-weight: 600;">${authCode}</span>
+          </div>
+        </div>
+        
+        <button onclick="POSScreen.closePaymentReceivedScreen()" style="
+          width: 100%;
+          padding: 18px;
+          background: linear-gradient(135deg, #27ae60, #229954);
+          border: none;
+          border-radius: 8px;
+          color: white;
+          font-size: 20px;
+          font-weight: 700;
+          cursor: pointer;
+        ">Done (ESC)</button>
+      </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    // Auto-close if enabled
+    this.scheduleAutoClose(modal);
+
+    // ESC key handler
+    const escHandler = (e) => {
+      if (e.key === 'Escape') {
+        this.closePaymentReceivedScreen();
+        document.removeEventListener('keydown', escHandler);
+      }
+    };
+    document.addEventListener('keydown', escHandler);
+  },
+
+  closePaymentReceivedScreen() {
+    const modal = document.getElementById('paymentReceivedModal');
+    if (modal) modal.remove();
+    this.reset();
+  },
+
+  scheduleAutoClose(modal) {
+    // Get auto-close setting from localStorage
+    const autoClose = localStorage.getItem('posAutoClosePayment') === 'true';
+    const autoCloseDelay = parseInt(localStorage.getItem('posAutoCloseDelay') || '5', 10);
+
+    if (autoClose && autoCloseDelay > 0) {
+      setTimeout(() => {
+        if (modal && modal.parentNode) {
+          modal.remove();
+          this.reset();
+        }
+      }, autoCloseDelay * 1000);
+    }
   },
 };
