@@ -110,8 +110,20 @@ const App = {
     document.getElementById('appContainer').style.display = 'flex';
 
     this.updateWineryDisplay();
-    this.createMobileMenuButton();
-    POSScreen.init();
+
+    // Initialize mobile or desktop POS based on screen width
+    const isMobile = window.innerWidth <= 768;
+
+    if (isMobile) {
+      // Mobile: use step-by-step flow
+      if (typeof MobilePOS !== 'undefined') {
+        MobilePOS.init();
+      }
+    } else {
+      // Desktop/Tablet: use traditional POS
+      this.createMobileMenuButton();
+      POSScreen.init();
+    }
   },
 
   createMobileMenuButton() {
