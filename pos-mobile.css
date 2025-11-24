@@ -13,6 +13,21 @@
         display: none !important;
     }
     
+    /* Hide ALL desktop POS elements on mobile */
+    body.mobile-layout .sidebar,
+    body.mobile-layout .header,
+    body.mobile-layout .left-panel,
+    body.mobile-layout .right-panel,
+    body.mobile-layout .container,
+    body.mobile-layout #posScreen {
+        display: none !important;
+    }
+    
+    /* Show mobile container */
+    body.mobile-layout #mobileContainer {
+        display: block !important;
+    }
+    
     /* Mobile Top Bar */
     .mobile-top-bar {
         position: fixed;
@@ -466,12 +481,5 @@
         padding: 2px 8px;
         font-size: 12px;
         font-weight: 600;
-    }
-    
-    /* Hide desktop layout on mobile */
-    .sidebar,
-    .header,
-    .container {
-        display: none !important;
     }
 }
