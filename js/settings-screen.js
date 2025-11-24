@@ -3,42 +3,84 @@ const SettingsScreen = {
   terminals: [],
   terminalStatuses: {},
   lastChecked: {},
+  currentTab: 'credit-card',
 
   async init() {
     await this.loadTerminals();
-    this.renderTerminals();
+    this.loadPOSPreferences();
+    this.renderTabs();
+    this.renderTabContent();
     // Auto-check terminal status on screen load
     await this.checkAllTerminalStatuses();
   },
 
-  async loadTerminals() {
-    if (!App.currentWinery) return;
+  loadPOSPreferences() {
+    // Load from localStorage
+    const autoClose = localStorage.getItem('posAutoClosePayment') === 'true';
+    const autoCloseDelay = parseInt(localStorage.getItem('posAutoCloseDelay') || '5', 10);
 
-    try {
-      const response = await fetch(
-        `/.netlify/functions/get-winery-terminals?winery_id=${App.currentWinery.id}`
-      );
-      const data = await response.json();
-
-      if (data.success) {
-        this.terminals = data.terminals;
-      }
-    } catch (error) {
-      console.error('Failed to load terminals:', error);
-      this.terminals = [];
-    }
+    return { autoClose, autoCloseDelay };
   },
 
-  async checkAllTerminalStatuses() {
-    const cardPresentTerminals = this.terminals.filter((t) => t.terminal_type === 'card_present');
-    for (const terminal of cardPresentTerminals) {
-      await this.checkTerminalStatus(terminal.id, true);
-    }
+  savePOSPreferences(autoClose, autoCloseDelay) {
+    localStorage.setItem('posAutoClosePayment', autoClose ? 'true' : 'false');
+    localStorage.setItem('posAutoCloseDelay', autoCloseDelay.toString());
   },
 
-  renderTerminals() {
+  switchTab(tab) {
+    this.currentTab = tab;
+    this.renderTabs();
+    this.renderTabContent();
+  },
+
+  renderTabs() {
     const container = document.getElementById('terminalSettings');
+    if (!container) return;
 
+    const tabsHtml = `
+      <div style="display: flex; gap: 10px; margin-bottom: 30px; border-bottom: 2px solid rgba(255, 255, 255, 0.1);">
+        <button onclick="SettingsScreen.switchTab('credit-card')" style="
+          padding: 15px 30px;
+          background: ${this.currentTab === 'credit-card' ? 'rgba(243, 156, 18, 0.2)' : 'transparent'};
+          border: none;
+          border-bottom: 3px solid ${this.currentTab === 'credit-card' ? '#f39c12' : 'transparent'};
+          color: ${this.currentTab === 'credit-card' ? '#f39c12' : '#95a5a6'};
+          font-size: 16px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.3s ease;
+        ">💳 Credit Card</button>
+        
+        <button onclick="SettingsScreen.switchTab('pos-preferences')" style="
+          padding: 15px 30px;
+          background: ${this.currentTab === 'pos-preferences' ? 'rgba(243, 156, 18, 0.2)' : 'transparent'};
+          border: none;
+          border-bottom: 3px solid ${this.currentTab === 'pos-preferences' ? '#f39c12' : 'transparent'};
+          color: ${this.currentTab === 'pos-preferences' ? '#f39c12' : '#95a5a6'};
+          font-size: 16px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.3s ease;
+        ">⚙️ POS Preferences</button>
+      </div>
+      <div id="tabContent"></div>
+    `;
+
+    container.innerHTML = tabsHtml;
+  },
+
+  renderTabContent() {
+    const contentDiv = document.getElementById('tabContent');
+    if (!contentDiv) return;
+
+    if (this.currentTab === 'credit-card') {
+      this.renderCreditCardTab(contentDiv);
+    } else if (this.currentTab === 'pos-preferences') {
+      this.renderPOSPreferencesTab(contentDiv);
+    }
+  },
+
+  renderCreditCardTab(container) {
     if (this.terminals.length === 0) {
       container.innerHTML =
         '<p style="color: #95a5a6;">No payment terminals configured for this winery.</p>';
@@ -106,7 +148,7 @@ const SettingsScreen = {
       html += `
         <div style="margin-bottom: 30px; padding: 20px; background: rgba(255, 255, 255, 0.03); border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.1);">
           <h4 style="color: #f39c12; margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
-            <span>🏪</span> Card Present (Physical Terminal)
+            <span>🪙</span> Card Present (Physical Terminal)
           </h4>
           
           <div style="margin-bottom: 15px; padding: 12px; background: rgba(255, 255, 255, 0.05); border-radius: 6px; display: flex; align-items: center; justify-content: space-between;">
@@ -152,6 +194,85 @@ const SettingsScreen = {
     }
 
     container.innerHTML = html;
+  },
+
+  renderPOSPreferencesTab(container) {
+    const prefs = this.loadPOSPreferences();
+
+    container.innerHTML = `
+      <div style="padding: 20px; background: rgba(255, 255, 255, 0.03); border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.1);">
+        <h4 style="color: #f39c12; margin-bottom: 20px;">Payment Received Screen</h4>
+        
+        <div style="margin-bottom: 25px;">
+          <label style="display: flex; align-items: center; gap: 12px; cursor: pointer; padding: 15px; background: rgba(255, 255, 255, 0.05); border-radius: 6px;">
+            <input type="checkbox" id="autoCloseCheckbox" ${prefs.autoClose ? 'checked' : ''} onchange="SettingsScreen.updateAutoClose()" style="width: 20px; height: 20px; cursor: pointer;" />
+            <span style="color: #e8e8e8; font-size: 16px;">Automatically close payment received screen</span>
+          </label>
+        </div>
+        
+        <div id="autoCloseDelaySection" style="margin-bottom: 25px; ${prefs.autoClose ? '' : 'opacity: 0.4; pointer-events: none;'}">
+          <label style="color: #95a5a6; font-size: 14px; margin-bottom: 10px; display: block;">Close after (seconds):</label>
+          <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;">
+            ${[3, 5, 10, 15, 20, 30, 60, 90]
+              .map(
+                (seconds) => `
+              <button onclick="SettingsScreen.setAutoCloseDelay(${seconds})" style="
+                padding: 12px;
+                background: ${prefs.autoCloseDelay === seconds ? 'rgba(243, 156, 18, 0.3)' : 'rgba(255, 255, 255, 0.05)'};
+                border: 2px solid ${prefs.autoCloseDelay === seconds ? '#f39c12' : 'rgba(255, 255, 255, 0.1)'};
+                border-radius: 6px;
+                color: ${prefs.autoCloseDelay === seconds ? '#f39c12' : '#e8e8e8'};
+                font-size: 16px;
+                font-weight: 600;
+                cursor: pointer;
+                transition: all 0.3s ease;
+              " onmouseover="if(${prefs.autoCloseDelay !== seconds}) this.style.background='rgba(255, 255, 255, 0.1)'" onmouseout="if(${prefs.autoCloseDelay !== seconds}) this.style.background='rgba(255, 255, 255, 0.05)'">
+                ${seconds}s
+              </button>
+            `
+              )
+              .join('')}
+          </div>
+        </div>
+        
+        <div style="padding: 15px; background: rgba(52, 152, 219, 0.1); border: 1px solid rgba(52, 152, 219, 0.3); border-radius: 6px;">
+          <div style="color: #3498db; font-size: 14px;">
+            <strong>ℹ️ Note:</strong> These settings control how the payment received screen behaves after completing a transaction. When auto-close is enabled, the screen will automatically close and reset the POS for the next transaction.
+          </div>
+        </div>
+      </div>
+    `;
+  },
+
+  updateAutoClose() {
+    const checkbox = document.getElementById('autoCloseCheckbox');
+    const prefs = this.loadPOSPreferences();
+    this.savePOSPreferences(checkbox.checked, prefs.autoCloseDelay);
+    this.renderTabContent();
+  },
+
+  setAutoCloseDelay(seconds) {
+    const prefs = this.loadPOSPreferences();
+    this.savePOSPreferences(prefs.autoClose, seconds);
+    this.renderTabContent();
+  },
+
+  async loadTerminals() {
+    if (!App.currentWinery) return;
+
+    try {
+      const response = await fetch(
+        `/.netlify/functions/get-winery-terminals?winery_id=${App.currentWinery.id}`
+      );
+      const data = await response.json();
+
+      if (data.success) {
+        this.terminals = data.terminals;
+      }
+    } catch (error) {
+      console.error('Failed to load terminals:', error);
+      this.terminals = [];
+    }
   },
 
   async checkTerminalStatus(terminalId, silent = false) {
@@ -203,7 +324,7 @@ const SettingsScreen = {
       }
 
       // Re-render to update status indicator
-      this.renderTerminals();
+      this.renderTabContent();
 
       if (!silent && resultDiv) {
         if (result.success) {
