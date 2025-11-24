@@ -116,11 +116,15 @@ const App = {
 
     if (isMobile) {
       // Mobile: use step-by-step flow
+      console.log('Initializing mobile POS layout');
       if (typeof MobilePOS !== 'undefined') {
         MobilePOS.init();
+      } else {
+        console.error('MobilePOS not loaded');
       }
     } else {
       // Desktop/Tablet: use traditional POS
+      console.log('Initializing desktop POS layout');
       this.createMobileMenuButton();
       POSScreen.init();
     }

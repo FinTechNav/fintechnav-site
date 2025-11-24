@@ -9,29 +9,35 @@ const MobilePOS = {
   TAX_RATE: 0.0775,
 
   init() {
-    this.setupMobileLayout();
-    this.loadProducts();
-    this.loadCustomers();
-    this.renderStep();
-  },
-
-  setupMobileLayout() {
     const isMobile = window.innerWidth <= 768;
     if (!isMobile) return;
 
+    console.log('Initializing Mobile POS');
+    this.setupMobileLayout();
+    this.loadProducts();
+    this.loadCustomers();
+  },
+
+  setupMobileLayout() {
     document.body.classList.add('mobile-layout');
 
-    const mainContent = document.getElementById('mainContent');
-    if (!mainContent) return;
+    const posScreen = document.getElementById('posScreen');
+    if (!posScreen) return;
 
-    mainContent.innerHTML = `
+    // Hide the desktop POS layout
+    posScreen.style.display = 'none';
+
+    // Create mobile layout
+    const mobileContainer = document.createElement('div');
+    mobileContainer.id = 'mobileContainer';
+    mobileContainer.innerHTML = `
       <!-- Mobile Top Bar -->
       <div class="mobile-top-bar">
         <div class="mobile-menu-icon" onclick="MobilePOS.toggleMenu()">
           <div class="hamburger">
-            <span style="display:block;width:24px;height:3px;background:#1a1a2e;margin:4px 0;"></span>
-            <span style="display:block;width:24px;height:3px;background:#1a1a2e;margin:4px 0;"></span>
-            <span style="display:block;width:24px;height:3px;background:#1a1a2e;margin:4px 0;"></span>
+            <span style="display:block;width:24px;height:3px;background:#1a1a2e;margin:4px 0;border-radius:2px;"></span>
+            <span style="display:block;width:24px;height:3px;background:#1a1a2e;margin:4px 0;border-radius:2px;"></span>
+            <span style="display:block;width:24px;height:3px;background:#1a1a2e;margin:4px 0;border-radius:2px;"></span>
           </div>
         </div>
         <div class="mobile-total-display">
@@ -54,6 +60,11 @@ const MobilePOS = {
       <!-- Bottom Navigation -->
       <div class="mobile-bottom-nav" id="mobileBottomNav"></div>
     `;
+
+    const mainContent = document.getElementById('mainContent');
+    if (mainContent) {
+      mainContent.appendChild(mobileContainer);
+    }
   },
 
   async loadProducts() {
@@ -67,7 +78,8 @@ const MobilePOS = {
 
       if (data.success) {
         this.products = data.products;
-        if (this.currentStep === 1) this.renderStep();
+        console.log('Products loaded:', this.products.length);
+        this.renderStep();
       }
     } catch (error) {
       console.error('Failed to load products:', error);
@@ -375,8 +387,3 @@ const MobilePOS = {
     }
   },
 };
-
-// Initialize mobile POS if on mobile device
-if (window.innerWidth <= 768 && App.currentWinery) {
-  MobilePOS.init();
-}
