@@ -123,11 +123,17 @@ const POSScreen = {
 
     if (this.cart.length === 0) {
       cartItems.innerHTML = '<div class="empty-cart">Add items to start order</div>';
-      document.getElementById('payButton').disabled = true;
+      const cardButton = document.getElementById('payCardButton');
+      const cashButton = document.getElementById('payCashButton');
+      if (cardButton) cardButton.disabled = true;
+      if (cashButton) cashButton.disabled = true;
       return;
     }
 
-    document.getElementById('payButton').disabled = false;
+    const cardButton = document.getElementById('payCardButton');
+    const cashButton = document.getElementById('payCashButton');
+    if (cardButton) cardButton.disabled = false;
+    if (cashButton) cashButton.disabled = false;
 
     cartItems.innerHTML = this.cart
       .map(
@@ -163,100 +169,18 @@ const POSScreen = {
   },
 
   setupPayButton() {
-    const payButton = document.getElementById('payButton');
-    if (payButton._hasListener) return;
+    // Payment buttons are now handled directly in HTML with separate click handlers
+    const cardButton = document.getElementById('payCardButton');
+    const cashButton = document.getElementById('payCashButton');
 
-    payButton.addEventListener('click', async () => {
-      await this.showPaymentMethodModal();
-    });
-    payButton._hasListener = true;
-  },
+    if (cardButton && !cardButton._hasListener) {
+      cardButton.addEventListener('click', () => this.processOrder());
+      cardButton._hasListener = true;
+    }
 
-  showPaymentMethodModal() {
-    const { subtotal, tax, total } = this.calculateTotals();
-
-    const modal = document.createElement('div');
-    modal.id = 'paymentMethodModal';
-    modal.style.cssText = `
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0,0,0,0.8);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 10000;
-    `;
-
-    modal.innerHTML = `
-      <div style="background: #2c3e50; padding: 40px; border-radius: 12px; max-width: 500px; width: 90%; color: #e8e8e8;">
-        <h2 style="color: #f39c12; margin-bottom: 30px; text-align: center;">Select Payment Method</h2>
-        
-        <div style="display: grid; gap: 15px; margin-bottom: 30px;">
-          <button class="payment-method-btn" onclick="POSScreen.selectPaymentMethod('card')" style="
-            padding: 20px;
-            background: linear-gradient(135deg, #3498db, #2980b9);
-            border: none;
-            border-radius: 8px;
-            color: white;
-            font-size: 18px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-          " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 20px rgba(52, 152, 219, 0.4)'" onmouseout="this.style.transform=''; this.style.boxShadow=''">
-            💳 Credit/Debit Card
-          </button>
-          
-          <button class="payment-method-btn" onclick="POSScreen.selectPaymentMethod('cash')" style="
-            padding: 20px;
-            background: linear-gradient(135deg, #27ae60, #229954);
-            border: none;
-            border-radius: 8px;
-            color: white;
-            font-size: 18px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-          " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 20px rgba(39, 174, 96, 0.4)'" onmouseout="this.style.transform=''; this.style.boxShadow=''">
-            💵 Cash
-          </button>
-        </div>
-        
-        <div style="text-align: center; margin-top: 20px;">
-          <div style="font-size: 14px; color: #95a5a6; margin-bottom: 10px;">Total Amount</div>
-          <div style="font-size: 32px; color: #f39c12; font-weight: 700;">$${total.toFixed(2)}</div>
-        </div>
-        
-        <button onclick="POSScreen.closePaymentMethodModal()" style="
-          width: 100%;
-          padding: 12px;
-          background: rgba(255, 255, 255, 0.1);
-          border: 1px solid rgba(255, 255, 255, 0.2);
-          border-radius: 8px;
-          color: #e8e8e8;
-          font-size: 14px;
-          cursor: pointer;
-          margin-top: 20px;
-        ">Cancel</button>
-      </div>
-    `;
-
-    document.body.appendChild(modal);
-  },
-
-  closePaymentMethodModal() {
-    const modal = document.getElementById('paymentMethodModal');
-    if (modal) modal.remove();
-  },
-
-  selectPaymentMethod(method) {
-    this.closePaymentMethodModal();
-    if (method === 'card') {
-      this.processOrder();
-    } else if (method === 'cash') {
-      this.processCashPayment();
+    if (cashButton && !cashButton._hasListener) {
+      cashButton.addEventListener('click', () => this.processCashPayment());
+      cashButton._hasListener = true;
     }
   },
 

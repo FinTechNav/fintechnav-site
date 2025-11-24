@@ -379,34 +379,49 @@ body {
     border-top: 2px solid rgba(243, 156, 18, 0.3);
 }
 
-.pay-button {
-    width: 100%;
+.pay-button-card,
+.pay-button-cash {
     padding: 18px;
-    background: linear-gradient(135deg, #f39c12, #e67e22);
     border: none;
     border-radius: 10px;
     color: white;
     font-size: 18px;
     font-weight: 700;
     cursor: pointer;
-    margin-top: 20px;
     transition: all 0.3s ease;
 }
 
-.pay-button:hover {
-    background: linear-gradient(135deg, #e67e22, #d35400);
-    transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(243, 156, 18, 0.4);
+.pay-button-card {
+    background: linear-gradient(135deg, #3498db, #2980b9);
 }
 
-.pay-button:active {
+.pay-button-card:hover {
+    background: linear-gradient(135deg, #2980b9, #21618c);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(52, 152, 219, 0.4);
+}
+
+.pay-button-cash {
+    background: linear-gradient(135deg, #27ae60, #229954);
+}
+
+.pay-button-cash:hover {
+    background: linear-gradient(135deg, #229954, #1e8449);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(39, 174, 96, 0.4);
+}
+
+.pay-button-card:active,
+.pay-button-cash:active {
     transform: translateY(0);
 }
 
-.pay-button:disabled {
+.pay-button-card:disabled,
+.pay-button-cash:disabled {
     background: rgba(255, 255, 255, 0.1);
     cursor: not-allowed;
     transform: none;
+    opacity: 0.5;
 }
 
 .empty-cart {

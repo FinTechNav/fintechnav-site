@@ -125,7 +125,31 @@
                             <span id="total">$0.00</span>
                         </div>
                     </div>
-                    <button class="pay-button" id="payButton" disabled>Pay</button>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px;">
+                        <button class="pay-button-card" id="payCardButton" disabled style="
+                            padding: 18px;
+                            background: linear-gradient(135deg, #3498db, #2980b9);
+                            border: none;
+                            border-radius: 10px;
+                            color: white;
+                            font-size: 18px;
+                            font-weight: 700;
+                            cursor: pointer;
+                            transition: all 0.3s ease;
+                        ">💳 Card</button>
+                        
+                        <button class="pay-button-cash" id="payCashButton" disabled style="
+                            padding: 18px;
+                            background: linear-gradient(135deg, #27ae60, #229954);
+                            border: none;
+                            border-radius: 10px;
+                            color: white;
+                            font-size: 18px;
+                            font-weight: 700;
+                            cursor: pointer;
+                            transition: all 0.3s ease;
+                        ">💵 Cash</button>
+                    </div>
                 </div>
             </div>
 
