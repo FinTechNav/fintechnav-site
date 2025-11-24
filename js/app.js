@@ -15,12 +15,17 @@ const App = {
   initMobileHandlers() {
     // Close sidebar when navigating on mobile
     window.addEventListener('resize', () => {
+      const mobileBtn = document.getElementById('mobileMenuBtn');
+
       if (window.innerWidth > 430) {
+        // Desktop mode - remove mobile button and overlay
+        if (mobileBtn) mobileBtn.remove();
         const overlay = document.querySelector('.sidebar-overlay');
-        if (overlay) {
-          overlay.remove();
-        }
+        if (overlay) overlay.remove();
         document.body.classList.remove('sidebar-open');
+      } else if (window.innerWidth <= 430 && this.currentUser && !mobileBtn) {
+        // Mobile mode and logged in - create button if it doesn't exist
+        this.createMobileMenuButton();
       }
     });
   },
@@ -105,7 +110,32 @@ const App = {
     document.getElementById('appContainer').style.display = 'flex';
 
     this.updateWineryDisplay();
+    this.createMobileMenuButton();
     POSScreen.init();
+  },
+
+  createMobileMenuButton() {
+    // Only create on mobile
+    if (window.innerWidth > 430) return;
+
+    // Remove existing button if any
+    const existing = document.getElementById('mobileMenuBtn');
+    if (existing) existing.remove();
+
+    // Create floating menu button
+    const btn = document.createElement('button');
+    btn.id = 'mobileMenuBtn';
+    btn.className = 'mobile-menu-btn';
+    btn.innerHTML = `
+      <div class="hamburger">
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
+    `;
+    btn.onclick = () => this.toggleSidebar();
+
+    document.body.appendChild(btn);
   },
 
   updateWineryDisplay() {
@@ -128,6 +158,17 @@ const App = {
     document.getElementById('appContainer').style.display = 'none';
     document.getElementById('loginScreen').style.display = 'flex';
     document.getElementById('userSection').style.display = 'none';
+
+    // Remove mobile menu button
+    const mobileBtn = document.getElementById('mobileMenuBtn');
+    if (mobileBtn) mobileBtn.remove();
+
+    // Close sidebar and remove overlay
+    const sidebar = document.getElementById('sidebar');
+    if (sidebar) sidebar.classList.remove('expanded');
+    const overlay = document.querySelector('.sidebar-overlay');
+    if (overlay) overlay.remove();
+    document.body.classList.remove('sidebar-open');
 
     POSScreen.reset();
   },

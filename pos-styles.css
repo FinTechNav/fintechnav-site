@@ -13,6 +13,21 @@ body {
     -webkit-tap-highlight-color: transparent;
 }
 
+.login-screen {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 20px;
+    overflow-y: auto;
+    width: 100vw;
+}
+
+/* Hide sidebar when on login screen */
+.login-screen ~ .app-container .sidebar {
+    display: none;
+}
+
 .app-container {
     display: flex;
     height: 100vh;
@@ -636,11 +651,14 @@ body {
     justify-content: center;
     min-height: 100vh;
     padding: 20px;
+    overflow-y: auto;
 }
 
 .login-container {
     max-width: 800px;
     width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
 }
 
 .login-header {
@@ -691,10 +709,10 @@ body {
     touch-action: manipulation;
 }
 
-.selection-card:hover {
+.selection-card:active {
     background: rgba(243, 156, 18, 0.15);
     border-color: #f39c12;
-    transform: translateY(-2px);
+    transform: scale(0.98);
 }
 
 .selection-card.selected {
@@ -904,16 +922,99 @@ body {
     .cart-items {
         min-height: 150px;
     }
+    
+    /* Login Screen Landscape */
+    .login-screen {
+        padding: 10px;
+    }
+    
+    .login-container {
+        max-height: 85vh;
+    }
+    
+    .login-header {
+        margin-bottom: 20px;
+    }
+    
+    .login-header h1 {
+        font-size: 28px;
+    }
+    
+    .login-header p {
+        font-size: 14px;
+    }
+    
+    .login-section {
+        padding: 20px;
+        margin-bottom: 15px;
+    }
+    
+    .login-section h3 {
+        font-size: 16px;
+        margin-bottom: 15px;
+    }
+    
+    .selection-grid {
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        gap: 12px;
+    }
+    
+    .selection-card {
+        padding: 20px 15px;
+        min-height: 110px;
+    }
+    
+    .selection-icon {
+        font-size: 36px;
+        margin-bottom: 10px;
+    }
+    
+    .selection-name {
+        font-size: 14px;
+    }
 }
 
 /* Phones Portrait (iPhone 13, Note 20) */
 @media (max-width: 430px) {
+    /* Floating menu button */
+    .mobile-menu-btn {
+        position: fixed;
+        top: 15px;
+        left: 15px;
+        width: 50px;
+        height: 50px;
+        background: rgba(243, 156, 18, 0.9);
+        border: none;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 2001;
+        cursor: pointer;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        touch-action: manipulation;
+    }
+    
+    .mobile-menu-btn .hamburger {
+        width: 24px;
+        height: 20px;
+    }
+    
+    .mobile-menu-btn .hamburger span {
+        background: white;
+    }
+    
     .sidebar {
         position: fixed;
-        left: -70px;
+        left: -260px;
         height: 100vh;
         z-index: 2000;
         transition: left 0.3s ease;
+        width: 260px;
+    }
+    
+    .sidebar .menu-toggle {
+        display: none;
     }
     
     .sidebar.expanded {
@@ -1055,6 +1156,20 @@ body {
     }
     
     /* Login Screen Mobile */
+    .login-screen {
+        padding: 15px 10px;
+        align-items: flex-start;
+    }
+    
+    .login-container {
+        max-height: 95vh;
+        padding-bottom: 20px;
+    }
+    
+    .login-header {
+        margin-bottom: 25px;
+    }
+    
     .login-header h1 {
         font-size: 32px;
     }
@@ -1073,22 +1188,26 @@ body {
     }
     
     .selection-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, 1fr);
         gap: 12px;
     }
     
     .selection-card {
-        padding: 25px 15px;
-        min-height: 120px;
+        padding: 20px 10px;
+        min-height: 100px;
     }
     
     .selection-icon {
-        font-size: 40px;
-        margin-bottom: 12px;
+        font-size: 36px;
+        margin-bottom: 8px;
     }
     
     .selection-name {
-        font-size: 15px;
+        font-size: 13px;
+    }
+    
+    .selection-role {
+        font-size: 10px;
     }
     
     /* Settings Screen Mobile */
