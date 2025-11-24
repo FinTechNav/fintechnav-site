@@ -10,12 +10,17 @@ body {
     color: #e8e8e8;
     height: 100vh;
     overflow: hidden;
+    -webkit-tap-highlight-color: transparent;
 }
 
 .app-container {
     display: flex;
     height: 100vh;
 }
+
+/* ===================================
+   SIDEBAR - Responsive
+   =================================== */
 
 .sidebar {
     width: 70px;
@@ -24,8 +29,10 @@ body {
     border-right: 1px solid rgba(255, 255, 255, 0.1);
     display: flex;
     flex-direction: column;
-    transition: width 0.3s ease;
+    transition: width 0.3s ease, transform 0.3s ease;
     overflow: hidden;
+    position: relative;
+    z-index: 1000;
 }
 
 .sidebar.expanded {
@@ -39,6 +46,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
+    min-height: 64px;
 }
 
 .menu-toggle:hover {
@@ -65,6 +73,7 @@ body {
 .menu-items {
     flex: 1;
     padding: 10px 0;
+    overflow-y: auto;
 }
 
 .menu-item {
@@ -75,6 +84,7 @@ body {
     transition: all 0.2s ease;
     white-space: nowrap;
     color: #95a5a6;
+    min-height: 54px;
 }
 
 .menu-item:hover {
@@ -112,6 +122,10 @@ body {
     border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
+/* ===================================
+   MAIN CONTENT - Responsive
+   =================================== */
+
 .main-content {
     flex: 1;
     display: flex;
@@ -130,6 +144,7 @@ body {
     display: flex;
     flex-direction: column;
     gap: 20px;
+    min-width: 0;
 }
 
 .header {
@@ -150,6 +165,10 @@ body {
     color: #95a5a6;
     font-size: 14px;
 }
+
+/* ===================================
+   PRODUCTS GRID - Responsive
+   =================================== */
 
 .products-grid {
     flex: 1;
@@ -184,6 +203,7 @@ body {
     display: flex;
     flex-direction: column;
     gap: 10px;
+    min-height: 180px;
 }
 
 .product-card:hover {
@@ -229,6 +249,10 @@ body {
     margin-top: auto;
 }
 
+/* ===================================
+   CART PANEL - Responsive
+   =================================== */
+
 .right-panel {
     width: 400px;
     background: rgba(255, 255, 255, 0.05);
@@ -238,6 +262,7 @@ body {
     display: flex;
     flex-direction: column;
     padding: 20px;
+    max-height: 100%;
 }
 
 .cart-header {
@@ -263,6 +288,7 @@ body {
     flex: 1;
     overflow-y: auto;
     margin-bottom: 20px;
+    min-height: 200px;
 }
 
 .cart-items::-webkit-scrollbar {
@@ -292,6 +318,7 @@ body {
 
 .cart-item-info {
     flex: 1;
+    min-width: 0;
 }
 
 .cart-item-name {
@@ -313,8 +340,8 @@ body {
 }
 
 .qty-btn {
-    width: 28px;
-    height: 28px;
+    width: 32px;
+    height: 32px;
     border-radius: 6px;
     border: 1px solid rgba(243, 156, 18, 0.5);
     background: rgba(243, 156, 18, 0.1);
@@ -325,6 +352,7 @@ body {
     justify-content: center;
     font-size: 16px;
     transition: all 0.2s ease;
+    flex-shrink: 0;
 }
 
 .qty-btn:hover {
@@ -379,6 +407,10 @@ body {
     border-top: 2px solid rgba(243, 156, 18, 0.3);
 }
 
+/* ===================================
+   PAYMENT BUTTONS - Touch Optimized
+   =================================== */
+
 .pay-button-card,
 .pay-button-cash {
     padding: 18px;
@@ -389,6 +421,8 @@ body {
     font-weight: 700;
     cursor: pointer;
     transition: all 0.3s ease;
+    min-height: 56px;
+    touch-action: manipulation;
 }
 
 .pay-button-card {
@@ -430,6 +464,10 @@ body {
     padding: 40px;
     font-size: 16px;
 }
+
+/* ===================================
+   SCREENS - Settings, Customers, etc.
+   =================================== */
 
 .placeholder-screen {
     display: flex;
@@ -509,7 +547,8 @@ body {
     margin-bottom: 8px;
 }
 
-.form-group input {
+.form-group input,
+.form-group select {
     width: 100%;
     padding: 12px;
     background: rgba(255, 255, 255, 0.05);
@@ -519,7 +558,8 @@ body {
     font-size: 14px;
 }
 
-.form-group input:focus {
+.form-group input:focus,
+.form-group select:focus {
     outline: none;
     border-color: #f39c12;
     background: rgba(255, 255, 255, 0.08);
@@ -535,6 +575,8 @@ body {
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
+    min-height: 44px;
+    touch-action: manipulation;
 }
 
 .btn:hover {
@@ -584,16 +626,10 @@ body {
     word-wrap: break-word;
 }
 
-@media (max-width: 1024px) {
-    .container {
-        flex-direction: column;
-    }
-    
-    .right-panel {
-        width: 100%;
-        max-height: 400px;
-    }
-}
+/* ===================================
+   LOGIN SCREEN - Responsive
+   =================================== */
+
 .login-screen {
     display: flex;
     align-items: center;
@@ -651,6 +687,8 @@ body {
     cursor: pointer;
     transition: all 0.3s ease;
     text-align: center;
+    min-height: 140px;
+    touch-action: manipulation;
 }
 
 .selection-card:hover {
@@ -682,52 +720,508 @@ body {
     text-transform: uppercase;
     letter-spacing: 1px;
 }
-/* Processing Overlay for Terminal Payments */
+
+/* ===================================
+   PROCESSING OVERLAY
+   =================================== */
+
 .processing-overlay {
-  display: none;
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.7);
-  justify-content: center;
-  align-items: center;
-  z-index: 9999;
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
 }
 
 .processing-overlay.active {
-  display: flex;
+    display: flex;
 }
 
 .processing-content {
-  background: white;
-  padding: 40px;
-  border-radius: 8px;
-  text-align: center;
-  max-width: 400px;
+    background: white;
+    padding: 40px;
+    border-radius: 8px;
+    text-align: center;
+    max-width: 400px;
+    width: 90%;
 }
 
 .processing-content h3 {
-  color: #333;
-  margin-bottom: 10px;
+    color: #333;
+    margin-bottom: 10px;
 }
 
 .spinner {
-  width: 50px;
-  height: 50px;
-  border: 4px solid #f3f3f3;
-  border-top: 4px solid #8b7355;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin: 0 auto 20px;
+    width: 50px;
+    height: 50px;
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #8b7355;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 20px;
 }
 
 @keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+/* ===================================
+   RESPONSIVE BREAKPOINTS
+   =================================== */
+
+/* Tablet Landscape (iPad Pro 12.9" landscape, Galaxy Tab S9 FE landscape) */
+@media (max-width: 1366px) and (min-width: 1025px) {
+    .right-panel {
+        width: 350px;
+    }
+    
+    .products-grid {
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    }
+}
+
+/* Tablet Portrait and Small Laptops (iPad Pro 12.9" portrait, Galaxy Tab S9 FE portrait) */
+@media (max-width: 1024px) {
+    .container {
+        flex-direction: column;
+        gap: 15px;
+        padding: 15px;
+    }
+    
+    .left-panel {
+        flex: 1;
+        min-height: 50%;
+    }
+    
+    .right-panel {
+        width: 100%;
+        max-height: 45vh;
+        min-height: 400px;
+    }
+    
+    .header h1 {
+        font-size: 24px;
+    }
+    
+    .products-grid {
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+        gap: 12px;
+    }
+    
+    .product-card {
+        padding: 15px;
+        min-height: 160px;
+    }
+    
+    .wine-icon {
+        width: 50px;
+        height: 50px;
+        font-size: 24px;
+    }
+    
+    .product-name {
+        font-size: 14px;
+    }
+    
+    .product-price {
+        font-size: 18px;
+    }
+    
+    .cart-header h2 {
+        font-size: 20px;
+    }
+    
+    .settings-screen {
+        padding: 15px;
+    }
+    
+    .settings-section {
+        padding: 20px;
+    }
+    
+    .login-header h1 {
+        font-size: 36px;
+    }
+    
+    .selection-grid {
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    }
+}
+
+/* Large Phones Landscape (iPhone 13 landscape, Note 20 landscape) */
+@media (max-width: 915px) and (orientation: landscape) {
+    .sidebar {
+        width: 60px;
+    }
+    
+    .sidebar.expanded {
+        width: 180px;
+    }
+    
+    .container {
+        padding: 10px;
+        gap: 10px;
+    }
+    
+    .header {
+        padding: 15px;
+    }
+    
+    .header h1 {
+        font-size: 20px;
+    }
+    
+    .header p {
+        font-size: 12px;
+    }
+    
+    .products-grid {
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        gap: 10px;
+        padding: 5px;
+    }
+    
+    .product-card {
+        padding: 12px;
+        min-height: 140px;
+    }
+    
+    .right-panel {
+        padding: 15px;
+        min-height: 350px;
+    }
+    
+    .cart-items {
+        min-height: 150px;
+    }
+}
+
+/* Phones Portrait (iPhone 13, Note 20) */
+@media (max-width: 430px) {
+    .sidebar {
+        position: fixed;
+        left: -70px;
+        height: 100vh;
+        z-index: 2000;
+        transition: left 0.3s ease;
+    }
+    
+    .sidebar.expanded {
+        left: 0;
+        width: 260px;
+        box-shadow: 4px 0 20px rgba(0, 0, 0, 0.5);
+    }
+    
+    .container {
+        flex-direction: column;
+        padding: 10px;
+        gap: 10px;
+    }
+    
+    .left-panel {
+        min-height: 0;
+        flex: 0 0 auto;
+    }
+    
+    .header {
+        padding: 15px;
+        border-radius: 8px;
+    }
+    
+    .header h1 {
+        font-size: 20px;
+    }
+    
+    .header p {
+        font-size: 12px;
+    }
+    
+    .products-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+        max-height: 40vh;
+        padding: 5px;
+    }
+    
+    .product-card {
+        padding: 12px;
+        min-height: 150px;
+    }
+    
+    .wine-icon {
+        width: 45px;
+        height: 45px;
+        font-size: 22px;
+    }
+    
+    .product-name {
+        font-size: 13px;
+    }
+    
+    .product-vintage {
+        font-size: 11px;
+    }
+    
+    .product-price {
+        font-size: 16px;
+    }
+    
+    .right-panel {
+        width: 100%;
+        max-height: none;
+        flex: 1;
+        padding: 15px;
+        border-radius: 8px;
+    }
+    
+    .cart-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+        margin-bottom: 15px;
+        padding-bottom: 12px;
+    }
+    
+    .cart-header h2 {
+        font-size: 18px;
+    }
+    
+    .customer-name {
+        font-size: 12px;
+    }
+    
+    .cart-items {
+        min-height: 200px;
+        margin-bottom: 15px;
+    }
+    
+    .cart-item {
+        flex-wrap: wrap;
+        padding: 12px;
+    }
+    
+    .cart-item-info {
+        flex: 1 1 100%;
+        margin-bottom: 10px;
+    }
+    
+    .cart-item-qty {
+        margin: 0;
+        flex: 0 0 auto;
+    }
+    
+    .qty-btn {
+        width: 36px;
+        height: 36px;
+        font-size: 18px;
+    }
+    
+    .cart-item-price {
+        flex: 0 0 auto;
+        min-width: 70px;
+        text-align: right;
+    }
+    
+    .cart-summary {
+        padding-top: 15px;
+    }
+    
+    .summary-row {
+        font-size: 14px;
+        margin-bottom: 10px;
+    }
+    
+    .summary-total {
+        font-size: 20px;
+        margin-top: 12px;
+        padding-top: 12px;
+    }
+    
+    .pay-button-card,
+    .pay-button-cash {
+        padding: 16px;
+        font-size: 16px;
+        min-height: 52px;
+    }
+    
+    /* Login Screen Mobile */
+    .login-header h1 {
+        font-size: 32px;
+    }
+    
+    .login-header p {
+        font-size: 16px;
+    }
+    
+    .login-section {
+        padding: 20px;
+    }
+    
+    .login-section h3 {
+        font-size: 18px;
+        margin-bottom: 15px;
+    }
+    
+    .selection-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+    
+    .selection-card {
+        padding: 25px 15px;
+        min-height: 120px;
+    }
+    
+    .selection-icon {
+        font-size: 40px;
+        margin-bottom: 12px;
+    }
+    
+    .selection-name {
+        font-size: 15px;
+    }
+    
+    /* Settings Screen Mobile */
+    .settings-screen {
+        padding: 10px;
+    }
+    
+    .settings-header {
+        margin-bottom: 20px;
+    }
+    
+    .settings-header h2 {
+        font-size: 24px;
+    }
+    
+    .settings-header p {
+        font-size: 14px;
+    }
+    
+    .settings-section {
+        padding: 15px;
+        margin-bottom: 15px;
+        border-radius: 8px;
+    }
+    
+    .settings-section h3 {
+        font-size: 18px;
+        margin-bottom: 15px;
+    }
+    
+    .form-group input,
+    .form-group select {
+        font-size: 16px;
+        padding: 14px;
+    }
+    
+    /* Processing Overlay Mobile */
+    .processing-content {
+        padding: 30px 20px;
+        width: 85%;
+    }
+    
+    .processing-content h3 {
+        font-size: 18px;
+    }
+    
+    /* Placeholder Screen Mobile */
+    .placeholder-screen {
+        padding: 20px;
+    }
+    
+    .placeholder-content {
+        padding: 40px 20px;
+    }
+    
+    .placeholder-icon {
+        font-size: 60px;
+    }
+    
+    .placeholder-content h2 {
+        font-size: 24px;
+    }
+    
+    .placeholder-content p {
+        font-size: 14px;
+    }
+}
+
+/* Very Small Phones (iPhone SE, etc.) */
+@media (max-width: 375px) {
+    .header h1 {
+        font-size: 18px;
+    }
+    
+    .products-grid {
+        grid-template-columns: 1fr;
+        max-height: 35vh;
+    }
+    
+    .product-card {
+        padding: 15px;
+    }
+    
+    .cart-header h2 {
+        font-size: 16px;
+    }
+    
+    .summary-total {
+        font-size: 18px;
+    }
+    
+    .pay-button-card,
+    .pay-button-cash {
+        font-size: 15px;
+        padding: 14px;
+    }
+}
+
+/* Sidebar Overlay for Mobile */
+@media (max-width: 430px) {
+    .sidebar-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 1999;
+    }
+    
+    .sidebar-overlay.active {
+        display: block;
+    }
+    
+    body.sidebar-open {
+        overflow: hidden;
+    }
+}
+
+/* Touch Target Improvements */
+@media (hover: none) and (pointer: coarse) {
+    .menu-item,
+    .product-card,
+    .selection-card,
+    .btn,
+    .pay-button-card,
+    .pay-button-cash {
+        min-height: 48px;
+    }
+    
+    .qty-btn {
+        min-width: 40px;
+        min-height: 40px;
+    }
 }

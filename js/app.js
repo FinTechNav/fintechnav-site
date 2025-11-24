@@ -9,6 +9,20 @@ const App = {
   async init() {
     await this.loadWineries();
     this.registerServiceWorker();
+    this.initMobileHandlers();
+  },
+
+  initMobileHandlers() {
+    // Close sidebar when navigating on mobile
+    window.addEventListener('resize', () => {
+      if (window.innerWidth > 430) {
+        const overlay = document.querySelector('.sidebar-overlay');
+        if (overlay) {
+          overlay.remove();
+        }
+        document.body.classList.remove('sidebar-open');
+      }
+    });
   },
 
   async loadWineries() {
@@ -120,7 +134,30 @@ const App = {
 
   toggleSidebar() {
     const sidebar = document.getElementById('sidebar');
+    const isMobile = window.innerWidth <= 430;
+
     sidebar.classList.toggle('expanded');
+
+    if (isMobile) {
+      // Create or toggle overlay
+      let overlay = document.querySelector('.sidebar-overlay');
+
+      if (sidebar.classList.contains('expanded')) {
+        if (!overlay) {
+          overlay = document.createElement('div');
+          overlay.className = 'sidebar-overlay';
+          overlay.addEventListener('click', () => this.toggleSidebar());
+          document.body.appendChild(overlay);
+        }
+        overlay.classList.add('active');
+        document.body.classList.add('sidebar-open');
+      } else {
+        if (overlay) {
+          overlay.classList.remove('active');
+        }
+        document.body.classList.remove('sidebar-open');
+      }
+    }
   },
 
   async navigateTo(screen) {
@@ -143,6 +180,14 @@ const App = {
     }
 
     event.currentTarget.classList.add('active');
+
+    // Close sidebar on mobile after navigation
+    if (window.innerWidth <= 430) {
+      const sidebar = document.getElementById('sidebar');
+      if (sidebar.classList.contains('expanded')) {
+        this.toggleSidebar();
+      }
+    }
 
     if (screen === 'customers') {
       await CustomersScreen.load();
