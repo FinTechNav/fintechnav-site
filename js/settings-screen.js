@@ -3,22 +3,24 @@ const SettingsScreen = {
   terminals: [],
   terminalStatuses: {},
   lastChecked: {},
-  currentTab: 'credit-card',
+  currentTab: 'general',
+  paymentTypes: {
+    cash: true,
+    check: false,
+  },
 
   async init() {
     await this.loadTerminals();
+    await this.loadPaymentTypes();
     this.loadPOSPreferences();
-    this.renderTabs();
-    this.renderTabContent();
+    this.render();
     // Auto-check terminal status on screen load
     await this.checkAllTerminalStatuses();
   },
 
   loadPOSPreferences() {
-    // Load from localStorage
     const autoClose = localStorage.getItem('posAutoClosePayment') === 'true';
     const autoCloseDelay = parseInt(localStorage.getItem('posAutoCloseDelay') || '5', 10);
-
     return { autoClose, autoCloseDelay };
   },
 
@@ -27,82 +29,213 @@ const SettingsScreen = {
     localStorage.setItem('posAutoCloseDelay', autoCloseDelay.toString());
   },
 
-  switchTab(tab) {
-    this.currentTab = tab;
-    this.renderTabs();
-    this.renderTabContent();
+  async loadPaymentTypes() {
+    // Load from localStorage or database
+    const saved = localStorage.getItem(`paymentTypes_${App.currentWinery?.id}`);
+    if (saved) {
+      this.paymentTypes = JSON.parse(saved);
+    }
   },
 
-  renderTabs() {
+  savePaymentTypes() {
+    localStorage.setItem(
+      `paymentTypes_${App.currentWinery?.id}`,
+      JSON.stringify(this.paymentTypes)
+    );
+  },
+
+  switchTab(tab) {
+    this.currentTab = tab;
+    this.render();
+  },
+
+  render() {
     const container = document.getElementById('terminalSettings');
     if (!container) return;
 
-    const tabsHtml = `
-      <div style="display: flex; gap: 10px; margin-bottom: 30px; border-bottom: 2px solid rgba(255, 255, 255, 0.1);">
-        <button onclick="SettingsScreen.switchTab('credit-card')" style="
-          padding: 15px 30px;
-          background: ${this.currentTab === 'credit-card' ? 'rgba(243, 156, 18, 0.2)' : 'transparent'};
-          border: none;
-          border-bottom: 3px solid ${this.currentTab === 'credit-card' ? '#f39c12' : 'transparent'};
-          color: ${this.currentTab === 'credit-card' ? '#f39c12' : '#95a5a6'};
-          font-size: 16px;
-          font-weight: 600;
-          cursor: pointer;
-          transition: all 0.3s ease;
-        ">💳 Credit Card</button>
+    container.innerHTML = `
+      <div style="display: flex; gap: 0; height: 100%;">
+        <!-- Left Sidebar -->
+        <div style="width: 220px; background: rgba(0, 0, 0, 0.3); border-right: 1px solid rgba(255, 255, 255, 0.1); padding: 20px 0;">
+          ${this.renderSidebarMenu()}
+        </div>
         
-        <button onclick="SettingsScreen.switchTab('pos-preferences')" style="
-          padding: 15px 30px;
-          background: ${this.currentTab === 'pos-preferences' ? 'rgba(243, 156, 18, 0.2)' : 'transparent'};
-          border: none;
-          border-bottom: 3px solid ${this.currentTab === 'pos-preferences' ? '#f39c12' : 'transparent'};
-          color: ${this.currentTab === 'pos-preferences' ? '#f39c12' : '#95a5a6'};
-          font-size: 16px;
-          font-weight: 600;
-          cursor: pointer;
-          transition: all 0.3s ease;
-        ">⚙️ POS Preferences</button>
+        <!-- Right Content -->
+        <div style="flex: 1; padding: 30px; overflow-y: auto;">
+          ${this.renderTabContent()}
+        </div>
       </div>
-      <div id="tabContent"></div>
     `;
+  },
 
-    container.innerHTML = tabsHtml;
+  renderSidebarMenu() {
+    const menuItems = [
+      { id: 'general', icon: '🏢', label: 'General' },
+      { id: 'users', icon: '👥', label: 'Users' },
+      { id: 'payment-types', icon: '💳', label: 'Payment Types' },
+      { id: 'pos-preferences', icon: '⚙️', label: 'POS Preferences' },
+    ];
+
+    return menuItems
+      .map(
+        (item) => `
+      <div onclick="SettingsScreen.switchTab('${item.id}')" style="
+        padding: 15px 20px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        color: ${this.currentTab === item.id ? '#f39c12' : '#95a5a6'};
+        background: ${this.currentTab === item.id ? 'rgba(243, 156, 18, 0.15)' : 'transparent'};
+        border-left: 3px solid ${this.currentTab === item.id ? '#f39c12' : 'transparent'};
+        transition: all 0.2s ease;
+      " onmouseover="if('${this.currentTab}' !== '${item.id}') this.style.background='rgba(255, 255, 255, 0.05)'" onmouseout="if('${this.currentTab}' !== '${item.id}') this.style.background='transparent'">
+        <span style="font-size: 20px;">${item.icon}</span>
+        <span style="font-size: 15px; font-weight: 500;">${item.label}</span>
+      </div>
+    `
+      )
+      .join('');
   },
 
   renderTabContent() {
-    const contentDiv = document.getElementById('tabContent');
-    if (!contentDiv) return;
-
-    if (this.currentTab === 'credit-card') {
-      this.renderCreditCardTab(contentDiv);
-    } else if (this.currentTab === 'pos-preferences') {
-      this.renderPOSPreferencesTab(contentDiv);
+    switch (this.currentTab) {
+      case 'general':
+        return this.renderGeneralTab();
+      case 'users':
+        return this.renderUsersTab();
+      case 'payment-types':
+        return this.renderPaymentTypesTab();
+      case 'pos-preferences':
+        return this.renderPOSPreferencesTab();
+      default:
+        return '<p>Select a category</p>';
     }
   },
 
-  renderCreditCardTab(container) {
-    if (this.terminals.length === 0) {
-      container.innerHTML =
-        '<p style="color: #95a5a6;">No payment terminals configured for this winery.</p>';
-      return;
-    }
+  renderGeneralTab() {
+    if (!App.currentWinery) return '<p style="color: #95a5a6;">No winery selected</p>';
 
+    return `
+      <h2 style="color: #f39c12; margin-bottom: 10px; font-size: 28px;">General Settings</h2>
+      <p style="color: #95a5a6; margin-bottom: 30px;">Winery information and configuration</p>
+      
+      <div style="background: rgba(255, 255, 255, 0.03); padding: 25px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.1);">
+        <h3 style="color: #e8e8e8; margin-bottom: 20px; font-size: 18px;">Winery Information</h3>
+        
+        <div style="display: grid; gap: 20px;">
+          <div>
+            <label style="display: block; color: #95a5a6; font-size: 12px; margin-bottom: 8px;">Winery Name</label>
+            <div style="color: #e8e8e8; font-size: 16px;">${App.currentWinery.name || 'N/A'}</div>
+          </div>
+          
+          <div>
+            <label style="display: block; color: #95a5a6; font-size: 12px; margin-bottom: 8px;">Location</label>
+            <div style="color: #e8e8e8; font-size: 16px;">${App.currentWinery.location || 'N/A'}</div>
+          </div>
+          
+          <div>
+            <label style="display: block; color: #95a5a6; font-size: 12px; margin-bottom: 8px;">Current User</label>
+            <div style="color: #e8e8e8; font-size: 16px;">${App.currentUser?.name || App.currentUser?.email || 'N/A'}</div>
+          </div>
+          
+          <div>
+            <label style="display: block; color: #95a5a6; font-size: 12px; margin-bottom: 8px;">User Role</label>
+            <div style="color: #e8e8e8; font-size: 16px; text-transform: capitalize;">${App.currentUser?.role || 'N/A'}</div>
+          </div>
+        </div>
+      </div>
+    `;
+  },
+
+  renderUsersTab() {
+    // This would be populated from a database query
+    return `
+      <h2 style="color: #f39c12; margin-bottom: 10px; font-size: 28px;">Users</h2>
+      <p style="color: #95a5a6; margin-bottom: 30px;">Manage user accounts for this winery</p>
+      
+      <div style="background: rgba(255, 255, 255, 0.03); padding: 25px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.1);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+          <h3 style="color: #e8e8e8; font-size: 18px;">User Accounts</h3>
+          <button class="btn" style="padding: 10px 20px; font-size: 14px;">+ Add User</button>
+        </div>
+        
+        <div style="color: #95a5a6; text-align: center; padding: 40px;">
+          User management coming soon...
+        </div>
+      </div>
+    `;
+  },
+
+  renderPaymentTypesTab() {
     const cardPresent = this.terminals.find((t) => t.terminal_type === 'card_present');
     const cardNotPresent = this.terminals.find((t) => t.terminal_type === 'card_not_present');
+    const hasCreditCard = cardPresent || cardNotPresent;
 
-    let html = '';
+    return `
+      <h2 style="color: #f39c12; margin-bottom: 10px; font-size: 28px;">Payment Types</h2>
+      <p style="color: #95a5a6; margin-bottom: 30px;">Configure accepted payment methods</p>
+      
+      <!-- Payment Method Selection -->
+      <div style="background: rgba(255, 255, 255, 0.03); padding: 25px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.1); margin-bottom: 20px;">
+        <h3 style="color: #e8e8e8; margin-bottom: 20px; font-size: 18px;">Accepted Payment Methods</h3>
+        
+        <div style="display: grid; gap: 15px;">
+          <label style="display: flex; align-items: center; gap: 12px; padding: 15px; background: rgba(255, 255, 255, 0.05); border-radius: 6px; cursor: pointer;">
+            <input type="checkbox" ${hasCreditCard ? 'checked disabled' : 'disabled'} style="width: 20px; height: 20px; cursor: ${hasCreditCard ? 'not-allowed' : 'not-allowed'};" />
+            <div style="flex: 1;">
+              <div style="color: #e8e8e8; font-size: 16px; font-weight: 600;">💳 Credit/Debit Card</div>
+              <div style="color: #95a5a6; font-size: 12px; margin-top: 4px;">
+                ${hasCreditCard ? 'Configured and enabled' : 'Configure terminals below to enable'}
+              </div>
+            </div>
+          </label>
+          
+          <label style="display: flex; align-items: center; gap: 12px; padding: 15px; background: rgba(255, 255, 255, 0.05); border-radius: 6px; cursor: pointer;">
+            <input type="checkbox" ${this.paymentTypes.cash ? 'checked' : ''} onchange="SettingsScreen.togglePaymentType('cash')" style="width: 20px; height: 20px; cursor: pointer;" />
+            <div style="flex: 1;">
+              <div style="color: #e8e8e8; font-size: 16px; font-weight: 600;">💵 Cash</div>
+              <div style="color: #95a5a6; font-size: 12px; margin-top: 4px;">Accept cash payments at POS</div>
+            </div>
+          </label>
+          
+          <label style="display: flex; align-items: center; gap: 12px; padding: 15px; background: rgba(255, 255, 255, 0.05); border-radius: 6px; cursor: pointer;">
+            <input type="checkbox" ${this.paymentTypes.check ? 'checked' : ''} onchange="SettingsScreen.togglePaymentType('check')" style="width: 20px; height: 20px; cursor: pointer;" />
+            <div style="flex: 1;">
+              <div style="color: #e8e8e8; font-size: 16px; font-weight: 600;">🏦 Check</div>
+              <div style="color: #95a5a6; font-size: 12px; margin-top: 4px;">Accept check payments at POS</div>
+            </div>
+          </label>
+        </div>
+      </div>
+      
+      ${hasCreditCard ? this.renderCreditCardConfig(cardPresent, cardNotPresent) : ''}
+    `;
+  },
+
+  togglePaymentType(type) {
+    this.paymentTypes[type] = !this.paymentTypes[type];
+    this.savePaymentTypes();
+    this.render();
+  },
+
+  renderCreditCardConfig(cardPresent, cardNotPresent) {
+    let html = `
+      <div style="background: rgba(255, 255, 255, 0.03); padding: 25px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.1); margin-bottom: 20px;">
+        <h3 style="color: #e8e8e8; margin-bottom: 20px; font-size: 18px;">Credit Card Configuration</h3>
+    `;
 
     // Card Not Present Section
     if (cardNotPresent) {
       html += `
         <div style="margin-bottom: 30px; padding: 20px; background: rgba(255, 255, 255, 0.03); border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.1);">
           <h4 style="color: #f39c12; margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
-            <span>💳</span> Card Not Present (Online/E-Commerce)
+            <span>🌐</span> Card Not Present (Online/E-Commerce)
           </h4>
-          <div style="display: grid; gap: 10px;">
+          <div style="display: grid; gap: 15px;">
             <div>
               <span style="color: #95a5a6; font-size: 12px;">Merchant ID:</span>
-              <div style="color: #e8e8e8; font-family: monospace; margin-top: 4px;">${cardNotPresent.ftd_merchant_id || 'Not configured'}</div>
+              <div style="color: #e8e8e8; font-family: monospace; margin-top: 4px; font-size: 14px;">${cardNotPresent.ftd_merchant_id || 'Not configured'}</div>
             </div>
             <div>
               <span style="color: #95a5a6; font-size: 12px;">Auth Token:</span>
@@ -110,11 +243,11 @@ const SettingsScreen = {
             </div>
             <div>
               <span style="color: #95a5a6; font-size: 12px;">Environment:</span>
-              <div style="color: #e8e8e8; margin-top: 4px; text-transform: uppercase;">${cardNotPresent.api_environment || 'sandbox'}</div>
+              <div style="color: #e8e8e8; margin-top: 4px; text-transform: uppercase; font-size: 14px;">${cardNotPresent.api_environment || 'sandbox'}</div>
             </div>
             <div>
               <span style="color: #95a5a6; font-size: 12px;">Location:</span>
-              <div style="color: #e8e8e8; margin-top: 4px;">${cardNotPresent.location || 'N/A'}</div>
+              <div style="color: #e8e8e8; margin-top: 4px; font-size: 14px;">${cardNotPresent.location || 'N/A'}</div>
             </div>
           </div>
         </div>
@@ -128,16 +261,19 @@ const SettingsScreen = {
 
       let statusIndicator = '';
       let statusText = 'Checking...';
+      let statusColor = '#f39c12';
 
       if (status) {
         if (status.TerminalStatus === 'Online') {
           statusIndicator =
             '<span style="display: inline-block; width: 12px; height: 12px; border-radius: 50%; background: #2ecc71; margin-right: 8px;"></span>';
           statusText = 'Online';
+          statusColor = '#2ecc71';
         } else if (status.TerminalStatus === 'Offline') {
           statusIndicator =
             '<span style="display: inline-block; width: 12px; height: 12px; border-radius: 50%; background: #e74c3c; margin-right: 8px;"></span>';
           statusText = 'Offline';
+          statusColor = '#e74c3c';
         } else {
           statusIndicator =
             '<span style="display: inline-block; width: 12px; height: 12px; border-radius: 50%; background: #f39c12; margin-right: 8px;"></span>';
@@ -146,7 +282,7 @@ const SettingsScreen = {
       }
 
       html += `
-        <div style="margin-bottom: 30px; padding: 20px; background: rgba(255, 255, 255, 0.03); border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.1);">
+        <div style="padding: 20px; background: rgba(255, 255, 255, 0.03); border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.1);">
           <h4 style="color: #f39c12; margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
             <span>🪙</span> Card Present (Physical Terminal)
           </h4>
@@ -154,37 +290,37 @@ const SettingsScreen = {
           <div style="margin-bottom: 15px; padding: 12px; background: rgba(255, 255, 255, 0.05); border-radius: 6px; display: flex; align-items: center; justify-content: space-between;">
             <div style="display: flex; align-items: center;">
               ${statusIndicator}
-              <span style="color: #e8e8e8; font-weight: 600;">${statusText}</span>
+              <span style="color: ${statusColor}; font-weight: 600; font-size: 14px;">${statusText}</span>
             </div>
             <div style="color: #95a5a6; font-size: 11px;">
               ${lastChecked ? 'Last checked: ' + new Date(lastChecked).toLocaleString() : 'Not checked yet'}
             </div>
           </div>
 
-          <div style="display: grid; gap: 10px; margin-bottom: 15px;">
+          <div style="display: grid; gap: 15px; margin-bottom: 15px;">
             <div>
               <span style="color: #95a5a6; font-size: 12px;">TPN (Terminal Processing Number):</span>
-              <div style="color: #e8e8e8; font-family: monospace; margin-top: 4px;">${cardPresent.tpn || 'Not configured'}</div>
+              <div style="color: #e8e8e8; font-family: monospace; margin-top: 4px; font-size: 14px;">${cardPresent.tpn || 'Not configured'}</div>
             </div>
             <div>
               <span style="color: #95a5a6; font-size: 12px;">Register ID:</span>
-              <div style="color: #e8e8e8; font-family: monospace; margin-top: 4px;">${cardPresent.register_id || 'Not configured'}</div>
+              <div style="color: #e8e8e8; font-family: monospace; margin-top: 4px; font-size: 14px;">${cardPresent.register_id || 'Not configured'}</div>
             </div>
             <div>
               <span style="color: #95a5a6; font-size: 12px;">Auth Key:</span>
-              <div style="color: #e8e8e8; font-family: monospace; margin-top: 4px;">${cardPresent.auth_key ? '••••••••' + cardPresent.auth_key.slice(-8) : 'Not configured'}</div>
+              <div style="color: #e8e8e8; font-family: monospace; margin-top: 4px; font-size: 14px;">${cardPresent.auth_key ? '••••••••' + cardPresent.auth_key.slice(-8) : 'Not configured'}</div>
             </div>
             <div>
               <span style="color: #95a5a6; font-size: 12px;">Terminal Name:</span>
-              <div style="color: #e8e8e8; margin-top: 4px;">${cardPresent.name || 'N/A'}</div>
+              <div style="color: #e8e8e8; margin-top: 4px; font-size: 14px;">${cardPresent.name || 'N/A'}</div>
             </div>
             <div>
               <span style="color: #95a5a6; font-size: 12px;">Location:</span>
-              <div style="color: #e8e8e8; margin-top: 4px;">${cardPresent.location || 'N/A'}</div>
+              <div style="color: #e8e8e8; margin-top: 4px; font-size: 14px;">${cardPresent.location || 'N/A'}</div>
             </div>
           </div>
           
-          <button class="btn" onclick="SettingsScreen.checkTerminalStatus('${cardPresent.id}')">
+          <button class="btn" onclick="SettingsScreen.checkTerminalStatus('${cardPresent.id}')" style="font-size: 14px;">
             Refresh Terminal Status
           </button>
           
@@ -193,15 +329,19 @@ const SettingsScreen = {
       `;
     }
 
-    container.innerHTML = html;
+    html += '</div>';
+    return html;
   },
 
-  renderPOSPreferencesTab(container) {
+  renderPOSPreferencesTab() {
     const prefs = this.loadPOSPreferences();
 
-    container.innerHTML = `
-      <div style="padding: 20px; background: rgba(255, 255, 255, 0.03); border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.1);">
-        <h4 style="color: #f39c12; margin-bottom: 20px;">Payment Received Screen</h4>
+    return `
+      <h2 style="color: #f39c12; margin-bottom: 10px; font-size: 28px;">POS Preferences</h2>
+      <p style="color: #95a5a6; margin-bottom: 30px;">Configure point of sale behavior and settings</p>
+      
+      <div style="background: rgba(255, 255, 255, 0.03); padding: 25px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.1);">
+        <h3 style="color: #e8e8e8; margin-bottom: 20px; font-size: 18px;">Payment Received Screen</h3>
         
         <div style="margin-bottom: 25px;">
           <label style="display: flex; align-items: center; gap: 12px; cursor: pointer; padding: 15px; background: rgba(255, 255, 255, 0.05); border-radius: 6px;">
@@ -248,13 +388,13 @@ const SettingsScreen = {
     const checkbox = document.getElementById('autoCloseCheckbox');
     const prefs = this.loadPOSPreferences();
     this.savePOSPreferences(checkbox.checked, prefs.autoCloseDelay);
-    this.renderTabContent();
+    this.render();
   },
 
   setAutoCloseDelay(seconds) {
     const prefs = this.loadPOSPreferences();
     this.savePOSPreferences(prefs.autoClose, seconds);
-    this.renderTabContent();
+    this.render();
   },
 
   async loadTerminals() {
@@ -324,7 +464,7 @@ const SettingsScreen = {
       }
 
       // Re-render to update status indicator
-      this.renderTabContent();
+      this.render();
 
       if (!silent && resultDiv) {
         if (result.success) {
