@@ -20,10 +20,15 @@ exports.handler = async (event, context) => {
     };
   }
 
+  console.log('🔵 check-terminal-status.js invoked');
+
   try {
     const { reference_id } = event.queryStringParameters || {};
+    console.log('📊 Query params:', event.queryStringParameters);
+    console.log('📊 Reference ID:', reference_id);
 
     if (!reference_id) {
+      console.error('❌ No reference_id provided');
       return {
         statusCode: 400,
         headers,
@@ -31,13 +36,18 @@ exports.handler = async (event, context) => {
       };
     }
 
+    console.log('🔌 Connecting to database...');
+    console.log('🔌 Database URL exists:', !!process.env.DATABASE_URL);
+
     const client = new Client({
       connectionString: process.env.DATABASE_URL,
       ssl: false,
     });
 
     await client.connect();
+    console.log('✅ Database connected');
 
+    console.log('🔍 Querying for reference_id:', reference_id);
     const result = await client.query(
       `SELECT 
         status, 
@@ -50,11 +60,18 @@ exports.handler = async (event, context) => {
       [reference_id]
     );
 
+    console.log('📊 Query result rows:', result.rows.length);
+    if (result.rows.length > 0) {
+      console.log('📊 Found row:', result.rows[0]);
+    }
+
     await client.end();
+    console.log('🔌 Database connection closed');
 
     if (result.rows.length === 0) {
+      console.log('ℹ️ Transaction not found');
       return {
-        statusCode: 404,
+        statusCode: 200,
         headers,
         body: JSON.stringify({
           status: 'not_found',
@@ -63,13 +80,18 @@ exports.handler = async (event, context) => {
       };
     }
 
+    console.log('✅ Returning status:', result.rows[0].status);
     return {
       statusCode: 200,
       headers,
       body: JSON.stringify(result.rows[0]),
     };
   } catch (error) {
-    console.error('Error checking terminal status:', error);
+    console.error('❌ Error checking terminal status:', error);
+    console.error('❌ Error name:', error.name);
+    console.error('❌ Error message:', error.message);
+    console.error('❌ Error code:', error.code);
+    console.error('❌ Error stack:', error.stack);
     return {
       statusCode: 500,
       headers,

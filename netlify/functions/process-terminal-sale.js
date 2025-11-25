@@ -222,22 +222,33 @@ exports.handler = async (event, context) => {
     // Race between timeout and SPIN API
     const result = await Promise.race([timeoutPromise, spinPromise]);
 
+    console.log('🏁 Race result:', result.timeout ? 'TIMEOUT' : 'SPIN_RESPONSE');
+
     if (result.timeout) {
       // Timeout reached - persist to database and return processing status
       console.log('💾 Persisting transaction status to database...');
+      console.log('💾 Database URL exists:', !!process.env.DATABASE_URL);
+      console.log('💾 Reference ID:', saleRequest.ReferenceId);
+      console.log('💾 Winery ID:', wineryId);
+      console.log('💾 Terminal ID:', terminalId);
+      console.log('💾 Amount:', amount);
 
       const client = new Client({
         connectionString: process.env.DATABASE_URL,
         ssl: false,
       });
 
-      await client.connect();
-
       try {
-        await client.query(
+        console.log('🔌 Connecting to database...');
+        await client.connect();
+        console.log('✅ Database connected');
+
+        console.log('📝 Executing INSERT query...');
+        const insertResult = await client.query(
           `INSERT INTO terminal_transaction_status 
            (reference_id, winery_id, terminal_id, amount, status, spin_request, created_at)
-           VALUES ($1, $2, $3, $4, $5, $6, NOW())`,
+           VALUES ($1, $2, $3, $4, $5, $6, NOW())
+           RETURNING id`,
           [
             saleRequest.ReferenceId,
             wineryId,
@@ -247,11 +258,15 @@ exports.handler = async (event, context) => {
             JSON.stringify(saleRequest),
           ]
         );
-        console.log('✅ Transaction status saved to database');
+        console.log('✅ Transaction status saved to database, ID:', insertResult.rows[0].id);
       } catch (dbError) {
         console.error('❌ Database error:', dbError);
+        console.error('❌ Error code:', dbError.code);
+        console.error('❌ Error message:', dbError.message);
+        console.error('❌ Error detail:', dbError.detail);
       } finally {
         await client.end();
+        console.log('🔌 Database connection closed');
       }
 
       // Continue waiting for SPIN response in background and update database
@@ -268,6 +283,12 @@ exports.handler = async (event, context) => {
             const statusCode = responseData.StatusCode || data.StatusCode;
             const message = responseData.Message || data.Message || '';
 
+            console.log('🔍 Background: Determining status from response:', {
+              resultCode,
+              statusCode,
+              message,
+            });
+
             if (resultCode === '0' || resultCode === 0) {
               if (statusCode === '0000' || message.toLowerCase().includes('approved')) {
                 finalStatus = 'approved';
@@ -276,6 +297,8 @@ exports.handler = async (event, context) => {
               }
             }
 
+            console.log('📊 Background: Final status determined:', finalStatus);
+
             // Update database with final result
             const bgClient = new Client({
               connectionString: process.env.DATABASE_URL,
@@ -283,23 +306,43 @@ exports.handler = async (event, context) => {
             });
 
             try {
+              console.log('🔌 Background: Connecting to database...');
               await bgClient.connect();
-              await bgClient.query(
+              console.log('✅ Background: Database connected');
+
+              console.log(
+                '📝 Background: Updating status for reference_id:',
+                saleRequest.ReferenceId
+              );
+              const updateResult = await bgClient.query(
                 `UPDATE terminal_transaction_status 
                SET status = $1, spin_response = $2, updated_at = NOW()
-               WHERE reference_id = $3`,
+               WHERE reference_id = $3
+               RETURNING id`,
                 [finalStatus, JSON.stringify(data), saleRequest.ReferenceId]
               );
-              console.log('✅ Background: Updated transaction status to:', finalStatus);
+
+              if (updateResult.rows.length > 0) {
+                console.log('✅ Background: Updated transaction status to:', finalStatus);
+              } else {
+                console.error(
+                  '❌ Background: No rows updated for reference_id:',
+                  saleRequest.ReferenceId
+                );
+              }
             } catch (bgError) {
               console.error('❌ Background: Failed to update status:', bgError);
+              console.error('❌ Background: Error code:', bgError.code);
+              console.error('❌ Background: Error message:', bgError.message);
             } finally {
               await bgClient.end();
+              console.log('🔌 Background: Database connection closed');
             }
           }
         })
         .catch((err) => {
           console.error('❌ Background: SPIN API error:', err);
+          console.error('❌ Background: Error stack:', err.stack);
         });
 
       // Return processing status to frontend
@@ -315,6 +358,9 @@ exports.handler = async (event, context) => {
       };
     } else {
       // Got response before timeout - return normally
+      console.log('✅ Got SPIN response before timeout');
+      console.log('📊 Response data keys:', Object.keys(result.data));
+
       return {
         statusCode: 200,
         headers,
@@ -326,6 +372,8 @@ exports.handler = async (event, context) => {
     }
   } catch (error) {
     console.error('❌ Error processing terminal sale:', error);
+    console.error('Error name:', error.name);
+    console.error('Error message:', error.message);
     console.error('Error stack:', error.stack);
     return {
       statusCode: 500,
