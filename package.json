@@ -29,6 +29,7 @@
   },
   "dependencies": {
     "nodemailer": "^7.0.3",
-    "pg": "^8.11.3"
+    "pg": "^8.11.3",
+    "bcryptjs": "^2.4.3"
   }
 }

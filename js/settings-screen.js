@@ -338,10 +338,49 @@ const SettingsScreen = {
 
   renderPOSPreferencesTab() {
     const prefs = this.loadPOSPreferences();
+    const currentLayout = App.currentUser?.layout_preference || 'commerce';
 
     return `
       <h2 style="color: #f39c12; margin-bottom: 10px; font-size: 28px;">POS Preferences</h2>
       <p style="color: #95a5a6; margin-bottom: 30px;">Configure point of sale behavior and settings</p>
+      
+      <div style="background: rgba(255, 255, 255, 0.03); padding: 25px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.1); margin-bottom: 20px;">
+        <h3 style="color: #e8e8e8; margin-bottom: 20px; font-size: 18px;">Layout Preference</h3>
+        
+        <div class="layout-preview-container">
+          <div class="layout-preview-option ${currentLayout === 'commerce' ? 'selected' : ''}" onclick="SettingsScreen.selectLayout('commerce')">
+            <div class="layout-preview-label">Commerce Layout</div>
+            <div class="layout-preview-sketch layout-preview-commerce">
+              <div class="preview-products">
+                <div class="preview-product-box"></div>
+                <div class="preview-product-box"></div>
+                <div class="preview-product-box"></div>
+                <div class="preview-product-box"></div>
+                <div class="preview-product-box"></div>
+                <div class="preview-product-box"></div>
+              </div>
+              <div class="preview-cart"></div>
+            </div>
+            <div style="text-align: center; margin-top: 8px; font-size: 12px; color: #95a5a6;">Products left, cart right</div>
+          </div>
+          
+          <div class="layout-preview-option ${currentLayout === 'carord' ? 'selected' : ''}" onclick="SettingsScreen.selectLayout('carord')">
+            <div class="layout-preview-label">Carord Layout</div>
+            <div class="layout-preview-sketch layout-preview-carord">
+              <div class="preview-cart"></div>
+              <div class="preview-products">
+                <div class="preview-product-box"></div>
+                <div class="preview-product-box"></div>
+                <div class="preview-product-box"></div>
+                <div class="preview-product-box"></div>
+                <div class="preview-product-box"></div>
+                <div class="preview-product-box"></div>
+              </div>
+            </div>
+            <div style="text-align: center; margin-top: 8px; font-size: 12px; color: #95a5a6;">Cart left, products right</div>
+          </div>
+        </div>
+      </div>
       
       <div style="background: rgba(255, 255, 255, 0.03); padding: 25px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.1);">
         <h3 style="color: #e8e8e8; margin-bottom: 20px; font-size: 18px;">Payment Received Screen</h3>
@@ -398,6 +437,15 @@ const SettingsScreen = {
     const prefs = this.loadPOSPreferences();
     this.savePOSPreferences(prefs.autoClose, seconds);
     this.render();
+  },
+
+  async selectLayout(layout) {
+    const success = await App.updateLayoutPreference(layout);
+    if (success) {
+      this.render();
+    } else {
+      alert('Failed to update layout preference');
+    }
   },
 
   async loadTerminals() {
