@@ -111,6 +111,9 @@ const App = {
 
     this.updateWineryDisplay();
 
+    // Apply user's layout preference
+    this.applyLayoutPreference();
+
     // Initialize mobile or desktop POS based on screen width
     const isMobile = window.innerWidth <= 768;
 
@@ -135,6 +138,41 @@ const App = {
       console.log('Initializing desktop POS layout');
       this.createMobileMenuButton();
       POSScreen.init();
+    }
+  },
+
+  applyLayoutPreference() {
+    const layout = this.currentUser?.layout_preference || 'commerce';
+    const posScreen = document.getElementById('posScreen');
+
+    if (posScreen) {
+      posScreen.classList.remove('layout-commerce', 'layout-carord');
+      posScreen.classList.add(`layout-${layout}`);
+    }
+  },
+
+  async updateLayoutPreference(newLayout) {
+    try {
+      const response = await fetch('/.netlify/functions/update-layout-preference', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          employee_id: this.currentUser.id,
+          layout_preference: newLayout,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        this.currentUser.layout_preference = newLayout;
+        this.applyLayoutPreference();
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('Failed to update layout preference:', error);
+      return false;
     }
   },
 
