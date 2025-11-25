@@ -1073,9 +1073,8 @@ const POSScreen = {
 
   async startPolling(referenceId, subtotal, tax, total, pollInterval, maxWait) {
     const startTime = Date.now();
-    let statusCheckCallMade = false;
-    const statusCheckTimeout =
-      parseInt(localStorage.getItem('terminalStatusCheckTimeout') || '120') * 1000;
+    let lastStatusCheckTime = 0;
+    const statusCheckInterval = 5000; // Check Status API every 5 seconds
 
     this.pollingInterval = setInterval(async () => {
       const elapsed = Date.now() - startTime;
@@ -1087,15 +1086,15 @@ const POSScreen = {
         return;
       }
 
-      if (elapsed > statusCheckTimeout && !statusCheckCallMade) {
-        console.log('⏱️ Status check timeout reached, triggering SPIN Status API check');
-        statusCheckCallMade = true;
+      // Check Status API every 5 seconds (instead of waiting 120s)
+      const timeSinceLastCheck = Date.now() - lastStatusCheckTime;
+      if (timeSinceLastCheck >= statusCheckInterval) {
+        console.log('⏱️ Triggering SPIN Status API check');
+        lastStatusCheckTime = Date.now();
         // Don't await - let it run in background and polling will pick it up
         this.manualStatusCheck(referenceId).catch((err) => {
           console.error('❌ Auto status check failed:', err);
         });
-        // Continue polling to pick up the result
-        return;
       }
 
       try {
