@@ -1,3 +1,5 @@
+const { Client } = require('pg');
+
 exports.handler = async (event, context) => {
   const headers = {
     'Access-Control-Allow-Origin': '*',
@@ -36,6 +38,9 @@ exports.handler = async (event, context) => {
       getReceipt = true,
       printReceipt = false,
       cartItems = [],
+      wineryId,
+      terminalId,
+      dbPersistTimeout = 20000, // Default 20 seconds
     } = body;
 
     console.log('📊 Request parameters:');
@@ -48,6 +53,7 @@ exports.handler = async (event, context) => {
     console.log('  - registerId:', registerId ? `✓ ${registerId}` : '✗ missing');
     console.log('  - referenceId:', referenceId);
     console.log('  - cartItems:', cartItems.length, 'items');
+    console.log('  - dbPersistTimeout:', dbPersistTimeout, 'ms');
 
     // Validate required parameters
     if (!amount || !tpn || !authkey || !registerId) {
@@ -68,7 +74,7 @@ exports.handler = async (event, context) => {
       };
     }
 
-    // Build Cart.Amounts array - include subtotal and tax if provided, otherwise just total
+    // Build Cart.Amounts array
     const cartAmounts = [];
     if (subtotal !== undefined && tax !== undefined) {
       cartAmounts.push(
@@ -80,40 +86,27 @@ exports.handler = async (event, context) => {
       cartAmounts.push({ Name: 'Total', Value: parseFloat(amount) });
     }
 
-    // Build Cart.Items array from cart items if provided
+    // Build Cart.Items array
     let cartItemsArray = [];
     if (cartItems && cartItems.length > 0) {
       console.log('📦 Building items from cart:', cartItems);
       cartItemsArray = cartItems.map((item) => {
         let itemName = '';
 
-        // Priority 1: Use vintage + varietal if both are available and not null
         if (item.vintage && item.varietal && item.vintage !== 'null' && item.varietal !== 'null') {
           itemName = `${item.vintage} ${item.varietal}`;
-        }
-        // Priority 2: Use just varietal if available
-        else if (item.varietal && item.varietal !== 'null') {
+        } else if (item.varietal && item.varietal !== 'null') {
           itemName = item.varietal;
-        }
-        // Priority 3: Use product name, removing winery name if present
-        else if (item.name) {
+        } else if (item.name) {
           itemName = item.name;
-          // Try to remove winery name from beginning (e.g., "Jensen Family Winery Bordeaux" -> "Bordeaux")
-          const wineryPatterns = [
-            /^Jensen Family Winery\s+/i,
-            /^Smith Vineyards\s+/i,
-            // Add more winery patterns as needed
-          ];
+          const wineryPatterns = [/^Jensen Family Winery\s+/i, /^Smith Vineyards\s+/i];
           for (const pattern of wineryPatterns) {
             itemName = itemName.replace(pattern, '');
           }
-        }
-        // Priority 4: Fallback
-        else {
+        } else {
           itemName = 'Wine';
         }
 
-        // Truncate name if too long (terminal display limit ~25 chars)
         if (itemName.length > 25) {
           itemName = itemName.substring(0, 22) + '...';
         }
@@ -129,7 +122,6 @@ exports.handler = async (event, context) => {
         };
       });
     } else {
-      // Fallback to generic item if no cart items provided
       cartItemsArray = [
         {
           Name: 'POS Transaction',
@@ -145,8 +137,6 @@ exports.handler = async (event, context) => {
 
     console.log('🛒 Cart items to send:', JSON.stringify(cartItemsArray, null, 2));
 
-    // Build CashPrices array to match cart items (for terminal display)
-    // This prevents $0.00 from showing under each item
     const cashPrices = cartItemsArray.map((item) => ({
       Name: item.Name,
       Value: item.Price,
@@ -180,68 +170,157 @@ exports.handler = async (event, context) => {
     console.log('📤 Sending Sale request to SPIN API:');
     console.log('  - Endpoint: https://test.spinpos.net/v2/Payment/Sale');
     console.log('  - Amount:', saleRequest.Amount);
-    console.log('  - TipAmount:', saleRequest.TipAmount);
     console.log('  - ReferenceId:', saleRequest.ReferenceId);
-    console.log('  - Cart.Amounts:', JSON.stringify(saleRequest.Cart.Amounts, null, 2));
 
-    const response = await fetch('https://test.spinpos.net/v2/Payment/Sale', {
+    // Create timeout promise
+    const timeoutPromise = new Promise((resolve) => {
+      setTimeout(() => {
+        console.log(`⏱️ ${dbPersistTimeout}ms timeout reached, will persist to database`);
+        resolve({ timeout: true });
+      }, dbPersistTimeout);
+    });
+
+    // Create SPIN API call promise
+    const spinPromise = fetch('https://test.spinpos.net/v2/Payment/Sale', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         Accept: 'application/json',
       },
       body: JSON.stringify(saleRequest),
+    }).then(async (response) => {
+      const responseText = await response.text();
+      console.log('📨 SPIN API response status:', response.status);
+      console.log('📨 SPIN API raw response:', responseText);
+
+      try {
+        const data = JSON.parse(responseText);
+        console.log('✅ SPIN API response data:', JSON.stringify(data, null, 2));
+
+        // Add original subtotal and tax to response
+        if (subtotal !== undefined && tax !== undefined) {
+          if (data.Amounts) {
+            data.Amounts.Subtotal = parseFloat(subtotal);
+            data.Amounts.TaxAmount = parseFloat(tax);
+          } else {
+            data.Amounts = {
+              TotalAmount: parseFloat(amount),
+              Subtotal: parseFloat(subtotal),
+              TaxAmount: parseFloat(tax),
+              TipAmount: parseFloat(tipAmount),
+            };
+          }
+        }
+
+        return { data, timeout: false };
+      } catch (parseError) {
+        console.error('❌ Failed to parse SPIN API response:', parseError);
+        throw new Error('SPIN API returned invalid response');
+      }
     });
 
-    console.log('📨 SPIN API response status:', response.status);
+    // Race between timeout and SPIN API
+    const result = await Promise.race([timeoutPromise, spinPromise]);
 
-    const responseText = await response.text();
-    console.log('📨 SPIN API raw response:', responseText);
+    if (result.timeout) {
+      // Timeout reached - persist to database and return processing status
+      console.log('💾 Persisting transaction status to database...');
 
-    let data;
-    try {
-      data = JSON.parse(responseText);
-      console.log('✅ SPIN API response data:', JSON.stringify(data, null, 2));
+      const client = new Client({
+        connectionString: process.env.DATABASE_URL,
+        ssl: false,
+      });
 
-      // Add our original subtotal and tax to the response
-      // This ensures we can save accurate tax data to the database
-      if (subtotal !== undefined && tax !== undefined) {
-        console.log('📊 Adding original subtotal and tax to response:', {
-          subtotal: parseFloat(subtotal),
-          tax: parseFloat(tax),
-        });
+      await client.connect();
 
-        // Add to the Amounts object if it exists
-        if (data.Amounts) {
-          data.Amounts.Subtotal = parseFloat(subtotal);
-          data.Amounts.TaxAmount = parseFloat(tax);
-        } else {
-          data.Amounts = {
-            TotalAmount: parseFloat(amount),
-            Subtotal: parseFloat(subtotal),
-            TaxAmount: parseFloat(tax),
-            TipAmount: parseFloat(tipAmount),
-          };
-        }
+      try {
+        await client.query(
+          `INSERT INTO terminal_transaction_status 
+           (reference_id, winery_id, terminal_id, amount, status, spin_request, created_at)
+           VALUES ($1, $2, $3, $4, $5, $6, NOW())`,
+          [
+            saleRequest.ReferenceId,
+            wineryId,
+            terminalId,
+            amount,
+            'processing',
+            JSON.stringify(saleRequest),
+          ]
+        );
+        console.log('✅ Transaction status saved to database');
+      } catch (dbError) {
+        console.error('❌ Database error:', dbError);
+      } finally {
+        await client.end();
       }
 
+      // Continue waiting for SPIN response in background and update database
+      spinPromise
+        .then(async (spinResult) => {
+          if (!spinResult.timeout) {
+            console.log('📥 Background: Received SPIN response after timeout');
+            const data = spinResult.data;
+
+            // Determine final status
+            let finalStatus = 'error';
+            const responseData = data.GeneralResponse || data;
+            const resultCode = responseData.ResultCode || data.ResultCode;
+            const statusCode = responseData.StatusCode || data.StatusCode;
+            const message = responseData.Message || data.Message || '';
+
+            if (resultCode === '0' || resultCode === 0) {
+              if (statusCode === '0000' || message.toLowerCase().includes('approved')) {
+                finalStatus = 'approved';
+              } else if (message.toLowerCase().includes('declined')) {
+                finalStatus = 'declined';
+              }
+            }
+
+            // Update database with final result
+            const bgClient = new Client({
+              connectionString: process.env.DATABASE_URL,
+              ssl: false,
+            });
+
+            try {
+              await bgClient.connect();
+              await bgClient.query(
+                `UPDATE terminal_transaction_status 
+               SET status = $1, spin_response = $2, updated_at = NOW()
+               WHERE reference_id = $3`,
+                [finalStatus, JSON.stringify(data), saleRequest.ReferenceId]
+              );
+              console.log('✅ Background: Updated transaction status to:', finalStatus);
+            } catch (bgError) {
+              console.error('❌ Background: Failed to update status:', bgError);
+            } finally {
+              await bgClient.end();
+            }
+          }
+        })
+        .catch((err) => {
+          console.error('❌ Background: SPIN API error:', err);
+        });
+
+      // Return processing status to frontend
       return {
         statusCode: 200,
         headers,
         body: JSON.stringify({
           success: true,
-          data: data,
+          status: 'processing',
+          reference_id: saleRequest.ReferenceId,
+          amount: amount,
         }),
       };
-    } catch (parseError) {
-      console.error('❌ Failed to parse SPIN API response:', parseError);
+    } else {
+      // Got response before timeout - return normally
       return {
-        statusCode: 500,
+        statusCode: 200,
         headers,
         body: JSON.stringify({
-          success: false,
-          error: 'SPIN API returned invalid response',
-          responsePreview: responseText.substring(0, 500),
+          success: true,
+          data: result.data,
         }),
       };
     }

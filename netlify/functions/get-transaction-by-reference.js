@@ -39,14 +39,7 @@ exports.handler = async (event, context) => {
     await client.connect();
 
     const result = await client.query(
-      `SELECT 
-        status, 
-        updated_at, 
-        spin_response->>'ResultCode' as result_code,
-        spin_response->'GeneralResponse'->>'Message' as message,
-        amount
-      FROM terminal_transaction_status 
-      WHERE reference_id = $1`,
+      'SELECT * FROM terminal_transaction_status WHERE reference_id = $1',
       [reference_id]
     );
 
@@ -57,8 +50,8 @@ exports.handler = async (event, context) => {
         statusCode: 404,
         headers,
         body: JSON.stringify({
-          status: 'not_found',
-          message: 'Transaction not found',
+          success: false,
+          error: 'Transaction not found',
         }),
       };
     }
@@ -66,15 +59,19 @@ exports.handler = async (event, context) => {
     return {
       statusCode: 200,
       headers,
-      body: JSON.stringify(result.rows[0]),
+      body: JSON.stringify({
+        success: true,
+        transaction: result.rows[0],
+      }),
     };
   } catch (error) {
-    console.error('Error checking terminal status:', error);
+    console.error('Error fetching transaction:', error);
     return {
       statusCode: 500,
       headers,
       body: JSON.stringify({
-        error: 'Failed to check terminal status',
+        success: false,
+        error: 'Failed to fetch transaction',
         details: error.message,
       }),
     };
