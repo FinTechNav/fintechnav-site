@@ -310,8 +310,8 @@ const POSScreen = {
       if (result.success && result.status === 'processing') {
         // Transaction is still processing - start polling
         console.log('⏳ Transaction processing, starting status polling...');
-        this.hideProcessingOverlay();
-        this.showProcessingModal(referenceId, total, pollInterval, maxWait);
+        // Keep showing the same overlay, add buttons after 60s
+        this.addButtonsToOverlay(referenceId);
         this.startPolling(referenceId, subtotal, tax, total, pollInterval, maxWait);
       } else if (result.success && result.data) {
         // Got immediate response
@@ -478,6 +478,38 @@ const POSScreen = {
       console.error('Failed to create order:', error);
       alert('Failed to create order');
     }
+  },
+
+  addButtonsToOverlay(referenceId) {
+    setTimeout(() => {
+      const overlay = document.getElementById('processing-overlay');
+      if (!overlay) return;
+
+      const existingButtons = overlay.querySelector('.overlay-buttons');
+      if (existingButtons) return; // Already added
+
+      const buttonContainer = document.createElement('div');
+      buttonContainer.className = 'overlay-buttons';
+      buttonContainer.style.cssText = 'margin-top: 20px;';
+
+      buttonContainer.innerHTML = `
+        <button onclick="POSScreen.manualStatusCheck('${referenceId}')" 
+                style="background: #8b7355; color: white; border: none; padding: 12px 24px; 
+                       border-radius: 5px; cursor: pointer; margin-right: 10px; font-family: Georgia, serif;">
+          Check Status Now
+        </button>
+        <button onclick="POSScreen.cancelPolling()" 
+                style="background: #95a5a6; color: white; border: none; padding: 12px 24px; 
+                       border-radius: 5px; cursor: pointer; font-family: Georgia, serif;">
+          Cancel
+        </button>
+      `;
+
+      const content = overlay.querySelector('div');
+      if (content) {
+        content.appendChild(buttonContainer);
+      }
+    }, 60000); // 60 seconds
   },
 
   showProcessingOverlay(message = 'Processing...') {
