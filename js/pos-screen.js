@@ -990,8 +990,6 @@ const POSScreen = {
   },
 
   showProcessingModal(referenceId, amount, pollInterval, maxWait) {
-    const showDetails = localStorage.getItem('terminalShowDetails') !== 'false';
-
     const modal = document.createElement('div');
     modal.id = 'processingModal';
     modal.style.cssText = `
@@ -1021,17 +1019,11 @@ const POSScreen = {
       <div style="font-size: 48px; margin-bottom: 20px;">⏳</div>
       <h2 style="color: #8b7355; margin-bottom: 10px;">Processing Payment on Terminal</h2>
       <p style="color: #666; font-size: 24px; font-weight: bold; margin: 20px 0;">$${amount.toFixed(2)}</p>
-      ${
-        showDetails
-          ? `
-        <p style="color: #666; margin-bottom: 20px;">
-          <span id="elapsedTime">0</span> seconds
-        </p>
-        <p style="color: #999; font-size: 14px;">Reference: ${referenceId}</p>
-      `
-          : ''
-      }
-      <div style="margin-top: 30px;">
+      <p style="color: #666; margin-bottom: 20px;">
+        <span id="elapsedTime">0</span> seconds
+      </p>
+      <p style="color: #999; font-size: 14px;">Reference: ${referenceId}</p>
+      <div id="modalButtons" style="margin-top: 30px; display: none;">
         <button onclick="POSScreen.manualStatusCheck('${referenceId}')" 
                 style="background: #8b7355; color: white; border: none; padding: 12px 24px; 
                        border-radius: 5px; cursor: pointer; margin-right: 10px; font-family: Georgia, serif;">
@@ -1049,9 +1041,15 @@ const POSScreen = {
     document.body.appendChild(modal);
 
     this.pollingStartTime = Date.now();
-    if (showDetails) {
-      this.updateElapsedTime();
-    }
+    this.updateElapsedTime();
+
+    // Show buttons after 60 seconds
+    setTimeout(() => {
+      const buttons = document.getElementById('modalButtons');
+      if (buttons) {
+        buttons.style.display = 'block';
+      }
+    }, 60000);
   },
 
   updateElapsedTime() {
