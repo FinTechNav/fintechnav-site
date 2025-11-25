@@ -482,7 +482,7 @@ const POSScreen = {
 
   addButtonsToOverlay(referenceId) {
     setTimeout(() => {
-      const overlay = document.getElementById('processing-overlay');
+      const overlay = document.getElementById('processingOverlay');
       if (!overlay) return;
 
       const existingButtons = overlay.querySelector('.overlay-buttons');
@@ -505,7 +505,7 @@ const POSScreen = {
         </button>
       `;
 
-      const content = overlay.querySelector('div');
+      const content = overlay.querySelector('.processing-content');
       if (content) {
         content.appendChild(buttonContainer);
       }
@@ -1148,13 +1148,9 @@ const POSScreen = {
 
         console.log('📊 Poll result:', statusData);
 
-        if (
-          statusData.status &&
-          statusData.status !== 'processing' &&
-          statusData.status !== 'not_found'
-        ) {
+        if (statusData.status === 'approved' || statusData.status === 'declined') {
           this.stopPolling();
-          this.hideProcessingModal();
+          this.hideProcessingOverlay();
 
           if (statusData.status === 'approved') {
             const fullResponse = await fetch(
@@ -1175,9 +1171,10 @@ const POSScreen = {
             }
           } else if (statusData.status === 'declined') {
             alert(`Payment declined: ${statusData.message || 'Please try another payment method'}`);
-          } else {
-            alert(`Transaction ${statusData.status}: ${statusData.message || 'Please try again'}`);
           }
+        } else if (statusData.status === 'error') {
+          // Don't stop polling on error - keep checking
+          console.log('⚠️ Error status, continuing to poll...');
         }
       } catch (error) {
         console.error('❌ Polling error:', error);
