@@ -24,9 +24,10 @@ body {
 }
 
 /* Hide sidebar when on login screen */
-.login-screen ~ .app-container .sidebar {
+.login-screen:not([style*="display: none"]) ~ .app-container .sidebar {
     display: none;
 }
+
 
 .app-container {
     display: flex;
