@@ -1090,7 +1090,11 @@ const POSScreen = {
       if (elapsed > statusCheckTimeout && !statusCheckCallMade) {
         console.log('⏱️ Status check timeout reached, triggering SPIN Status API check');
         statusCheckCallMade = true;
-        await this.manualStatusCheck(referenceId);
+        // Don't await - let it run in background and polling will pick it up
+        this.manualStatusCheck(referenceId).catch((err) => {
+          console.error('❌ Auto status check failed:', err);
+        });
+        // Continue polling to pick up the result
         return;
       }
 
