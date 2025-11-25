@@ -250,6 +250,7 @@ const POSScreen = {
         cardPresentTerminal.auth_key
       ) {
         return {
+          terminalId: cardPresentTerminal.id,
           tpn: cardPresentTerminal.tpn,
           registerId: cardPresentTerminal.register_id,
           authkey: cardPresentTerminal.auth_key,
