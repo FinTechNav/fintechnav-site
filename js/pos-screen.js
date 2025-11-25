@@ -1074,7 +1074,8 @@ const POSScreen = {
   async startPolling(referenceId, subtotal, tax, total, pollInterval, maxWait) {
     const startTime = Date.now();
     let lastStatusCheckTime = 0;
-    const statusCheckInterval = 5000; // Check Status API every 5 seconds
+    const minStatusCheckDelay = 30000; // Wait at least 30s before first Status API check
+    let nextStatusCheckDelay = minStatusCheckDelay; // Can be increased if terminal is busy
 
     this.pollingInterval = setInterval(async () => {
       const elapsed = Date.now() - startTime;
@@ -1086,15 +1087,26 @@ const POSScreen = {
         return;
       }
 
-      // Check Status API every 5 seconds (instead of waiting 120s)
+      // Check Status API with intelligent backoff
       const timeSinceLastCheck = Date.now() - lastStatusCheckTime;
-      if (timeSinceLastCheck >= statusCheckInterval) {
+      if (elapsed >= minStatusCheckDelay && timeSinceLastCheck >= nextStatusCheckDelay) {
         console.log('⏱️ Triggering SPIN Status API check');
         lastStatusCheckTime = Date.now();
-        // Don't await - let it run in background and polling will pick it up
-        this.manualStatusCheck(referenceId).catch((err) => {
+
+        try {
+          const statusResult = await this.manualStatusCheck(referenceId);
+
+          // If terminal is busy, respect the delay it requested
+          if (statusResult && statusResult.data && statusResult.data.GeneralResponse) {
+            const delaySeconds = statusResult.data.GeneralResponse.DelayBeforeNextRequest;
+            if (delaySeconds && delaySeconds > 0) {
+              nextStatusCheckDelay = delaySeconds * 1000;
+              console.log(`⏱️ Terminal busy, waiting ${delaySeconds}s before next status check`);
+            }
+          }
+        } catch (err) {
           console.error('❌ Auto status check failed:', err);
-        });
+        }
       }
 
       try {
@@ -1177,9 +1189,12 @@ const POSScreen = {
       } else {
         alert('Could not verify transaction status. Please try again.');
       }
+
+      return result;
     } catch (error) {
       console.error('❌ Manual status check error:', error);
       alert('Error checking status. Please try again.');
+      return null;
     }
   },
 
