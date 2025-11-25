@@ -269,81 +269,8 @@ exports.handler = async (event, context) => {
         console.log('🔌 Database connection closed');
       }
 
-      // Continue waiting for SPIN response in background and update database
-      spinPromise
-        .then(async (spinResult) => {
-          if (!spinResult.timeout) {
-            console.log('📥 Background: Received SPIN response after timeout');
-            const data = spinResult.data;
-
-            // Determine final status
-            let finalStatus = 'error';
-            const responseData = data.GeneralResponse || data;
-            const resultCode = responseData.ResultCode || data.ResultCode;
-            const statusCode = responseData.StatusCode || data.StatusCode;
-            const message = responseData.Message || data.Message || '';
-
-            console.log('🔍 Background: Determining status from response:', {
-              resultCode,
-              statusCode,
-              message,
-            });
-
-            if (resultCode === '0' || resultCode === 0) {
-              if (statusCode === '0000' || message.toLowerCase().includes('approved')) {
-                finalStatus = 'approved';
-              } else if (message.toLowerCase().includes('declined')) {
-                finalStatus = 'declined';
-              }
-            }
-
-            console.log('📊 Background: Final status determined:', finalStatus);
-
-            // Update database with final result
-            const bgClient = new Client({
-              connectionString: process.env.DATABASE_URL,
-              ssl: false,
-            });
-
-            try {
-              console.log('🔌 Background: Connecting to database...');
-              await bgClient.connect();
-              console.log('✅ Background: Database connected');
-
-              console.log(
-                '📝 Background: Updating status for reference_id:',
-                saleRequest.ReferenceId
-              );
-              const updateResult = await bgClient.query(
-                `UPDATE terminal_transaction_status 
-               SET status = $1, spin_response = $2, updated_at = NOW()
-               WHERE reference_id = $3
-               RETURNING id`,
-                [finalStatus, JSON.stringify(data), saleRequest.ReferenceId]
-              );
-
-              if (updateResult.rows.length > 0) {
-                console.log('✅ Background: Updated transaction status to:', finalStatus);
-              } else {
-                console.error(
-                  '❌ Background: No rows updated for reference_id:',
-                  saleRequest.ReferenceId
-                );
-              }
-            } catch (bgError) {
-              console.error('❌ Background: Failed to update status:', bgError);
-              console.error('❌ Background: Error code:', bgError.code);
-              console.error('❌ Background: Error message:', bgError.message);
-            } finally {
-              await bgClient.end();
-              console.log('🔌 Background: Database connection closed');
-            }
-          }
-        })
-        .catch((err) => {
-          console.error('❌ Background: SPIN API error:', err);
-          console.error('❌ Background: Error stack:', err.stack);
-        });
+      // Note: Background updates won't work due to Netlify 26s function timeout
+      // Frontend will trigger verify-terminal-transaction after 120s via polling
 
       // Return processing status to frontend
       return {
