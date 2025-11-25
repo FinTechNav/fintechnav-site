@@ -1094,7 +1094,8 @@ const POSScreen = {
         lastStatusCheckTime = Date.now();
 
         try {
-          const statusResult = await this.manualStatusCheck(referenceId);
+          // Pass silent=true to avoid showing alert during automatic checks
+          const statusResult = await this.manualStatusCheck(referenceId, true);
 
           // If terminal is busy, respect the delay it requested
           if (statusResult && statusResult.data && statusResult.data.GeneralResponse) {
@@ -1169,7 +1170,7 @@ const POSScreen = {
     );
   },
 
-  async manualStatusCheck(referenceId) {
+  async manualStatusCheck(referenceId, silent = false) {
     console.log('🔍 Manual status check for:', referenceId);
 
     try {
@@ -1182,18 +1183,22 @@ const POSScreen = {
       const result = await response.json();
       console.log('✅ Manual status check result:', result);
 
-      if (result.success && result.status) {
-        alert(
-          `Transaction status: ${result.status}\n\nThe status has been updated. Please wait for automatic update or check again.`
-        );
-      } else {
-        alert('Could not verify transaction status. Please try again.');
+      if (!silent) {
+        if (result.success && result.status) {
+          alert(
+            `Transaction status: ${result.status}\n\nThe status has been updated. Please wait for automatic update or check again.`
+          );
+        } else {
+          alert('Could not verify transaction status. Please try again.');
+        }
       }
 
       return result;
     } catch (error) {
       console.error('❌ Manual status check error:', error);
-      alert('Error checking status. Please try again.');
+      if (!silent) {
+        alert('Error checking status. Please try again.');
+      }
       return null;
     }
   },
