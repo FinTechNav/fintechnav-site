@@ -67,14 +67,27 @@ exports.handler = async (event, context) => {
     const spinRequest = result.rows[0].spin_request;
     console.log('📋 SPIN request TPN:', spinRequest.Tpn);
     console.log('📋 SPIN request RegisterId:', spinRequest.RegisterId);
+    console.log('📋 Original PaymentType:', spinRequest.PaymentType);
 
-    // Build SPIN Status API request
+    // Build SPIN Status API request matching official format
     const statusRequest = {
-      TransType: 'Status',
-      RefId: reference_id,
+      TransactionNumber: null,
+      PaymentType: spinRequest.PaymentType || 'Credit',
+      ReferenceId: reference_id,
+      PrintReceipt: 'No',
+      GetReceipt: 'No',
+      MerchantNumber: null,
+      CaptureSignature: false,
+      GetExtendedData: true,
+      IsReadyForIS: false,
+      CallbackInfo: {
+        Url: '',
+      },
       Tpn: spinRequest.Tpn,
       RegisterId: spinRequest.RegisterId,
       Authkey: spinRequest.Authkey,
+      SPInProxyTimeout: null,
+      CustomFields: {},
     };
 
     console.log('🔍 Checking SPIN Status API for:', reference_id);
