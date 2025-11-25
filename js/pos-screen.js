@@ -1148,6 +1148,15 @@ const POSScreen = {
 
         console.log('📊 Poll result:', statusData);
 
+        // Check if transaction was not attempted (terminal timeout with "Not found")
+        if (statusData.status === 'error' && statusData.message === 'Not found') {
+          console.log('⚠️ Terminal timeout - transaction not attempted');
+          this.stopPolling();
+          this.hideProcessingOverlay();
+          alert('Terminal timed out. No payment was attempted. Please try again.');
+          return;
+        }
+
         if (statusData.status === 'approved' || statusData.status === 'declined') {
           this.stopPolling();
           this.hideProcessingOverlay();
@@ -1172,8 +1181,8 @@ const POSScreen = {
           } else if (statusData.status === 'declined') {
             alert(`Payment declined: ${statusData.message || 'Please try another payment method'}`);
           }
-        } else if (statusData.status === 'error') {
-          // Don't stop polling on error - keep checking
+        } else if (statusData.status === 'error' && statusData.message !== 'Not found') {
+          // Don't stop polling on other errors - keep checking
           console.log('⚠️ Error status, continuing to poll...');
         }
       } catch (error) {
@@ -1191,7 +1200,7 @@ const POSScreen = {
 
   cancelPolling() {
     this.stopPolling();
-    this.hideProcessingModal();
+    this.hideProcessingOverlay();
     alert(
       'Status checking cancelled. Transaction may still be processing. Check order history or use reference ID to verify.'
     );
