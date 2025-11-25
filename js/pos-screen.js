@@ -5,6 +5,9 @@ const POSScreen = {
   TAX_RATE: 0.0775,
   selectedCustomer: null,
   customers: [],
+  pollingInterval: null,
+  pollingStartTime: null,
+  currentReferenceId: null,
 
   async init() {
     await this.loadProducts();
@@ -262,17 +265,22 @@ const POSScreen = {
   },
 
   async processTerminalSale(terminalConfig, subtotal, tax, total) {
-    console.log('🏪 Processing terminal sale...');
+    console.log('🏪 Processing terminal sale with timeout handling...');
     console.log('  - Subtotal:', subtotal);
     console.log('  - Tax:', tax);
     console.log('  - Total:', total);
-    console.log('  - Terminal TPN:', terminalConfig.tpn);
 
-    // Show processing overlay
+    // Get timeout settings from localStorage or use defaults
+    const dbPersistTimeout =
+      parseInt(localStorage.getItem('terminalDbPersistTimeout') || '20') * 1000;
+    const pollInterval = parseInt(localStorage.getItem('terminalPollInterval') || '5') * 1000;
+    const maxWait = parseInt(localStorage.getItem('terminalMaxWait') || '180') * 1000;
+
     this.showProcessingOverlay('Processing payment on terminal...');
 
     try {
       const referenceId = `POS${Date.now()}`;
+      this.currentReferenceId = referenceId;
 
       const response = await fetch('/.netlify/functions/process-terminal-sale', {
         method: 'POST',
@@ -288,70 +296,37 @@ const POSScreen = {
           authkey: terminalConfig.authkey,
           registerId: terminalConfig.registerId,
           referenceId: referenceId,
-          captureSignature: false,
-          getReceipt: true,
-          printReceipt: false,
+          wineryId: App.currentWinery?.id,
+          terminalId: terminalConfig.terminalId,
           cartItems: this.cart,
+          dbPersistTimeout: dbPersistTimeout,
         }),
       });
 
       const result = await response.json();
       console.log('📥 Terminal sale response:', result);
-      console.log('📥 Response structure:', {
-        success: result.success,
-        hasData: !!result.data,
-        dataKeys: result.data ? Object.keys(result.data) : [],
-        fullData: JSON.stringify(result.data, null, 2),
-      });
 
-      this.hideProcessingOverlay();
-
-      if (result.success && result.data) {
-        const transactionData = result.data;
-
-        console.log('🔍 Checking transaction data:', {
-          hasGeneralResponse: !!transactionData.GeneralResponse,
-          generalResponse: JSON.stringify(transactionData.GeneralResponse, null, 2),
-          responseCode: transactionData.ResponseCode,
-          message: transactionData.Message,
-        });
-
-        // Check if transaction was approved
-        // SPIN API may return data in GeneralResponse object
-        const responseData = transactionData.GeneralResponse || transactionData;
-        const responseCode = responseData.ResponseCode || transactionData.ResponseCode;
-        const message = responseData.Message || transactionData.Message;
-
-        console.log('🔍 Extracted values:', {
-          responseCode,
-          message,
-          authCode: responseData.AuthCode || transactionData.AuthCode,
-        });
-
-        if (responseCode === '00' || responseCode === '0' || message === 'Approved') {
-          console.log('✅ Transaction approved');
-
-          // Save order to database - pass COMPLETE transactionData, not just responseData
-          await this.saveOrderWithPayment(subtotal, tax, total, transactionData, referenceId);
-        } else {
-          console.error('❌ Transaction declined or error');
-          console.error('❌ Full response:', JSON.stringify(transactionData, null, 2));
-          alert(
-            `Payment failed: ${message || 'Unknown error'}\n\nResponse Code: ${responseCode || 'N/A'}\n\nPlease try again or use a different payment method.`
-          );
-        }
+      if (result.success && result.status === 'processing') {
+        // Transaction is still processing - start polling
+        console.log('⏳ Transaction processing, starting status polling...');
+        this.hideProcessingOverlay();
+        this.showProcessingModal(referenceId, total, pollInterval, maxWait);
+        this.startPolling(referenceId, subtotal, tax, total, pollInterval, maxWait);
+      } else if (result.success && result.data) {
+        // Got immediate response
+        this.hideProcessingOverlay();
+        await this.handleTerminalResponse(result.data, subtotal, tax, total, referenceId);
       } else {
+        this.hideProcessingOverlay();
         console.error('❌ Terminal sale failed:', result.error);
         alert(
           `Terminal error: ${result.error || 'Unknown error'}\n\nPlease check terminal connection and try again.`
         );
       }
     } catch (error) {
-      console.error('💥 Error processing terminal sale:', error);
       this.hideProcessingOverlay();
-      alert(
-        'Failed to process payment on terminal.\n\nPlease check terminal connection and try again.'
-      );
+      console.error('💥 Error processing terminal sale:', error);
+      alert(`Error: ${error.message}\n\nPlease try again.`);
     }
   },
 
@@ -1010,6 +985,236 @@ const POSScreen = {
           this.reset();
         }
       }, autoCloseDelay * 1000);
+    }
+  },
+
+  showProcessingModal(referenceId, amount, pollInterval, maxWait) {
+    const showDetails = localStorage.getItem('terminalShowDetails') !== 'false';
+
+    const modal = document.createElement('div');
+    modal.id = 'processingModal';
+    modal.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+    `;
+
+    const content = document.createElement('div');
+    content.style.cssText = `
+      background: white;
+      padding: 40px;
+      border-radius: 10px;
+      text-align: center;
+      max-width: 500px;
+      font-family: Georgia, serif;
+    `;
+
+    content.innerHTML = `
+      <div style="font-size: 48px; margin-bottom: 20px;">⏳</div>
+      <h2 style="color: #8b7355; margin-bottom: 10px;">Processing Payment on Terminal</h2>
+      <p style="color: #666; font-size: 24px; font-weight: bold; margin: 20px 0;">$${amount.toFixed(2)}</p>
+      ${
+        showDetails
+          ? `
+        <p style="color: #666; margin-bottom: 20px;">
+          <span id="elapsedTime">0</span> seconds
+        </p>
+        <p style="color: #999; font-size: 14px;">Reference: ${referenceId}</p>
+      `
+          : ''
+      }
+      <div style="margin-top: 30px;">
+        <button onclick="POSScreen.manualStatusCheck('${referenceId}')" 
+                style="background: #8b7355; color: white; border: none; padding: 12px 24px; 
+                       border-radius: 5px; cursor: pointer; margin-right: 10px; font-family: Georgia, serif;">
+          Check Status Now
+        </button>
+        <button onclick="POSScreen.cancelPolling()" 
+                style="background: #95a5a6; color: white; border: none; padding: 12px 24px; 
+                       border-radius: 5px; cursor: pointer; font-family: Georgia, serif;">
+          Cancel
+        </button>
+      </div>
+    `;
+
+    modal.appendChild(content);
+    document.body.appendChild(modal);
+
+    this.pollingStartTime = Date.now();
+    if (showDetails) {
+      this.updateElapsedTime();
+    }
+  },
+
+  updateElapsedTime() {
+    const elapsedElement = document.getElementById('elapsedTime');
+    if (elapsedElement && this.pollingStartTime) {
+      const elapsed = Math.floor((Date.now() - this.pollingStartTime) / 1000);
+      elapsedElement.textContent = elapsed;
+      setTimeout(() => this.updateElapsedTime(), 1000);
+    }
+  },
+
+  hideProcessingModal() {
+    const modal = document.getElementById('processingModal');
+    if (modal) {
+      modal.remove();
+    }
+    this.pollingStartTime = null;
+  },
+
+  async startPolling(referenceId, subtotal, tax, total, pollInterval, maxWait) {
+    const startTime = Date.now();
+    let statusCheckCallMade = false;
+    const statusCheckTimeout =
+      parseInt(localStorage.getItem('terminalStatusCheckTimeout') || '120') * 1000;
+
+    this.pollingInterval = setInterval(async () => {
+      const elapsed = Date.now() - startTime;
+
+      if (elapsed > maxWait) {
+        console.log('⏱️ Max wait time exceeded');
+        this.stopPolling();
+        this.showTimeoutMessage(referenceId);
+        return;
+      }
+
+      if (elapsed > statusCheckTimeout && !statusCheckCallMade) {
+        console.log('⏱️ Status check timeout reached, triggering SPIN Status API check');
+        statusCheckCallMade = true;
+        await this.manualStatusCheck(referenceId);
+        return;
+      }
+
+      try {
+        const response = await fetch(
+          `/.netlify/functions/check-terminal-status?reference_id=${referenceId}`
+        );
+        const statusData = await response.json();
+
+        console.log('📊 Poll result:', statusData);
+
+        if (
+          statusData.status &&
+          statusData.status !== 'processing' &&
+          statusData.status !== 'not_found'
+        ) {
+          this.stopPolling();
+          this.hideProcessingModal();
+
+          if (statusData.status === 'approved') {
+            const fullResponse = await fetch(
+              `/.netlify/functions/get-transaction-by-reference?reference_id=${referenceId}`
+            );
+            const fullData = await fullResponse.json();
+
+            if (fullData.success && fullData.transaction) {
+              await this.handleTerminalResponse(
+                fullData.transaction.spin_response,
+                subtotal,
+                tax,
+                total,
+                referenceId
+              );
+            } else {
+              alert('Transaction approved but could not load details. Please check order history.');
+            }
+          } else if (statusData.status === 'declined') {
+            alert(`Payment declined: ${statusData.message || 'Please try another payment method'}`);
+          } else {
+            alert(`Transaction ${statusData.status}: ${statusData.message || 'Please try again'}`);
+          }
+        }
+      } catch (error) {
+        console.error('❌ Polling error:', error);
+      }
+    }, pollInterval);
+  },
+
+  stopPolling() {
+    if (this.pollingInterval) {
+      clearInterval(this.pollingInterval);
+      this.pollingInterval = null;
+    }
+  },
+
+  cancelPolling() {
+    this.stopPolling();
+    this.hideProcessingModal();
+    alert(
+      'Status checking cancelled. Transaction may still be processing. Check order history or use reference ID to verify.'
+    );
+  },
+
+  async manualStatusCheck(referenceId) {
+    console.log('🔍 Manual status check for:', referenceId);
+
+    try {
+      const response = await fetch('/.netlify/functions/verify-terminal-transaction', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reference_id: referenceId }),
+      });
+
+      const result = await response.json();
+      console.log('✅ Manual status check result:', result);
+
+      if (result.success && result.status) {
+        alert(
+          `Transaction status: ${result.status}\n\nThe status has been updated. Please wait for automatic update or check again.`
+        );
+      } else {
+        alert('Could not verify transaction status. Please try again.');
+      }
+    } catch (error) {
+      console.error('❌ Manual status check error:', error);
+      alert('Error checking status. Please try again.');
+    }
+  },
+
+  showTimeoutMessage(referenceId) {
+    this.hideProcessingModal();
+
+    if (
+      confirm(
+        'Transaction is taking longer than expected.\n\n' +
+          `Reference ID: ${referenceId}\n\n` +
+          'Would you like to check the status now?'
+      )
+    ) {
+      this.manualStatusCheck(referenceId);
+    } else {
+      alert(
+        `Transaction reference: ${referenceId}\n\n` +
+          'You can check this transaction later in order history or contact support with this reference ID.'
+      );
+    }
+  },
+
+  async handleTerminalResponse(transactionData, subtotal, tax, total, referenceId) {
+    console.log('🔍 Handling terminal response:', transactionData);
+
+    const responseData = transactionData.GeneralResponse || transactionData;
+    const responseCode = responseData.ResponseCode || transactionData.ResponseCode;
+    const message = responseData.Message || transactionData.Message;
+
+    if (responseCode === '00' || responseCode === '0' || message === 'Approved') {
+      console.log('✅ Transaction approved');
+      await this.saveOrderWithPayment(subtotal, tax, total, transactionData, referenceId);
+    } else {
+      console.error('❌ Transaction declined or error');
+      alert(
+        `Payment failed: ${message || 'Unknown error'}\n\n` +
+          `Response Code: ${responseCode || 'N/A'}\n\n` +
+          'Please try again or use a different payment method.'
+      );
     }
   },
 };

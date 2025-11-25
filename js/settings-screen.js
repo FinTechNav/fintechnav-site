@@ -74,6 +74,7 @@ const SettingsScreen = {
       { id: 'users', icon: '👥', label: 'Users' },
       { id: 'payment-types', icon: '💳', label: 'Payment Types' },
       { id: 'pos-preferences', icon: '⚙️', label: 'POS Preferences' },
+      { id: 'terminal-timeout', icon: '⏱️', label: 'Terminal Timeouts' },
     ];
 
     return menuItems
@@ -108,6 +109,8 @@ const SettingsScreen = {
         return this.renderPaymentTypesTab();
       case 'pos-preferences':
         return this.renderPOSPreferencesTab();
+      case 'terminal-timeout':
+        return this.renderTerminalTimeoutTab();
       default:
         return '<p>Select a category</p>';
     }
@@ -509,6 +512,196 @@ const SettingsScreen = {
           </div>
         `;
       }
+    }
+  },
+
+  renderTerminalTimeoutTab() {
+    const dbPersistTimeout = parseInt(localStorage.getItem('terminalDbPersistTimeout') || '20');
+    const statusCheckTimeout = parseInt(
+      localStorage.getItem('terminalStatusCheckTimeout') || '120'
+    );
+    const pollInterval = parseInt(localStorage.getItem('terminalPollInterval') || '5');
+    const maxWait = parseInt(localStorage.getItem('terminalMaxWait') || '180');
+    const showDetails = localStorage.getItem('terminalShowDetails') !== 'false';
+
+    return `
+      <h2 style="color: #8b7355; margin-bottom: 20px; font-size: 28px;">Terminal Transaction Settings</h2>
+      
+      <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+        <p style="color: #666; line-height: 1.6; margin: 0;">
+          These settings control how the POS handles long-running terminal transactions to avoid timeout errors.
+          Adjust these based on your terminal response times and network conditions.
+        </p>
+      </div>
+
+      <div style="margin-bottom: 30px;">
+        <label style="display: block; color: #8b7355; font-weight: bold; margin-bottom: 10px;">
+          Database Persist Timeout
+        </label>
+        <p style="color: #666; font-size: 14px; margin-bottom: 10px;">
+          Save transaction state after this many seconds to avoid function timeout (default: 20s)
+        </p>
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; max-width: 400px;">
+          ${[15, 20, 25]
+            .map(
+              (seconds) => `
+            <button onclick="SettingsScreen.setTerminalTimeout('terminalDbPersistTimeout', ${seconds})"
+                    style="padding: 12px; border: 2px solid ${dbPersistTimeout === seconds ? '#8b7355' : '#ddd'};
+                           background: ${dbPersistTimeout === seconds ? '#8b7355' : 'white'};
+                           color: ${dbPersistTimeout === seconds ? 'white' : '#666'};
+                           border-radius: 5px; cursor: pointer; font-family: Georgia, serif;
+                           font-weight: ${dbPersistTimeout === seconds ? 'bold' : 'normal'};">
+              ${seconds}s
+            </button>
+          `
+            )
+            .join('')}
+        </div>
+      </div>
+
+      <div style="margin-bottom: 30px;">
+        <label style="display: block; color: #8b7355; font-weight: bold; margin-bottom: 10px;">
+          SPIN Status Check Timeout
+        </label>
+        <p style="color: #666; font-size: 14px; margin-bottom: 10px;">
+          Check Dejavoo Status API after this many seconds if no response (default: 120s)
+        </p>
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; max-width: 500px;">
+          ${[90, 120, 150, 180]
+            .map(
+              (seconds) => `
+            <button onclick="SettingsScreen.setTerminalTimeout('terminalStatusCheckTimeout', ${seconds})"
+                    style="padding: 12px; border: 2px solid ${statusCheckTimeout === seconds ? '#8b7355' : '#ddd'};
+                           background: ${statusCheckTimeout === seconds ? '#8b7355' : 'white'};
+                           color: ${statusCheckTimeout === seconds ? 'white' : '#666'};
+                           border-radius: 5px; cursor: pointer; font-family: Georgia, serif;
+                           font-weight: ${statusCheckTimeout === seconds ? 'bold' : 'normal'};">
+              ${seconds}s
+            </button>
+          `
+            )
+            .join('')}
+        </div>
+      </div>
+
+      <div style="margin-bottom: 30px;">
+        <label style="display: block; color: #8b7355; font-weight: bold; margin-bottom: 10px;">
+          Frontend Poll Interval
+        </label>
+        <p style="color: #666; font-size: 14px; margin-bottom: 10px;">
+          How often to check transaction status (default: 5s)
+        </p>
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; max-width: 400px;">
+          ${[3, 5, 10]
+            .map(
+              (seconds) => `
+            <button onclick="SettingsScreen.setTerminalTimeout('terminalPollInterval', ${seconds})"
+                    style="padding: 12px; border: 2px solid ${pollInterval === seconds ? '#8b7355' : '#ddd'};
+                           background: ${pollInterval === seconds ? '#8b7355' : 'white'};
+                           color: ${pollInterval === seconds ? 'white' : '#666'};
+                           border-radius: 5px; cursor: pointer; font-family: Georgia, serif;
+                           font-weight: ${pollInterval === seconds ? 'bold' : 'normal'};">
+              ${seconds}s
+            </button>
+          `
+            )
+            .join('')}
+        </div>
+      </div>
+
+      <div style="margin-bottom: 30px;">
+        <label style="display: block; color: #8b7355; font-weight: bold; margin-bottom: 10px;">
+          Maximum Total Wait
+        </label>
+        <p style="color: #666; font-size: 14px; margin-bottom: 10px;">
+          Give up and show manual check button after this many seconds (default: 180s)
+        </p>
+        <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; max-width: 600px;">
+          ${[60, 90, 120, 180, 240]
+            .map(
+              (seconds) => `
+            <button onclick="SettingsScreen.setTerminalTimeout('terminalMaxWait', ${seconds})"
+                    style="padding: 12px; border: 2px solid ${maxWait === seconds ? '#8b7355' : '#ddd'};
+                           background: ${maxWait === seconds ? '#8b7355' : 'white'};
+                           color: ${maxWait === seconds ? 'white' : '#666'};
+                           border-radius: 5px; cursor: pointer; font-family: Georgia, serif;
+                           font-weight: ${maxWait === seconds ? 'bold' : 'normal'};">
+              ${seconds}s
+            </button>
+          `
+            )
+            .join('')}
+        </div>
+      </div>
+
+      <div style="margin-bottom: 30px;">
+        <label style="display: block; color: #8b7355; font-weight: bold; margin-bottom: 10px;">
+          Show Terminal Processing Details
+        </label>
+        <p style="color: #666; font-size: 14px; margin-bottom: 10px;">
+          Show elapsed time and status updates to cashier (default: Yes)
+        </p>
+        <div style="display: flex; gap: 10px; max-width: 300px;">
+          <button onclick="SettingsScreen.setTerminalShowDetails(true)"
+                  style="padding: 12px 24px; border: 2px solid ${showDetails ? '#8b7355' : '#ddd'};
+                         background: ${showDetails ? '#8b7355' : 'white'};
+                         color: ${showDetails ? 'white' : '#666'};
+                         border-radius: 5px; cursor: pointer; font-family: Georgia, serif;
+                         font-weight: ${showDetails ? 'bold' : 'normal'}; flex: 1;">
+            Yes
+          </button>
+          <button onclick="SettingsScreen.setTerminalShowDetails(false)"
+                  style="padding: 12px 24px; border: 2px solid ${!showDetails ? '#8b7355' : '#ddd'};
+                         background: ${!showDetails ? '#8b7355' : 'white'};
+                         color: ${!showDetails ? 'white' : '#666'};
+                         border-radius: 5px; cursor: pointer; font-family: Georgia, serif;
+                         font-weight: ${!showDetails ? 'bold' : 'normal'}; flex: 1;">
+            No
+          </button>
+        </div>
+      </div>
+
+      <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #ddd;">
+        <button onclick="SettingsScreen.resetTerminalTimeoutDefaults()"
+                style="padding: 12px 24px; background: #95a5a6; color: white; border: none;
+                       border-radius: 5px; cursor: pointer; font-family: Georgia, serif;">
+          Reset to Defaults
+        </button>
+      </div>
+
+      <div style="background: #e8f4f8; padding: 15px; border-radius: 8px; border-left: 4px solid #3498db; margin-top: 30px;">
+        <strong style="color: #2c3e50;">ℹ️ How It Works:</strong>
+        <ul style="color: #666; margin-top: 10px; line-height: 1.8;">
+          <li><strong>Fast transactions (&lt;20s):</strong> Work exactly as before with no changes</li>
+          <li><strong>Medium transactions (20-120s):</strong> Saved to database, frontend polls for status</li>
+          <li><strong>Slow transactions (&gt;120s):</strong> Automatic SPIN Status API check, then continue polling</li>
+          <li><strong>Very slow transactions:</strong> Manual check button appears after max wait time</li>
+        </ul>
+      </div>
+    `;
+  },
+
+  setTerminalTimeout(setting, value) {
+    localStorage.setItem(setting, value.toString());
+    console.log(`✅ Set ${setting} to ${value}`);
+    this.render();
+  },
+
+  setTerminalShowDetails(value) {
+    localStorage.setItem('terminalShowDetails', value.toString());
+    console.log(`✅ Set terminalShowDetails to ${value}`);
+    this.render();
+  },
+
+  resetTerminalTimeoutDefaults() {
+    if (confirm('Reset all terminal timeout settings to defaults?')) {
+      localStorage.setItem('terminalDbPersistTimeout', '20');
+      localStorage.setItem('terminalStatusCheckTimeout', '120');
+      localStorage.setItem('terminalPollInterval', '5');
+      localStorage.setItem('terminalMaxWait', '180');
+      localStorage.setItem('terminalShowDetails', 'true');
+      console.log('✅ Reset all terminal timeout settings to defaults');
+      this.render();
     }
   },
 };
