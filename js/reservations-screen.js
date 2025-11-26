@@ -141,7 +141,7 @@ const ReservationsScreen = {
           <div class="reservation-actions">
             <span class="status-badge status-${statusClass}">${statusLabel}</span>
             ${
-              res.status === 'confirmed' || res.status === 'pending'
+              res.visit_status === 'expected'
                 ? `
               <button class="check-in-btn" onclick="event.stopPropagation(); ReservationsScreen.checkIn('${res.id}')">
                 Check In
@@ -158,9 +158,9 @@ const ReservationsScreen = {
 
   getStatusClass(status) {
     const statusMap = {
-      pending: 'expected',
-      confirmed: 'expected',
-      checked_in: 'arrived',
+      expected: 'expected',
+      arrived: 'arrived',
+      seated: 'seated',
       completed: 'completed',
       no_show: 'no-show',
       cancelled: 'cancelled',
@@ -170,14 +170,14 @@ const ReservationsScreen = {
 
   getStatusLabel(status) {
     const labelMap = {
-      pending: 'Pending',
-      confirmed: 'Confirmed',
-      checked_in: 'Checked In',
+      expected: 'Expected',
+      arrived: 'Arrived',
+      seated: 'Seated',
       completed: 'Completed',
       no_show: 'No Show',
       cancelled: 'Cancelled',
     };
-    return labelMap[status] || 'Confirmed';
+    return labelMap[status] || 'Expected';
   },
 
   getInitials(name) {
@@ -194,8 +194,9 @@ const ReservationsScreen = {
   },
 
   getConfirmedCount() {
-    return this.reservations.filter((res) => res.status !== 'cancelled' && res.status !== 'no_show')
-      .length;
+    return this.reservations.filter(
+      (res) => res.visit_status !== 'cancelled' && res.visit_status !== 'no_show'
+    ).length;
   },
 
   previousDay() {
@@ -454,8 +455,8 @@ const ReservationsScreen = {
             <div class="summary-item">
               <span class="summary-label">Status:</span>
               <span class="summary-value">
-                <span class="status-badge status-${this.getStatusClass(reservation.status)}">
-                  ${this.getStatusLabel(reservation.status)}
+                <span class="status-badge status-${this.getStatusClass(reservation.visit_status)}">
+                  ${this.getStatusLabel(reservation.visit_status)}
                 </span>
               </span>
             </div>
