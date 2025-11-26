@@ -3,6 +3,8 @@ const App = {
   currentScreen: 'pos',
   currentWinery: null,
   currentUser: null,
+  currentLoginMethod: 'user',
+  pinEntry: '',
   wineries: [],
   users: [],
 
@@ -13,18 +15,15 @@ const App = {
   },
 
   initMobileHandlers() {
-    // Close sidebar when navigating on mobile
     window.addEventListener('resize', () => {
       const mobileBtn = document.getElementById('mobileMenuBtn');
 
       if (window.innerWidth > 430) {
-        // Desktop mode - remove mobile button and overlay
         if (mobileBtn) mobileBtn.remove();
         const overlay = document.querySelector('.sidebar-overlay');
         if (overlay) overlay.remove();
         document.body.classList.remove('sidebar-open');
       } else if (window.innerWidth <= 430 && this.currentUser && !mobileBtn) {
-        // Mobile mode and logged in - create button if it doesn't exist
         this.createMobileMenuButton();
       }
     });
@@ -63,13 +62,49 @@ const App = {
   async selectWinery(wineryId) {
     this.currentWinery = this.wineries.find((w) => w.id === wineryId);
 
-    document.querySelectorAll('#winerySelection .selection-card').forEach((card) => {
-      card.classList.remove('selected');
-    });
-    event.currentTarget.classList.add('selected');
-
+    // Load users for this winery
     await this.loadUsers(wineryId);
-    document.getElementById('userSection').style.display = 'block';
+
+    // Show login method screen
+    document.getElementById('wineryLoginScreen').style.display = 'none';
+    document.getElementById('loginMethodScreen').style.display = 'flex';
+    document.getElementById('loginMethodWinery').textContent = this.currentWinery.name;
+
+    // Default to user login method
+    this.showLoginMethod('user');
+  },
+
+  backToWinerySelection() {
+    this.currentWinery = null;
+    this.users = [];
+    this.pinEntry = '';
+    document.getElementById('wineryLoginScreen').style.display = 'flex';
+    document.getElementById('loginMethodScreen').style.display = 'none';
+    this.updatePinDots();
+  },
+
+  showLoginMethod(method) {
+    this.currentLoginMethod = method;
+    this.pinEntry = '';
+    this.updatePinDots();
+
+    // Update tabs
+    document.querySelectorAll('.login-tab').forEach((tab) => {
+      tab.classList.remove('active');
+    });
+    event.currentTarget.classList.add('active');
+
+    // Show/hide content
+    if (method === 'user') {
+      document.getElementById('userLoginMethod').style.display = 'block';
+      document.getElementById('pinLoginMethod').style.display = 'none';
+    } else {
+      document.getElementById('userLoginMethod').style.display = 'none';
+      document.getElementById('pinLoginMethod').style.display = 'block';
+    }
+
+    // Clear any errors
+    document.getElementById('pinError').textContent = '';
   },
 
   async loadUsers(wineryId) {
@@ -103,39 +138,102 @@ const App = {
       .join('');
   },
 
+  enterPin(digit) {
+    if (this.pinEntry.length < 4) {
+      this.pinEntry += digit;
+      this.updatePinDots();
+
+      // Auto-submit when 4 digits entered
+      if (this.pinEntry.length === 4) {
+        setTimeout(() => this.submitPin(), 300);
+      }
+    }
+  },
+
+  backspacePin() {
+    this.pinEntry = this.pinEntry.slice(0, -1);
+    this.updatePinDots();
+    document.getElementById('pinError').textContent = '';
+  },
+
+  updatePinDots() {
+    const dots = document.querySelectorAll('.pin-dot');
+    dots.forEach((dot, index) => {
+      if (index < this.pinEntry.length) {
+        dot.classList.add('filled');
+      } else {
+        dot.classList.remove('filled');
+      }
+    });
+  },
+
+  async submitPin() {
+    const errorEl = document.getElementById('pinError');
+    errorEl.textContent = '';
+
+    if (this.pinEntry.length !== 4) {
+      errorEl.textContent = 'Please enter a 4-digit PIN';
+      return;
+    }
+
+    // Try each user in the winery with this PIN
+    for (const user of this.users) {
+      try {
+        const response = await fetch('/.netlify/functions/validate-pin', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            employee_id: user.id,
+            pin: this.pinEntry,
+          }),
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          // PIN matched for this user
+          this.currentUser = {
+            ...user,
+            layout_preference: data.employee.layout_preference,
+          };
+          this.loginSuccess();
+          return;
+        }
+      } catch (error) {
+        console.error('Error validating PIN for user:', user.id, error);
+      }
+    }
+
+    // No match found
+    this.pinEntry = '';
+    this.updatePinDots();
+    errorEl.textContent = 'Invalid PIN. Please try again.';
+  },
+
   selectUser(userId) {
     this.currentUser = this.users.find((u) => u.id === userId);
+    this.loginSuccess();
+  },
 
-    document.getElementById('loginScreen').style.display = 'none';
+  loginSuccess() {
+    document.getElementById('loginMethodScreen').style.display = 'none';
     document.getElementById('appContainer').style.display = 'flex';
 
     this.updateWineryDisplay();
-
-    // Apply user's layout preference
     this.applyLayoutPreference();
 
-    // Initialize mobile or desktop POS based on screen width
     const isMobile = window.innerWidth <= 768;
 
     if (isMobile) {
-      // Mobile: use step-by-step flow
-      console.log('Initializing mobile POS layout');
-
-      // Wait for MobilePOS to be available
       const initMobile = () => {
         if (typeof MobilePOS !== 'undefined') {
-          console.log('MobilePOS found, initializing...');
           MobilePOS.init();
         } else {
-          console.error('MobilePOS not loaded, retrying...');
           setTimeout(initMobile, 100);
         }
       };
-
       initMobile();
     } else {
-      // Desktop/Tablet: use traditional POS
-      console.log('Initializing desktop POS layout');
       this.createMobileMenuButton();
       POSScreen.init();
     }
@@ -177,14 +275,11 @@ const App = {
   },
 
   createMobileMenuButton() {
-    // Only create on mobile
     if (window.innerWidth > 430) return;
 
-    // Remove existing button if any
     const existing = document.getElementById('mobileMenuBtn');
     if (existing) existing.remove();
 
-    // Create floating menu button
     const btn = document.createElement('button');
     btn.id = 'mobileMenuBtn';
     btn.className = 'mobile-menu-btn';
@@ -216,16 +311,15 @@ const App = {
     this.currentWinery = null;
     this.currentUser = null;
     this.users = [];
+    this.pinEntry = '';
 
     document.getElementById('appContainer').style.display = 'none';
-    document.getElementById('loginScreen').style.display = 'flex';
-    document.getElementById('userSection').style.display = 'none';
+    document.getElementById('wineryLoginScreen').style.display = 'flex';
+    document.getElementById('loginMethodScreen').style.display = 'none';
 
-    // Remove mobile menu button
     const mobileBtn = document.getElementById('mobileMenuBtn');
     if (mobileBtn) mobileBtn.remove();
 
-    // Close sidebar and remove overlay
     const sidebar = document.getElementById('sidebar');
     if (sidebar) sidebar.classList.remove('expanded');
     const overlay = document.querySelector('.sidebar-overlay');
@@ -242,7 +336,6 @@ const App = {
     sidebar.classList.toggle('expanded');
 
     if (isMobile) {
-      // Create or toggle overlay
       let overlay = document.querySelector('.sidebar-overlay');
 
       if (sidebar.classList.contains('expanded')) {
@@ -284,7 +377,6 @@ const App = {
 
     event.currentTarget.classList.add('active');
 
-    // Close sidebar on mobile after navigation
     if (window.innerWidth <= 430) {
       const sidebar = document.getElementById('sidebar');
       if (sidebar.classList.contains('expanded')) {
