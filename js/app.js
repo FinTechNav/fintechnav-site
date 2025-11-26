@@ -9,9 +9,11 @@ const App = {
   users: [],
 
   async init() {
+    console.log('🚀 App initializing...');
     await this.loadWineries();
     this.registerServiceWorker();
     this.initMobileHandlers();
+    console.log('✅ App initialized');
   },
 
   initMobileHandlers() {
@@ -30,22 +32,26 @@ const App = {
   },
 
   async loadWineries() {
+    console.log('📡 Loading wineries...');
     try {
       const response = await fetch('/.netlify/functions/get-wineries');
       const data = await response.json();
+      console.log('📦 Wineries data:', data);
 
       if (data.success && data.wineries.length > 0) {
         this.wineries = data.wineries;
+        console.log(`✅ Loaded ${data.wineries.length} wineries`);
         this.renderWinerySelection();
       }
     } catch (error) {
-      console.error('Failed to load wineries:', error);
+      console.error('❌ Failed to load wineries:', error);
       document.getElementById('winerySelection').innerHTML =
         '<p style="text-align: center; color: #e74c3c;">Failed to load wineries</p>';
     }
   },
 
   renderWinerySelection() {
+    console.log('🎨 Rendering winery selection...');
     const container = document.getElementById('winerySelection');
     container.innerHTML = this.wineries
       .map(
@@ -57,33 +63,71 @@ const App = {
         `
       )
       .join('');
+    console.log('✅ Winery selection rendered');
   },
 
   async selectWinery(wineryId) {
+    console.log('🍷 Selecting winery:', wineryId);
     this.currentWinery = this.wineries.find((w) => w.id === wineryId);
+    console.log('📍 Current winery:', this.currentWinery);
+
+    // Check if elements exist
+    const wineryLoginScreen = document.getElementById('wineryLoginScreen');
+    const loginMethodScreen = document.getElementById('loginMethodScreen');
+    const loginMethodWinery = document.getElementById('loginMethodWinery');
+
+    console.log('🔍 Checking elements:');
+    console.log('  - wineryLoginScreen:', wineryLoginScreen);
+    console.log('  - loginMethodScreen:', loginMethodScreen);
+    console.log('  - loginMethodWinery:', loginMethodWinery);
+
+    if (!wineryLoginScreen) {
+      console.error('❌ wineryLoginScreen not found!');
+      alert('Error: wineryLoginScreen element not found. Check your HTML.');
+      return;
+    }
+
+    if (!loginMethodScreen) {
+      console.error('❌ loginMethodScreen not found!');
+      alert('Error: loginMethodScreen element not found. Check your HTML.');
+      return;
+    }
+
+    if (!loginMethodWinery) {
+      console.error('❌ loginMethodWinery not found!');
+      alert('Error: loginMethodWinery element not found. Check your HTML.');
+      return;
+    }
 
     // Load users for this winery
+    console.log('👥 Loading users for winery...');
     await this.loadUsers(wineryId);
 
     // Show login method screen
-    document.getElementById('wineryLoginScreen').style.display = 'none';
-    document.getElementById('loginMethodScreen').style.display = 'flex';
-    document.getElementById('loginMethodWinery').textContent = this.currentWinery.name;
+    console.log('🔄 Switching to login method screen...');
+    wineryLoginScreen.style.display = 'none';
+    loginMethodScreen.style.display = 'flex';
+    loginMethodWinery.textContent = this.currentWinery.name;
 
     // Default to user login method
+    console.log('👤 Showing user login method...');
     this.showLoginMethod('user');
+    console.log('✅ Winery selected successfully');
   },
 
   backToWinerySelection() {
+    console.log('⬅️ Going back to winery selection...');
     this.currentWinery = null;
     this.users = [];
     this.pinEntry = '';
     document.getElementById('wineryLoginScreen').style.display = 'flex';
     document.getElementById('loginMethodScreen').style.display = 'none';
     this.updatePinDots();
+    console.log('✅ Back to winery selection');
   },
 
   showLoginMethod(method) {
+    console.log('🔀 Switching to login method:', method);
     this.currentLoginMethod = method;
     this.pinEntry = '';
     this.updatePinDots();
@@ -104,26 +148,34 @@ const App = {
     }
 
     // Clear any errors
-    document.getElementById('pinError').textContent = '';
+    const pinError = document.getElementById('pinError');
+    if (pinError) {
+      pinError.textContent = '';
+    }
+    console.log('✅ Login method switched');
   },
 
   async loadUsers(wineryId) {
+    console.log('📡 Loading users for winery:', wineryId);
     try {
       const response = await fetch(`/.netlify/functions/get-winery-users?winery_id=${wineryId}`);
       const data = await response.json();
+      console.log('📦 Users data:', data);
 
       if (data.success && data.users.length > 0) {
         this.users = data.users;
+        console.log(`✅ Loaded ${data.users.length} users`);
         this.renderUserSelection();
       }
     } catch (error) {
-      console.error('Failed to load users:', error);
+      console.error('❌ Failed to load users:', error);
       document.getElementById('userSelection').innerHTML =
         '<p style="text-align: center; color: #e74c3c;">Failed to load users</p>';
     }
   },
 
   renderUserSelection() {
+    console.log('🎨 Rendering user selection...');
     const container = document.getElementById('userSelection');
     container.innerHTML = this.users
       .map(
@@ -136,24 +188,33 @@ const App = {
         `
       )
       .join('');
+    console.log('✅ User selection rendered');
   },
 
   enterPin(digit) {
+    console.log('🔢 Entering digit:', digit);
     if (this.pinEntry.length < 4) {
       this.pinEntry += digit;
       this.updatePinDots();
+      console.log('📍 Current PIN length:', this.pinEntry.length);
 
       // Auto-submit when 4 digits entered
       if (this.pinEntry.length === 4) {
+        console.log('✅ 4 digits entered, auto-submitting...');
         setTimeout(() => this.submitPin(), 300);
       }
     }
   },
 
   backspacePin() {
+    console.log('⌫ Backspace pressed');
     this.pinEntry = this.pinEntry.slice(0, -1);
     this.updatePinDots();
-    document.getElementById('pinError').textContent = '';
+    const pinError = document.getElementById('pinError');
+    if (pinError) {
+      pinError.textContent = '';
+    }
+    console.log('📍 Current PIN length:', this.pinEntry.length);
   },
 
   updatePinDots() {
@@ -168,16 +229,25 @@ const App = {
   },
 
   async submitPin() {
+    console.log('🔐 Submitting PIN...');
     const errorEl = document.getElementById('pinError');
-    errorEl.textContent = '';
+    if (errorEl) {
+      errorEl.textContent = '';
+    }
 
     if (this.pinEntry.length !== 4) {
-      errorEl.textContent = 'Please enter a 4-digit PIN';
+      console.error('❌ Invalid PIN length:', this.pinEntry.length);
+      if (errorEl) {
+        errorEl.textContent = 'Please enter a 4-digit PIN';
+      }
       return;
     }
 
+    console.log(`🔍 Trying PIN against ${this.users.length} users...`);
+
     // Try each user in the winery with this PIN
     for (const user of this.users) {
+      console.log('🧪 Testing PIN for user:', user.first_name, user.last_name);
       try {
         const response = await fetch('/.netlify/functions/validate-pin', {
           method: 'POST',
@@ -189,8 +259,10 @@ const App = {
         });
 
         const data = await response.json();
+        console.log('📦 PIN validation response:', data);
 
         if (data.success) {
+          console.log('✅ PIN matched for user:', user.first_name, user.last_name);
           // PIN matched for this user
           this.currentUser = {
             ...user,
@@ -200,22 +272,28 @@ const App = {
           return;
         }
       } catch (error) {
-        console.error('Error validating PIN for user:', user.id, error);
+        console.error('❌ Error validating PIN for user:', user.id, error);
       }
     }
 
     // No match found
+    console.log('❌ No matching PIN found');
     this.pinEntry = '';
     this.updatePinDots();
-    errorEl.textContent = 'Invalid PIN. Please try again.';
+    if (errorEl) {
+      errorEl.textContent = 'Invalid PIN. Please try again.';
+    }
   },
 
   selectUser(userId) {
+    console.log('👤 Selecting user:', userId);
     this.currentUser = this.users.find((u) => u.id === userId);
+    console.log('📍 Current user:', this.currentUser);
     this.loginSuccess();
   },
 
   loginSuccess() {
+    console.log('🎉 Login successful!');
     document.getElementById('loginMethodScreen').style.display = 'none';
     document.getElementById('appContainer').style.display = 'flex';
 
@@ -223,17 +301,21 @@ const App = {
     this.applyLayoutPreference();
 
     const isMobile = window.innerWidth <= 768;
+    console.log('📱 Mobile mode:', isMobile);
 
     if (isMobile) {
       const initMobile = () => {
         if (typeof MobilePOS !== 'undefined') {
+          console.log('📱 Initializing MobilePOS...');
           MobilePOS.init();
         } else {
+          console.log('⏳ Waiting for MobilePOS...');
           setTimeout(initMobile, 100);
         }
       };
       initMobile();
     } else {
+      console.log('💻 Initializing desktop POS...');
       this.createMobileMenuButton();
       POSScreen.init();
     }
@@ -241,15 +323,18 @@ const App = {
 
   applyLayoutPreference() {
     const layout = this.currentUser?.layout_preference || 'commerce';
+    console.log('🎨 Applying layout preference:', layout);
     const posScreen = document.getElementById('posScreen');
 
     if (posScreen) {
       posScreen.classList.remove('layout-commerce', 'layout-carord');
       posScreen.classList.add(`layout-${layout}`);
+      console.log('✅ Layout applied:', layout);
     }
   },
 
   async updateLayoutPreference(newLayout) {
+    console.log('💾 Updating layout preference to:', newLayout);
     try {
       const response = await fetch('/.netlify/functions/update-layout-preference', {
         method: 'POST',
@@ -261,15 +346,18 @@ const App = {
       });
 
       const data = await response.json();
+      console.log('📦 Update response:', data);
 
       if (data.success) {
         this.currentUser.layout_preference = newLayout;
         this.applyLayoutPreference();
+        console.log('✅ Layout preference updated');
         return true;
       }
+      console.error('❌ Failed to update layout preference');
       return false;
     } catch (error) {
-      console.error('Failed to update layout preference:', error);
+      console.error('❌ Error updating layout preference:', error);
       return false;
     }
   },
@@ -296,6 +384,7 @@ const App = {
   },
 
   updateWineryDisplay() {
+    console.log('📝 Updating winery display...');
     if (this.currentWinery && this.currentUser) {
       const userName = `${this.currentUser.first_name} ${this.currentUser.last_name}`;
       document.getElementById('currentWineryName').textContent = this.currentWinery.name;
@@ -304,10 +393,12 @@ const App = {
       document.getElementById('customersWineryName').textContent = this.currentWinery.name;
       document.getElementById('settingsWineryName').textContent = this.currentWinery.name;
       document.getElementById('settingsUserName').textContent = userName;
+      console.log('✅ Winery display updated');
     }
   },
 
   logout() {
+    console.log('🚪 Logging out...');
     this.currentWinery = null;
     this.currentUser = null;
     this.users = [];
@@ -327,6 +418,7 @@ const App = {
     document.body.classList.remove('sidebar-open');
 
     POSScreen.reset();
+    console.log('✅ Logged out');
   },
 
   toggleSidebar() {
@@ -357,6 +449,7 @@ const App = {
   },
 
   async navigateTo(screen) {
+    console.log('🧭 Navigating to:', screen);
     document.getElementById('posScreen').style.display = 'none';
     document.getElementById('settingsScreen').style.display = 'none';
     document.getElementById('customersScreen').style.display = 'none';
@@ -393,6 +486,7 @@ const App = {
     } else if (screen === 'settings') {
       await SettingsScreen.init();
     }
+    console.log('✅ Navigation complete');
   },
 
   registerServiceWorker() {
