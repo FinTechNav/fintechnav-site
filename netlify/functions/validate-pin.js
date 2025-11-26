@@ -1,7 +1,8 @@
 const { Client } = require('pg');
-const bcrypt = require('bcryptjs');
 
 exports.handler = async (event) => {
+  console.log('🔐 validate-pin function called');
+
   if (event.httpMethod !== 'POST') {
     return {
       statusCode: 405,
@@ -16,6 +17,7 @@ exports.handler = async (event) => {
 
   try {
     const { employee_id, pin } = JSON.parse(event.body);
+    console.log('📦 Request data:', { employee_id, pin });
 
     if (!employee_id || !pin) {
       return {
@@ -28,6 +30,7 @@ exports.handler = async (event) => {
     }
 
     await client.connect();
+    console.log('✅ Database connected');
 
     // Get employee data
     const employeeQuery = `
@@ -37,6 +40,7 @@ exports.handler = async (event) => {
     `;
 
     const result = await client.query(employeeQuery, [employee_id]);
+    console.log('📊 Query result:', result.rows.length, 'rows');
 
     if (result.rows.length === 0) {
       return {
@@ -49,6 +53,8 @@ exports.handler = async (event) => {
     }
 
     const employee = result.rows[0];
+    console.log('👤 Employee found:', employee.first_name, employee.last_name);
+    console.log('🔑 Has pin_hash:', !!employee.pin_hash);
 
     // Check if account is locked
     if (employee.pin_locked_until && new Date(employee.pin_locked_until) > new Date()) {
@@ -73,8 +79,27 @@ exports.handler = async (event) => {
       };
     }
 
+    // Try to load bcrypt
+    let bcrypt;
+    try {
+      bcrypt = require('bcryptjs');
+      console.log('✅ bcryptjs loaded');
+    } catch (e) {
+      console.error('❌ bcryptjs not available:', e.message);
+      return {
+        statusCode: 500,
+        body: JSON.stringify({
+          success: false,
+          error:
+            'bcryptjs module not installed. Run: npm install bcryptjs in netlify/functions directory',
+        }),
+      };
+    }
+
     // Validate PIN
+    console.log('🔐 Validating PIN...');
     const isValid = await bcrypt.compare(pin, employee.pin_hash);
+    console.log('🔐 PIN valid:', isValid);
 
     if (isValid) {
       // Reset failed attempts on successful login
@@ -98,10 +123,10 @@ exports.handler = async (event) => {
     } else {
       // Increment failed attempts
       const newAttempts = (employee.pin_attempts || 0) + 1;
-      const lockUntil = newAttempts >= 5 ? new Date(Date.now() + 15 * 60000) : null; // Lock for 15 minutes
+      const lockUntil = newAttempts >= 5 ? new Date(Date.now() + 15 * 60000) : null;
 
       await client.query(
-        'UPDATE employees SET pin_attempts = $1, pin_locked_until = $2 WHERE id = $1',
+        'UPDATE employees SET pin_attempts = $1, pin_locked_until = $2 WHERE id = $3',
         [newAttempts, lockUntil, employee_id]
       );
 
@@ -124,12 +149,14 @@ exports.handler = async (event) => {
       };
     }
   } catch (error) {
-    console.error('Error validating PIN:', error);
+    console.error('❌ Error in validate-pin:', error);
+    console.error('Error stack:', error.stack);
     return {
       statusCode: 500,
       body: JSON.stringify({
         success: false,
         error: 'Failed to validate PIN',
+        details: error.message,
       }),
     };
   } finally {
