@@ -470,6 +470,11 @@ const SettingsScreen = {
     const terminal = this.terminals.find((t) => t.id === terminalId);
     const resultDiv = document.getElementById(`terminalStatusResult-${terminalId}`);
 
+    console.log('🔍 checkTerminalStatus called');
+    console.log('  - terminalId:', terminalId);
+    console.log('  - silent:', silent);
+    console.log('  - terminal found:', !!terminal);
+
     if (!terminal) {
       console.error('❌ Terminal not found');
       if (resultDiv) {
@@ -482,6 +487,11 @@ const SettingsScreen = {
       }
       return;
     }
+
+    console.log('📋 Terminal details:');
+    console.log('  - TPN:', terminal.tpn);
+    console.log('  - Register ID:', terminal.register_id);
+    console.log('  - Auth Key:', terminal.auth_key ? 'present' : 'missing');
 
     if (!silent && resultDiv) {
       resultDiv.innerHTML = `
@@ -497,8 +507,10 @@ const SettingsScreen = {
       tpn: terminal.tpn,
     };
 
+    console.log('📤 Sending request to check-spin-terminal-status');
+
     try {
-      const response = await fetch('/.netlify/functions/check-terminal-status', {
+      const response = await fetch('/.netlify/functions/check-spin-terminal-status', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -506,12 +518,15 @@ const SettingsScreen = {
         body: JSON.stringify(requestBody),
       });
 
+      console.log('📨 Response status:', response.status);
       const result = await response.json();
+      console.log('📨 Response body:', JSON.stringify(result, null, 2));
 
       // Store status and timestamp
       if (result.success && result.data) {
         this.terminalStatuses[terminalId] = result.data;
         this.lastChecked[terminalId] = new Date().toISOString();
+        console.log('✅ Status stored:', result.data.TerminalStatus);
       }
 
       // Re-render to update status indicator
@@ -551,11 +566,15 @@ const SettingsScreen = {
         }
       }
     } catch (error) {
-      console.error('❌ Fetch error:', error);
+      console.error('💥 Error checking terminal status:', error);
+      console.error('Error name:', error.name);
+      console.error('Error message:', error.message);
+      console.error('Error stack:', error.stack);
+
       if (!silent && resultDiv) {
         resultDiv.innerHTML = `
           <div style="padding: 15px; background: rgba(231, 76, 60, 0.1); border: 1px solid rgba(231, 76, 60, 0.3); border-radius: 6px;">
-            <h4 style="color: #e74c3c; margin-bottom: 8px;">Connection Error</h4>
+            <h4 style="color: #e74c3c; margin-bottom: 8px;">Error</h4>
             <pre style="color: #e8e8e8; white-space: pre-wrap; font-size: 12px;">${error.message}</pre>
           </div>
         `;
