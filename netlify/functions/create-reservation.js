@@ -79,6 +79,10 @@ exports.handler = async (event) => {
     }
 
     // Insert reservation
+    const datetimeObj = new Date(datetime);
+    const dateOnly = datetimeObj.toISOString().split('T')[0];
+    const timeOnly = datetimeObj.toTimeString().split(' ')[0];
+
     const result = await client.query(
       `
       INSERT INTO reservations (
@@ -86,6 +90,8 @@ exports.handler = async (event) => {
         customer_id,
         service_id,
         service_name,
+        date,
+        time,
         datetime,
         party_size,
         visit_status,
@@ -97,7 +103,7 @@ exports.handler = async (event) => {
         balance_due_cents,
         created_at,
         updated_at
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, NOW(), NOW())
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, NOW(), NOW())
       RETURNING id, confirmation_code
     `,
       [
@@ -106,6 +112,8 @@ exports.handler = async (event) => {
         service_id,
         (await client.query('SELECT name FROM service_offerings WHERE id = $1', [service_id]))
           .rows[0]?.name,
+        dateOnly,
+        timeOnly,
         datetime,
         party_size,
         'expected',
