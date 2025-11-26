@@ -49,7 +49,7 @@ exports.handler = async (event) => {
     // Get service offering details for pricing
     const serviceResult = await client.query(
       `
-      SELECT price_cents, pricing_type
+      SELECT base_price_cents, pricing_per_person
       FROM service_offerings
       WHERE id = $1
     `,
@@ -72,10 +72,10 @@ exports.handler = async (event) => {
 
     // Calculate subtotal based on pricing type
     let subtotalCents;
-    if (service.pricing_type === 'per_person') {
-      subtotalCents = service.price_cents * party_size;
+    if (service.pricing_per_person) {
+      subtotalCents = service.base_price_cents * party_size;
     } else {
-      subtotalCents = service.price_cents;
+      subtotalCents = service.base_price_cents;
     }
 
     // Insert reservation
@@ -84,19 +84,16 @@ exports.handler = async (event) => {
       INSERT INTO reservations (
         winery_id,
         customer_id,
-        service_id,
-        datetime,
+        service_offering_id,
+        reservation_datetime,
         party_size,
-        visit_status,
-        check_in_status,
+        status,
         confirmation_code,
-        notes,
         subtotal_cents,
-        total_price_cents,
-        balance_due_cents,
+        total_cents,
         created_at,
         updated_at
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW(), NOW())
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW())
       RETURNING id, confirmation_code
     `,
       [
@@ -105,11 +102,8 @@ exports.handler = async (event) => {
         service_id,
         datetime,
         party_size,
-        'expected',
-        'none',
+        'confirmed',
         confirmationCode,
-        notes || null,
-        subtotalCents,
         subtotalCents,
         subtotalCents,
       ]

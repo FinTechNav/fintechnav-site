@@ -39,26 +39,19 @@ exports.handler = async (event) => {
         r.customer_id,
         c.name as customer_name,
         c.email as customer_email,
-        r.service_id,
+        r.service_offering_id as service_id,
         so.name as service_name,
-        r.venue_id,
-        v.name as venue_name,
-        r.datetime,
+        r.reservation_datetime as datetime,
         r.party_size,
-        r.visit_status,
-        r.check_in_status,
-        r.confirmation_code,
-        r.notes,
-        r.special_requests
+        r.status as visit_status,
+        r.confirmation_code
       FROM reservations r
       JOIN customers c ON r.customer_id = c.id
-      JOIN service_offerings so ON r.service_id = so.id
-      LEFT JOIN venues v ON r.venue_id = v.id
+      JOIN service_offerings so ON r.service_offering_id = so.id
       WHERE r.winery_id = $1
-        AND DATE(r.datetime) = $2
-        AND r.deleted_at IS NULL
-        AND r.visit_status NOT IN ('cancelled')
-      ORDER BY r.datetime
+        AND DATE(r.reservation_datetime) = $2
+        AND r.status NOT IN ('cancelled')
+      ORDER BY r.reservation_datetime
     `,
       [winery_id, date]
     );

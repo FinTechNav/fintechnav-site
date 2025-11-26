@@ -39,17 +39,16 @@ exports.handler = async (event) => {
         winery_id,
         name,
         description,
-        duration_minutes,
-        price_cents,
-        pricing_type,
-        capacity_min,
-        capacity_max,
+        default_duration_minutes,
+        base_price_cents,
+        pricing_per_person,
+        min_party_size,
+        max_party_size,
         is_active,
-        allow_online_booking
+        online_booking_enabled
       FROM service_offerings
       WHERE winery_id = $1 
         AND is_active = true
-        AND deleted_at IS NULL
       ORDER BY name
     `,
       [winery_id]

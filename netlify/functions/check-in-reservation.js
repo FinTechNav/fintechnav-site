@@ -48,12 +48,11 @@ exports.handler = async (event) => {
       `
       UPDATE reservations
       SET 
-        visit_status = 'arrived',
-        check_in_status = 'full',
-        arrival_time = $2,
+        status = 'checked_in',
+        checked_in_at = $2,
         updated_at = NOW()
       WHERE id = $1
-      RETURNING id, visit_status, arrival_time
+      RETURNING id, status, checked_in_at
     `,
       [reservation_id, arrivalTime]
     );
