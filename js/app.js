@@ -407,6 +407,7 @@ const App = {
     document.getElementById('customersScreen').style.display = 'none';
     document.getElementById('ordersScreen').style.display = 'none';
     document.getElementById('productsScreen').style.display = 'none';
+    document.getElementById('reservationsScreen').style.display = 'none';
     document.getElementById('clubScreen').style.display = 'none';
     document.getElementById('reportsScreen').style.display = 'none';
 
@@ -435,6 +436,8 @@ const App = {
       await ProductsScreen.init();
     } else if (screen === 'orders') {
       await OrdersScreen.load();
+    } else if (screen === 'reservations') {
+      await ReservationsScreen.init();
     } else if (screen === 'settings') {
       await SettingsScreen.init();
     }
