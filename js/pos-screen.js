@@ -276,6 +276,7 @@ const POSScreen = {
       parseInt(localStorage.getItem('terminalDbPersistTimeout') || '20') * 1000;
     const pollInterval = parseInt(localStorage.getItem('terminalPollInterval') || '5') * 1000;
     const maxWait = parseInt(localStorage.getItem('terminalMaxWait') || '180') * 1000;
+    const enablePolling = localStorage.getItem('terminalEnablePolling') !== 'false';
 
     this.showProcessingOverlay('Processing payment on terminal...');
 
@@ -308,7 +309,18 @@ const POSScreen = {
       console.log('📥 Terminal sale response:', result);
 
       if (result.success && result.status === 'processing') {
-        // Transaction is still processing - start polling
+        // Transaction is still processing
+        if (!enablePolling) {
+          // Polling is disabled - show error immediately
+          this.hideProcessingOverlay();
+          console.log('⚠️ Polling disabled, transaction timed out');
+          alert(
+            `Transaction timeout after 20 seconds.\n\nPolling is disabled in Settings > Terminal Timeouts.\n\nThe transaction may still complete on the terminal. Reference: ${referenceId}`
+          );
+          return;
+        }
+
+        // Polling is enabled - start tracking
         console.log('⏳ Transaction processing, starting status polling...');
         // Keep showing the same overlay, add buttons after 60s
         this.addButtonsToOverlay(referenceId);
