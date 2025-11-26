@@ -84,26 +84,35 @@ exports.handler = async (event) => {
       INSERT INTO reservations (
         winery_id,
         customer_id,
-        service_offering_id,
-        reservation_datetime,
+        service_id,
+        service_name,
+        datetime,
         party_size,
-        status,
+        visit_status,
+        check_in_status,
         confirmation_code,
+        customer_notes,
         subtotal_cents,
-        total_cents,
+        total_price_cents,
+        balance_due_cents,
         created_at,
         updated_at
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW())
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, NOW(), NOW())
       RETURNING id, confirmation_code
     `,
       [
         winery_id,
         customer_id,
         service_id,
+        (await client.query('SELECT name FROM service_offerings WHERE id = $1', [service_id]))
+          .rows[0]?.name,
         datetime,
         party_size,
-        'confirmed',
+        'expected',
+        'none',
         confirmationCode,
+        notes || null,
+        subtotalCents,
         subtotalCents,
         subtotalCents,
       ]
