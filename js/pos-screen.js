@@ -551,7 +551,7 @@ const POSScreen = {
   hideProcessingOverlay() {
     const overlay = document.getElementById('processingOverlay');
     if (overlay) {
-      overlay.classList.remove('active');
+      overlay.remove(); // Remove from DOM completely to avoid button persistence
     }
   },
 
