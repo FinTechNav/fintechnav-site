@@ -1,0 +1,176 @@
+/* Login Method Selection Styles */
+.login-method-tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 30px;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+.login-tab {
+  flex: 1;
+  padding: 15px 20px;
+  background: transparent;
+  border: none;
+  border-bottom: 3px solid transparent;
+  color: #95a5a6;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.login-tab:hover {
+  color: #e8e8e8;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.login-tab.active {
+  color: #f39c12;
+  border-bottom-color: #f39c12;
+  background: rgba(243, 156, 18, 0.05);
+}
+
+.login-method-content {
+  min-height: 400px;
+}
+
+/* PIN Entry Styles */
+.pin-entry-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 30px;
+  padding: 20px;
+}
+
+.pin-dots {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.pin-dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  background: transparent;
+  transition: all 0.3s ease;
+}
+
+.pin-dot.filled {
+  background: #f39c12;
+  border-color: #f39c12;
+  box-shadow: 0 0 10px rgba(243, 156, 18, 0.5);
+}
+
+.pin-keypad {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 15px;
+  max-width: 300px;
+  width: 100%;
+}
+
+.pin-key {
+  aspect-ratio: 1;
+  min-height: 70px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  color: #e8e8e8;
+  font-size: 24px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pin-key:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: scale(1.05);
+}
+
+.pin-key:active {
+  transform: scale(0.95);
+  background: rgba(243, 156, 18, 0.2);
+  border-color: #f39c12;
+}
+
+.pin-key-empty {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.pin-key-backspace {
+  background: rgba(231, 76, 60, 0.1);
+  border-color: rgba(231, 76, 60, 0.3);
+  color: #e74c3c;
+  font-size: 28px;
+}
+
+.pin-key-backspace:hover {
+  background: rgba(231, 76, 60, 0.2);
+  border-color: rgba(231, 76, 60, 0.5);
+}
+
+.pin-error {
+  min-height: 24px;
+  color: #e74c3c;
+  font-size: 14px;
+  text-align: center;
+  font-weight: 500;
+}
+
+/* Back Button */
+.back-button {
+  margin-top: 20px;
+  padding: 12px 24px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: #95a5a6;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.back-button:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #e8e8e8;
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Mobile Adjustments for PIN Pad */
+@media (max-width: 430px) {
+  .pin-keypad {
+    gap: 10px;
+  }
+  
+  .pin-key {
+    min-height: 60px;
+    font-size: 20px;
+  }
+  
+  .login-method-tabs {
+    flex-direction: column;
+    gap: 0;
+  }
+  
+  .login-tab {
+    border-bottom: none;
+    border-left: 3px solid transparent;
+  }
+  
+  .login-tab.active {
+    border-bottom: none;
+    border-left-color: #f39c12;
+  }
+}
