@@ -563,6 +563,14 @@ const SettingsScreen = {
     }
   },
 
+  async checkAllTerminalStatuses() {
+    // Silently check all terminal statuses on screen load
+    const cardPresentTerminals = this.terminals.filter((t) => t.terminal_type === 'card_present');
+    for (const terminal of cardPresentTerminals) {
+      await this.checkTerminalStatus(terminal.id, true); // silent=true
+    }
+  },
+
   renderTerminalTimeoutTab() {
     const dbPersistTimeout = parseInt(localStorage.getItem('terminalDbPersistTimeout') || '20');
     const statusCheckTimeout = parseInt(
