@@ -11,12 +11,12 @@
     <link rel="apple-touch-icon" href="icon-192.png">
     <link rel="stylesheet" href="pos-styles.css">
     <link rel="stylesheet" href="pos-layout-styles.css">
+    <link rel="stylesheet" href="pos-login-styles.css">
     <link rel="stylesheet" href="pos-mobile-clean.css">
-
 </head>
 <body>
-    <!-- Login Screen -->
-    <div id="loginScreen" class="login-screen">
+    <!-- Login Screen - Winery Selection -->
+    <div id="wineryLoginScreen" class="login-screen">
         <div class="login-container">
             <div class="login-header">
                 <h1>Heavy Pour Wine</h1>
@@ -29,12 +29,57 @@
                     <p style="text-align: center; color: #95a5a6;">Loading wineries...</p>
                 </div>
             </div>
+        </div>
+    </div>
 
-            <div class="login-section" id="userSection" style="display: none;">
-                <h3>Select User</h3>
+    <!-- Login Method Selection Screen -->
+    <div id="loginMethodScreen" class="login-screen" style="display: none;">
+        <div class="login-container">
+            <div class="login-header">
+                <h1>Heavy Pour Wine</h1>
+                <p id="loginMethodWinery">Jensen Family Winery</p>
+            </div>
+
+            <div class="login-method-tabs">
+                <button class="login-tab active" onclick="App.showLoginMethod('user')">USER LOGIN</button>
+                <button class="login-tab" onclick="App.showLoginMethod('pin')">PIN LOGIN</button>
+            </div>
+
+            <div id="userLoginMethod" class="login-method-content">
+                <h3 style="text-align: center; margin-bottom: 20px; color: #f39c12;">Select User</h3>
                 <div id="userSelection" class="selection-grid">
+                    <p style="text-align: center; color: #95a5a6;">Loading users...</p>
                 </div>
             </div>
+
+            <div id="pinLoginMethod" class="login-method-content" style="display: none;">
+                <h3 style="text-align: center; margin-bottom: 20px; color: #f39c12;">Enter Personal PIN</h3>
+                <div class="pin-entry-container">
+                    <div class="pin-dots">
+                        <div class="pin-dot"></div>
+                        <div class="pin-dot"></div>
+                        <div class="pin-dot"></div>
+                        <div class="pin-dot"></div>
+                    </div>
+                    <div class="pin-keypad">
+                        <button class="pin-key" onclick="App.enterPin('1')">1</button>
+                        <button class="pin-key" onclick="App.enterPin('2')">2</button>
+                        <button class="pin-key" onclick="App.enterPin('3')">3</button>
+                        <button class="pin-key" onclick="App.enterPin('4')">4</button>
+                        <button class="pin-key" onclick="App.enterPin('5')">5</button>
+                        <button class="pin-key" onclick="App.enterPin('6')">6</button>
+                        <button class="pin-key" onclick="App.enterPin('7')">7</button>
+                        <button class="pin-key" onclick="App.enterPin('8')">8</button>
+                        <button class="pin-key" onclick="App.enterPin('9')">9</button>
+                        <button class="pin-key pin-key-empty"></button>
+                        <button class="pin-key" onclick="App.enterPin('0')">0</button>
+                        <button class="pin-key pin-key-backspace" onclick="App.backspacePin()">⌫</button>
+                    </div>
+                    <div id="pinError" class="pin-error"></div>
+                </div>
+            </div>
+
+            <button class="back-button" onclick="App.backToWinerySelection()">← Back to Wineries</button>
         </div>
     </div>
 
@@ -203,6 +248,7 @@
                     </div>
                 </div>
             </div>
+            
             <div id="ordersScreen" class="settings-screen" style="display: none;">
                 <div class="settings-header">
                     <h2>Orders</h2>
@@ -215,6 +261,7 @@
                     </div>
                 </div>
             </div>
+            
             <!-- Placeholder Screens -->
             <div id="clubScreen" class="placeholder-screen" style="display: none;">
                 <div class="placeholder-content">
