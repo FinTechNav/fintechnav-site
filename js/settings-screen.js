@@ -571,6 +571,7 @@ const SettingsScreen = {
     const pollInterval = parseInt(localStorage.getItem('terminalPollInterval') || '5');
     const maxWait = parseInt(localStorage.getItem('terminalMaxWait') || '180');
     const showDetails = localStorage.getItem('terminalShowDetails') !== 'false';
+    const enablePolling = localStorage.getItem('terminalEnablePolling') !== 'false';
 
     return `
       <h2 style="color: #8b7355; margin-bottom: 20px; font-size: 28px;">Terminal Transaction Settings</h2>
@@ -580,6 +581,45 @@ const SettingsScreen = {
           These settings control how the POS handles long-running terminal transactions to avoid timeout errors.
           Adjust these based on your terminal response times and network conditions.
         </p>
+      </div>
+
+      <div style="margin-bottom: 30px;">
+        <label style="display: block; color: #8b7355; font-weight: bold; margin-bottom: 10px;">
+          Enable Transaction Polling
+        </label>
+        <p style="color: #666; font-size: 14px; margin-bottom: 10px;">
+          Enable polling to track terminal transactions longer than 20 seconds (default: Yes)
+        </p>
+        <div style="display: flex; gap: 10px; max-width: 300px;">
+          <button onclick="SettingsScreen.setTerminalEnablePolling(true)"
+                  style="padding: 12px 24px; border: 2px solid ${enablePolling ? '#8b7355' : '#ddd'};
+                         background: ${enablePolling ? '#8b7355' : 'white'};
+                         color: ${enablePolling ? 'white' : '#666'};
+                         border-radius: 5px; cursor: pointer; font-family: Georgia, serif;
+                         font-weight: ${enablePolling ? 'bold' : 'normal'}; flex: 1;">
+            Enabled
+          </button>
+          <button onclick="SettingsScreen.setTerminalEnablePolling(false)"
+                  style="padding: 12px 24px; border: 2px solid ${!enablePolling ? '#8b7355' : '#ddd'};
+                         background: ${!enablePolling ? '#8b7355' : 'white'};
+                         color: ${!enablePolling ? 'white' : '#666'};
+                         border-radius: 5px; cursor: pointer; font-family: Georgia, serif;
+                         font-weight: ${!enablePolling ? 'bold' : 'normal'}; flex: 1;">
+            Disabled
+          </button>
+        </div>
+        ${
+          !enablePolling
+            ? `
+        <div style="background: #ffe0e0; padding: 12px; border-radius: 6px; border-left: 4px solid #e74c3c; margin-top: 15px;">
+          <p style="color: #c0392b; font-size: 13px; margin: 0; line-height: 1.5;">
+            <strong>⚠️ Warning:</strong> With polling disabled, transactions longer than 20 seconds will return an error immediately. 
+            The transaction may still complete on the terminal, but the POS won't track it automatically.
+          </p>
+        </div>
+        `
+            : ''
+        }
       </div>
 
       <div style="margin-bottom: 30px;">
@@ -741,6 +781,12 @@ const SettingsScreen = {
     this.render();
   },
 
+  setTerminalEnablePolling(value) {
+    localStorage.setItem('terminalEnablePolling', value.toString());
+    console.log(`✅ Set terminalEnablePolling to ${value}`);
+    this.render();
+  },
+
   resetTerminalTimeoutDefaults() {
     if (confirm('Reset all terminal timeout settings to defaults?')) {
       localStorage.setItem('terminalDbPersistTimeout', '20');
@@ -748,6 +794,7 @@ const SettingsScreen = {
       localStorage.setItem('terminalPollInterval', '5');
       localStorage.setItem('terminalMaxWait', '180');
       localStorage.setItem('terminalShowDetails', 'true');
+      localStorage.setItem('terminalEnablePolling', 'true');
       console.log('✅ Reset all terminal timeout settings to defaults');
       this.render();
     }
