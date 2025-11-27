@@ -442,16 +442,19 @@
       // Load customers
       async function loadCustomers() {
         try {
-          const response = await fetch('/.netlify/functions/get-customers');
+          const response = await fetch(`/.netlify/functions/get-winery-customers?winery_id=${WINERY_ID}`);
           if (!response.ok) throw new Error('Failed to load customers');
           
-          const customers = await response.json();
+          const data = await response.json();
+          if (!data.success) throw new Error('Failed to load customers');
+          
+          const customers = data.customers;
           const select = document.getElementById('customerSelect');
           
           customers.forEach(customer => {
             const option = document.createElement('option');
-            option.value = customer.customer_id;
-            option.textContent = customer.customer_name;
+            option.value = customer.id;
+            option.textContent = customer.name || customer.email;
             option.dataset.customer = JSON.stringify(customer);
             select.appendChild(option);
           });
@@ -480,17 +483,27 @@
         continueBtn.disabled = false;
 
         if (select.value === 'guest') {
-          selectedCustomer = { customer_id: null, customer_name: 'Guest' };
+          selectedCustomer = { 
+            id: null, 
+            customer_id: null, 
+            name: 'Guest',
+            customer_name: 'Guest'
+          };
           infoBox.style.display = 'none';
         } else {
           const option = select.options[select.selectedIndex];
-          selectedCustomer = JSON.parse(option.dataset.customer);
+          const customer = JSON.parse(option.dataset.customer);
+          
+          // Map new fields to old field names for compatibility
+          selectedCustomer = {
+            ...customer,
+            customer_id: customer.id,
+            customer_name: customer.name || customer.email,
+          };
           
           infoDiv.innerHTML = `
             <strong>${selectedCustomer.customer_name}</strong><br>
-            ${selectedCustomer.email}<br>
-            ${selectedCustomer.billing_street}<br>
-            ${selectedCustomer.billing_city}, ${selectedCustomer.billing_state} ${selectedCustomer.billing_zip}
+            ${selectedCustomer.email || ''}<br>
           `;
           infoBox.style.display = 'block';
         }
@@ -505,14 +518,10 @@
         // Setup Google Pay when entering payment step
         setupGooglePay();
 
-        if (selectedCustomer.customer_id) {
+        if (selectedCustomer.id || selectedCustomer.customer_id) {
           // Load saved cards and pre-fill billing
-          await loadSavedCards(selectedCustomer.customer_id);
-          document.getElementById('billingName').value = selectedCustomer.customer_name;
-          document.getElementById('billingAddress').value = selectedCustomer.billing_street;
-          document.getElementById('billingCity').value = selectedCustomer.billing_city;
-          document.getElementById('billingState').value = selectedCustomer.billing_state;
-          document.getElementById('billingZip').value = selectedCustomer.billing_zip;
+          await loadSavedCards(selectedCustomer.id || selectedCustomer.customer_id);
+          document.getElementById('billingName').value = selectedCustomer.customer_name || '';
           document.getElementById('saveCardOption').style.display = 'block';
         } else {
           // Guest - clear form
@@ -526,7 +535,7 @@
       async function loadSavedCards(customerId) {
         try {
           console.log('📡 Loading saved cards for customer:', customerId);
-          const response = await fetch(`/.netlify/functions/get-payment-tokens?customer_id=${customerId}`);
+          const response = await fetch(`/.netlify/functions/get-payment-tokens?customer_id=${customerId}&winery_id=${WINERY_ID}`);
           
           console.log('Response status:', response.status);
           
