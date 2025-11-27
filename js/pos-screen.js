@@ -205,7 +205,7 @@ const POSScreen = {
     // Check if winery has a terminal configured
     const terminalConfig = await this.getTerminalConfig();
 
-    if (terminalConfig && terminalConfig.tpn) {
+    if (terminalConfig && terminalConfig.terminalId) {
       console.log('✅ Terminal configured, processing via terminal');
       await this.processTerminalSale(terminalConfig, subtotal, tax, total);
     } else {
