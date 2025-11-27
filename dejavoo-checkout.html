@@ -270,7 +270,9 @@
     </div>
 
     <script>
-      // Configuration
+      // Configuration - SET YOUR WINERY ID HERE
+      const WINERY_ID = '22222222-2222-2222-2222-222222222222'; // Jensen Family Winery
+      
       let MERCHANT_ID = '';
       let API_AUTH_TOKEN = '';
       let DEJAVOO_AUTH_TOKEN = '';
@@ -294,7 +296,7 @@
 
         try {
           console.log('🔄 Loading configuration...');
-          const response = await fetch('/.netlify/functions/get-dejavoo-config');
+          const response = await fetch(`/.netlify/functions/get-dejavoo-config?winery_id=${WINERY_ID}`);
           
           if (!response.ok) {
             throw new Error(`HTTP ${response.status}`);

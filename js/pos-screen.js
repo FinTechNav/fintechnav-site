@@ -243,6 +243,22 @@ const POSScreen = {
       // Find card_present terminal
       const cardPresentTerminal = data.terminals.find((t) => t.terminal_type === 'card_present');
 
+      console.log('🖥️ Card present terminal found:', !!cardPresentTerminal);
+
+      if (cardPresentTerminal) {
+        console.log('🔍 Terminal config object:', cardPresentTerminal.processor_terminal_config);
+        console.log(
+          '🔍 Has processor_terminal_config:',
+          !!cardPresentTerminal.processor_terminal_config
+        );
+        console.log('🔍 Has TPN:', !!cardPresentTerminal.processor_terminal_config?.tpn);
+        console.log(
+          '🔍 Has register_id:',
+          !!cardPresentTerminal.processor_terminal_config?.register_id
+        );
+        console.log('🔍 Has auth_key:', !!cardPresentTerminal.processor_terminal_config?.auth_key);
+      }
+
       if (
         cardPresentTerminal &&
         cardPresentTerminal.processor_terminal_config &&
@@ -250,6 +266,7 @@ const POSScreen = {
         cardPresentTerminal.processor_terminal_config.register_id &&
         cardPresentTerminal.processor_terminal_config.auth_key
       ) {
+        console.log('✅ Terminal configuration valid, returning config');
         return {
           terminalId: cardPresentTerminal.id,
           wineryId: App.currentWinery.id,
