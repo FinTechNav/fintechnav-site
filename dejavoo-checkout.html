@@ -960,22 +960,41 @@
 
           const ccnumber = document.getElementById('ccnumber').value.replace(/\s/g, '');
           const lastFour = ccnumber.slice(-4);
+          const firstFour = ccnumber.slice(0, 4);
           const cardType = getCardType(ccnumber);
           const expiry = document.getElementById('ccexpiry').value.split('/');
+          
+          // Generate card fingerprint
+          const fingerprintData = firstFour + lastFour + expiry[0] + '20' + expiry[1];
+          const cardFingerprint = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(fingerprintData))
+            .then(hash => Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join(''));
+
+          const payload = {
+            customer_id: selectedCustomer.id || selectedCustomer.customer_id,
+            winery_id: WINERY_ID,
+            processor_payment_method_id: transactionData.chdToken,
+            card_last_4: lastFour,
+            card_type: cardType,
+            card_brand: cardType,
+            card_expiry_month: expiry[0],
+            card_expiry_year: '20' + expiry[1],
+            card_fingerprint: cardFingerprint,
+            card_bin: firstFour,
+            source_channel: 'card_not_present'
+          };
+          
+          console.log('🔍 Sending payment token payload:', payload);
 
           const response = await fetch('/.netlify/functions/save-payment-token', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              customer_id: selectedCustomer.customer_id,
-              payment_token_id: paymentTokenId,
-              reusable_token: transactionData.chdToken,
-              card_last_four: lastFour,
-              card_type: cardType,
-              expiry_month: expiry[0],
-              expiry_year: '20' + expiry[1]
-            })
+            body: JSON.stringify(payload)
           });
+
+          if (!response.ok) {
+            const errorText = await response.text();
+            console.error('❌ Save token error response:', errorText);
+          }
 
           if (response.ok) {
             console.log('✅ Card token saved:', transactionData.chdToken);
@@ -998,19 +1017,40 @@
             console.warn('No transaction data to save');
             return;
           }
+          
+          const ccnumber = document.getElementById('ccnumber').value.replace(/\s/g, '');
+          const lastFour = ccnumber.slice(-4);
+          const cardType = getCardType(ccnumber);
 
-          await fetch('/.netlify/functions/save-transaction', {
+          const payload = {
+            winery_id: WINERY_ID,
+            customer_id: selectedCustomer.id || selectedCustomer.customer_id,
+            reference_id: transactionData.transactionReferenceId || `WEB${Date.now()}`,
+            transaction_id: transactionData.transactionId,
+            amount: transactionData.totalAmount || transactionData.amount || 0,
+            status: 'approved',
+            response_code: transactionData.responseCode,
+            response_message: transactionData.responseMessage || transactionData.errResponseMessage,
+            card_type: cardType,
+            card_last_4: lastFour,
+            approval_code: transactionData.responseApprovalCode,
+            batch_number: transactionData.batchNumber,
+            request_data: saleResponse,
+            response_data: transactionData
+          };
+          
+          console.log('🔍 Sending transaction payload:', payload);
+
+          const response = await fetch('/.netlify/functions/save-transaction', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              customer_id: selectedCustomer.customer_id,
-              dejavoo_reference_id: transactionData.transactionId,
-              amount: 155.00,
-              status: 'approved',
-              response_code: transactionData.responseCode,
-              response_message: transactionData.responseMessage || transactionData.errResponseMessage
-            })
+            body: JSON.stringify(payload)
           });
+          
+          if (!response.ok) {
+            const errorText = await response.text();
+            console.error('❌ Save transaction error response:', errorText);
+          }
           
           console.log('✅ Transaction saved to database');
         } catch (error) {
