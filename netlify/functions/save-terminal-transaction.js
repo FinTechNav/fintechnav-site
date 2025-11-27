@@ -1,4 +1,5 @@
 const { Client } = require('pg');
+const crypto = require('crypto');
 
 exports.handler = async (event, context) => {
   const headers = {
@@ -31,8 +32,8 @@ exports.handler = async (event, context) => {
     console.log('  - winery_id:', winery_id);
     console.log('  - customer_id:', customer_id);
     console.log('  - employee_id:', employee_id);
+    console.log('  - terminal_id:', terminal_id);
     console.log('  - transactionData keys:', Object.keys(transactionData));
-    console.log('  - transactionData:', JSON.stringify(transactionData, null, 2));
 
     // Validate required parameters
     if (!winery_id || !transactionData) {
@@ -60,239 +61,150 @@ exports.handler = async (event, context) => {
     const generalResponse = transactionData.GeneralResponse || {};
     const amounts = transactionData.Amounts || {};
     const cardData = transactionData.CardData || {};
-    const emvData = transactionData.EMVData || {};
     const extendedData = transactionData.ExtendedDataByApplication || {};
 
     console.log('📦 Extracted data structures:');
     console.log('  - generalResponse:', Object.keys(generalResponse));
     console.log('  - amounts:', Object.keys(amounts));
     console.log('  - cardData:', Object.keys(cardData));
-    console.log('  - emvData:', Object.keys(emvData));
-    console.log('  - extendedData keys:', Object.keys(extendedData));
 
-    // Get the first entry type and application data
-    const appKey = Object.keys(extendedData)[0];
-    const appData = appKey ? extendedData[appKey] : {};
+    // Determine transaction status
+    const resultCode = generalResponse.ResultCode || '1';
+    const statusCode = generalResponse.StatusCode || '';
+    let status = 'error';
 
-    console.log('📱 Application data from:', appKey);
-    console.log('  - appData keys:', Object.keys(appData));
-
-    // Parse transaction datetime
-    let transactionDatetime = null;
-    if (appData.DateTime) {
-      // Format: "2025-11-2214:36:22"
-      // Position: 0123456789012345678
-      //           YYYY-MM-DDHH:MM:SS
-      const dateStr = appData.DateTime;
-      console.log('📅 Parsing datetime:', dateStr);
-
-      const year = dateStr.substring(0, 4); // positions 0-3: "2025"
-      const month = dateStr.substring(5, 7); // positions 5-6: "11"
-      const day = dateStr.substring(8, 10); // positions 8-9: "22"
-      const hour = dateStr.substring(10, 12); // positions 10-11: "14"
-      const minute = dateStr.substring(13, 15); // positions 13-14: "36"
-      const second = dateStr.substring(16, 18); // positions 16-17: "22"
-
-      transactionDatetime = `${year}-${month}-${day} ${hour}:${minute}:${second}`;
-      console.log('📅 Parsed datetime:', transactionDatetime);
+    if (resultCode === '0' || resultCode === 0) {
+      if (statusCode === '0000' || generalResponse.Message?.toLowerCase().includes('approved')) {
+        status = 'approved';
+      } else if (generalResponse.Message?.toLowerCase().includes('declined')) {
+        status = 'declined';
+      }
     }
 
-    console.log('🔢 Preparing values for insert...');
-    console.log('  - Reference ID:', transactionData.ReferenceId);
-    console.log('  - Total Amount:', amounts.TotalAmount);
-    console.log('  - Auth Code:', transactionData.AuthCode);
-    console.log('  - Card Type:', cardData.CardType);
-    console.log('  - iPOS Token:', transactionData.IPosToken);
+    console.log('📊 Transaction status determined:', status);
+
+    // Check if payment method should be saved (if iPOS token present and customer_id exists)
+    let payment_method_id = null;
+
+    if (transactionData.IPosToken && customer_id && status === 'approved') {
+      console.log('💳 iPOS token present, saving payment method...');
+
+      // Generate card fingerprint
+      const fingerprintData = `${cardData.BIN || ''}${cardData.Last4}${cardData.ExpirationDate || ''}`;
+      const cardFingerprint = crypto.createHash('sha256').update(fingerprintData).digest('hex');
+
+      // Parse expiry date (format: MMYY)
+      let cardExpMonth = null;
+      let cardExpYear = null;
+      if (cardData.ExpirationDate && cardData.ExpirationDate.length === 4) {
+        cardExpMonth = cardData.ExpirationDate.substring(0, 2);
+        cardExpYear = '20' + cardData.ExpirationDate.substring(2, 4);
+      }
+
+      // Check if this is customer's first card
+      const existingCards = await client.query(
+        'SELECT COUNT(*) as count FROM payment_methods WHERE customer_id = $1 AND winery_id = $2 AND processor = $3 AND is_active = TRUE',
+        [customer_id, winery_id, 'dejavoo']
+      );
+
+      const isFirstCard = existingCards.rows[0].count === '0';
+
+      // Insert or update payment method
+      const pmResult = await client.query(
+        `INSERT INTO payment_methods (
+          customer_id, winery_id, processor,
+          processor_payment_method_id, card_last_4, card_type, card_brand,
+          card_expiry_month, card_expiry_year, card_fingerprint,
+          source_channel, is_default
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+        ON CONFLICT (customer_id, winery_id, processor, card_fingerprint) 
+        DO UPDATE SET
+          last_used_at = NOW(),
+          usage_count = payment_methods.usage_count + 1,
+          is_active = TRUE,
+          updated_at = NOW()
+        RETURNING id`,
+        [
+          customer_id,
+          winery_id,
+          'dejavoo',
+          transactionData.IPosToken,
+          cardData.Last4,
+          cardData.CardType,
+          cardData.CardType,
+          cardExpMonth,
+          cardExpYear,
+          cardFingerprint,
+          'card_present',
+          isFirstCard,
+        ]
+      );
+
+      payment_method_id = pmResult.rows[0].id;
+      console.log('✅ Payment method saved/updated:', payment_method_id);
+    }
 
     // Insert transaction record
-    const insertQuery = `
-      INSERT INTO terminal_transactions (
-        order_id,
+    const transactionResult = await client.query(
+      `INSERT INTO transactions (
+        order_id, winery_id, customer_id, employee_id, payment_method_id, terminal_id,
+        processor, reference_id, processor_transaction_id,
+        transaction_channel, transaction_type, payment_method_type,
+        amount, subtotal, tax, tip,
+        status, status_code, status_message,
+        card_type, card_last_4, card_entry_type,
+        auth_code, batch_number,
+        processor_request, processor_response,
+        processed_at
+      ) VALUES (
+        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12,
+        $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27
+      )
+      RETURNING id`,
+      [
+        order_id || null,
         winery_id,
-        customer_id,
-        employee_id,
-        terminal_id,
-        
-        reference_id,
-        transaction_number,
-        invoice_number,
-        serial_number,
-        batch_number,
-        host_transaction_id,
-        transaction_id,
-        rrn,
-        pn_reference_id,
-        
-        transaction_type,
-        payment_type,
-        voided,
-        
-        total_amount,
-        base_amount,
-        tip_amount,
-        fee_amount,
-        tax_amount,
-        discount_amount,
-        cashback_amount,
-        
-        result_code,
-        status_code,
-        host_response_code,
-        host_response_message,
-        message,
-        detailed_message,
-        auth_code,
-        
-        card_type,
-        card_last_4,
-        card_first_4,
-        card_bin,
-        card_name,
-        card_expiration,
-        entry_type,
-        
-        emv_application_name,
-        emv_aid,
-        emv_tvr,
-        emv_tsi,
-        emv_iad,
-        emv_arc,
-        
-        ipos_token,
-        
-        transaction_start_time,
-        transaction_end_time,
-        transaction_datetime,
-        
-        network_mode,
-        profile_id,
-        offline_pin,
-        fallback_mode,
-        
-        is_partial_approval,
-        is_surcharge_applied,
-        is_fee_applied_for_debit,
-        is_disclose_fee_to_customer,
-        is_gift_mode,
-        is_wallet_mode,
-        is_ibs,
-        
-        tax_city,
-        tax_state,
-        tax_commercial,
-        
-        extended_data
-      )
-      VALUES (
-        $1, $2, $3, $4, $5,
-        $6, $7, $8, $9, $10, $11, $12, $13, $14,
-        $15, $16, $17,
-        $18, $19, $20, $21, $22, $23, $24,
-        $25, $26, $27, $28, $29, $30, $31,
-        $32, $33, $34, $35, $36, $37, $38,
-        $39, $40, $41, $42, $43, $44,
-        $45,
-        $46, $47, $48,
-        $49, $50, $51, $52,
-        $53, $54, $55, $56, $57, $58, $59,
-        $60, $61, $62,
-        $63
-      )
-      RETURNING id
-    `;
+        customer_id || null,
+        employee_id || null,
+        payment_method_id,
+        terminal_id || null,
+        'dejavoo',
+        transactionData.ReferenceId || null,
+        transactionData.TransactionNumber || null,
+        'card_present',
+        'sale',
+        'card',
+        parseFloat(amounts.TotalAmount || 0),
+        parseFloat(amounts.Subtotal || amounts.Amount || 0),
+        parseFloat(amounts.TaxAmount || 0),
+        parseFloat(amounts.TipAmount || 0),
+        status,
+        statusCode,
+        generalResponse.Message || null,
+        cardData.CardType || null,
+        cardData.Last4 || null,
+        cardData.EntryType || null,
+        transactionData.AuthCode || null,
+        transactionData.BatchNumber || null,
+        JSON.stringify(transactionData),
+        JSON.stringify(transactionData),
+        new Date(),
+      ]
+    );
 
-    const values = [
-      order_id || null,
-      winery_id,
-      customer_id || null,
-      employee_id || null,
-      terminal_id || null,
+    const transaction_id = transactionResult.rows[0].id;
+    console.log('✅ Transaction saved with ID:', transaction_id);
 
-      transactionData.ReferenceId || null,
-      transactionData.TransactionNumber || null,
-      transactionData.InvoiceNumber || null,
-      transactionData.SerialNumber || null,
-      transactionData.BatchNumber || null,
-      appData.HostTxnId || null,
-      appData.TxnId || null,
-      transactionData.RRN || null,
-      transactionData.PNReferenceId || null,
-
-      transactionData.TransactionType || null,
-      transactionData.PaymentType || null,
-      transactionData.Voided || false,
-
-      parseFloat(amounts.TotalAmount || 0),
-      parseFloat(appData.BaseAmount || amounts.Amount || 0),
-      parseFloat(amounts.TipAmount || appData.Tip || 0),
-      parseFloat(amounts.FeeAmount || appData.Fee || 0),
-      parseFloat(amounts.TaxAmount || appData.TaxAmount || 0),
-      parseFloat(appData.Disc || 0),
-      parseFloat(appData.CashBack || 0),
-
-      generalResponse.ResultCode || null,
-      generalResponse.StatusCode || null,
-      generalResponse.HostResponseCode || null,
-      generalResponse.HostResponseMessage || null,
-      generalResponse.Message || null,
-      generalResponse.DetailedMessage || null,
-      transactionData.AuthCode || null,
-
-      cardData.CardType || appData.CardType || null,
-      cardData.Last4 || appData.AcntLast4 || null,
-      cardData.First4 || appData.AcntFirst4 || null,
-      cardData.BIN || appData.BIN || null,
-      cardData.Name || appData.Name || null,
-      cardData.ExpirationDate || appData.ExpDate || null,
-      cardData.EntryType || appData.EntryType || null,
-
-      emvData.ApplicationName || appData.AppName || null,
-      emvData.AID || appData.AID || null,
-      emvData.TVR || appData.TVR || null,
-      emvData.TSI || appData.TSI || null,
-      emvData.IAD || null,
-      emvData.ARC || null,
-
-      transactionData.IPosToken || null,
-
-      appData.TxnStartTime ? parseInt(appData.TxnStartTime) : null,
-      appData.TxnEndTime ? parseInt(appData.TxnEndTime) : null,
-      transactionDatetime,
-
-      appData.NetworkMode || null,
-      appData.ProfileId || null,
-      appData.OfflinePin === 'true',
-      appData.FallBackMode || null,
-
-      appData.IsPartialApprovalTxn === 'true',
-      appData.IsSurChargeApplied === 'true',
-      appData.IsFeeAppliedForDebitCard === 'true',
-      appData.IsDiscloseFeeToCustomer === 'true',
-      appData.IsGiftMode === 'true',
-      appData.IsWalletMode === 'true',
-      appData.IsIbs === 'true',
-
-      parseFloat(appData.TaxCity || 0),
-      parseFloat(appData.TaxState || 0),
-      parseFloat(appData.TaxCommercial || 0),
-
-      JSON.stringify(extendedData),
-    ];
-
-    console.log('📝 Executing INSERT query...');
-    console.log('  - Query has', values.length, 'parameters');
-    console.log('  - Sample values:', {
-      reference_id: values[5],
-      total_amount: values[17],
-      auth_code: values[30],
-      card_type: values[31],
-      ipos_token: values[44],
-    });
-
-    const result = await client.query(insertQuery, values);
-    const transactionId = result.rows[0].id;
-
-    console.log('✅ Transaction saved with ID:', transactionId);
+    // Save extended processor data if present
+    if (extendedData && Object.keys(extendedData).length > 0) {
+      await client.query(
+        `INSERT INTO transaction_processor_details (
+          transaction_id, processor, processor_extended_data
+        ) VALUES ($1, $2, $3)`,
+        [transaction_id, 'dejavoo', JSON.stringify(extendedData)]
+      );
+      console.log('✅ Extended processor data saved');
+    }
 
     await client.end();
 
@@ -301,7 +213,8 @@ exports.handler = async (event, context) => {
       headers,
       body: JSON.stringify({
         success: true,
-        transaction_id: transactionId,
+        transaction_id: transaction_id,
+        payment_method_id: payment_method_id,
       }),
     };
   } catch (error) {
@@ -310,12 +223,9 @@ exports.handler = async (event, context) => {
     console.error('Error message:', error.message);
     console.error('Error stack:', error.stack);
 
-    // If it's a database error, log additional details
     if (error.code) {
       console.error('Database error code:', error.code);
       console.error('Database error detail:', error.detail);
-      console.error('Database error hint:', error.hint);
-      console.error('Database error position:', error.position);
     }
 
     return {

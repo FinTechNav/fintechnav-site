@@ -29,9 +29,7 @@ exports.handler = async (event, context) => {
       subtotal,
       tax,
       tipAmount = 0,
-      tpn,
-      authkey,
-      registerId,
+      terminalId,
       referenceId,
       invoiceNumber = '',
       captureSignature = false,
@@ -39,8 +37,7 @@ exports.handler = async (event, context) => {
       printReceipt = false,
       cartItems = [],
       wineryId,
-      terminalId,
-      dbPersistTimeout = 20000, // Default 20 seconds
+      dbPersistTimeout = 20000,
     } = body;
 
     console.log('📊 Request parameters:');
@@ -48,27 +45,85 @@ exports.handler = async (event, context) => {
     console.log('  - subtotal:', subtotal);
     console.log('  - tax:', tax);
     console.log('  - tipAmount:', tipAmount);
-    console.log('  - tpn:', tpn ? `✓ ${tpn}` : '✗ missing');
-    console.log('  - authkey:', authkey ? `✓ ${authkey}` : '✗ missing');
-    console.log('  - registerId:', registerId ? `✓ ${registerId}` : '✗ missing');
+    console.log('  - terminalId:', terminalId);
+    console.log('  - wineryId:', wineryId);
     console.log('  - referenceId:', referenceId);
     console.log('  - cartItems:', cartItems.length, 'items');
     console.log('  - dbPersistTimeout:', dbPersistTimeout, 'ms');
 
     // Validate required parameters
-    if (!amount || !tpn || !authkey || !registerId) {
+    if (!amount || !terminalId || !wineryId) {
       console.error('❌ Missing required parameters');
       return {
         statusCode: 400,
         headers,
         body: JSON.stringify({
           error: 'Missing required parameters',
-          required: ['amount', 'tpn', 'authkey', 'registerId'],
+          required: ['amount', 'terminalId', 'wineryId'],
           received: {
             amount: !!amount,
-            tpn: !!tpn,
-            authkey: !!authkey,
-            registerId: !!registerId,
+            terminalId: !!terminalId,
+            wineryId: !!wineryId,
+          },
+        }),
+      };
+    }
+
+    // Connect to database to get terminal configuration
+    const client = new Client({
+      connectionString: process.env.DATABASE_URL,
+      ssl: false,
+    });
+
+    await client.connect();
+    console.log('✅ Database connected');
+
+    // Get terminal configuration
+    const terminalResult = await client.query(
+      `SELECT processor, processor_terminal_config
+       FROM terminals
+       WHERE id = $1 AND deleted_at IS NULL`,
+      [terminalId]
+    );
+
+    if (terminalResult.rows.length === 0) {
+      await client.end();
+      return {
+        statusCode: 404,
+        headers,
+        body: JSON.stringify({ error: 'Terminal not found' }),
+      };
+    }
+
+    const terminal = terminalResult.rows[0];
+    const terminalConfig = terminal.processor_terminal_config;
+
+    console.log('🖥️ Terminal processor:', terminal.processor);
+    console.log('🖥️ Terminal config keys:', Object.keys(terminalConfig));
+
+    // Extract credentials from terminal config
+    const tpn = terminalConfig.tpn;
+    const registerId = terminalConfig.register_id;
+    const authkey = terminalConfig.auth_key;
+    const apiBaseUrl = terminalConfig.api_base_url || 'https://test.spinpos.net';
+
+    console.log('📋 Terminal credentials:');
+    console.log('  - TPN:', tpn);
+    console.log('  - Register ID:', registerId);
+    console.log('  - Auth Key:', authkey ? '✓ present' : '✗ missing');
+    console.log('  - API Base URL:', apiBaseUrl);
+
+    if (!tpn || !registerId || !authkey) {
+      await client.end();
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({
+          error: 'Terminal configuration incomplete',
+          missing: {
+            tpn: !tpn,
+            registerId: !registerId,
+            authkey: !authkey,
           },
         }),
       };
@@ -168,7 +223,7 @@ exports.handler = async (event, context) => {
     };
 
     console.log('📤 Sending Sale request to SPIN API:');
-    console.log('  - Endpoint: https://test.spinpos.net/v2/Payment/Sale');
+    console.log('  - Endpoint:', `${apiBaseUrl}/v2/Payment/Sale`);
     console.log('  - Amount:', saleRequest.Amount);
     console.log('  - ReferenceId:', saleRequest.ReferenceId);
 
@@ -181,7 +236,7 @@ exports.handler = async (event, context) => {
     });
 
     // Create SPIN API call promise
-    const spinPromise = fetch('https://test.spinpos.net/v2/Payment/Sale', {
+    const spinPromise = fetch(`${apiBaseUrl}/v2/Payment/Sale`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -227,23 +282,9 @@ exports.handler = async (event, context) => {
     if (result.timeout) {
       // Timeout reached - persist to database and return processing status
       console.log('💾 Persisting transaction status to database...');
-      console.log('💾 Database URL exists:', !!process.env.DATABASE_URL);
-      console.log('💾 Reference ID:', saleRequest.ReferenceId);
-      console.log('💾 Winery ID:', wineryId);
-      console.log('💾 Terminal ID:', terminalId);
-      console.log('💾 Amount:', amount);
-
-      const client = new Client({
-        connectionString: process.env.DATABASE_URL,
-        ssl: false,
-      });
 
       try {
-        console.log('🔌 Connecting to database...');
-        await client.connect();
-        console.log('✅ Database connected');
-
-        console.log('📝 Executing INSERT query...');
+        console.log('🔍 Executing INSERT query...');
         const insertResult = await client.query(
           `INSERT INTO terminal_transaction_status 
            (reference_id, winery_id, terminal_id, amount, status, spin_request, created_at)
@@ -263,14 +304,10 @@ exports.handler = async (event, context) => {
         console.error('❌ Database error:', dbError);
         console.error('❌ Error code:', dbError.code);
         console.error('❌ Error message:', dbError.message);
-        console.error('❌ Error detail:', dbError.detail);
       } finally {
         await client.end();
         console.log('🔌 Database connection closed');
       }
-
-      // Note: Background updates won't work due to Netlify 26s function timeout
-      // Frontend will trigger verify-terminal-transaction after 120s via polling
 
       // Return processing status to frontend
       return {
@@ -285,6 +322,7 @@ exports.handler = async (event, context) => {
       };
     } else {
       // Got response before timeout - return normally
+      await client.end();
       console.log('✅ Got SPIN response before timeout');
       console.log('📊 Response data keys:', Object.keys(result.data));
 

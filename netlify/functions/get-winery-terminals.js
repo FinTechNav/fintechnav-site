@@ -34,14 +34,11 @@ exports.handler = async (event, context) => {
       `
       SELECT 
         id,
-        terminal_type,
-        tpn,
-        register_id,
-        auth_key,
-        ftd_auth_token,
-        ftd_merchant_id,
-        api_environment,
         name,
+        terminal_type,
+        processor,
+        processor_terminal_config,
+        api_environment,
         location,
         status
       FROM terminals

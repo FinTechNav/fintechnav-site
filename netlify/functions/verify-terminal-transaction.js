@@ -69,7 +69,7 @@ exports.handler = async (event, context) => {
     console.log('📋 SPIN request RegisterId:', spinRequest.RegisterId);
     console.log('📋 Original PaymentType:', spinRequest.PaymentType);
 
-    // Build SPIN Status API request matching official format
+    // Build SPIN Status API request
     const statusRequest = {
       TransactionNumber: null,
       PaymentType: spinRequest.PaymentType || 'Credit',
@@ -91,7 +91,6 @@ exports.handler = async (event, context) => {
     };
 
     console.log('🔍 Checking SPIN Status API for:', reference_id);
-    console.log('📤 Status request:', JSON.stringify(statusRequest, null, 2));
 
     // Call SPIN Status API
     const response = await fetch('https://test.spinpos.net/v2/Payment/Status', {
@@ -105,13 +104,12 @@ exports.handler = async (event, context) => {
 
     console.log('📨 SPIN Status API response status:', response.status);
     const responseText = await response.text();
-    console.log('📨 SPIN Status API raw response:', responseText);
 
     let statusData;
 
     try {
       statusData = JSON.parse(responseText);
-      console.log('✅ Parsed SPIN Status response:', JSON.stringify(statusData, null, 2));
+      console.log('✅ Parsed SPIN Status response');
     } catch (parseError) {
       console.error('❌ Failed to parse SPIN Status response:', parseError);
       await client.end();
@@ -125,7 +123,7 @@ exports.handler = async (event, context) => {
       };
     }
 
-    // Determine final status based on SPIN response
+    // Determine final status
     let finalStatus = 'error';
     const resultCode = statusData.GeneralResponse?.ResultCode || statusData.ResultCode;
     const statusCode = statusData.GeneralResponse?.StatusCode || statusData.StatusCode;
@@ -147,23 +145,16 @@ exports.handler = async (event, context) => {
 
     console.log('📊 Final status determined:', finalStatus);
 
-    // Update database with status check result
-    console.log('📝 Updating database with status:', finalStatus);
-    const updateResult = await client.query(
+    // Update terminal_transaction_status table
+    console.log('🔍 Updating terminal_transaction_status...');
+    await client.query(
       `UPDATE terminal_transaction_status 
        SET status = $1, 
            spin_response = $2, 
            status_checked_at = NOW()
-       WHERE reference_id = $3
-       RETURNING id`,
+       WHERE reference_id = $3`,
       [finalStatus, JSON.stringify(statusData), reference_id]
     );
-
-    if (updateResult.rows.length > 0) {
-      console.log('✅ Database updated, ID:', updateResult.rows[0].id);
-    } else {
-      console.error('❌ No rows updated');
-    }
 
     await client.end();
     console.log('🔌 Database connection closed');

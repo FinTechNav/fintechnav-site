@@ -9,11 +9,7 @@ exports.handler = async (event, context) => {
   };
 
   if (event.httpMethod === 'OPTIONS') {
-    return {
-      statusCode: 200,
-      headers,
-      body: '',
-    };
+    return { statusCode: 200, headers, body: '' };
   }
 
   if (event.httpMethod !== 'GET') {
@@ -24,14 +20,13 @@ exports.handler = async (event, context) => {
     };
   }
 
-  const customerId = event.queryStringParameters?.customer_id;
   const wineryId = event.queryStringParameters?.winery_id;
 
-  if (!customerId || !wineryId) {
+  if (!wineryId) {
     return {
       statusCode: 400,
       headers,
-      body: JSON.stringify({ error: 'customer_id and winery_id are required' }),
+      body: JSON.stringify({ error: 'winery_id parameter is required' }),
     };
   }
 
@@ -42,46 +37,44 @@ exports.handler = async (event, context) => {
 
   try {
     await client.connect();
-    console.log('✅ Connected to database');
 
     const result = await client.query(
-      `
-      SELECT 
-        id,
-        processor_payment_method_id as token,
-        card_type || ' •••• ' || card_last_4 AS display_name,
-        card_type,
-        card_brand,
-        card_last_4,
-        card_expiry_month,
-        card_expiry_year,
-        is_default,
-        last_used_at,
-        processor
-      FROM payment_methods
-      WHERE customer_id = $1 
-        AND winery_id = $2
-        AND is_active = TRUE
-      ORDER BY is_default DESC, last_used_at DESC NULLS LAST
-      `,
-      [customerId, wineryId]
+      `SELECT 
+        processor,
+        processor_config,
+        processor_environment,
+        features_enabled,
+        is_active
+       FROM winery_payment_config
+       WHERE winery_id = $1 AND is_active = TRUE`,
+      [wineryId]
     );
 
-    console.log(`✅ Retrieved ${result.rows.length} payment methods`);
+    if (result.rows.length === 0) {
+      return {
+        statusCode: 404,
+        headers,
+        body: JSON.stringify({
+          error: 'No payment processor configured for this winery',
+        }),
+      };
+    }
 
     return {
       statusCode: 200,
       headers,
-      body: JSON.stringify(result.rows),
+      body: JSON.stringify({
+        success: true,
+        config: result.rows[0],
+      }),
     };
   } catch (error) {
-    console.error('❌ Database error:', error);
-
+    console.error('Database error:', error);
     return {
       statusCode: 500,
       headers,
       body: JSON.stringify({
-        error: 'Failed to retrieve payment methods',
+        error: 'Failed to retrieve processor configuration',
         details: error.message,
       }),
     };
