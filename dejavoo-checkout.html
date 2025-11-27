@@ -572,13 +572,13 @@
           const div = document.createElement('div');
           div.className = 'card-option';
           div.innerHTML = `
-            <input type="radio" name="payment-method" value="${card.token_id}" id="card-${card.token_id}">
+            <input type="radio" name="payment-method" value="${card.id}" id="card-${card.id}">
             <div>
-              <strong>${card.card_type || 'Card'} •••• ${card.card_last_four}</strong><br>
-              <small style="color: #999">Expires ${card.expiry_month}/${card.expiry_year}</small>
+              <strong>${card.card_type || 'Card'} •••• ${card.card_last_4}</strong><br>
+              <small style="color: #999">Expires ${card.card_expiry_month}/${card.card_expiry_year}</small>
             </div>
           `;
-          div.onclick = function() { selectSavedCard(card.token_id, this); };
+          div.onclick = function() { selectSavedCard(card.id, this); };
           list.appendChild(div);
         });
 
@@ -593,25 +593,25 @@
         list.appendChild(newDiv);
 
         section.style.display = 'block';
-        selectSavedCard(savedCards[0].token_id);
+        selectSavedCard(savedCards[0].id);
       }
 
       // Select saved card
-      function selectSavedCard(tokenId, clickedElement) {
-        selectedPaymentMethod = tokenId;
+      function selectSavedCard(paymentMethodId, clickedElement) {
+        selectedPaymentMethod = paymentMethodId;
         document.querySelectorAll('.card-option').forEach(el => el.classList.remove('selected'));
         
         if (clickedElement) {
           clickedElement.classList.add('selected');
         } else {
-          const cardElement = document.getElementById(`card-${tokenId}`)?.closest('.card-option');
+          const cardElement = document.getElementById(`card-${paymentMethodId}`)?.closest('.card-option');
           if (cardElement) cardElement.classList.add('selected');
         }
         
-        document.getElementById(`card-${tokenId}`).checked = true;
+        document.getElementById(`card-${paymentMethodId}`).checked = true;
         document.getElementById('savedCardCvv').style.display = 'block';
         document.getElementById('newCardForm').style.display = 'none';
-        console.log('💳 Selected saved card:', tokenId);
+        console.log('💳 Selected saved card:', paymentMethodId);
       }
 
       // Select new card
@@ -705,8 +705,8 @@
         } else if (selectedPaymentMethod === 'googlepay') {
           document.getElementById('reviewPayment').textContent = 'Google Pay';
         } else {
-          const card = savedCards.find(c => c.token_id === selectedPaymentMethod);
-          document.getElementById('reviewPayment').textContent = `${card.card_type} •••• ${card.card_last_four}`;
+          const card = savedCards.find(c => c.id === selectedPaymentMethod);
+          document.getElementById('reviewPayment').textContent = `${card.card_type} •••• ${card.card_last_4}`;
         }
 
         if (selectedPaymentMethod !== 'googlepay') {
@@ -759,8 +759,8 @@
               if (tokenResponse.statusCode !== '00') throw new Error('Token generation failed');
               paymentTokenId = tokenResponse.payment_token_id;
             } else {
-              const card = savedCards.find(c => c.token_id === selectedPaymentMethod);
-              reusableToken = card.reusable_token;
+              const card = savedCards.find(c => c.id === selectedPaymentMethod);
+              reusableToken = card.token;
               console.log("💳 Using saved card token:", reusableToken);
             }
 
