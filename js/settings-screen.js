@@ -230,6 +230,7 @@ const SettingsScreen = {
 
     // Card Not Present Section
     if (cardNotPresent) {
+      const cnpConfig = cardNotPresent.processor_terminal_config || {};
       html += `
         <div style="margin-bottom: 30px; padding: 20px; background: rgba(255, 255, 255, 0.03); border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.1);">
           <h4 style="color: #f39c12; margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
@@ -238,11 +239,11 @@ const SettingsScreen = {
           <div style="display: grid; gap: 15px;">
             <div>
               <span style="color: #95a5a6; font-size: 12px;">Merchant ID:</span>
-              <div style="color: #e8e8e8; font-family: monospace; margin-top: 4px; font-size: 14px;">${cardNotPresent.ftd_merchant_id || 'Not configured'}</div>
+              <div style="color: #e8e8e8; font-family: monospace; margin-top: 4px; font-size: 14px;">${cnpConfig.merchant_id || 'Not configured'}</div>
             </div>
             <div>
               <span style="color: #95a5a6; font-size: 12px;">Auth Token:</span>
-              <div style="color: #e8e8e8; font-family: monospace; margin-top: 4px; font-size: 11px; word-break: break-all;">${cardNotPresent.ftd_auth_token ? '••••••••' + cardNotPresent.ftd_auth_token.slice(-8) : 'Not configured'}</div>
+              <div style="color: #e8e8e8; font-family: monospace; margin-top: 4px; font-size: 11px; word-break: break-all;">${cnpConfig.ftd_security_key ? '••••••••' + cnpConfig.ftd_security_key.slice(-8) : 'Not configured'}</div>
             </div>
             <div>
               <span style="color: #95a5a6; font-size: 12px;">Environment:</span>
@@ -259,6 +260,7 @@ const SettingsScreen = {
 
     // Card Present Section
     if (cardPresent) {
+      const cpConfig = cardPresent.processor_terminal_config || {};
       const status = this.terminalStatuses[cardPresent.id];
       const lastChecked = this.lastChecked[cardPresent.id];
 
@@ -303,15 +305,15 @@ const SettingsScreen = {
           <div style="display: grid; gap: 15px; margin-bottom: 15px;">
             <div>
               <span style="color: #95a5a6; font-size: 12px;">TPN (Terminal Processing Number):</span>
-              <div style="color: #e8e8e8; font-family: monospace; margin-top: 4px; font-size: 14px;">${cardPresent.tpn || 'Not configured'}</div>
+              <div style="color: #e8e8e8; font-family: monospace; margin-top: 4px; font-size: 14px;">${cpConfig.tpn || 'Not configured'}</div>
             </div>
             <div>
               <span style="color: #95a5a6; font-size: 12px;">Register ID:</span>
-              <div style="color: #e8e8e8; font-family: monospace; margin-top: 4px; font-size: 14px;">${cardPresent.register_id || 'Not configured'}</div>
+              <div style="color: #e8e8e8; font-family: monospace; margin-top: 4px; font-size: 14px;">${cpConfig.register_id || 'Not configured'}</div>
             </div>
             <div>
               <span style="color: #95a5a6; font-size: 12px;">Auth Key:</span>
-              <div style="color: #e8e8e8; font-family: monospace; margin-top: 4px; font-size: 14px;">${cardPresent.auth_key ? '••••••••' + cardPresent.auth_key.slice(-8) : 'Not configured'}</div>
+              <div style="color: #e8e8e8; font-family: monospace; margin-top: 4px; font-size: 14px;">${cpConfig.auth_key ? '••••••••' + cpConfig.auth_key.slice(-8) : 'Not configured'}</div>
             </div>
             <div>
               <span style="color: #95a5a6; font-size: 12px;">Terminal Name:</span>
@@ -488,10 +490,12 @@ const SettingsScreen = {
       return;
     }
 
+    const config = terminal.processor_terminal_config || {};
+
     console.log('📋 Terminal details:');
-    console.log('  - TPN:', terminal.tpn);
-    console.log('  - Register ID:', terminal.register_id);
-    console.log('  - Auth Key:', terminal.auth_key ? 'present' : 'missing');
+    console.log('  - TPN:', config.tpn);
+    console.log('  - Register ID:', config.register_id);
+    console.log('  - Auth Key:', config.auth_key ? 'present' : 'missing');
 
     if (!silent && resultDiv) {
       resultDiv.innerHTML = `
@@ -502,9 +506,9 @@ const SettingsScreen = {
     }
 
     const requestBody = {
-      register_id: terminal.register_id,
-      auth_key: terminal.auth_key,
-      tpn: terminal.tpn,
+      register_id: config.register_id,
+      auth_key: config.auth_key,
+      tpn: config.tpn,
     };
 
     console.log('📤 Sending request to check-spin-terminal-status');

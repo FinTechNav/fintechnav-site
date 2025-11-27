@@ -245,15 +245,14 @@ const POSScreen = {
 
       if (
         cardPresentTerminal &&
-        cardPresentTerminal.tpn &&
-        cardPresentTerminal.register_id &&
-        cardPresentTerminal.auth_key
+        cardPresentTerminal.processor_terminal_config &&
+        cardPresentTerminal.processor_terminal_config.tpn &&
+        cardPresentTerminal.processor_terminal_config.register_id &&
+        cardPresentTerminal.processor_terminal_config.auth_key
       ) {
         return {
           terminalId: cardPresentTerminal.id,
-          tpn: cardPresentTerminal.tpn,
-          registerId: cardPresentTerminal.register_id,
-          authkey: cardPresentTerminal.auth_key,
+          wineryId: App.currentWinery.id,
         };
       }
 
@@ -294,9 +293,8 @@ const POSScreen = {
           subtotal: subtotal,
           tax: tax,
           tipAmount: 0,
-          tpn: terminalConfig.tpn,
-          authkey: terminalConfig.authkey,
-          registerId: terminalConfig.registerId,
+          terminalId: terminalConfig.terminalId,
+          wineryId: terminalConfig.wineryId,
           referenceId: referenceId,
           wineryId: App.currentWinery?.id,
           terminalId: terminalConfig.terminalId,
