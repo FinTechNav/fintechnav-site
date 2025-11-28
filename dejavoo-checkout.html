@@ -899,11 +899,6 @@
         const billingZip = document.getElementById('billingZip').value;
         const billingAddress = document.getElementById('billingAddress').value;
 
-        // Use Netlify proxy instead of direct API call
-        const proxyUrl = ENVIRONMENT === 'production' 
-          ? '/api/ipos-transact-prod'
-          : '/api/ipos-transact-sandbox';
-
         const requestBody = {
           merchantAuthentication: {
             merchantId: MERCHANT_ID,
@@ -925,10 +920,10 @@
           requestBody.transactionRequest.cvv = document.getElementById('savedCvv').value;
         }
 
-        console.log('📤 Calling iPOS via Netlify proxy:', proxyUrl);
+        console.log('📤 Calling iPOS API directly:', API_BASE_URL);
         console.log('📤 Request:', requestBody);
 
-        const response = await fetch(proxyUrl, {
+        const response = await fetch(API_BASE_URL, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
