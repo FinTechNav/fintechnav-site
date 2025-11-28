@@ -775,51 +775,46 @@
           console.log("🔍 Analyzing response structure...");
           console.log("   Response keys:", Object.keys(saleResponse));
           
-          // Check response
-          const transactionData = saleResponse.iposTransactResponse || saleResponse.iposhpresponse;
-          
-          console.log("🔍 Transaction data found:", !!transactionData);
-          if (transactionData) {
-            console.log("   Transaction data keys:", Object.keys(transactionData));
-            console.log("   Response code:", transactionData.responseCode);
-            console.log("   Response message:", transactionData.responseMessage || transactionData.errResponseMessage);
-          }
-          
-          if (!transactionData) {
-            console.error("❌ No transaction data in response");
-            if (saleResponse.errors && saleResponse.errors.length > 0) {
-              const error = saleResponse.errors[0];
-              console.error("   API Error:", error);
-              showAlert('reviewAlerts', 'error', `API Error: ${error.message}`);
-            } else {
-              console.error("   Unknown error format:", saleResponse);
-              showAlert('reviewAlerts', 'error', 'Unknown error occurred');
-            }
+          // Check if backend processing succeeded
+          if (!saleResponse.success) {
+            console.error("❌ Backend processing failed");
+            showDeclineModal(saleResponse.declineInfo || {
+              code: 'ERROR',
+              message: 'PROCESSING ERROR',
+              definition: saleResponse.error || 'Payment processing failed',
+            });
             return;
           }
 
-          console.log("🎯 Response code check:", transactionData.responseCode, "=== '200'?", transactionData.responseCode === '200');
+          console.log("🎯 Transaction approved:", saleResponse.approved);
           
-          if (transactionData.responseCode === '200') {
+          if (saleResponse.approved) {
             console.log("✅ Transaction approved!");
             
-            // Save token if needed
+            // Save token if needed (token is in transactionData.chdToken)
             if (selectedPaymentMethod === 'new' && selectedCustomer.customer_id && document.getElementById('saveCardCheckbox').checked) {
               console.log("💾 Saving payment token...");
-              await savePaymentToken(saleResponse);
+              // Reconstruct response format for savePaymentToken function
+              const legacyResponse = {
+                iposTransactResponse: saleResponse.transactionData
+              };
+              await savePaymentToken(legacyResponse);
             }
             
             // Save transaction
             console.log("💾 Saving transaction to database...");
-            await saveTransaction(saleResponse);
+            // Reconstruct response format for saveTransaction function
+            const legacyResponse = {
+              iposTransactResponse: saleResponse.transactionData
+            };
+            await saveTransaction(legacyResponse);
             
             console.log("🎉 Showing success page");
-            showSuccessPage(saleResponse);
+            showSuccessPage(legacyResponse);
           } else {
-            const errorMsg = transactionData.errResponseMessage || transactionData.responseMessage || 'Transaction failed';
-            console.error("❌ Transaction declined:", errorMsg);
-            console.error("   Full transaction data:", transactionData);
-            showAlert('reviewAlerts', 'error', `❌ ${errorMsg}`);
+            console.error("❌ Transaction declined");
+            console.error("   Decline info:", saleResponse.declineInfo);
+            showDeclineModal(saleResponse.declineInfo);
           }
         } catch (error) {
           console.error('💥 Error in placeOrder:', error);
@@ -900,51 +895,43 @@
       async function processSale() {
         const billingZip = document.getElementById('billingZip').value;
         const billingAddress = document.getElementById('billingAddress').value;
-        const streetNo = billingAddress.split(' ')[0];
 
         const requestBody = {
-          merchantAuthentication: {
-            merchantId: MERCHANT_ID,
-            transactionReferenceId: 'TEST' + Date.now(),
-          },
-          transactionRequest: {
-            transactionType: 1,
-            amount: 15500,
-            applySteamSettingTipFeeTax: false,
-          },
-          preferences: {
-            eReceipt: true,
-            customerName: document.getElementById('billingName').value,
-            customerEmail: selectedCustomer.email || 'guest@example.com',
-            customerMobile: '+14048811898',
-          },
-          Avs: {
-            StreetNo: streetNo,
-            Zip: billingZip,
-          },
+          amount: 155.00, // Convert from cents
+          subtotal: 145.00,
+          tax: 10.00,
+          tipAmount: 0,
+          customerId: selectedCustomer?.id || selectedCustomer?.customer_id,
+          wineryId: WINERY_ID,
+          referenceId: 'WEB' + Date.now(),
+          saveCard: selectedPaymentMethod === 'new' && selectedCustomer?.customer_id && document.getElementById('saveCardCheckbox')?.checked,
+          billingAddress: billingAddress,
+          billingZip: billingZip,
         };
 
         // Use paymentTokenId for new cards, cardToken for saved cards
         if (selectedPaymentMethod === 'new') {
-          requestBody.transactionRequest.paymentTokenId = paymentTokenId;
-          requestBody.preferences.requestCardToken = true;
+          requestBody.paymentTokenId = paymentTokenId;
         } else {
-          requestBody.transactionRequest.cardToken = reusableToken;
-          requestBody.transactionRequest.cvv = document.getElementById('savedCvv').value;
+          requestBody.cardToken = reusableToken;
+          requestBody.cvv = document.getElementById('savedCvv').value;
         }
 
-        console.log('iPOS Transact Request:', requestBody);
+        console.log('📤 Calling process-card-not-present-sale:', requestBody);
 
-        const response = await fetch(API_BASE_URL, {
+        const response = await fetch('/.netlify/functions/process-card-not-present-sale', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            token: API_AUTH_TOKEN,
           },
           body: JSON.stringify(requestBody),
         });
 
-        if (!response.ok) throw new Error('API request failed');
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error('Payment processing failed: ' + errorText);
+        }
+        
         return await response.json();
       }
 
@@ -1072,6 +1059,87 @@
         const alertClass = type === 'success' ? 'alert-success' : 'alert-error';
         container.innerHTML = `<div class="alert ${alertClass}">${message}</div>`;
       }
+
+      function showDeclineModal(declineInfo) {
+        // Remove any existing decline modal
+        const existingModal = document.getElementById('declineModal');
+        if (existingModal) {
+          existingModal.remove();
+        }
+
+        // Create decline modal
+        const modal = document.createElement('div');
+        modal.id = 'declineModal';
+        modal.style.cssText = `
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: rgba(0, 0, 0, 0.7);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 10000;
+          font-family: Georgia, serif;
+        `;
+
+        const content = document.createElement('div');
+        content.style.cssText = `
+          background: white;
+          border-radius: 12px;
+          padding: 40px;
+          max-width: 500px;
+          width: 90%;
+          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+          text-align: center;
+        `;
+
+        content.innerHTML = `
+          <div style="color: #e74c3c; font-size: 64px; margin-bottom: 20px;">
+            ✕
+          </div>
+          <h2 style="color: #333; margin: 0 0 30px 0; font-size: 28px;">
+            PAYMENT DECLINED
+          </h2>
+          <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 30px; text-align: left;">
+            <div style="margin-bottom: 15px;">
+              <div style="color: #666; font-size: 14px; margin-bottom: 5px;">Decline Code</div>
+              <div style="color: #333; font-weight: bold; font-size: 18px;">${declineInfo.code || 'N/A'}</div>
+            </div>
+            <div style="margin-bottom: 15px;">
+              <div style="color: #666; font-size: 14px; margin-bottom: 5px;">Authorization Response Message</div>
+              <div style="color: #333; font-weight: bold; font-size: 18px;">${declineInfo.message || 'Unknown error'}</div>
+            </div>
+            <div>
+              <div style="color: #666; font-size: 14px; margin-bottom: 5px;">Response Definition</div>
+              <div style="color: #333; font-size: 16px; line-height: 1.5;">${declineInfo.definition || 'No details available'}</div>
+            </div>
+          </div>
+          <button id="closeDeclineModal" style="
+            background: #5dade2;
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 18px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: Georgia, serif;
+            font-weight: bold;
+          ">
+            Close
+          </button>
+        `;
+
+        modal.appendChild(content);
+        document.body.appendChild(modal);
+
+        // Handle close button
+        document.getElementById('closeDeclineModal').addEventListener('click', () => {
+          modal.remove();
+        });
+      }
+
 
       function setStep(step) {
         for (let i = 1; i <= 3; i++) {

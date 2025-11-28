@@ -1180,7 +1180,11 @@ const POSScreen = {
           console.log('⚠️ Terminal timeout - transaction not attempted');
           this.stopPolling();
           this.hideProcessingOverlay();
-          alert('Terminal timed out. No payment was attempted. Please try again.');
+          this.showDeclineModal({
+            code: 'TIMEOUT',
+            message: 'Terminal Timeout',
+            definition: 'Terminal timed out. No payment was attempted. Please try again.',
+          });
           return;
         }
 
@@ -1203,14 +1207,38 @@ const POSScreen = {
                 referenceId
               );
             } else {
-              alert('Transaction approved but could not load details. Please check order history.');
+              this.showDeclineModal({
+                code: 'ERROR',
+                message: 'Load Error',
+                definition:
+                  'Transaction approved but could not load details. Please check order history.',
+              });
             }
           } else if (statusData.status === 'declined') {
-            alert(`Payment declined: ${statusData.message || 'Please try another payment method'}`);
+            this.showDeclineModal({
+              code: statusData.status_code || 'DECLINED',
+              message: statusData.result_code || 'Payment Declined',
+              definition: statusData.message || 'Please try another payment method',
+            });
           }
         } else if (statusData.status === 'error' && statusData.message !== 'Not found') {
-          // Don't stop polling on other errors - keep checking
-          console.log('⚠️ Error status, continuing to poll...');
+          // Check if this is a SPIN error with data
+          if (statusData.data && statusData.data.GeneralResponse) {
+            const generalResponse = statusData.data.GeneralResponse;
+            this.stopPolling();
+            this.hideProcessingOverlay();
+            this.showDeclineModal({
+              code: generalResponse.StatusCode || generalResponse.ResultCode || 'ERROR',
+              message: generalResponse.Message || 'Transaction Error',
+              definition:
+                generalResponse.DetailedMessage ||
+                generalResponse.Message ||
+                'An error occurred processing the payment',
+            });
+          } else {
+            // Generic error - keep polling
+            console.log('⚠️ Error status, continuing to poll...');
+          }
         }
       } catch (error) {
         console.error('❌ Polling error:', error);
@@ -1228,9 +1256,12 @@ const POSScreen = {
   cancelPolling() {
     this.stopPolling();
     this.hideProcessingOverlay();
-    alert(
-      'Status checking cancelled. Transaction may still be processing. Check order history or use reference ID to verify.'
-    );
+    this.showDeclineModal({
+      code: 'CANCELLED',
+      message: 'Status Check Cancelled',
+      definition:
+        'Status checking cancelled. Transaction may still be processing. Check order history or use reference ID to verify.',
+    });
   },
 
   async manualStatusCheck(referenceId, silent = false) {
@@ -1269,39 +1300,112 @@ const POSScreen = {
   showTimeoutMessage(referenceId) {
     this.hideProcessingModal();
 
-    if (
-      confirm(
-        'Transaction is taking longer than expected.\n\n' +
-          `Reference ID: ${referenceId}\n\n` +
-          'Would you like to check the status now?'
-      )
-    ) {
-      this.manualStatusCheck(referenceId);
-    } else {
-      alert(
-        `Transaction reference: ${referenceId}\n\n` +
-          'You can check this transaction later in order history or contact support with this reference ID.'
-      );
-    }
+    this.showDeclineModal({
+      code: '13',
+      message: 'Timed out',
+      definition: `Transaction is taking longer than expected. Reference ID: ${referenceId}. You can check this transaction later in order history or use the Manual Status Check button.`,
+    });
   },
 
   async handleTerminalResponse(transactionData, subtotal, tax, total, referenceId) {
     console.log('🔍 Handling terminal response:', transactionData);
 
-    const responseData = transactionData.GeneralResponse || transactionData;
-    const responseCode = responseData.ResponseCode || transactionData.ResponseCode;
-    const message = responseData.Message || transactionData.Message;
+    // Check if decline info is provided by backend
+    const declineInfo = transactionData.declineInfo;
 
-    if (responseCode === '00' || responseCode === '0' || message === 'Approved') {
+    if (declineInfo && declineInfo.isApproval) {
       console.log('✅ Transaction approved');
       await this.saveOrderWithPayment(subtotal, tax, total, transactionData, referenceId);
     } else {
+      // Transaction declined or error
       console.error('❌ Transaction declined or error');
-      alert(
-        `Payment failed: ${message || 'Unknown error'}\n\n` +
-          `Response Code: ${responseCode || 'N/A'}\n\n` +
-          'Please try again or use a different payment method.'
+      this.showDeclineModal(
+        declineInfo || {
+          code: 'ERROR',
+          message: 'UNKNOWN ERROR',
+          definition: 'An error occurred processing the payment',
+        }
       );
     }
+  },
+
+  showDeclineModal(declineInfo) {
+    // Remove any existing decline modal
+    const existingModal = document.getElementById('declineModal');
+    if (existingModal) {
+      existingModal.remove();
+    }
+
+    // Create decline modal
+    const modal = document.createElement('div');
+    modal.id = 'declineModal';
+    modal.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+      font-family: Georgia, serif;
+    `;
+
+    const content = document.createElement('div');
+    content.style.cssText = `
+      background: white;
+      border-radius: 12px;
+      padding: 40px;
+      max-width: 500px;
+      width: 90%;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      text-align: center;
+    `;
+
+    content.innerHTML = `
+      <div style="color: #e74c3c; font-size: 64px; margin-bottom: 20px;">
+        ✕
+      </div>
+      <h2 style="color: #333; margin: 0 0 30px 0; font-size: 28px;">
+        PAYMENT DECLINED
+      </h2>
+      <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 30px; text-align: left;">
+        <div style="margin-bottom: 15px;">
+          <div style="color: #666; font-size: 14px; margin-bottom: 5px;">Decline Code</div>
+          <div style="color: #333; font-weight: bold; font-size: 18px;">${declineInfo.code || 'N/A'}</div>
+        </div>
+        <div style="margin-bottom: 15px;">
+          <div style="color: #666; font-size: 14px; margin-bottom: 5px;">Authorization Response Message</div>
+          <div style="color: #333; font-weight: bold; font-size: 18px;">${declineInfo.message || 'Unknown error'}</div>
+        </div>
+        <div>
+          <div style="color: #666; font-size: 14px; margin-bottom: 5px;">Response Definition</div>
+          <div style="color: #333; font-size: 16px; line-height: 1.5;">${declineInfo.definition || 'No details available'}</div>
+        </div>
+      </div>
+      <button id="closeDeclineModal" style="
+        background: #5dade2;
+        color: white;
+        border: none;
+        padding: 15px 40px;
+        font-size: 18px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-family: Georgia, serif;
+        font-weight: bold;
+      ">
+        Close
+      </button>
+    `;
+
+    modal.appendChild(content);
+    document.body.appendChild(modal);
+
+    // Handle close button
+    document.getElementById('closeDeclineModal').addEventListener('click', () => {
+      modal.remove();
+    });
   },
 };
