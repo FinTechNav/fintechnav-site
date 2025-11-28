@@ -503,13 +503,16 @@ exports.handler = async (event, context) => {
     // Extract Dejavoo credentials
     const merchantId = processorConfig.merchant_id;
     const apiAuthToken = processorConfig.api_auth_token;
+
+    // Use Netlify proxy instead of direct API call (free tier network restriction workaround)
     const apiBaseUrl =
       config.processor_environment === 'production'
-        ? 'https://api.iposcloud.net/ipostransact'
-        : 'https://test.iposcloud.net/ipostransact';
+        ? '/api/ipos-transact-prod'
+        : '/api/ipos-transact-sandbox';
 
     console.log('🔑 Merchant ID:', merchantId);
     console.log('🔑 API Base URL:', apiBaseUrl);
+    console.log('🔑 Environment:', config.processor_environment);
     console.log('🔑 Auth Token:', apiAuthToken ? '✓ present' : '✗ missing');
 
     if (!merchantId || !apiAuthToken) {
@@ -567,11 +570,16 @@ exports.handler = async (event, context) => {
     console.log('  - Request card token:', requestBody.transactionRequest.requestCardToken);
     console.log('  - Full request body:', JSON.stringify(requestBody, null, 2));
 
-    // Call iPOS Transact API
+    // Call iPOS Transact API via Netlify proxy
     let response;
     try {
       console.log('🔄 Calling fetch...');
-      response = await fetch(apiBaseUrl, {
+
+      // Build full URL - Netlify functions need full URL for redirects
+      const fullUrl = `https://${event.headers.host}${apiBaseUrl}`;
+      console.log('🔗 Full proxy URL:', fullUrl);
+
+      response = await fetch(fullUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
