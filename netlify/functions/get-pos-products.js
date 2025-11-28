@@ -29,10 +29,14 @@ exports.handler = async (event, context) => {
 
   try {
     await client.connect();
+    console.log('✅ Connected to database');
+    console.log('🔍 Querying for winery_id:', wineryId);
 
     const wineryResult = await client.query('SELECT name FROM wineries WHERE id = $1', [wineryId]);
     const wineryName = wineryResult.rows[0]?.name;
+    console.log('🏢 Winery name:', wineryName);
 
+    console.log('📊 Executing products query...');
     const result = await client.query(
       `
       SELECT 
@@ -74,6 +78,45 @@ exports.handler = async (event, context) => {
     `,
       [wineryId]
     );
+
+    console.log('📦 Total products returned:', result.rows.length);
+
+    // Count by type
+    const byType = result.rows.reduce((acc, p) => {
+      acc[p.type || 'unknown'] = (acc[p.type || 'unknown'] || 0) + 1;
+      return acc;
+    }, {});
+    console.log('📊 Products by type:', JSON.stringify(byType));
+
+    // Count by category
+    const byCategory = result.rows.reduce((acc, p) => {
+      acc[p.category || 'none'] = (acc[p.category || 'none'] || 0) + 1;
+      return acc;
+    }, {});
+    console.log('📊 Products by category:', JSON.stringify(byCategory));
+
+    // Count by tax_category
+    const byTaxCategory = result.rows.reduce((acc, p) => {
+      acc[p.tax_category || 'null'] = (acc[p.tax_category || 'null'] || 0) + 1;
+      return acc;
+    }, {});
+    console.log('💰 Products by tax_category:', JSON.stringify(byTaxCategory));
+
+    // Show first 5 test products if any
+    const testProducts = result.rows.filter((p) => p.category === 'Payment Testing');
+    if (testProducts.length > 0) {
+      console.log(
+        '🧪 Sample test products:',
+        testProducts.slice(0, 5).map((p) => ({
+          name: p.name,
+          price: p.price,
+          sku: p.sku,
+          tax_category: p.tax_category,
+        }))
+      );
+    } else {
+      console.log('⚠️ No Payment Testing products found');
+    }
 
     return {
       statusCode: 200,
