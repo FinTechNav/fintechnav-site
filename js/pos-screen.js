@@ -79,16 +79,38 @@ const POSScreen = {
     }
 
     grid.innerHTML = this.products
-      .map(
-        (product) => `
+      .map((product) => {
+        // Determine icon and details based on product type
+        const icon =
+          product.type === 'wine'
+            ? '🍷'
+            : product.category === 'Payment Testing'
+              ? '💳'
+              : product.category === 'Stemware'
+                ? '🍸'
+                : product.category === 'Decanter'
+                  ? '🍾'
+                  : product.category === 'Provisions'
+                    ? '🧺'
+                    : '📦';
+
+        const details =
+          product.vintage &&
+          product.varietal &&
+          product.vintage !== 'null' &&
+          product.varietal !== 'null'
+            ? `${product.vintage} - ${product.varietal}`
+            : product.category || product.type || '';
+
+        return `
             <div class="product-card" onclick="POSScreen.addToCart(${product.id})">
-                <div class="wine-icon">🍷</div>
+                <div class="wine-icon">${icon}</div>
                 <div class="product-name">${product.name}</div>
-                <div class="product-vintage">${product.vintage} - ${product.varietal}</div>
+                <div class="product-vintage">${details}</div>
                 <div class="product-price">$${parseFloat(product.price).toFixed(2)}</div>
             </div>
-        `
-      )
+          `;
+      })
       .join('');
   },
 
@@ -139,12 +161,17 @@ const POSScreen = {
     if (cashButton) cashButton.disabled = false;
 
     cartItems.innerHTML = this.cart
-      .map(
-        (item) => `
+      .map((item) => {
+        const details =
+          item.vintage && item.varietal && item.vintage !== 'null' && item.varietal !== 'null'
+            ? `${item.vintage} ${item.varietal}`
+            : item.category || item.type || '';
+
+        return `
             <div class="cart-item">
                 <div class="cart-item-info">
                     <div class="cart-item-name">${item.name}</div>
-                    <div class="cart-item-details">${item.vintage} ${item.varietal}</div>
+                    <div class="cart-item-details">${details}</div>
                 </div>
                 <div class="cart-item-qty">
                     <div class="qty-btn" onclick="POSScreen.updateQuantity(${item.id}, -1)">−</div>
@@ -153,8 +180,8 @@ const POSScreen = {
                 </div>
                 <div class="cart-item-price">$${(parseFloat(item.price) * item.quantity).toFixed(2)}</div>
             </div>
-        `
-      )
+          `;
+      })
       .join('');
   },
 
