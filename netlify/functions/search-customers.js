@@ -5,21 +5,31 @@ exports.handler = async (event) => {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type',
     'Access-Control-Allow-Methods': 'GET, OPTIONS',
+    'Content-Type': 'application/json',
   };
 
   if (event.httpMethod === 'OPTIONS') {
     return { statusCode: 200, headers, body: '' };
   }
 
-  const { winery_id, query } = event.queryStringParameters || {};
+  if (event.httpMethod !== 'GET') {
+    return {
+      statusCode: 405,
+      headers,
+      body: JSON.stringify({ error: 'Method not allowed' }),
+    };
+  }
 
-  if (!winery_id || !query) {
+  const params = event.queryStringParameters || {};
+  const { query, limit = '20' } = params;
+
+  if (!query || query.trim().length === 0) {
     return {
       statusCode: 400,
       headers,
       body: JSON.stringify({
         success: false,
-        error: 'winery_id and query are required',
+        error: 'Search query is required',
       }),
     };
   }
@@ -32,26 +42,48 @@ exports.handler = async (event) => {
   try {
     await client.connect();
 
-    // Search customers by name or email
-    const result = await client.query(
-      `
+    // Advanced search with fuzzy matching
+    const searchQuery = `
       SELECT 
-        id,
-        name,
-        email,
-        phone
-      FROM customers
-      WHERE (
-        LOWER(name) LIKE LOWER($1)
-        OR LOWER(email) LIKE LOWER($1)
-        OR phone LIKE $1
-      )
-      AND deleted_at IS NULL
-      ORDER BY name
-      LIMIT 10
-    `,
-      [`%${query}%`]
-    );
+        c.id,
+        c.first_name,
+        c.last_name,
+        c.email,
+        c.phone,
+        c.customer_code,
+        c.city,
+        c.state_code,
+        c.country_code,
+        c.customer_status,
+        c.club_member_status,
+        c.lifetime_value_cents,
+        cs.country_name,
+        cs.default_currency
+      FROM customers c
+      LEFT JOIN country_settings cs ON c.country_code = cs.country_code
+      WHERE c.deleted_at IS NULL
+        AND (
+          c.first_name ILIKE $1 OR
+          c.last_name ILIKE $1 OR
+          c.email ILIKE $1 OR
+          c.phone ILIKE $1 OR
+          c.customer_code ILIKE $1 OR
+          (c.first_name || ' ' || c.last_name) ILIKE $1
+        )
+      ORDER BY 
+        CASE 
+          WHEN c.email = $2 THEN 1
+          WHEN c.customer_code = $2 THEN 2
+          WHEN c.phone = $2 THEN 3
+          ELSE 4
+        END,
+        c.last_activity_date DESC NULLS LAST,
+        c.created_at DESC
+      LIMIT $3
+    `;
+
+    const searchTerm = `%${query.trim()}%`;
+    const result = await client.query(searchQuery, [searchTerm, query.trim(), parseInt(limit)]);
 
     return {
       statusCode: 200,
@@ -59,10 +91,11 @@ exports.handler = async (event) => {
       body: JSON.stringify({
         success: true,
         customers: result.rows,
+        count: result.rows.length,
       }),
     };
   } catch (error) {
-    console.error('Error searching customers:', error);
+    console.error('Database error:', error);
     return {
       statusCode: 500,
       headers,
