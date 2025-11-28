@@ -430,9 +430,6 @@ const App = {
     }
 
     if (screen === 'customers') {
-      if (!customersScreen) {
-        customersScreen = new CustomersScreen();
-      }
       await customersScreen.init();
     } else if (screen === 'products') {
       await ProductsScreen.init();
@@ -451,9 +448,6 @@ const App = {
     }
   },
 };
-
-// Global screen instances
-let customersScreen = null;
 
 // Global functions for HTML onclick handlers
 function toggleSidebar() {
