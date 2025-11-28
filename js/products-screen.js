@@ -118,7 +118,7 @@ const ProductsScreen = {
                     <input type="text" 
                         placeholder="Search products..." 
                         value="${this.searchTerm}"
-                        onkeyup="ProductsScreen.handleSearch(this.value)"
+                        oninput="ProductsScreen.handleSearch(this.value)"
                         style="flex: 1; min-width: 250px; padding: 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.05); color: #e8e8e8;">
                     
                     <select onchange="ProductsScreen.handleFilterType(this.value)" 
@@ -229,31 +229,126 @@ const ProductsScreen = {
         `;
 
     container.innerHTML = tableHtml;
+
+    // Render table separately so search input keeps focus
+    this.renderProductsTable();
+  },
+
+  renderProductsTable() {
+    // Find the table tbody or re-render just the table portion
+    const container = document.getElementById('productsContainer');
+    if (!container) return;
+
+    const filtered = this.getFilteredAndSortedProducts();
+
+    // Find existing table or create table HTML
+    let table = container.querySelector('table.data-table');
+    if (!table) {
+      // First render - create full table structure
+      const tableHtml = `
+            <table class="data-table" style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="background: rgba(255, 255, 255, 0.05); border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
+                        <th style="padding: 12px; text-align: center; color: #f39c12; width: 60px;">POS</th>
+                        <th style="padding: 12px; text-align: left; color: #f39c12;">Product Name</th>
+                        <th style="padding: 12px; text-align: left; color: #f39c12;">Vintage</th>
+                        <th style="padding: 12px; text-align: left; color: #f39c12;">Varietal</th>
+                        <th style="padding: 12px; text-align: left; color: #f39c12;">Type</th>
+                        <th style="padding: 12px; text-align: right; color: #f39c12;">Price</th>
+                        <th style="padding: 12px; text-align: center; color: #f39c12;">Stock</th>
+                        <th style="padding: 12px; text-align: center; color: #f39c12;">Status</th>
+                        <th style="padding: 12px; text-align: center; color: #f39c12; width: 120px;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        `;
+      container.insertAdjacentHTML('beforeend', tableHtml);
+      table = container.querySelector('table.data-table');
+    }
+
+    const tbody = table.querySelector('tbody');
+    tbody.innerHTML =
+      filtered.length === 0
+        ? '<tr><td colspan="9" style="padding: 40px; text-align: center; color: #95a5a6;">No products match your filters</td></tr>'
+        : filtered
+            .map(
+              (p) => `
+          <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.05);">
+              <td style="padding: 12px; text-align: center;">
+                  <input type="checkbox" 
+                      ${this.selectedProductIds.has(p.id) ? 'checked' : ''}
+                      onchange="ProductsScreen.toggleProduct(${p.id})"
+                      style="cursor: pointer; width: 18px; height: 18px;">
+              </td>
+              <td style="padding: 12px; color: #e8e8e8;">
+                  ${p.name}
+                  ${p.image_url ? '🖼️' : ''}
+              </td>
+              <td style="padding: 12px; color: #95a5a6;">${p.vintage || '-'}</td>
+              <td style="padding: 12px; color: #95a5a6;">${p.varietal || '-'}</td>
+              <td style="padding: 12px; color: #95a5a6;">
+                  <span style="background: ${this.getTypeColor(p.wine_color || p.product_category || p.type)}; padding: 2px 8px; border-radius: 4px; font-size: 0.85em;">
+                      ${p.wine_color || p.product_category || p.type || 'Product'}
+                  </span>
+              </td>
+              <td style="padding: 12px; text-align: right; color: #f39c12; font-weight: 600;">
+                  $${parseFloat(p.price || 0).toFixed(2)}
+              </td>
+              <td style="padding: 12px; text-align: center; color: ${p.available_quantity > p.reorder_point ? '#27ae60' : '#e74c3c'};">
+                  ${p.track_inventory ? p.available_quantity || 0 : '∞'}
+              </td>
+              <td style="padding: 12px; text-align: center;">
+                  <span style="color: ${p.online_status === 'available' ? '#27ae60' : '#e74c3c'};">
+                      ${p.online_status || 'available'}
+                  </span>
+              </td>
+              <td style="padding: 12px; text-align: center;">
+                  <button onclick="ProductsScreen.viewDetails(${p.id})" 
+                      style="background: #3498db; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; margin-right: 4px;"
+                      title="View Details">👁️</button>
+                  <button onclick="ProductsScreen.editProduct(${p.id})" 
+                      style="background: #f39c12; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; margin-right: 4px;"
+                      title="Edit">✏️</button>
+                  <button onclick="ProductsScreen.deleteProduct(${p.id})" 
+                      style="background: #e74c3c; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer;"
+                      title="Delete">🗑️</button>
+              </td>
+          </tr>
+        `
+            )
+            .join('');
+
+    // Update the count display
+    const countDisplay = container.querySelector('span[style*="margin-left: 15px"]');
+    if (countDisplay) {
+      countDisplay.textContent = `Showing ${filtered.length} of ${this.products.length} products | ${this.selectedProductIds.size} active for POS`;
+    }
   },
 
   handleSearch(value) {
     this.searchTerm = value;
-    this.renderProducts();
+    this.renderProductsTable(); // Only re-render table, not inputs
   },
 
   handleFilterType(value) {
     this.filterType = value;
-    this.renderProducts();
+    this.renderProductsTable();
   },
 
   handleFilterStatus(value) {
     this.filterStatus = value;
-    this.renderProducts();
+    this.renderProductsTable();
   },
 
   handleSort(value) {
     this.sortBy = value;
-    this.renderProducts();
+    this.renderProductsTable();
   },
 
   toggleSortOrder() {
     this.sortOrder = this.sortOrder === 'asc' ? 'desc' : 'asc';
-    this.renderProducts();
+    this.renderProductsTable();
   },
 
   getTypeColor(wineColor) {
