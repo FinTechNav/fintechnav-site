@@ -29,10 +29,14 @@ exports.handler = async (event, context) => {
 
   try {
     await client.connect();
+    console.log('✅ Connected to database');
+    console.log('🔍 Querying for winery_id:', wineryId);
 
     const wineryResult = await client.query('SELECT name FROM wineries WHERE id = $1', [wineryId]);
     const wineryName = wineryResult.rows[0]?.name;
+    console.log('🏢 Winery name:', wineryName);
 
+    console.log('📊 Executing wine products query...');
     // Get wine products
     const wineResult = await client.query(
       `
@@ -57,12 +61,12 @@ exports.handler = async (event, context) => {
       LEFT JOIN winery_products wp ON p.id = wp.product_id AND wp.winery_id = $1
       WHERE p.deleted_at IS NULL
         AND p.type = 'wine'
-        AND p.name LIKE $2
       ORDER BY p.name ASC, wp_data.vintage DESC
     `,
-      [wineryId, wineryName + '%']
+      [wineryId]
     );
 
+    console.log('📊 Executing merchandise products query...');
     // Get merchandise products
     const merchResult = await client.query(
       `
@@ -80,13 +84,28 @@ exports.handler = async (event, context) => {
       LEFT JOIN winery_products wp ON p.id = wp.product_id AND wp.winery_id = $1
       WHERE p.deleted_at IS NULL
         AND p.type = 'merchandise'
-        AND p.name LIKE $2
-      ORDER BY p.name ASC
+      ORDER BY 
+        CASE 
+          WHEN p.category = 'Payment Testing' THEN 2
+          ELSE 1
+        END,
+        p.name ASC
     `,
-      [wineryId, wineryName + '%']
+      [wineryId]
     );
 
     const result = { rows: [...wineResult.rows, ...merchResult.rows] };
+
+    console.log('📦 Total products returned:', result.rows.length);
+    console.log('  - Wine products:', wineResult.rows.length);
+    console.log('  - Merchandise products:', merchResult.rows.length);
+
+    // Count by category
+    const byCategory = result.rows.reduce((acc, p) => {
+      acc[p.category || 'none'] = (acc[p.category || 'none'] || 0) + 1;
+      return acc;
+    }, {});
+    console.log('📊 Products by category:', JSON.stringify(byCategory));
 
     return {
       statusCode: 200,
