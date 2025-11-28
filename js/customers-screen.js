@@ -226,9 +226,6 @@ class CustomersScreen {
             onchange="customersScreen.toggleSelection('${customer.id}')"
           />
         </div>
-        <div class="customer-avatar">
-          ${this.getInitials(customer)}
-        </div>
         <div class="customer-info">
           <div class="customer-name">${this.getFullName(customer)}</div>
           <div class="customer-email">${customer.email}</div>
@@ -297,8 +294,7 @@ class CustomersScreen {
               </td>
               <td>
                 <div class="customer-name-cell">
-                  <div class="avatar-small">${this.getInitials(customer)}</div>
-                  <div>${this.getFullName(customer)}</div>
+                  ${this.getFullName(customer)}
                 </div>
               </td>
               <td>${customer.email}</td>
@@ -333,6 +329,8 @@ class CustomersScreen {
         this.render();
         this.attachEventListeners();
       });
+    } else {
+      console.log('Search input not found');
     }
 
     const groupingSelect = document.getElementById('customer-grouping');
@@ -372,12 +370,6 @@ class CustomersScreen {
     }
     this.render();
     this.attachEventListeners();
-  }
-
-  getInitials(customer) {
-    const first = customer.first_name ? customer.first_name[0] : '';
-    const last = customer.last_name ? customer.last_name[0] : '';
-    return (first + last).toUpperCase() || customer.email[0].toUpperCase();
   }
 
   getFullName(customer) {
