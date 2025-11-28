@@ -775,13 +775,13 @@
           console.log("🔍 Analyzing response structure...");
           console.log("   Response keys:", Object.keys(saleResponse));
           
-          // Check if backend processing succeeded
+          // Check if processing succeeded
           if (!saleResponse.success) {
-            console.error("❌ Backend processing failed");
-            showDeclineModal(saleResponse.declineInfo || {
+            console.error("❌ Processing failed");
+            showDeclineModal({
               code: 'ERROR',
               message: 'PROCESSING ERROR',
-              definition: saleResponse.error || 'Payment processing failed',
+              definition: 'Payment processing failed',
             });
             return;
           }
@@ -791,10 +791,9 @@
           if (saleResponse.approved) {
             console.log("✅ Transaction approved!");
             
-            // Save token if needed (token is in transactionData.chdToken)
+            // Save token if needed
             if (selectedPaymentMethod === 'new' && selectedCustomer.customer_id && document.getElementById('saveCardCheckbox').checked) {
               console.log("💾 Saving payment token...");
-              // Reconstruct response format for savePaymentToken function
               const legacyResponse = {
                 iposTransactResponse: saleResponse.transactionData
               };
@@ -803,7 +802,6 @@
             
             // Save transaction
             console.log("💾 Saving transaction to database...");
-            // Reconstruct response format for saveTransaction function
             const legacyResponse = {
               iposTransactResponse: saleResponse.transactionData
             };
@@ -813,8 +811,13 @@
             showSuccessPage(legacyResponse);
           } else {
             console.error("❌ Transaction declined");
-            console.error("   Decline info:", saleResponse.declineInfo);
-            showDeclineModal(saleResponse.declineInfo);
+            console.error("   Response code:", saleResponse.responseCode);
+            console.error("   Response message:", saleResponse.responseMessage);
+            showDeclineModal({
+              code: saleResponse.responseCode || 'DECLINED',
+              message: saleResponse.responseMessage || 'Payment Declined',
+              definition: saleResponse.responseMessage || 'Please try another payment method',
+            });
           }
         } catch (error) {
           console.error('💥 Error in placeOrder:', error);
@@ -896,33 +899,45 @@
         const billingZip = document.getElementById('billingZip').value;
         const billingAddress = document.getElementById('billingAddress').value;
 
+        // Get API config
+        const configResponse = await fetch(`/.netlify/functions/get-dejavoo-config?winery_id=${WINERY_ID}`);
+        const config = await configResponse.json();
+        
+        const MERCHANT_ID = config.merchant_id;
+        const API_AUTH_TOKEN = config.api_auth_token;
+        const API_BASE_URL = config.environment === 'production' 
+          ? '/api/ipos-transact-prod'
+          : '/api/ipos-transact-sandbox';
+
         const requestBody = {
-          amount: 155.00, // Convert from cents
-          subtotal: 145.00,
-          tax: 10.00,
-          tipAmount: 0,
-          customerId: selectedCustomer?.id || selectedCustomer?.customer_id,
-          wineryId: WINERY_ID,
-          referenceId: 'WEB' + Date.now(),
-          saveCard: selectedPaymentMethod === 'new' && selectedCustomer?.customer_id && document.getElementById('saveCardCheckbox')?.checked,
-          billingAddress: billingAddress,
-          billingZip: billingZip,
+          merchantAuthentication: {
+            merchantId: MERCHANT_ID,
+            transactionReferenceId: 'WEB' + Date.now(),
+          },
+          transactionRequest: {
+            amount: Math.round(155.00 * 100), // Convert to cents
+            tipAmount: 0,
+            requestCardToken: false,
+          },
         };
 
         // Use paymentTokenId for new cards, cardToken for saved cards
         if (selectedPaymentMethod === 'new') {
-          requestBody.paymentTokenId = paymentTokenId;
+          requestBody.transactionRequest.paymentTokenId = paymentTokenId;
+          requestBody.transactionRequest.requestCardToken = selectedCustomer?.customer_id && document.getElementById('saveCardCheckbox')?.checked;
         } else {
-          requestBody.cardToken = reusableToken;
-          requestBody.cvv = document.getElementById('savedCvv').value;
+          requestBody.transactionRequest.cardToken = reusableToken;
+          requestBody.transactionRequest.cvv = document.getElementById('savedCvv').value;
         }
 
-        console.log('📤 Calling process-card-not-present-sale:', requestBody);
+        console.log('📤 Calling iPOS via Netlify proxy:', API_BASE_URL);
+        console.log('📤 Request:', requestBody);
 
-        const response = await fetch('/.netlify/functions/process-card-not-present-sale', {
+        const response = await fetch(API_BASE_URL, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            token: API_AUTH_TOKEN,
           },
           body: JSON.stringify(requestBody),
         });
@@ -932,7 +947,30 @@
           throw new Error('Payment processing failed: ' + errorText);
         }
         
-        return await response.json();
+        const responseData = await response.json();
+        console.log('📥 Response:', responseData);
+        
+        // Extract transaction data (iPOS uses lowercase)
+        const transactionData = responseData.iposhpresponse || responseData.iposTransactResponse;
+        
+        if (!transactionData) {
+          throw new Error('Invalid response from payment processor');
+        }
+        
+        // Map response code to decline info
+        const responseCode = transactionData.responseCode || '';
+        const responseMessage = transactionData.responseMessage || transactionData.errResponseMessage || '';
+        
+        // Simple approval check - only '200' is approval for iPOS
+        const approved = responseCode === '200';
+        
+        return {
+          success: true,
+          approved: approved,
+          transactionData: transactionData,
+          responseCode: responseCode,
+          responseMessage: responseMessage,
+        };
       }
 
       // Save token
