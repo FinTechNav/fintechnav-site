@@ -39,9 +39,7 @@ const POSScreen = {
     if (!App.currentWinery) return;
 
     try {
-      const response = await fetch(
-        `/.netlify/functions/get-winery-customers?winery_id=${App.currentWinery.id}`
-      );
+      const response = await fetch('/.netlify/functions/get-customers?limit=1000');
       const data = await response.json();
 
       if (data.success) {
@@ -59,7 +57,13 @@ const POSScreen = {
 
     const options = [
       '<option value="">Guest Checkout</option>',
-      ...this.customers.map((c) => `<option value="${c.id}">${c.name || c.email}</option>`),
+      ...this.customers.map((c) => {
+        const name =
+          c.first_name || c.last_name
+            ? `${c.first_name || ''} ${c.last_name || ''}`.trim()
+            : c.email;
+        return `<option value="${c.id}">${name}</option>`;
+      }),
     ];
 
     container.innerHTML = options.join('');
