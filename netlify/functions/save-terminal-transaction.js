@@ -87,11 +87,17 @@ exports.handler = async (event, context) => {
     let payment_method_id = null;
 
     if (transactionData.IPosToken && customer_id && status === 'approved') {
-      console.log('💳 iPOS token present, saving payment method...');
+      console.log('💳 iPOS token present, attempting to save payment method...');
+      console.log('  - Customer ID:', customer_id);
+      console.log('  - Winery ID:', winery_id);
+      console.log('  - iPOS Token:', transactionData.IPosToken);
+      console.log('  - Card Last 4:', cardData.Last4);
+      console.log('  - Card Type:', cardData.CardType);
 
       // Generate card fingerprint
       const fingerprintData = `${cardData.BIN || ''}${cardData.Last4}${cardData.ExpirationDate || ''}`;
       const cardFingerprint = crypto.createHash('sha256').update(fingerprintData).digest('hex');
+      console.log('  - Card Fingerprint:', cardFingerprint);
 
       // Parse expiry date (format: MMYY)
       let cardExpMonth = null;
@@ -99,6 +105,25 @@ exports.handler = async (event, context) => {
       if (cardData.ExpirationDate && cardData.ExpirationDate.length === 4) {
         cardExpMonth = cardData.ExpirationDate.substring(0, 2);
         cardExpYear = '20' + cardData.ExpirationDate.substring(2, 4);
+      }
+      console.log('  - Expiry:', cardExpMonth + '/' + cardExpYear);
+
+      // Check for existing card with same fingerprint
+      const duplicateCheck = await client.query(
+        `SELECT id, processor_payment_method_id, usage_count, last_used_at 
+         FROM payment_methods 
+         WHERE customer_id = $1 AND winery_id = $2 AND processor = $3 AND card_fingerprint = $4`,
+        [customer_id, winery_id, 'dejavoo', cardFingerprint]
+      );
+
+      if (duplicateCheck.rows.length > 0) {
+        console.log('🔄 DUPLICATE CARD DETECTED - Will update existing record:');
+        console.log('  - Existing ID:', duplicateCheck.rows[0].id);
+        console.log('  - Existing Token:', duplicateCheck.rows[0].processor_payment_method_id);
+        console.log('  - Current Usage Count:', duplicateCheck.rows[0].usage_count);
+        console.log('  - Last Used:', duplicateCheck.rows[0].last_used_at);
+      } else {
+        console.log('✨ NEW CARD - Will insert new record');
       }
 
       // Check if this is customer's first card
@@ -108,6 +133,7 @@ exports.handler = async (event, context) => {
       );
 
       const isFirstCard = existingCards.rows[0].count === '0';
+      console.log('  - Is First Card:', isFirstCard);
 
       // Insert or update payment method
       const pmResult = await client.query(
@@ -123,7 +149,7 @@ exports.handler = async (event, context) => {
           usage_count = payment_methods.usage_count + 1,
           is_active = TRUE,
           updated_at = NOW()
-        RETURNING id`,
+        RETURNING id, (xmax = 0) AS inserted`,
         [
           customer_id,
           winery_id,
@@ -141,7 +167,23 @@ exports.handler = async (event, context) => {
       );
 
       payment_method_id = pmResult.rows[0].id;
-      console.log('✅ Payment method saved/updated:', payment_method_id);
+      const wasInserted = pmResult.rows[0].inserted;
+
+      if (wasInserted) {
+        console.log('✅ NEW PAYMENT METHOD SAVED:', payment_method_id);
+      } else {
+        console.log('✅ EXISTING PAYMENT METHOD UPDATED:', payment_method_id);
+        console.log('  - last_used_at updated to NOW()');
+        console.log('  - usage_count incremented');
+      }
+    } else {
+      if (!transactionData.IPosToken) {
+        console.log('ℹ️ No iPOS token in response - payment method not saved');
+      } else if (!customer_id) {
+        console.log('ℹ️ No customer_id - payment method not saved (guest transaction)');
+      } else if (status !== 'approved') {
+        console.log('ℹ️ Transaction not approved - payment method not saved');
+      }
     }
 
     // Insert transaction record
