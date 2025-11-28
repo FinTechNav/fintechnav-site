@@ -53,7 +53,8 @@ exports.handler = async (event, context) => {
         p.track_inventory,
         p.online_status,
         p.inventory_status,
-        p.type
+        p.type,
+        p.tax_category
       FROM products p
       LEFT JOIN wine_products wp_data ON p.id = wp_data.product_id
       INNER JOIN winery_products wp ON p.id = wp.product_id

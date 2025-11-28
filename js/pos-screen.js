@@ -163,7 +163,16 @@ const POSScreen = {
       (sum, item) => sum + parseFloat(item.price) * item.quantity,
       0
     );
-    const tax = subtotal * this.TAX_RATE;
+
+    // Calculate tax only for taxable items (exclude tax_exempt products)
+    const taxableSubtotal = this.cart.reduce((sum, item) => {
+      if (item.tax_category === 'tax_exempt') {
+        return sum; // Don't add tax_exempt items to taxable amount
+      }
+      return sum + parseFloat(item.price) * item.quantity;
+    }, 0);
+
+    const tax = taxableSubtotal * this.TAX_RATE;
     const total = subtotal + tax;
 
     document.getElementById('subtotal').textContent = `$${subtotal.toFixed(2)}`;
@@ -192,7 +201,16 @@ const POSScreen = {
       (sum, item) => sum + parseFloat(item.price) * item.quantity,
       0
     );
-    const tax = subtotal * this.TAX_RATE;
+
+    // Calculate tax only for taxable items (exclude tax_exempt products)
+    const taxableSubtotal = this.cart.reduce((sum, item) => {
+      if (item.tax_category === 'tax_exempt') {
+        return sum; // Don't add tax_exempt items to taxable amount
+      }
+      return sum + parseFloat(item.price) * item.quantity;
+    }, 0);
+
+    const tax = taxableSubtotal * this.TAX_RATE;
     const total = subtotal + tax;
     return { subtotal, tax, total };
   },
