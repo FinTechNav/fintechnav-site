@@ -63,10 +63,16 @@ exports.handler = async (event, context) => {
         AND p.deleted_at IS NULL
         AND p.online_status = 'available'
         AND p.inventory_status = 'available'
-        AND p.name LIKE $2
-      ORDER BY p.type, p.name ASC, wp_data.vintage DESC
+      ORDER BY 
+        CASE 
+          WHEN p.category = 'Payment Testing' THEN 2
+          ELSE 1
+        END,
+        p.type, 
+        p.name ASC, 
+        wp_data.vintage DESC
     `,
-      [wineryId, wineryName + '%']
+      [wineryId]
     );
 
     return {
