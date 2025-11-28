@@ -1,6 +1,21 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <script>
+    // Log all CSS file attempts
+    window.addEventListener('DOMContentLoaded', () => {
+        const links = document.querySelectorAll('link[rel="stylesheet"]');
+        links.forEach(link => {
+        console.log('Attempting to load CSS:', link.href);
+        link.addEventListener('load', () => {
+            console.log('✅ CSS loaded successfully:', link.href);
+        });
+        link.addEventListener('error', () => {
+            console.error('❌ CSS failed to load:', link.href);
+        });
+        });
+    });
+    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -9,11 +24,12 @@
     <title>Heavy Pour Wine - POS</title>
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="icon-192.png">
-    <link rel="stylesheet" href="pos-styles.css">
-    <link rel="stylesheet" href="pos-layout-styles.css">
-    <link rel="stylesheet" href="pos-login-styles.css">
-    <link rel="stylesheet" href="pos-mobile-clean.css">
-    <link rel="stylesheet" href="pos-reservations-styles.css">
+    <link rel="stylesheet" href="css/pos-styles.css">
+    <link rel="stylesheet" href="css/pos-layout-styles.css">
+    <link rel="stylesheet" href="css/pos-login-styles.css">
+    <link rel="stylesheet" href="css/pos-mobile-clean.css">
+    <link rel="stylesheet" href="css/pos-reservations-styles.css">
+    <link rel="stylesheet" href="css/customers-screen.css">
 </head>
 <body>
     <!-- Login Screen - Winery Selection -->
@@ -132,7 +148,7 @@
                     <div class="menu-label">Settings</div>
                 </div>
                 <div class="menu-item logout-button" onclick="logout()">
-                    <div class="menu-icon">→</div>
+                    <div class="menu-icon">↩</div>
                     <div class="menu-label">Log out</div>
                 </div>
             </div>
@@ -228,17 +244,8 @@
             </div>
 
             <!-- Customers Screen -->
-            <div id="customersScreen" class="settings-screen" style="display: none;">
-                <div class="settings-header">
-                    <h2>Customers</h2>
-                    <p id="customersWineryName">Jensen Family Winery</p>
-                </div>
-
-                <div class="settings-section">
-                    <div id="customersList">
-                        <p style="text-align: center; color: #95a5a6;">Loading customers...</p>
-                    </div>
-                </div>
+            <div id="customersScreen" class="screen-content" style="display: none;">
+                <!-- Customer management screen will be rendered here by customers-screen.js -->
             </div>
 
             <div id="productsScreen" class="settings-screen" style="display: none;">
