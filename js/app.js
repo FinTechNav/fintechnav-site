@@ -341,7 +341,6 @@ const App = {
       document.getElementById('currentWineryName').textContent = this.currentWinery.name;
       document.getElementById('currentUserName').textContent = userName;
       document.getElementById('cartWineryName').textContent = this.currentWinery.name;
-      document.getElementById('customersWineryName').textContent = this.currentWinery.name;
       document.getElementById('settingsWineryName').textContent = this.currentWinery.name;
       document.getElementById('settingsUserName').textContent = userName;
     }
@@ -431,7 +430,10 @@ const App = {
     }
 
     if (screen === 'customers') {
-      await CustomersScreen.load();
+      if (!customersScreen) {
+        customersScreen = new CustomersScreen();
+      }
+      await customersScreen.init();
     } else if (screen === 'products') {
       await ProductsScreen.init();
     } else if (screen === 'orders') {
@@ -449,6 +451,9 @@ const App = {
     }
   },
 };
+
+// Global screen instances
+let customersScreen = null;
 
 // Global functions for HTML onclick handlers
 function toggleSidebar() {
