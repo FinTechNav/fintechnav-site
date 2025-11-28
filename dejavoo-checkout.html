@@ -899,13 +899,8 @@
         const billingZip = document.getElementById('billingZip').value;
         const billingAddress = document.getElementById('billingAddress').value;
 
-        // Get API config
-        const configResponse = await fetch(`/.netlify/functions/get-dejavoo-config?winery_id=${WINERY_ID}`);
-        const config = await configResponse.json();
-        
-        const MERCHANT_ID = config.merchant_id;
-        const API_AUTH_TOKEN = config.api_auth_token;
-        const API_BASE_URL = config.environment === 'production' 
+        // Use Netlify proxy instead of direct API call
+        const proxyUrl = ENVIRONMENT === 'production' 
           ? '/api/ipos-transact-prod'
           : '/api/ipos-transact-sandbox';
 
@@ -930,10 +925,10 @@
           requestBody.transactionRequest.cvv = document.getElementById('savedCvv').value;
         }
 
-        console.log('📤 Calling iPOS via Netlify proxy:', API_BASE_URL);
+        console.log('📤 Calling iPOS via Netlify proxy:', proxyUrl);
         console.log('📤 Request:', requestBody);
 
-        const response = await fetch(API_BASE_URL, {
+        const response = await fetch(proxyUrl, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
