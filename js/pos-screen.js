@@ -1354,29 +1354,45 @@ const POSScreen = {
 
   async handleTerminalResponse(transactionData, subtotal, tax, total, referenceId) {
     console.log('🔍 Handling terminal response:', transactionData);
-    console.log('🔍 declineInfo in response:', transactionData.declineInfo);
-    console.log('🔍 Response keys:', Object.keys(transactionData));
 
-    // Check if decline info is provided by backend
-    const declineInfo = transactionData.declineInfo;
+    // Check SPIN status first
+    const generalResponse = transactionData.GeneralResponse || {};
+    const resultCode = generalResponse.ResultCode;
+    const statusCode = generalResponse.StatusCode;
+    const hostResponseCode = generalResponse.HostResponseCode;
 
-    if (declineInfo) {
-      console.log('✅ declineInfo found:', declineInfo);
-      console.log('✅ isApproval:', declineInfo.isApproval);
+    console.log('📊 ResultCode:', resultCode);
+    console.log('📊 StatusCode:', statusCode);
+    console.log('📊 HostResponseCode:', hostResponseCode);
 
-      if (declineInfo.isApproval) {
-        console.log('✅ Transaction approved');
-        await this.saveOrderWithPayment(subtotal, tax, total, transactionData, referenceId);
-      } else {
-        console.error('❌ Transaction declined or error');
-        this.showDeclineModal(declineInfo);
-      }
-    } else {
-      console.error('❌ No declineInfo in response, treating as error');
+    // Check if SPIN transaction was successful
+    const spinSuccess = resultCode === '0' && statusCode === '0000';
+
+    if (!spinSuccess) {
+      // SPIN error - show error modal
+      console.error('❌ SPIN error');
       this.showDeclineModal({
-        code: 'ERROR',
-        message: 'UNKNOWN ERROR',
-        definition: 'No decline information in response',
+        code: statusCode || resultCode || 'ERROR',
+        message: generalResponse.Message || 'Transaction Error',
+        definition:
+          generalResponse.DetailedMessage || generalResponse.Message || 'Transaction failed',
+      });
+      return;
+    }
+
+    // SPIN success - now check host response code for approval
+    console.log('✅ SPIN success, checking host response code');
+
+    if (hostResponseCode === '00') {
+      console.log('✅ Transaction approved (HostResponseCode=00)');
+      await this.saveOrderWithPayment(subtotal, tax, total, transactionData, referenceId);
+    } else {
+      console.error('❌ Transaction declined (HostResponseCode=' + hostResponseCode + ')');
+      this.showDeclineModal({
+        code: hostResponseCode || 'DECLINED',
+        message:
+          generalResponse.HostResponseMessage || generalResponse.Message || 'Payment Declined',
+        definition: 'Transaction was declined by the card issuer',
       });
     }
   },
