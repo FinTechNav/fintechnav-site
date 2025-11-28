@@ -1,4 +1,5 @@
 const { Client } = require('pg');
+const { mapDeclineCode, isApprovalCode } = require('./decline-code-mapper');
 
 exports.handler = async (event, context) => {
   const headers = {
@@ -251,6 +252,48 @@ exports.handler = async (event, context) => {
       try {
         const data = JSON.parse(responseText);
         console.log('✅ SPIN API response data:', JSON.stringify(data, null, 2));
+
+        // Extract response code and status code from SPIN API response
+        const generalResponse = data.GeneralResponse || {};
+        const resultCode = generalResponse.ResultCode;
+        const statusCode = generalResponse.StatusCode;
+        const hostResponseCode = generalResponse.HostResponseCode;
+        const message = generalResponse.Message || generalResponse.DetailedMessage || '';
+
+        console.log('📊 Result code:', resultCode);
+        console.log('📊 Status code:', statusCode);
+        console.log('📊 Host response code:', hostResponseCode);
+        console.log('📊 Message:', message);
+
+        // Determine decline info based on SPIN response
+        let declineInfo;
+
+        if (resultCode === '0' && statusCode === '0000') {
+          // Success - use host response code for decline mapping
+          declineInfo = mapDeclineCode(hostResponseCode || '00');
+        } else {
+          // SPIN error (ResultCode != 0 or StatusCode != 0000)
+          // Use StatusCode for error display
+          declineInfo = {
+            code: statusCode || 'ERROR',
+            message: message || 'Transaction Error',
+            definition: generalResponse.DetailedMessage || message || 'Transaction failed',
+            isApproval: false,
+          };
+        }
+
+        console.log('🔍 Decline mapping:', declineInfo);
+
+        // Add decline info to response
+        data.declineInfo = {
+          code: declineInfo.code,
+          message: declineInfo.message,
+          definition: declineInfo.definition,
+          isApproval: declineInfo.isApproval,
+          originalMessage: message,
+          resultCode: resultCode,
+          statusCode: statusCode,
+        };
 
         // Add original subtotal and tax to response
         if (subtotal !== undefined && tax !== undefined) {

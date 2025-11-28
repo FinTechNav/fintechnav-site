@@ -270,7 +270,9 @@
     </div>
 
     <script>
-      // Configuration
+      // Configuration - SET YOUR WINERY ID HERE
+      const WINERY_ID = '22222222-2222-2222-2222-222222222222'; // Jensen Family Winery
+      
       let MERCHANT_ID = '';
       let API_AUTH_TOKEN = '';
       let DEJAVOO_AUTH_TOKEN = '';
@@ -294,7 +296,7 @@
 
         try {
           console.log('🔄 Loading configuration...');
-          const response = await fetch('/.netlify/functions/get-dejavoo-config');
+          const response = await fetch(`/.netlify/functions/get-dejavoo-config?winery_id=${WINERY_ID}`);
           
           if (!response.ok) {
             throw new Error(`HTTP ${response.status}`);
@@ -440,16 +442,19 @@
       // Load customers
       async function loadCustomers() {
         try {
-          const response = await fetch('/.netlify/functions/get-customers');
+          const response = await fetch(`/.netlify/functions/get-winery-customers?winery_id=${WINERY_ID}`);
           if (!response.ok) throw new Error('Failed to load customers');
           
-          const customers = await response.json();
+          const data = await response.json();
+          if (!data.success) throw new Error('Failed to load customers');
+          
+          const customers = data.customers;
           const select = document.getElementById('customerSelect');
           
           customers.forEach(customer => {
             const option = document.createElement('option');
-            option.value = customer.customer_id;
-            option.textContent = customer.customer_name;
+            option.value = customer.id;
+            option.textContent = customer.name || customer.email;
             option.dataset.customer = JSON.stringify(customer);
             select.appendChild(option);
           });
@@ -478,17 +483,27 @@
         continueBtn.disabled = false;
 
         if (select.value === 'guest') {
-          selectedCustomer = { customer_id: null, customer_name: 'Guest' };
+          selectedCustomer = { 
+            id: null, 
+            customer_id: null, 
+            name: 'Guest',
+            customer_name: 'Guest'
+          };
           infoBox.style.display = 'none';
         } else {
           const option = select.options[select.selectedIndex];
-          selectedCustomer = JSON.parse(option.dataset.customer);
+          const customer = JSON.parse(option.dataset.customer);
+          
+          // Map new fields to old field names for compatibility
+          selectedCustomer = {
+            ...customer,
+            customer_id: customer.id,
+            customer_name: customer.name || customer.email,
+          };
           
           infoDiv.innerHTML = `
             <strong>${selectedCustomer.customer_name}</strong><br>
-            ${selectedCustomer.email}<br>
-            ${selectedCustomer.billing_street}<br>
-            ${selectedCustomer.billing_city}, ${selectedCustomer.billing_state} ${selectedCustomer.billing_zip}
+            ${selectedCustomer.email || ''}<br>
           `;
           infoBox.style.display = 'block';
         }
@@ -503,14 +518,10 @@
         // Setup Google Pay when entering payment step
         setupGooglePay();
 
-        if (selectedCustomer.customer_id) {
+        if (selectedCustomer.id || selectedCustomer.customer_id) {
           // Load saved cards and pre-fill billing
-          await loadSavedCards(selectedCustomer.customer_id);
-          document.getElementById('billingName').value = selectedCustomer.customer_name;
-          document.getElementById('billingAddress').value = selectedCustomer.billing_street;
-          document.getElementById('billingCity').value = selectedCustomer.billing_city;
-          document.getElementById('billingState').value = selectedCustomer.billing_state;
-          document.getElementById('billingZip').value = selectedCustomer.billing_zip;
+          await loadSavedCards(selectedCustomer.id || selectedCustomer.customer_id);
+          document.getElementById('billingName').value = selectedCustomer.customer_name || '';
           document.getElementById('saveCardOption').style.display = 'block';
         } else {
           // Guest - clear form
@@ -524,7 +535,7 @@
       async function loadSavedCards(customerId) {
         try {
           console.log('📡 Loading saved cards for customer:', customerId);
-          const response = await fetch(`/.netlify/functions/get-payment-tokens?customer_id=${customerId}`);
+          const response = await fetch(`/.netlify/functions/get-payment-tokens?customer_id=${customerId}&winery_id=${WINERY_ID}`);
           
           console.log('Response status:', response.status);
           
@@ -561,13 +572,13 @@
           const div = document.createElement('div');
           div.className = 'card-option';
           div.innerHTML = `
-            <input type="radio" name="payment-method" value="${card.token_id}" id="card-${card.token_id}">
+            <input type="radio" name="payment-method" value="${card.id}" id="card-${card.id}">
             <div>
-              <strong>${card.card_type || 'Card'} •••• ${card.card_last_four}</strong><br>
-              <small style="color: #999">Expires ${card.expiry_month}/${card.expiry_year}</small>
+              <strong>${card.card_type || 'Card'} •••• ${card.card_last_4}</strong><br>
+              <small style="color: #999">Expires ${card.card_expiry_month}/${card.card_expiry_year}</small>
             </div>
           `;
-          div.onclick = function() { selectSavedCard(card.token_id, this); };
+          div.onclick = function() { selectSavedCard(card.id, this); };
           list.appendChild(div);
         });
 
@@ -582,25 +593,25 @@
         list.appendChild(newDiv);
 
         section.style.display = 'block';
-        selectSavedCard(savedCards[0].token_id);
+        selectSavedCard(savedCards[0].id);
       }
 
       // Select saved card
-      function selectSavedCard(tokenId, clickedElement) {
-        selectedPaymentMethod = tokenId;
+      function selectSavedCard(paymentMethodId, clickedElement) {
+        selectedPaymentMethod = paymentMethodId;
         document.querySelectorAll('.card-option').forEach(el => el.classList.remove('selected'));
         
         if (clickedElement) {
           clickedElement.classList.add('selected');
         } else {
-          const cardElement = document.getElementById(`card-${tokenId}`)?.closest('.card-option');
+          const cardElement = document.getElementById(`card-${paymentMethodId}`)?.closest('.card-option');
           if (cardElement) cardElement.classList.add('selected');
         }
         
-        document.getElementById(`card-${tokenId}`).checked = true;
+        document.getElementById(`card-${paymentMethodId}`).checked = true;
         document.getElementById('savedCardCvv').style.display = 'block';
         document.getElementById('newCardForm').style.display = 'none';
-        console.log('💳 Selected saved card:', tokenId);
+        console.log('💳 Selected saved card:', paymentMethodId);
       }
 
       // Select new card
@@ -694,8 +705,8 @@
         } else if (selectedPaymentMethod === 'googlepay') {
           document.getElementById('reviewPayment').textContent = 'Google Pay';
         } else {
-          const card = savedCards.find(c => c.token_id === selectedPaymentMethod);
-          document.getElementById('reviewPayment').textContent = `${card.card_type} •••• ${card.card_last_four}`;
+          const card = savedCards.find(c => c.id === selectedPaymentMethod);
+          document.getElementById('reviewPayment').textContent = `${card.card_type} •••• ${card.card_last_4}`;
         }
 
         if (selectedPaymentMethod !== 'googlepay') {
@@ -748,8 +759,8 @@
               if (tokenResponse.statusCode !== '00') throw new Error('Token generation failed');
               paymentTokenId = tokenResponse.payment_token_id;
             } else {
-              const card = savedCards.find(c => c.token_id === selectedPaymentMethod);
-              reusableToken = card.reusable_token;
+              const card = savedCards.find(c => c.id === selectedPaymentMethod);
+              reusableToken = card.token;
               console.log("💳 Using saved card token:", reusableToken);
             }
 
@@ -764,51 +775,46 @@
           console.log("🔍 Analyzing response structure...");
           console.log("   Response keys:", Object.keys(saleResponse));
           
-          // Check response
-          const transactionData = saleResponse.iposTransactResponse || saleResponse.iposhpresponse;
-          
-          console.log("🔍 Transaction data found:", !!transactionData);
-          if (transactionData) {
-            console.log("   Transaction data keys:", Object.keys(transactionData));
-            console.log("   Response code:", transactionData.responseCode);
-            console.log("   Response message:", transactionData.responseMessage || transactionData.errResponseMessage);
-          }
-          
-          if (!transactionData) {
-            console.error("❌ No transaction data in response");
-            if (saleResponse.errors && saleResponse.errors.length > 0) {
-              const error = saleResponse.errors[0];
-              console.error("   API Error:", error);
-              showAlert('reviewAlerts', 'error', `API Error: ${error.message}`);
-            } else {
-              console.error("   Unknown error format:", saleResponse);
-              showAlert('reviewAlerts', 'error', 'Unknown error occurred');
-            }
+          // Check if backend processing succeeded
+          if (!saleResponse.success) {
+            console.error("❌ Backend processing failed");
+            showDeclineModal(saleResponse.declineInfo || {
+              code: 'ERROR',
+              message: 'PROCESSING ERROR',
+              definition: saleResponse.error || 'Payment processing failed',
+            });
             return;
           }
 
-          console.log("🎯 Response code check:", transactionData.responseCode, "=== '200'?", transactionData.responseCode === '200');
+          console.log("🎯 Transaction approved:", saleResponse.approved);
           
-          if (transactionData.responseCode === '200') {
+          if (saleResponse.approved) {
             console.log("✅ Transaction approved!");
             
-            // Save token if needed
+            // Save token if needed (token is in transactionData.chdToken)
             if (selectedPaymentMethod === 'new' && selectedCustomer.customer_id && document.getElementById('saveCardCheckbox').checked) {
               console.log("💾 Saving payment token...");
-              await savePaymentToken(saleResponse);
+              // Reconstruct response format for savePaymentToken function
+              const legacyResponse = {
+                iposTransactResponse: saleResponse.transactionData
+              };
+              await savePaymentToken(legacyResponse);
             }
             
             // Save transaction
             console.log("💾 Saving transaction to database...");
-            await saveTransaction(saleResponse);
+            // Reconstruct response format for saveTransaction function
+            const legacyResponse = {
+              iposTransactResponse: saleResponse.transactionData
+            };
+            await saveTransaction(legacyResponse);
             
             console.log("🎉 Showing success page");
-            showSuccessPage(saleResponse);
+            showSuccessPage(legacyResponse);
           } else {
-            const errorMsg = transactionData.errResponseMessage || transactionData.responseMessage || 'Transaction failed';
-            console.error("❌ Transaction declined:", errorMsg);
-            console.error("   Full transaction data:", transactionData);
-            showAlert('reviewAlerts', 'error', `❌ ${errorMsg}`);
+            console.error("❌ Transaction declined");
+            console.error("   Decline info:", saleResponse.declineInfo);
+            showDeclineModal(saleResponse.declineInfo);
           }
         } catch (error) {
           console.error('💥 Error in placeOrder:', error);
@@ -889,51 +895,43 @@
       async function processSale() {
         const billingZip = document.getElementById('billingZip').value;
         const billingAddress = document.getElementById('billingAddress').value;
-        const streetNo = billingAddress.split(' ')[0];
 
         const requestBody = {
-          merchantAuthentication: {
-            merchantId: MERCHANT_ID,
-            transactionReferenceId: 'TEST' + Date.now(),
-          },
-          transactionRequest: {
-            transactionType: 1,
-            amount: 15500,
-            applySteamSettingTipFeeTax: false,
-          },
-          preferences: {
-            eReceipt: true,
-            customerName: document.getElementById('billingName').value,
-            customerEmail: selectedCustomer.email || 'guest@example.com',
-            customerMobile: '+14048811898',
-          },
-          Avs: {
-            StreetNo: streetNo,
-            Zip: billingZip,
-          },
+          amount: 155.00, // Convert from cents
+          subtotal: 145.00,
+          tax: 10.00,
+          tipAmount: 0,
+          customerId: selectedCustomer?.id || selectedCustomer?.customer_id,
+          wineryId: WINERY_ID,
+          referenceId: 'WEB' + Date.now(),
+          saveCard: selectedPaymentMethod === 'new' && selectedCustomer?.customer_id && document.getElementById('saveCardCheckbox')?.checked,
+          billingAddress: billingAddress,
+          billingZip: billingZip,
         };
 
         // Use paymentTokenId for new cards, cardToken for saved cards
         if (selectedPaymentMethod === 'new') {
-          requestBody.transactionRequest.paymentTokenId = paymentTokenId;
-          requestBody.preferences.requestCardToken = true;
+          requestBody.paymentTokenId = paymentTokenId;
         } else {
-          requestBody.transactionRequest.cardToken = reusableToken;
-          requestBody.transactionRequest.cvv = document.getElementById('savedCvv').value;
+          requestBody.cardToken = reusableToken;
+          requestBody.cvv = document.getElementById('savedCvv').value;
         }
 
-        console.log('iPOS Transact Request:', requestBody);
+        console.log('📤 Calling process-card-not-present-sale:', requestBody);
 
-        const response = await fetch(API_BASE_URL, {
+        const response = await fetch('/.netlify/functions/process-card-not-present-sale', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            token: API_AUTH_TOKEN,
           },
           body: JSON.stringify(requestBody),
         });
 
-        if (!response.ok) throw new Error('API request failed');
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error('Payment processing failed: ' + errorText);
+        }
+        
         return await response.json();
       }
 
@@ -949,22 +947,41 @@
 
           const ccnumber = document.getElementById('ccnumber').value.replace(/\s/g, '');
           const lastFour = ccnumber.slice(-4);
+          const firstFour = ccnumber.slice(0, 4);
           const cardType = getCardType(ccnumber);
           const expiry = document.getElementById('ccexpiry').value.split('/');
+          
+          // Generate card fingerprint
+          const fingerprintData = firstFour + lastFour + expiry[0] + '20' + expiry[1];
+          const cardFingerprint = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(fingerprintData))
+            .then(hash => Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join(''));
+
+          const payload = {
+            customer_id: selectedCustomer.id || selectedCustomer.customer_id,
+            winery_id: WINERY_ID,
+            processor_payment_method_id: transactionData.chdToken,
+            card_last_4: lastFour,
+            card_type: cardType,
+            card_brand: cardType,
+            card_expiry_month: expiry[0],
+            card_expiry_year: '20' + expiry[1],
+            card_fingerprint: cardFingerprint,
+            card_bin: firstFour,
+            source_channel: 'card_not_present'
+          };
+          
+          console.log('🔍 Sending payment token payload:', payload);
 
           const response = await fetch('/.netlify/functions/save-payment-token', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              customer_id: selectedCustomer.customer_id,
-              payment_token_id: paymentTokenId,
-              reusable_token: transactionData.chdToken,
-              card_last_four: lastFour,
-              card_type: cardType,
-              expiry_month: expiry[0],
-              expiry_year: '20' + expiry[1]
-            })
+            body: JSON.stringify(payload)
           });
+
+          if (!response.ok) {
+            const errorText = await response.text();
+            console.error('❌ Save token error response:', errorText);
+          }
 
           if (response.ok) {
             console.log('✅ Card token saved:', transactionData.chdToken);
@@ -987,19 +1004,40 @@
             console.warn('No transaction data to save');
             return;
           }
+          
+          const ccnumber = document.getElementById('ccnumber').value.replace(/\s/g, '');
+          const lastFour = ccnumber.slice(-4);
+          const cardType = getCardType(ccnumber);
 
-          await fetch('/.netlify/functions/save-transaction', {
+          const payload = {
+            winery_id: WINERY_ID,
+            customer_id: selectedCustomer.id || selectedCustomer.customer_id,
+            reference_id: transactionData.transactionReferenceId || `WEB${Date.now()}`,
+            transaction_id: transactionData.transactionId,
+            amount: transactionData.totalAmount || transactionData.amount || 0,
+            status: 'approved',
+            response_code: transactionData.responseCode,
+            response_message: transactionData.responseMessage || transactionData.errResponseMessage,
+            card_type: cardType,
+            card_last_4: lastFour,
+            approval_code: transactionData.responseApprovalCode,
+            batch_number: transactionData.batchNumber,
+            request_data: saleResponse,
+            response_data: transactionData
+          };
+          
+          console.log('🔍 Sending transaction payload:', payload);
+
+          const response = await fetch('/.netlify/functions/save-transaction', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              customer_id: selectedCustomer.customer_id,
-              dejavoo_reference_id: transactionData.transactionId,
-              amount: 155.00,
-              status: 'approved',
-              response_code: transactionData.responseCode,
-              response_message: transactionData.responseMessage || transactionData.errResponseMessage
-            })
+            body: JSON.stringify(payload)
           });
+          
+          if (!response.ok) {
+            const errorText = await response.text();
+            console.error('❌ Save transaction error response:', errorText);
+          }
           
           console.log('✅ Transaction saved to database');
         } catch (error) {
@@ -1021,6 +1059,87 @@
         const alertClass = type === 'success' ? 'alert-success' : 'alert-error';
         container.innerHTML = `<div class="alert ${alertClass}">${message}</div>`;
       }
+
+      function showDeclineModal(declineInfo) {
+        // Remove any existing decline modal
+        const existingModal = document.getElementById('declineModal');
+        if (existingModal) {
+          existingModal.remove();
+        }
+
+        // Create decline modal
+        const modal = document.createElement('div');
+        modal.id = 'declineModal';
+        modal.style.cssText = `
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: rgba(0, 0, 0, 0.7);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 10000;
+          font-family: Georgia, serif;
+        `;
+
+        const content = document.createElement('div');
+        content.style.cssText = `
+          background: white;
+          border-radius: 12px;
+          padding: 40px;
+          max-width: 500px;
+          width: 90%;
+          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+          text-align: center;
+        `;
+
+        content.innerHTML = `
+          <div style="color: #e74c3c; font-size: 64px; margin-bottom: 20px;">
+            ✕
+          </div>
+          <h2 style="color: #333; margin: 0 0 30px 0; font-size: 28px;">
+            PAYMENT DECLINED
+          </h2>
+          <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 30px; text-align: left;">
+            <div style="margin-bottom: 15px;">
+              <div style="color: #666; font-size: 14px; margin-bottom: 5px;">Decline Code</div>
+              <div style="color: #333; font-weight: bold; font-size: 18px;">${declineInfo.code || 'N/A'}</div>
+            </div>
+            <div style="margin-bottom: 15px;">
+              <div style="color: #666; font-size: 14px; margin-bottom: 5px;">Authorization Response Message</div>
+              <div style="color: #333; font-weight: bold; font-size: 18px;">${declineInfo.message || 'Unknown error'}</div>
+            </div>
+            <div>
+              <div style="color: #666; font-size: 14px; margin-bottom: 5px;">Response Definition</div>
+              <div style="color: #333; font-size: 16px; line-height: 1.5;">${declineInfo.definition || 'No details available'}</div>
+            </div>
+          </div>
+          <button id="closeDeclineModal" style="
+            background: #5dade2;
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 18px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: Georgia, serif;
+            font-weight: bold;
+          ">
+            Close
+          </button>
+        `;
+
+        modal.appendChild(content);
+        document.body.appendChild(modal);
+
+        // Handle close button
+        document.getElementById('closeDeclineModal').addEventListener('click', () => {
+          modal.remove();
+        });
+      }
+
 
       function setStep(step) {
         for (let i = 1; i <= 3; i++) {

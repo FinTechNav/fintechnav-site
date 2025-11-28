@@ -1,5 +1,5 @@
-// netlify/functions/save-payment-token.js
 const { Client } = require('pg');
+const crypto = require('crypto');
 
 exports.handler = async (event, context) => {
   const headers = {
@@ -38,10 +38,10 @@ exports.handler = async (event, context) => {
 
   const requiredFields = [
     'customer_id',
-    'payment_token',
-    'card_fingerprint',
-    'card_last_four',
-    'card_brand',
+    'winery_id',
+    'processor_payment_method_id',
+    'card_last_4',
+    'source_channel',
   ];
 
   for (const field of requiredFields) {
@@ -63,52 +63,91 @@ exports.handler = async (event, context) => {
     await client.connect();
     console.log('✅ Connected to database');
 
+    // Get winery's processor
+    const processorResult = await client.query(
+      'SELECT processor FROM winery_payment_config WHERE winery_id = $1 AND is_active = TRUE',
+      [tokenData.winery_id]
+    );
+
+    if (processorResult.rows.length === 0) {
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({ error: 'No processor configured for this winery' }),
+      };
+    }
+
+    const processor = processorResult.rows[0].processor;
+
+    // Generate card fingerprint if not provided
+    let cardFingerprint = tokenData.card_fingerprint;
+    if (
+      !cardFingerprint &&
+      tokenData.card_bin &&
+      tokenData.card_last_4 &&
+      tokenData.card_expiry_month &&
+      tokenData.card_expiry_year
+    ) {
+      const fingerprintData = `${tokenData.card_bin}${tokenData.card_last_4}${tokenData.card_expiry_month}${tokenData.card_expiry_year}`;
+      cardFingerprint = crypto.createHash('sha256').update(fingerprintData).digest('hex');
+    }
+
+    // Check if this is customer's first card for this winery+processor
     const existingCards = await client.query(
-      'SELECT COUNT(*) as count FROM payment_methods WHERE customer_id = $1 AND is_active = TRUE',
-      [tokenData.customer_id]
+      'SELECT COUNT(*) as count FROM payment_methods WHERE customer_id = $1 AND winery_id = $2 AND processor = $3 AND is_active = TRUE',
+      [tokenData.customer_id, tokenData.winery_id, processor]
     );
 
     const isFirstCard = existingCards.rows[0].count === '0';
 
+    // Insert or update payment method
     const result = await client.query(
       `
       INSERT INTO payment_methods (
         customer_id,
-        payment_type,
-        provider,
-        payment_token,
-        reusable_token,
-        card_fingerprint,
-        card_last_four,
+        winery_id,
+        processor,
+        processor_payment_method_id,
+        processor_customer_id,
+        card_last_4,
+        card_type,
         card_brand,
-        card_exp_month,
-        card_exp_year,
-        cardholder_name,
-        billing_address,
+        card_expiry_month,
+        card_expiry_year,
+        card_fingerprint,
+        source_channel,
+        source_transaction_id,
         is_default,
-        is_active
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+        billing_zip
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+      ON CONFLICT (customer_id, winery_id, processor, card_fingerprint) 
+      DO UPDATE SET
+        last_used_at = NOW(),
+        usage_count = payment_methods.usage_count + 1,
+        is_active = TRUE,
+        updated_at = NOW()
       RETURNING id, created_at
     `,
       [
         tokenData.customer_id,
-        tokenData.payment_type || 'card',
-        tokenData.provider || 'dejavoo',
-        tokenData.payment_token,
-        tokenData.reusable_token || null,
-        tokenData.card_fingerprint,
-        tokenData.card_last_four,
-        tokenData.card_brand,
-        tokenData.card_exp_month || null,
-        tokenData.card_exp_year || null,
-        tokenData.cardholder_name || null,
-        tokenData.billing_address ? JSON.stringify(tokenData.billing_address) : null,
+        tokenData.winery_id,
+        processor,
+        tokenData.processor_payment_method_id,
+        tokenData.processor_customer_id || null,
+        tokenData.card_last_4,
+        tokenData.card_type || null,
+        tokenData.card_brand || tokenData.card_type || null,
+        tokenData.card_expiry_month || null,
+        tokenData.card_expiry_year || null,
+        cardFingerprint,
+        tokenData.source_channel,
+        tokenData.source_transaction_id || null,
         isFirstCard,
-        true,
+        tokenData.billing_zip || null,
       ]
     );
 
-    console.log('✅ Payment token saved:', result.rows[0]);
+    console.log('✅ Payment method saved:', result.rows[0]);
 
     return {
       statusCode: 201,
@@ -137,7 +176,7 @@ exports.handler = async (event, context) => {
       statusCode: 500,
       headers,
       body: JSON.stringify({
-        error: 'Failed to save payment token',
+        error: 'Failed to save payment method',
         details: error.message,
       }),
     };

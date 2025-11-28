@@ -1,4 +1,3 @@
-// netlify/functions/get-customers.js
 const { Client } = require('pg');
 
 exports.handler = async (event, context) => {
@@ -25,6 +24,16 @@ exports.handler = async (event, context) => {
     };
   }
 
+  const wineryId = event.queryStringParameters?.winery_id;
+
+  if (!wineryId) {
+    return {
+      statusCode: 400,
+      headers,
+      body: JSON.stringify({ error: 'winery_id parameter is required' }),
+    };
+  }
+
   const client = new Client({
     connectionString: process.env.DATABASE_URL,
     ssl: false,
@@ -36,19 +45,20 @@ exports.handler = async (event, context) => {
 
     const query = `
       SELECT 
-        customer_id,
-        customer_name,
-        email,
-        billing_street,
-        billing_city,
-        billing_state,
-        billing_zip,
-        billing_country
-      FROM dejavoo_customers
-      ORDER BY customer_name ASC
+        c.id,
+        c.name,
+        c.email,
+        c.phone,
+        c.created_at
+      FROM customers c
+      INNER JOIN customer_wineries cw ON c.id = cw.customer_id
+      WHERE cw.winery_id = $1
+        AND c.deleted_at IS NULL
+        AND cw.deleted_at IS NULL
+      ORDER BY c.name ASC
     `;
 
-    const result = await client.query(query);
+    const result = await client.query(query, [wineryId]);
 
     console.log(`✅ Retrieved ${result.rows.length} customers`);
 
