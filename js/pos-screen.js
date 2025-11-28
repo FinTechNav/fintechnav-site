@@ -79,38 +79,16 @@ const POSScreen = {
     }
 
     grid.innerHTML = this.products
-      .map((product) => {
-        // Determine icon and details based on product type
-        const icon =
-          product.type === 'wine'
-            ? '🍷'
-            : product.category === 'Payment Testing'
-              ? '💳'
-              : product.category === 'Stemware'
-                ? '🍸'
-                : product.category === 'Decanter'
-                  ? '🍾'
-                  : product.category === 'Provisions'
-                    ? '🧺'
-                    : '📦';
-
-        const details =
-          product.vintage &&
-          product.varietal &&
-          product.vintage !== 'null' &&
-          product.varietal !== 'null'
-            ? `${product.vintage} - ${product.varietal}`
-            : product.category || product.type || '';
-
-        return `
+      .map(
+        (product) => `
             <div class="product-card" onclick="POSScreen.addToCart(${product.id})">
-                <div class="wine-icon">${icon}</div>
+                <div class="wine-icon">🍷</div>
                 <div class="product-name">${product.name}</div>
-                <div class="product-vintage">${details}</div>
+                <div class="product-vintage">${product.vintage} - ${product.varietal}</div>
                 <div class="product-price">$${parseFloat(product.price).toFixed(2)}</div>
             </div>
-          `;
-      })
+        `
+      )
       .join('');
   },
 
@@ -161,17 +139,12 @@ const POSScreen = {
     if (cashButton) cashButton.disabled = false;
 
     cartItems.innerHTML = this.cart
-      .map((item) => {
-        const details =
-          item.vintage && item.varietal && item.vintage !== 'null' && item.varietal !== 'null'
-            ? `${item.vintage} ${item.varietal}`
-            : item.category || item.type || '';
-
-        return `
+      .map(
+        (item) => `
             <div class="cart-item">
                 <div class="cart-item-info">
                     <div class="cart-item-name">${item.name}</div>
-                    <div class="cart-item-details">${details}</div>
+                    <div class="cart-item-details">${item.vintage} ${item.varietal}</div>
                 </div>
                 <div class="cart-item-qty">
                     <div class="qty-btn" onclick="POSScreen.updateQuantity(${item.id}, -1)">−</div>
@@ -180,8 +153,8 @@ const POSScreen = {
                 </div>
                 <div class="cart-item-price">$${(parseFloat(item.price) * item.quantity).toFixed(2)}</div>
             </div>
-          `;
-      })
+        `
+      )
       .join('');
   },
 
@@ -190,16 +163,7 @@ const POSScreen = {
       (sum, item) => sum + parseFloat(item.price) * item.quantity,
       0
     );
-
-    // Calculate tax only for taxable items (exclude tax_exempt products)
-    const taxableSubtotal = this.cart.reduce((sum, item) => {
-      if (item.tax_category === 'tax_exempt') {
-        return sum; // Don't add tax_exempt items to taxable amount
-      }
-      return sum + parseFloat(item.price) * item.quantity;
-    }, 0);
-
-    const tax = taxableSubtotal * this.TAX_RATE;
+    const tax = subtotal * this.TAX_RATE;
     const total = subtotal + tax;
 
     document.getElementById('subtotal').textContent = `$${subtotal.toFixed(2)}`;
@@ -228,16 +192,7 @@ const POSScreen = {
       (sum, item) => sum + parseFloat(item.price) * item.quantity,
       0
     );
-
-    // Calculate tax only for taxable items (exclude tax_exempt products)
-    const taxableSubtotal = this.cart.reduce((sum, item) => {
-      if (item.tax_category === 'tax_exempt') {
-        return sum; // Don't add tax_exempt items to taxable amount
-      }
-      return sum + parseFloat(item.price) * item.quantity;
-    }, 0);
-
-    const tax = taxableSubtotal * this.TAX_RATE;
+    const tax = subtotal * this.TAX_RATE;
     const total = subtotal + tax;
     return { subtotal, tax, total };
   },
@@ -1354,23 +1309,30 @@ const POSScreen = {
 
   async handleTerminalResponse(transactionData, subtotal, tax, total, referenceId) {
     console.log('🔍 Handling terminal response:', transactionData);
+    console.log('🔍 declineInfo in response:', transactionData.declineInfo);
+    console.log('🔍 Response keys:', Object.keys(transactionData));
 
     // Check if decline info is provided by backend
     const declineInfo = transactionData.declineInfo;
 
-    if (declineInfo && declineInfo.isApproval) {
-      console.log('✅ Transaction approved');
-      await this.saveOrderWithPayment(subtotal, tax, total, transactionData, referenceId);
+    if (declineInfo) {
+      console.log('✅ declineInfo found:', declineInfo);
+      console.log('✅ isApproval:', declineInfo.isApproval);
+
+      if (declineInfo.isApproval) {
+        console.log('✅ Transaction approved');
+        await this.saveOrderWithPayment(subtotal, tax, total, transactionData, referenceId);
+      } else {
+        console.error('❌ Transaction declined or error');
+        this.showDeclineModal(declineInfo);
+      }
     } else {
-      // Transaction declined or error
-      console.error('❌ Transaction declined or error');
-      this.showDeclineModal(
-        declineInfo || {
-          code: 'ERROR',
-          message: 'UNKNOWN ERROR',
-          definition: 'An error occurred processing the payment',
-        }
-      );
+      console.error('❌ No declineInfo in response, treating as error');
+      this.showDeclineModal({
+        code: 'ERROR',
+        message: 'UNKNOWN ERROR',
+        definition: 'No decline information in response',
+      });
     }
   },
 
