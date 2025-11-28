@@ -20,11 +20,15 @@ class CustomersScreen {
   }
 
   async loadCountrySettings() {
+    console.log('Loading country settings...');
     try {
       const response = await fetch('/.netlify/functions/get-country-settings');
+      console.log('Country settings response:', response.status);
       const data = await response.json();
+      console.log('Country settings data:', data);
       if (data.success) {
         this.countrySettings = data.settings;
+        console.log('Loaded country settings:', this.countrySettings);
       }
     } catch (error) {
       console.error('Failed to load country settings:', error);
@@ -32,12 +36,19 @@ class CustomersScreen {
   }
 
   async loadCustomers() {
+    console.log('Loading customers...');
     try {
       const response = await fetch('/.netlify/functions/get-customers?limit=1000');
+      console.log('Customers response status:', response.status);
       const data = await response.json();
+      console.log('Customers data:', data);
       if (data.success) {
         this.customers = data.customers;
+        console.log(`Loaded ${this.customers.length} customers`);
         this.applyFilters();
+      } else {
+        console.error('API returned success: false', data);
+        alert('Failed to load customers: ' + (data.error || 'Unknown error'));
       }
     } catch (error) {
       console.error('Failed to load customers:', error);
@@ -46,6 +57,7 @@ class CustomersScreen {
   }
 
   applyFilters() {
+    console.log('Applying filters...');
     let filtered = [...this.customers];
 
     // Apply search filter
@@ -92,11 +104,16 @@ class CustomersScreen {
     }
 
     this.filteredCustomers = filtered;
+    console.log(`Filtered to ${this.filteredCustomers.length} customers`);
   }
 
   render() {
-    const container = document.getElementById('screen-content');
-    if (!container) return;
+    console.log('Rendering customers screen...');
+    const container = document.getElementById('customersScreen');
+    if (!container) {
+      console.error('Container element #customersScreen not found!');
+      return;
+    }
 
     const html = `
       <div class="customers-screen">
@@ -168,6 +185,7 @@ class CustomersScreen {
     `;
 
     container.innerHTML = html;
+    console.log('Render complete');
   }
 
   renderBulkActions() {
@@ -306,6 +324,7 @@ class CustomersScreen {
   }
 
   attachEventListeners() {
+    console.log('Attaching event listeners...');
     const searchInput = document.getElementById('customer-search');
     if (searchInput) {
       searchInput.addEventListener('input', (e) => {
