@@ -1357,16 +1357,25 @@ const POSScreen = {
 
     // Check SPIN status first
     const generalResponse = transactionData.GeneralResponse || {};
-    const resultCode = generalResponse.ResultCode;
-    const statusCode = generalResponse.StatusCode;
-    const hostResponseCode = generalResponse.HostResponseCode;
+    const resultCode = String(generalResponse.ResultCode || '');
+    const statusCode = String(generalResponse.StatusCode || '');
+    const hostResponseCode = String(generalResponse.HostResponseCode || '');
 
-    console.log('📊 ResultCode:', resultCode);
-    console.log('📊 StatusCode:', statusCode);
-    console.log('📊 HostResponseCode:', hostResponseCode);
+    console.log('📊 ResultCode:', resultCode, '(type:', typeof resultCode + ')');
+    console.log('📊 StatusCode:', statusCode, '(type:', typeof statusCode + ')');
+    console.log('📊 HostResponseCode:', hostResponseCode, '(type:', typeof hostResponseCode + ')');
 
     // Check if SPIN transaction was successful
     const spinSuccess = resultCode === '0' && statusCode === '0000';
+    console.log(
+      '📊 SPIN Success check:',
+      spinSuccess,
+      '(resultCode===0:',
+      resultCode === '0',
+      'statusCode===0000:',
+      statusCode === '0000',
+      ')'
+    );
 
     if (!spinSuccess) {
       // SPIN error - show error modal
@@ -1382,8 +1391,16 @@ const POSScreen = {
 
     // SPIN success - now check host response code for approval
     console.log('✅ SPIN success, checking host response code');
+    const isApproved = hostResponseCode === '00';
+    console.log(
+      '📊 Approval check:',
+      isApproved,
+      '(hostResponseCode===00:',
+      hostResponseCode === '00',
+      ')'
+    );
 
-    if (hostResponseCode === '00') {
+    if (isApproved) {
       console.log('✅ Transaction approved (HostResponseCode=00)');
       await this.saveOrderWithPayment(subtotal, tax, total, transactionData, referenceId);
     } else {
