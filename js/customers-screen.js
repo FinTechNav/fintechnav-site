@@ -293,7 +293,7 @@ class CustomersScreen {
     this.attachEventListeners();
   }
 
-  initializeMap() {
+  async initializeMap() {
     if (!window.google) {
       console.error('Google Maps API not loaded');
       return;
@@ -312,6 +312,7 @@ class CustomersScreen {
         zoom: 4,
         center: center,
         styles: this.getMapStyles(),
+        mapId: 'HEAVY_POUR_CUSTOMER_MAP', // Required for AdvancedMarkerElement
       });
       return;
     }
@@ -328,31 +329,36 @@ class CustomersScreen {
       zoom: 4,
       center: bounds.getCenter(),
       styles: this.getMapStyles(),
+      mapId: 'HEAVY_POUR_CUSTOMER_MAP', // Required for AdvancedMarkerElement
     });
 
     this.map.fitBounds(bounds);
 
     // Clear existing markers
-    this.markers.forEach((marker) => marker.setMap(null));
+    this.markers.forEach((marker) => (marker.map = null));
     this.markers = [];
+
+    // Load the marker library for AdvancedMarkerElement
+    const { AdvancedMarkerElement, PinElement } = await google.maps.importLibrary('marker');
 
     // Add markers for each customer
     geocodedCustomers.forEach((customer) => {
-      const marker = new google.maps.Marker({
+      // Create custom pin element
+      const pinElement = new PinElement({
+        background: '#f39c12',
+        borderColor: '#ffffff',
+        glyphColor: '#ffffff',
+        scale: 1.2,
+      });
+
+      const marker = new AdvancedMarkerElement({
         position: {
           lat: parseFloat(customer.latitude),
           lng: parseFloat(customer.longitude),
         },
         map: this.map,
         title: this.getFullName(customer),
-        icon: {
-          path: google.maps.SymbolPath.CIRCLE,
-          scale: 8,
-          fillColor: '#f39c12',
-          fillOpacity: 0.9,
-          strokeColor: '#ffffff',
-          strokeWeight: 2,
-        },
+        content: pinElement.element,
       });
 
       const infoWindow = new google.maps.InfoWindow({
@@ -370,7 +376,10 @@ class CustomersScreen {
       });
 
       marker.addListener('click', () => {
-        infoWindow.open(this.map, marker);
+        infoWindow.open({
+          anchor: marker,
+          map: this.map,
+        });
       });
 
       this.markers.push(marker);
