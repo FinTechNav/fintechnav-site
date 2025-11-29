@@ -197,6 +197,7 @@ class CustomersScreen {
     console.log('showMap:', this.showMap);
     console.log('currentPolygon exists:', !!this.currentPolygon);
     console.log('map instance exists:', !!this.map);
+    console.log('selectedCustomers.size:', this.selectedCustomers.size);
 
     const container = document.getElementById('customersScreen');
     if (!container) return;
@@ -221,13 +222,18 @@ class CustomersScreen {
 
       // Update bulk actions bar - remove old one first
       const existingBulkActions = document.querySelector('.bulk-actions-bar');
+      console.log('Existing bulk actions bar found:', !!existingBulkActions);
+      console.log('Should show bulk actions:', this.selectedCustomers.size > 0);
+
       if (existingBulkActions) {
+        console.log('Removing existing bulk actions bar');
         existingBulkActions.remove();
       }
 
       if (this.selectedCustomers.size > 0) {
         const statsContainer = document.querySelector('.customers-stats');
         if (statsContainer) {
+          console.log('Adding new bulk actions bar after stats');
           statsContainer.insertAdjacentHTML('afterend', this.renderBulkActions());
         }
       }
@@ -237,6 +243,7 @@ class CustomersScreen {
       return;
     }
 
+    console.log('Full render - recreating entire HTML');
     const activeFilterCount = this.getActiveFilterCount();
 
     const html = `
@@ -1117,8 +1124,9 @@ class CustomersScreen {
   }
 
   renderBulkActions() {
+    console.log('renderBulkActions called, selectedCustomers.size:', this.selectedCustomers.size);
     return `
-      <div class="bulk-actions">
+      <div class="bulk-actions-bar">
         <button class="btn-bulk" onclick="customersScreen.bulkEmail()">📧 Email Selected</button>
         <button class="btn-bulk" onclick="customersScreen.bulkExport()">💾 Export Selected</button>
         <button class="btn-bulk" onclick="customersScreen.bulkAddToClub()">🍷 Add to Club</button>
