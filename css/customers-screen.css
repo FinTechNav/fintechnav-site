@@ -173,6 +173,49 @@
   text-align: center;
 }
 
+/* Map Button */
+.btn-map {
+  padding: 12px 20px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: #e8e8e8;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-map:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: #f39c12;
+}
+
+.btn-map.active {
+  background: rgba(243, 156, 18, 0.2);
+  border-color: rgba(243, 156, 18, 0.5);
+  color: #f39c12;
+}
+
+.map-icon {
+  font-size: 18px;
+}
+
+.map-container {
+  padding: 10px 0;
+}
+
+#customer-map {
+  width: 100%;
+  height: 600px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
 .view-toggle {
   display: flex;
   gap: 5px;
@@ -430,6 +473,19 @@
 .customers-table th.sortable:hover {
   background: rgba(243, 156, 18, 0.1);
   color: #f39c12;
+}
+
+.sort-arrows {
+  opacity: 0.3;
+  margin-left: 4px;
+  font-size: 12px;
+}
+
+.sort-arrow-active {
+  color: #f39c12;
+  margin-left: 4px;
+  font-size: 14px;
+  font-weight: bold;
 }
 
 .customers-table tbody tr {
