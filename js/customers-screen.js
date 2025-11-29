@@ -9,6 +9,18 @@ class CustomersScreen {
     this.currentGrouping = localStorage.getItem('customerGrouping') || 'all';
     this.searchTerm = '';
     this.countrySettings = null;
+    this.sortField = 'last_name';
+    this.sortDirection = 'asc';
+    this.filters = {
+      customerStatus: [],
+      clubMemberStatus: [],
+      allocationStatus: [],
+      minLTV: null,
+      maxLTV: null,
+      minOrders: null,
+      maxOrders: null,
+      lastOrderDays: null,
+    };
   }
 
   async init() {
@@ -103,6 +115,60 @@ class CustomersScreen {
         break;
     }
 
+    // Apply advanced filters
+    if (this.filters.customerStatus.length > 0) {
+      filtered = filtered.filter((c) => this.filters.customerStatus.includes(c.customer_status));
+    }
+    if (this.filters.clubMemberStatus.length > 0) {
+      filtered = filtered.filter((c) =>
+        this.filters.clubMemberStatus.includes(c.club_member_status)
+      );
+    }
+    if (this.filters.allocationStatus.length > 0) {
+      filtered = filtered.filter((c) =>
+        this.filters.allocationStatus.includes(c.allocation_list_status)
+      );
+    }
+    if (this.filters.minLTV !== null) {
+      filtered = filtered.filter((c) => c.lifetime_value_cents >= this.filters.minLTV * 100);
+    }
+    if (this.filters.maxLTV !== null) {
+      filtered = filtered.filter((c) => c.lifetime_value_cents <= this.filters.maxLTV * 100);
+    }
+    if (this.filters.minOrders !== null) {
+      filtered = filtered.filter((c) => c.order_count >= this.filters.minOrders);
+    }
+    if (this.filters.maxOrders !== null) {
+      filtered = filtered.filter((c) => c.order_count <= this.filters.maxOrders);
+    }
+    if (this.filters.lastOrderDays !== null) {
+      const daysAgo = new Date();
+      daysAgo.setDate(daysAgo.getDate() - this.filters.lastOrderDays);
+      filtered = filtered.filter(
+        (c) => c.last_order_date && new Date(c.last_order_date) >= daysAgo
+      );
+    }
+
+    // Apply sorting
+    filtered.sort((a, b) => {
+      let aVal = a[this.sortField];
+      let bVal = b[this.sortField];
+
+      // Handle null values
+      if (aVal === null || aVal === undefined) aVal = '';
+      if (bVal === null || bVal === undefined) bVal = '';
+
+      // Handle different data types
+      if (typeof aVal === 'string') {
+        aVal = aVal.toLowerCase();
+        bVal = bVal.toLowerCase();
+      }
+
+      if (aVal < bVal) return this.sortDirection === 'asc' ? -1 : 1;
+      if (aVal > bVal) return this.sortDirection === 'asc' ? 1 : -1;
+      return 0;
+    });
+
     this.filteredCustomers = filtered;
     console.log(`Filtered to ${this.filteredCustomers.length} customers`);
   }
@@ -114,6 +180,8 @@ class CustomersScreen {
       console.error('Container element #customersScreen not found!');
       return;
     }
+
+    const activeFilterCount = this.getActiveFilterCount();
 
     const html = `
       <div class="customers-screen">
@@ -153,6 +221,11 @@ class CustomersScreen {
             </select>
           </div>
 
+          <button class="btn-filter" id="filter-btn" onclick="customersScreen.openFilterModal()">
+            <span class="filter-icon">⚙</span> Filter
+            ${activeFilterCount > 0 ? `<span class="filter-badge">${activeFilterCount}</span>` : ''}
+          </button>
+
           <div class="view-toggle">
             <button 
               class="view-btn ${this.currentView === 'grid' ? 'active' : ''}" 
@@ -182,10 +255,162 @@ class CustomersScreen {
           ${this.currentView === 'grid' ? this.renderGridView() : this.renderListView()}
         </div>
       </div>
+
+      ${this.renderFilterModal()}
     `;
 
     container.innerHTML = html;
     console.log('Render complete');
+  }
+
+  getActiveFilterCount() {
+    let count = 0;
+    if (this.filters.customerStatus.length > 0) count++;
+    if (this.filters.clubMemberStatus.length > 0) count++;
+    if (this.filters.allocationStatus.length > 0) count++;
+    if (this.filters.minLTV !== null) count++;
+    if (this.filters.maxLTV !== null) count++;
+    if (this.filters.minOrders !== null) count++;
+    if (this.filters.maxOrders !== null) count++;
+    if (this.filters.lastOrderDays !== null) count++;
+    return count;
+  }
+
+  renderFilterModal() {
+    return `
+      <div id="filter-modal" class="modal" style="display: none;">
+        <div class="modal-content filter-modal-content">
+          <div class="modal-header">
+            <h2>Filters</h2>
+            <button class="modal-close" onclick="customersScreen.closeFilterModal()">×</button>
+          </div>
+          
+          <div class="modal-body">
+            <div class="filter-section">
+              <h3>Customer Status</h3>
+              <label><input type="checkbox" value="active" ${this.filters.customerStatus.includes('active') ? 'checked' : ''}> Active</label>
+              <label><input type="checkbox" value="vip" ${this.filters.customerStatus.includes('vip') ? 'checked' : ''}> VIP</label>
+              <label><input type="checkbox" value="at_risk" ${this.filters.customerStatus.includes('at_risk') ? 'checked' : ''}> At Risk</label>
+              <label><input type="checkbox" value="inactive" ${this.filters.customerStatus.includes('inactive') ? 'checked' : ''}> Inactive</label>
+            </div>
+
+            <div class="filter-section">
+              <h3>Club Membership</h3>
+              <label><input type="checkbox" value="active" ${this.filters.clubMemberStatus.includes('active') ? 'checked' : ''}> Active Member</label>
+              <label><input type="checkbox" value="paused" ${this.filters.clubMemberStatus.includes('paused') ? 'checked' : ''}> Paused</label>
+              <label><input type="checkbox" value="cancelled" ${this.filters.clubMemberStatus.includes('cancelled') ? 'checked' : ''}> Cancelled</label>
+              <label><input type="checkbox" value="none" ${this.filters.clubMemberStatus.includes('none') ? 'checked' : ''}> Not a Member</label>
+            </div>
+
+            <div class="filter-section">
+              <h3>Allocation List</h3>
+              <label><input type="checkbox" value="active" ${this.filters.allocationStatus.includes('active') ? 'checked' : ''}> Active</label>
+              <label><input type="checkbox" value="waitlist" ${this.filters.allocationStatus.includes('waitlist') ? 'checked' : ''}> Waitlist</label>
+              <label><input type="checkbox" value="none" ${this.filters.allocationStatus.includes('none') ? 'checked' : ''}> Not on List</label>
+            </div>
+
+            <div class="filter-section">
+              <h3>Lifetime Value (LTV)</h3>
+              <div class="filter-range">
+                <input type="number" id="filter-min-ltv" placeholder="Min $" value="${this.filters.minLTV || ''}" />
+                <span>to</span>
+                <input type="number" id="filter-max-ltv" placeholder="Max $" value="${this.filters.maxLTV || ''}" />
+              </div>
+            </div>
+
+            <div class="filter-section">
+              <h3>Order Count</h3>
+              <div class="filter-range">
+                <input type="number" id="filter-min-orders" placeholder="Min" value="${this.filters.minOrders || ''}" />
+                <span>to</span>
+                <input type="number" id="filter-max-orders" placeholder="Max" value="${this.filters.maxOrders || ''}" />
+              </div>
+            </div>
+
+            <div class="filter-section">
+              <h3>Last Order</h3>
+              <select id="filter-last-order">
+                <option value="">Any time</option>
+                <option value="7" ${this.filters.lastOrderDays === 7 ? 'selected' : ''}>Last 7 days</option>
+                <option value="30" ${this.filters.lastOrderDays === 30 ? 'selected' : ''}>Last 30 days</option>
+                <option value="90" ${this.filters.lastOrderDays === 90 ? 'selected' : ''}>Last 90 days</option>
+                <option value="365" ${this.filters.lastOrderDays === 365 ? 'selected' : ''}>Last year</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button class="btn-secondary" onclick="customersScreen.resetFilters()">Reset Filters</button>
+            <button class="btn-primary" onclick="customersScreen.applyFiltersFromModal()">Apply Changes</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  openFilterModal() {
+    const modal = document.getElementById('filter-modal');
+    if (modal) modal.style.display = 'flex';
+  }
+
+  closeFilterModal() {
+    const modal = document.getElementById('filter-modal');
+    if (modal) modal.style.display = 'none';
+  }
+
+  resetFilters() {
+    this.filters = {
+      customerStatus: [],
+      clubMemberStatus: [],
+      allocationStatus: [],
+      minLTV: null,
+      maxLTV: null,
+      minOrders: null,
+      maxOrders: null,
+      lastOrderDays: null,
+    };
+    this.applyFilters();
+    this.closeFilterModal();
+    this.render();
+    this.attachEventListeners();
+  }
+
+  applyFiltersFromModal() {
+    // Customer status
+    this.filters.customerStatus = Array.from(
+      document.querySelectorAll('.filter-section:nth-of-type(1) input[type="checkbox"]:checked')
+    ).map((cb) => cb.value);
+
+    // Club membership
+    this.filters.clubMemberStatus = Array.from(
+      document.querySelectorAll('.filter-section:nth-of-type(2) input[type="checkbox"]:checked')
+    ).map((cb) => cb.value);
+
+    // Allocation status
+    this.filters.allocationStatus = Array.from(
+      document.querySelectorAll('.filter-section:nth-of-type(3) input[type="checkbox"]:checked')
+    ).map((cb) => cb.value);
+
+    // LTV range
+    const minLTV = document.getElementById('filter-min-ltv').value;
+    const maxLTV = document.getElementById('filter-max-ltv').value;
+    this.filters.minLTV = minLTV ? parseFloat(minLTV) : null;
+    this.filters.maxLTV = maxLTV ? parseFloat(maxLTV) : null;
+
+    // Order count range
+    const minOrders = document.getElementById('filter-min-orders').value;
+    const maxOrders = document.getElementById('filter-max-orders').value;
+    this.filters.minOrders = minOrders ? parseInt(minOrders) : null;
+    this.filters.maxOrders = maxOrders ? parseInt(maxOrders) : null;
+
+    // Last order
+    const lastOrder = document.getElementById('filter-last-order').value;
+    this.filters.lastOrderDays = lastOrder ? parseInt(lastOrder) : null;
+
+    this.applyFilters();
+    this.closeFilterModal();
+    this.render();
+    this.attachEventListeners();
   }
 
   renderBulkActions() {
@@ -260,6 +485,11 @@ class CustomersScreen {
       return '<div class="no-customers">No customers found</div>';
     }
 
+    const getSortIndicator = (field) => {
+      if (this.sortField !== field) return '';
+      return this.sortDirection === 'asc' ? ' ▲' : ' ▼';
+    };
+
     return `
       <table class="customers-table">
         <thead>
@@ -270,12 +500,24 @@ class CustomersScreen {
                 onchange="customersScreen.toggleSelectAll(this.checked)"
               />
             </th>
-            <th>Customer</th>
-            <th>Email</th>
-            <th>Phone</th>
-            <th>Location</th>
-            <th>Orders</th>
-            <th>LTV</th>
+            <th class="sortable" onclick="customersScreen.sortBy('last_name')">
+              Customer${getSortIndicator('last_name')}
+            </th>
+            <th class="sortable" onclick="customersScreen.sortBy('email')">
+              Email${getSortIndicator('email')}
+            </th>
+            <th class="sortable" onclick="customersScreen.sortBy('phone')">
+              Phone${getSortIndicator('phone')}
+            </th>
+            <th class="sortable" onclick="customersScreen.sortBy('city')">
+              Location${getSortIndicator('city')}
+            </th>
+            <th class="sortable" onclick="customersScreen.sortBy('order_count')">
+              Orders${getSortIndicator('order_count')}
+            </th>
+            <th class="sortable" onclick="customersScreen.sortBy('lifetime_value_cents')">
+              LTV${getSortIndicator('lifetime_value_cents')}
+            </th>
             <th>Status</th>
             <th>Actions</th>
           </tr>
@@ -319,22 +561,35 @@ class CustomersScreen {
     `;
   }
 
+  sortBy(field) {
+    if (this.sortField === field) {
+      this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+      this.sortField = field;
+      this.sortDirection = 'asc';
+    }
+    this.applyFilters();
+    this.render();
+    this.attachEventListeners();
+  }
+
   attachEventListeners() {
     console.log('Attaching event listeners...');
+
+    // FIXED: Store reference to search input and only attach listener once
     const searchInput = document.getElementById('customer-search');
-    if (searchInput) {
+    if (searchInput && !searchInput.dataset.listenerAttached) {
+      searchInput.dataset.listenerAttached = 'true';
       searchInput.addEventListener('input', (e) => {
         this.searchTerm = e.target.value;
         this.applyFilters();
-        this.render();
-        this.attachEventListeners();
+        this.renderWithoutReattaching();
       });
-    } else {
-      console.log('Search input not found');
     }
 
     const groupingSelect = document.getElementById('customer-grouping');
-    if (groupingSelect) {
+    if (groupingSelect && !groupingSelect.dataset.listenerAttached) {
+      groupingSelect.dataset.listenerAttached = 'true';
       groupingSelect.addEventListener('change', (e) => {
         this.currentGrouping = e.target.value;
         localStorage.setItem('customerGrouping', this.currentGrouping);
@@ -342,6 +597,48 @@ class CustomersScreen {
         this.render();
         this.attachEventListeners();
       });
+    }
+  }
+
+  // Render without re-attaching event listeners (for search input)
+  renderWithoutReattaching() {
+    const container = document.getElementById('customersScreen');
+    if (!container) return;
+
+    const activeFilterCount = this.getActiveFilterCount();
+
+    // Update stats
+    const statsEl = container.querySelector('.customers-stats');
+    if (statsEl) {
+      statsEl.innerHTML = `
+        <span>Showing ${this.filteredCustomers.length} of ${this.customers.length} customers</span>
+        ${this.selectedCustomers.size > 0 ? `<span class="selected-count">${this.selectedCustomers.size} selected</span>` : ''}
+      `;
+    }
+
+    // Update filter badge
+    const filterBtn = container.querySelector('#filter-btn');
+    if (filterBtn) {
+      filterBtn.innerHTML = `
+        <span class="filter-icon">⚙</span> Filter
+        ${activeFilterCount > 0 ? `<span class="filter-badge">${activeFilterCount}</span>` : ''}
+      `;
+    }
+
+    // Update customer list
+    const customersContainer = container.querySelector('.customers-container');
+    if (customersContainer) {
+      customersContainer.innerHTML =
+        this.currentView === 'grid' ? this.renderGridView() : this.renderListView();
+    }
+
+    // Update bulk actions
+    const bulkActionsContainer = container.querySelector('.bulk-actions');
+    if (this.selectedCustomers.size > 0 && !bulkActionsContainer) {
+      const toolbar = container.querySelector('.customers-toolbar');
+      toolbar.insertAdjacentHTML('afterend', this.renderBulkActions());
+    } else if (this.selectedCustomers.size === 0 && bulkActionsContainer) {
+      bulkActionsContainer.remove();
     }
   }
 
