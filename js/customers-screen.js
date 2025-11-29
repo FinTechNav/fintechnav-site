@@ -414,8 +414,15 @@ class CustomersScreen {
       this.stopDrawing();
     }
 
-    this.render();
-    this.attachEventListeners();
+    // Just update the button state, don't re-render entire screen
+    const drawBtn = document.querySelector('.btn-map-control');
+    if (drawBtn) {
+      if (this.isDrawingMode) {
+        drawBtn.classList.add('active');
+      } else {
+        drawBtn.classList.remove('active');
+      }
+    }
   }
 
   startDrawing() {
@@ -535,10 +542,28 @@ class CustomersScreen {
     console.log('Applying polygon filter');
     this.applyPolygonFilter();
 
-    // Re-render
-    console.log('Re-rendering screen');
-    this.render();
-    this.attachEventListeners();
+    // Update the controls UI only
+    const controlsContainer = document.querySelector('.map-controls');
+    if (controlsContainer) {
+      controlsContainer.innerHTML = `
+        <button class="btn-map-control" onclick="customersScreen.toggleDrawingMode()" title="Draw boundary">
+          <span class="draw-icon">✏️</span> Draw Area
+        </button>
+        <button class="btn-map-control btn-remove" onclick="customersScreen.removePolygon()" title="Remove boundary">
+          <span>🗑️</span> Remove Outline
+        </button>
+        <div class="map-filter-count">
+          ${this.filteredCustomers.length} customers in area
+        </div>
+      `;
+    }
+
+    // Update the customer list view
+    const customersContainer = document.querySelector('.customers-container');
+    if (customersContainer) {
+      customersContainer.innerHTML =
+        this.currentView === 'grid' ? this.renderGridView() : this.renderListView();
+    }
   }
 
   clearTempDrawing() {
@@ -565,8 +590,23 @@ class CustomersScreen {
 
     // Re-apply filters without polygon
     this.applyFilters();
-    this.render();
-    this.attachEventListeners();
+
+    // Update controls UI
+    const controlsContainer = document.querySelector('.map-controls');
+    if (controlsContainer) {
+      controlsContainer.innerHTML = `
+        <button class="btn-map-control" onclick="customersScreen.toggleDrawingMode()" title="Draw boundary">
+          <span class="draw-icon">✏️</span> Draw Area
+        </button>
+      `;
+    }
+
+    // Update customer list
+    const customersContainer = document.querySelector('.customers-container');
+    if (customersContainer) {
+      customersContainer.innerHTML =
+        this.currentView === 'grid' ? this.renderGridView() : this.renderListView();
+    }
   }
 
   applyPolygonFilter() {
