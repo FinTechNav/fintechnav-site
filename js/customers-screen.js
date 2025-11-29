@@ -311,7 +311,6 @@ class CustomersScreen {
       this.map = new google.maps.Map(mapElement, {
         zoom: 4,
         center: center,
-        styles: this.getMapStyles(),
         mapId: 'HEAVY_POUR_CUSTOMER_MAP', // Required for AdvancedMarkerElement
       });
       return;
@@ -328,7 +327,6 @@ class CustomersScreen {
     this.map = new google.maps.Map(mapElement, {
       zoom: 4,
       center: bounds.getCenter(),
-      styles: this.getMapStyles(),
       mapId: 'HEAVY_POUR_CUSTOMER_MAP', // Required for AdvancedMarkerElement
     });
 
@@ -384,28 +382,6 @@ class CustomersScreen {
 
       this.markers.push(marker);
     });
-  }
-
-  getMapStyles() {
-    return [
-      {
-        elementType: 'geometry',
-        stylers: [{ color: '#1a1a2e' }],
-      },
-      {
-        elementType: 'labels.text.fill',
-        stylers: [{ color: '#8ec3b9' }],
-      },
-      {
-        elementType: 'labels.text.stroke',
-        stylers: [{ color: '#1a1a2e' }],
-      },
-      {
-        featureType: 'water',
-        elementType: 'geometry',
-        stylers: [{ color: '#16213e' }],
-      },
-    ];
   }
 
   getActiveFilterCount() {
