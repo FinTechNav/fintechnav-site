@@ -1,20 +1,31 @@
+# Environment variables
 .env
-node_modules/
 .env.local
 .env.*.local
 
-# Local Netlify folder
+# API Keys and Config
+config.js
+**/config.js
+
+# Dependencies
+node_modules/
+
+# Netlify
 .netlify
+
+# OS Files
 .DS_Store
-js/.DS_Store
-.DS_Store
-.DS_Store
-js/.DS_Store
-js/.DS_Store
-js/.DS_Store
-.DS_Store
-.DS_Store
-.DS_Store
-.DS_Store
-.DS_Store
-.DS_Store
+**/.DS_Store
+
+# IDE
+.vscode/
+.idea/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build outputs
+dist/
+build/
