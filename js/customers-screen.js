@@ -239,7 +239,7 @@ class CustomersScreen {
           </button>
 
           <button class="btn-map ${this.showMap ? 'active' : ''}" onclick="customersScreen.toggleMap()" title="Map View">
-            <span class="map-icon">📍</span>
+            <span class="map-icon">🗺</span> Map
           </button>
 
           <div class="view-toggle">
@@ -396,13 +396,19 @@ class CustomersScreen {
   }
 
   toggleDrawingMode() {
+    console.log('toggleDrawingMode called, current isDrawingMode:', this.isDrawingMode);
+    console.log('map object:', this.map);
+
     this.isDrawingMode = !this.isDrawingMode;
+    console.log('new isDrawingMode:', this.isDrawingMode);
 
     if (this.isDrawingMode) {
+      console.log('Enabling drawing mode with crosshair cursor');
       // Enable drawing mode
       this.map.setOptions({ draggableCursor: 'crosshair' });
       this.startDrawing();
     } else {
+      console.log('Disabling drawing mode');
       // Disable drawing mode
       this.map.setOptions({ draggableCursor: null });
       this.stopDrawing();
@@ -413,24 +419,30 @@ class CustomersScreen {
   }
 
   startDrawing() {
+    console.log('startDrawing called');
     this.polygonPath = [];
     this.clearTempDrawing();
 
     // Add click listener to map
     this.drawingClickListener = google.maps.event.addListener(this.map, 'click', (event) => {
+      console.log('Map clicked at:', event.latLng.toString());
       this.addPolygonPoint(event.latLng);
     });
+    console.log('Drawing click listener added');
   }
 
   stopDrawing() {
+    console.log('stopDrawing called');
     if (this.drawingClickListener) {
       google.maps.event.removeListener(this.drawingClickListener);
       this.drawingClickListener = null;
+      console.log('Drawing click listener removed');
     }
     this.clearTempDrawing();
   }
 
   addPolygonPoint(latLng) {
+    console.log('addPolygonPoint called, point count:', this.polygonPath.length + 1);
     this.polygonPath.push(latLng);
 
     // Add marker at click point
@@ -475,12 +487,16 @@ class CustomersScreen {
   }
 
   completePolygon() {
+    console.log('completePolygon called with', this.polygonPath.length, 'points');
+
     // Remove previous polygon if exists
     if (this.currentPolygon) {
+      console.log('Removing previous polygon');
       this.currentPolygon.setMap(null);
     }
 
     // Create the polygon
+    console.log('Creating new polygon');
     this.currentPolygon = new google.maps.Polygon({
       paths: this.polygonPath,
       fillColor: '#f39c12',
@@ -492,27 +508,35 @@ class CustomersScreen {
       map: this.map,
     });
 
+    console.log('Polygon created, adding edit listeners');
+
     // Add listeners for polygon edits
     google.maps.event.addListener(this.currentPolygon.getPath(), 'set_at', () => {
+      console.log('Polygon point moved');
       this.applyPolygonFilter();
       this.updateMarkers();
     });
     google.maps.event.addListener(this.currentPolygon.getPath(), 'insert_at', () => {
+      console.log('Polygon point added');
       this.applyPolygonFilter();
       this.updateMarkers();
     });
 
     // Clear temp drawing
+    console.log('Clearing temporary drawing elements');
     this.clearTempDrawing();
 
     // Stop drawing mode
+    console.log('Stopping drawing mode');
     this.isDrawingMode = false;
     this.stopDrawing();
 
     // Apply filter
+    console.log('Applying polygon filter');
     this.applyPolygonFilter();
 
     // Re-render
+    console.log('Re-rendering screen');
     this.render();
     this.attachEventListeners();
   }
