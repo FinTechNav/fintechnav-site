@@ -486,12 +486,19 @@ class CustomersScreen {
 
   handleMouseDown(e) {
     e.preventDefault();
+    console.log('=== MOUSE DOWN ===');
+    console.log('Event:', e);
+    console.log('offsetX:', e.offsetX, 'offsetY:', e.offsetY);
+
     this.isFreehandDrawing = true;
     this.freehandPath = [];
 
     const latLng = this.getLatLngFromMouseEvent(e);
+    console.log('Starting latLng:', latLng ? latLng.toString() : 'null');
+
     if (latLng) {
       this.freehandPath.push(latLng);
+      console.log('Path initialized with', this.freehandPath.length, 'points');
 
       if (this.tempPolyline) {
         this.tempPolyline.setMap(null);
@@ -503,6 +510,9 @@ class CustomersScreen {
         strokeWeight: 2,
         map: this.map,
       });
+      console.log('Temp polyline created');
+    } else {
+      console.error('Failed to get latLng from mouse down event');
     }
 
     this.mouseMoveListener = google.maps.event.addDomListener(
@@ -516,6 +526,8 @@ class CustomersScreen {
     this.mouseUpListener = google.maps.event.addDomListener(this.map.getDiv(), 'mouseup', (e) => {
       this.handleMouseUp(e);
     });
+
+    console.log('Mouse move and up listeners attached');
   }
 
   handleMouseMove(e) {
@@ -523,14 +535,25 @@ class CustomersScreen {
     e.preventDefault();
 
     const latLng = this.getLatLngFromMouseEvent(e);
+
     if (latLng && this.tempPolyline) {
       this.freehandPath.push(latLng);
+
+      if (this.freehandPath.length % 50 === 0) {
+        console.log('Path growing:', this.freehandPath.length, 'points');
+      }
+
       this.tempPolyline.setPath(this.freehandPath);
+    } else if (!latLng) {
+      console.warn('Failed to get latLng during mouse move at offset:', e.offsetX, e.offsetY);
     }
   }
 
   handleMouseUp(e) {
     e.preventDefault();
+    console.log('=== MOUSE UP ===');
+    console.log('Final path length:', this.freehandPath.length, 'points');
+
     this.isFreehandDrawing = false;
 
     if (this.mouseMoveListener) {
@@ -543,9 +566,16 @@ class CustomersScreen {
     }
 
     if (this.freehandPath.length >= 3) {
+      console.log('Path before simplification:', this.freehandPath.length, 'points');
       this.polygonPath = this.simplifyPath(this.freehandPath);
+      console.log('Path after simplification:', this.polygonPath.length, 'points');
+      console.log(
+        'Simplified path:',
+        this.polygonPath.map((p) => p.toString())
+      );
       this.completePolygon();
     } else {
+      console.warn('Path too short, discarding:', this.freehandPath.length, 'points');
       this.clearTempDrawing();
     }
   }
@@ -619,15 +649,34 @@ class CustomersScreen {
   getLatLngFromMouseEvent(e) {
     const bounds = this.map.getBounds();
     const projection = this.map.getProjection();
-    if (!bounds || !projection) return null;
+
+    if (!bounds || !projection) {
+      console.error('Missing bounds or projection:', {
+        bounds: !!bounds,
+        projection: !!projection,
+      });
+      return null;
+    }
 
     const ne = projection.fromLatLngToPoint(bounds.getNorthEast());
     const sw = projection.fromLatLngToPoint(bounds.getSouthWest());
     const scale = Math.pow(2, this.map.getZoom());
 
+    console.log('Coordinate conversion:', {
+      offsetX: e.offsetX,
+      offsetY: e.offsetY,
+      zoom: this.map.getZoom(),
+      scale: scale,
+      ne: { x: ne.x, y: ne.y },
+      sw: { x: sw.x, y: sw.y },
+    });
+
     const point = new google.maps.Point(e.offsetX / scale + sw.x, e.offsetY / scale + ne.y);
 
-    return projection.fromPointToLatLng(point);
+    const latLng = projection.fromPointToLatLng(point);
+    console.log('Converted to latLng:', latLng ? latLng.toString() : 'null');
+
+    return latLng;
   }
 
   getLatLngFromTouchEvent(e) {
@@ -653,18 +702,37 @@ class CustomersScreen {
   }
 
   simplifyPath(path) {
-    if (path.length <= 10) return path;
+    console.log('=== SIMPLIFY PATH ===');
+    console.log('Input path length:', path.length);
+
+    if (path.length <= 10) {
+      console.log('Path too short to simplify, returning original');
+      return path;
+    }
 
     const simplified = [];
     const step = Math.max(1, Math.floor(path.length / 50));
+    console.log('Simplification step size:', step);
 
     for (let i = 0; i < path.length; i += step) {
       simplified.push(path[i]);
+      console.log(`Added point ${simplified.length}:`, path[i].toString());
     }
 
     if (simplified[simplified.length - 1] !== path[path.length - 1]) {
       simplified.push(path[path.length - 1]);
+      console.log('Added final point:', path[path.length - 1].toString());
     }
+
+    console.log('Simplified path length:', simplified.length);
+    console.log(
+      'First 5 simplified points:',
+      simplified.slice(0, 5).map((p) => p.toString())
+    );
+    console.log(
+      'Last 5 simplified points:',
+      simplified.slice(-5).map((p) => p.toString())
+    );
 
     return simplified;
   }
