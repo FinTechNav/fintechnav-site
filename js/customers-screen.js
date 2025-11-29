@@ -202,8 +202,12 @@ class CustomersScreen {
     const container = document.getElementById('customersScreen');
     if (!container) return;
 
-    // If map is visible and already initialized, just update the customer list
-    if (this.showMap && this.map) {
+    // Check if map panel actually exists in DOM
+    const mapPanelExists = !!document.querySelector('.map-panel');
+    console.log('map panel exists in DOM:', mapPanelExists);
+
+    // If map is visible and already initialized AND map panel exists, just update the customer list
+    if (this.showMap && this.map && mapPanelExists) {
       console.log('Map visible and initialized - updating customer list only');
       const customersContainer = document.querySelector('.customers-container');
       if (customersContainer) {
