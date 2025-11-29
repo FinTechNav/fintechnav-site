@@ -360,21 +360,18 @@ class CustomersScreen {
       return;
     }
 
-    // If map already exists and polygon is drawn, just update markers
-    if (this.map && this.currentPolygon) {
-      console.log('Map exists with polygon - updating markers only');
+    // If map already exists, just update markers and ensure polygon visibility
+    if (this.map) {
+      console.log('Map exists - updating markers only, preserving zoom/position');
       await this.updateMarkers();
 
-      // Re-attach polygon to map if it's not visible
-      if (!this.currentPolygon.getMap()) {
+      // Re-attach polygon to map if it exists and isn't visible
+      if (this.currentPolygon && !this.currentPolygon.getMap()) {
         console.log('Re-attaching polygon to map');
         this.currentPolygon.setMap(this.map);
       }
 
-      // Ensure map is in the correct container
-      console.log('Setting map div to:', mapElement);
-      this.map.setOptions({ div: mapElement });
-
+      console.log('Map update complete - zoom/position preserved');
       return;
     }
 
