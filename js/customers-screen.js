@@ -487,13 +487,20 @@ class CustomersScreen {
   handleMouseDown(e) {
     e.preventDefault();
     console.log('=== MOUSE DOWN ===');
-    console.log('Event:', e);
-    console.log('offsetX:', e.offsetX, 'offsetY:', e.offsetY);
+
+    const mapDiv = this.map.getDiv();
+    const rect = mapDiv.getBoundingClientRect();
+    const offsetX = e.clientX - rect.left;
+    const offsetY = e.clientY - rect.top;
+
+    console.log('clientX:', e.clientX, 'clientY:', e.clientY);
+    console.log('rect.left:', rect.left, 'rect.top:', rect.top);
+    console.log('calculated offsetX:', offsetX, 'offsetY:', offsetY);
 
     this.isFreehandDrawing = true;
     this.freehandPath = [];
 
-    const latLng = this.getLatLngFromMouseEvent(e);
+    const latLng = this.getLatLngFromPixelCoords(offsetX, offsetY);
     console.log('Starting latLng:', latLng ? latLng.toString() : 'null');
 
     if (latLng) {
@@ -534,7 +541,20 @@ class CustomersScreen {
     if (!this.isFreehandDrawing) return;
     e.preventDefault();
 
-    const latLng = this.getLatLngFromMouseEvent(e);
+    const mapDiv = this.map.getDiv();
+    const rect = mapDiv.getBoundingClientRect();
+
+    // Calculate offset from clientX/clientY instead of using unreliable offsetX/offsetY
+    const offsetX = e.clientX - rect.left;
+    const offsetY = e.clientY - rect.top;
+
+    // Check if mouse is actually within the map div
+    if (offsetX < 0 || offsetY < 0 || offsetX > rect.width || offsetY > rect.height) {
+      console.warn('Mouse outside map bounds, skipping point:', offsetX, offsetY);
+      return;
+    }
+
+    const latLng = this.getLatLngFromPixelCoords(offsetX, offsetY);
 
     if (latLng && this.tempPolyline) {
       this.freehandPath.push(latLng);
@@ -545,7 +565,7 @@ class CustomersScreen {
 
       this.tempPolyline.setPath(this.freehandPath);
     } else if (!latLng) {
-      console.warn('Failed to get latLng during mouse move at offset:', e.offsetX, e.offsetY);
+      console.warn('Failed to get latLng during mouse move at coords:', offsetX, offsetY);
     }
   }
 
@@ -618,6 +638,19 @@ class CustomersScreen {
     if (!this.isFreehandDrawing) return;
     e.preventDefault();
 
+    if (!e.touches || e.touches.length === 0) return;
+
+    const touch = e.touches[0];
+    const rect = this.map.getDiv().getBoundingClientRect();
+    const offsetX = touch.clientX - rect.left;
+    const offsetY = touch.clientY - rect.top;
+
+    // Check if touch is within map bounds
+    if (offsetX < 0 || offsetY < 0 || offsetX > rect.width || offsetY > rect.height) {
+      console.warn('Touch outside map bounds, skipping point:', offsetX, offsetY);
+      return;
+    }
+
     const latLng = this.getLatLngFromTouchEvent(e);
     if (latLng && this.tempPolyline) {
       this.freehandPath.push(latLng);
@@ -646,7 +679,7 @@ class CustomersScreen {
     }
   }
 
-  getLatLngFromMouseEvent(e) {
+  getLatLngFromPixelCoords(offsetX, offsetY) {
     const bounds = this.map.getBounds();
     const projection = this.map.getProjection();
 
@@ -663,15 +696,15 @@ class CustomersScreen {
     const scale = Math.pow(2, this.map.getZoom());
 
     console.log('Coordinate conversion:', {
-      offsetX: e.offsetX,
-      offsetY: e.offsetY,
+      offsetX: offsetX,
+      offsetY: offsetY,
       zoom: this.map.getZoom(),
       scale: scale,
       ne: { x: ne.x, y: ne.y },
       sw: { x: sw.x, y: sw.y },
     });
 
-    const point = new google.maps.Point(e.offsetX / scale + sw.x, e.offsetY / scale + ne.y);
+    const point = new google.maps.Point(offsetX / scale + sw.x, offsetY / scale + ne.y);
 
     const latLng = projection.fromPointToLatLng(point);
     console.log('Converted to latLng:', latLng ? latLng.toString() : 'null');
