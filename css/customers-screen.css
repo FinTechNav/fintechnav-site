@@ -205,15 +205,63 @@
   font-size: 18px;
 }
 
-.map-container {
-  padding: 10px 0;
+.map-controls {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+  align-items: center;
 }
 
-#customer-map {
-  width: 100%;
-  height: 600px;
-  border-radius: 12px;
+.btn-map-control {
+  padding: 12px 20px;
+  background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: #e8e8e8;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-map-control:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: #f39c12;
+}
+
+.btn-map-control.active {
+  background: rgba(243, 156, 18, 0.2);
+  border-color: rgba(243, 156, 18, 0.5);
+  color: #f39c12;
+}
+
+.btn-map-control.btn-remove {
+  background: rgba(231, 76, 60, 0.1);
+  border-color: rgba(231, 76, 60, 0.3);
+  color: #e74c3c;
+}
+
+.btn-map-control.btn-remove:hover {
+  background: rgba(231, 76, 60, 0.2);
+  border-color: rgba(231, 76, 60, 0.5);
+}
+
+.map-filter-count {
+  padding: 8px 16px;
+  background: rgba(243, 156, 18, 0.2);
+  border: 1px solid rgba(243, 156, 18, 0.5);
+  border-radius: 8px;
+  color: #f39c12;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.draw-icon {
+  font-size: 16px;
 }
 
 .view-toggle {
@@ -292,6 +340,45 @@
 .selected-count {
   font-weight: 600;
   color: #f39c12;
+}
+
+/* Split View Layout */
+.split-view-container {
+  display: flex;
+  gap: 20px;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.customers-panel {
+  flex: 0 0 45%;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.map-panel {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.map-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+#customer-map {
+  flex: 1;
+  min-height: 0;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .customers-container {
