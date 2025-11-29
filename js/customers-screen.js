@@ -11,7 +11,7 @@ class CustomersScreen {
     this.countrySettings = null;
     this.sortField = 'last_name';
     this.sortDirection = 'asc';
-    this.showMap = false;
+    this.showMap = localStorage.getItem('showMap') === 'true';
     this.map = null;
     this.markers = [];
     this.drawingManager = null;
@@ -201,6 +201,40 @@ class CustomersScreen {
     const container = document.getElementById('customersScreen');
     if (!container) return;
 
+    // If map is visible and already initialized, just update the customer list
+    if (this.showMap && this.map) {
+      console.log('Map visible and initialized - updating customer list only');
+      const customersContainer = document.querySelector('.customers-container');
+      if (customersContainer) {
+        customersContainer.innerHTML =
+          this.currentView === 'grid' ? this.renderGridView() : this.renderListView();
+      }
+
+      // Update stats
+      const statsContainer = document.querySelector('.customers-stats');
+      if (statsContainer) {
+        statsContainer.innerHTML = `
+          <span>Showing ${this.filteredCustomers.length} of ${this.customers.length} customers</span>
+          ${this.selectedCustomers.size > 0 ? `<span class="selected-count">${this.selectedCustomers.size} selected</span>` : ''}
+        `;
+      }
+
+      // Update bulk actions bar
+      const existingBulkActions = document.querySelector('.bulk-actions-bar');
+      if (this.selectedCustomers.size > 0 && !existingBulkActions) {
+        const statsContainer = document.querySelector('.customers-stats');
+        if (statsContainer) {
+          statsContainer.insertAdjacentHTML('afterend', this.renderBulkActions());
+        }
+      } else if (this.selectedCustomers.size === 0 && existingBulkActions) {
+        existingBulkActions.remove();
+      }
+
+      // Update markers on map
+      this.updateMarkers();
+      return;
+    }
+
     const activeFilterCount = this.getActiveFilterCount();
 
     const html = `
@@ -297,7 +331,7 @@ class CustomersScreen {
     `;
 
     container.innerHTML = html;
-    console.log('HTML rendered, showMap:', this.showMap);
+    console.log('HTML rendered (full render), showMap:', this.showMap);
 
     if (this.showMap) {
       console.log('Map should be visible, calling initializeMap in 100ms');
@@ -338,6 +372,7 @@ class CustomersScreen {
 
   toggleMap() {
     this.showMap = !this.showMap;
+    localStorage.setItem('showMap', this.showMap);
     this.render();
     this.attachEventListeners();
   }
