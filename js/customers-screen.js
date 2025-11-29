@@ -1,4 +1,4 @@
-// Customer Management Screen with multiple views and grouping
+// Customer Management Screen with Map Integration
 
 class CustomersScreen {
   constructor() {
@@ -11,6 +11,9 @@ class CustomersScreen {
     this.countrySettings = null;
     this.sortField = 'last_name';
     this.sortDirection = 'asc';
+    this.showMap = false;
+    this.map = null;
+    this.markers = [];
     this.filters = {
       customerStatus: [],
       clubMemberStatus: [],
@@ -35,12 +38,9 @@ class CustomersScreen {
     console.log('Loading country settings...');
     try {
       const response = await fetch('/.netlify/functions/get-country-settings');
-      console.log('Country settings response:', response.status);
       const data = await response.json();
-      console.log('Country settings data:', data);
       if (data.success) {
         this.countrySettings = data.settings;
-        console.log('Loaded country settings:', this.countrySettings);
       }
     } catch (error) {
       console.error('Failed to load country settings:', error);
@@ -51,15 +51,12 @@ class CustomersScreen {
     console.log('Loading customers...');
     try {
       const response = await fetch('/.netlify/functions/get-customers?limit=1000');
-      console.log('Customers response status:', response.status);
       const data = await response.json();
-      console.log('Customers data:', data);
       if (data.success) {
         this.customers = data.customers;
         console.log(`Loaded ${this.customers.length} customers`);
         this.applyFilters();
       } else {
-        console.error('API returned success: false', data);
         alert('Failed to load customers: ' + (data.error || 'Unknown error'));
       }
     } catch (error) {
@@ -69,7 +66,6 @@ class CustomersScreen {
   }
 
   applyFilters() {
-    console.log('Applying filters...');
     let filtered = [...this.customers];
 
     // Apply search filter
@@ -103,15 +99,14 @@ class CustomersScreen {
         filtered = filtered.filter((c) => c.customer_status === 'inactive');
         break;
       case 'high_ltv':
-        filtered = filtered.filter((c) => c.lifetime_value_cents > 100000);
+        filtered = filtered.filter((c) => (c.lifetime_value_cents || 0) >= 100000);
         break;
       case 'recent':
         const thirtyDaysAgo = new Date();
         thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-        filtered = filtered.filter((c) => new Date(c.created_at) > thirtyDaysAgo);
-        break;
-      case 'all':
-      default:
+        filtered = filtered.filter(
+          (c) => c.last_order_date && new Date(c.last_order_date) >= thirtyDaysAgo
+        );
         break;
     }
 
@@ -130,16 +125,16 @@ class CustomersScreen {
       );
     }
     if (this.filters.minLTV !== null) {
-      filtered = filtered.filter((c) => c.lifetime_value_cents >= this.filters.minLTV * 100);
+      filtered = filtered.filter((c) => (c.lifetime_value_cents || 0) >= this.filters.minLTV * 100);
     }
     if (this.filters.maxLTV !== null) {
-      filtered = filtered.filter((c) => c.lifetime_value_cents <= this.filters.maxLTV * 100);
+      filtered = filtered.filter((c) => (c.lifetime_value_cents || 0) <= this.filters.maxLTV * 100);
     }
     if (this.filters.minOrders !== null) {
-      filtered = filtered.filter((c) => c.order_count >= this.filters.minOrders);
+      filtered = filtered.filter((c) => (c.order_count || 0) >= this.filters.minOrders);
     }
     if (this.filters.maxOrders !== null) {
-      filtered = filtered.filter((c) => c.order_count <= this.filters.maxOrders);
+      filtered = filtered.filter((c) => (c.order_count || 0) <= this.filters.maxOrders);
     }
     if (this.filters.lastOrderDays !== null) {
       const daysAgo = new Date();
@@ -149,37 +144,48 @@ class CustomersScreen {
       );
     }
 
-    // Apply sorting
-    filtered.sort((a, b) => {
+    this.filteredCustomers = this.sortCustomers(filtered);
+  }
+
+  sortBy(field) {
+    if (this.sortField === field) {
+      this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+      this.sortField = field;
+      this.sortDirection = 'asc';
+    }
+    this.filteredCustomers = this.sortCustomers(this.filteredCustomers);
+    this.render();
+    this.attachEventListeners();
+    if (this.showMap) {
+      this.initializeMap();
+    }
+  }
+
+  sortCustomers(customers) {
+    return [...customers].sort((a, b) => {
       let aVal = a[this.sortField];
       let bVal = b[this.sortField];
 
-      // Handle null values
+      // Handle null/undefined values
       if (aVal === null || aVal === undefined) aVal = '';
       if (bVal === null || bVal === undefined) bVal = '';
 
-      // Handle different data types
-      if (typeof aVal === 'string') {
-        aVal = aVal.toLowerCase();
-        bVal = bVal.toLowerCase();
-      }
+      // Convert to lowercase for string comparison
+      if (typeof aVal === 'string') aVal = aVal.toLowerCase();
+      if (typeof bVal === 'string') bVal = bVal.toLowerCase();
 
-      if (aVal < bVal) return this.sortDirection === 'asc' ? -1 : 1;
-      if (aVal > bVal) return this.sortDirection === 'asc' ? 1 : -1;
-      return 0;
+      let comparison = 0;
+      if (aVal < bVal) comparison = -1;
+      if (aVal > bVal) comparison = 1;
+
+      return this.sortDirection === 'asc' ? comparison : -comparison;
     });
-
-    this.filteredCustomers = filtered;
-    console.log(`Filtered to ${this.filteredCustomers.length} customers`);
   }
 
   render() {
-    console.log('Rendering customers screen...');
     const container = document.getElementById('customersScreen');
-    if (!container) {
-      console.error('Container element #customersScreen not found!');
-      return;
-    }
+    if (!container) return;
 
     const activeFilterCount = this.getActiveFilterCount();
 
@@ -187,13 +193,10 @@ class CustomersScreen {
       <div class="customers-screen">
         <div class="customers-header">
           <h1>Customers</h1>
+          <p>Manage your customer relationships and sales data</p>
           <div class="header-actions">
-            <button class="btn-secondary" onclick="customersScreen.importCustomers()">
-              Import Customers
-            </button>
-            <button class="btn-primary" onclick="customersScreen.addCustomer()">
-              Add Customer
-            </button>
+            <button class="btn-primary" onclick="customersScreen.createCustomer()">+ Add Customer</button>
+            <button class="btn-secondary" onclick="customersScreen.exportCustomers()">Export</button>
           </div>
         </div>
 
@@ -226,6 +229,10 @@ class CustomersScreen {
             ${activeFilterCount > 0 ? `<span class="filter-badge">${activeFilterCount}</span>` : ''}
           </button>
 
+          <button class="btn-map ${this.showMap ? 'active' : ''}" onclick="customersScreen.toggleMap()" title="Map View">
+            <span class="map-icon">📍</span>
+          </button>
+
           <div class="view-toggle">
             <button 
               class="view-btn ${this.currentView === 'grid' ? 'active' : ''}" 
@@ -251,16 +258,145 @@ class CustomersScreen {
           ${this.selectedCustomers.size > 0 ? `<span class="selected-count">${this.selectedCustomers.size} selected</span>` : ''}
         </div>
 
+        ${
+          this.showMap
+            ? this.renderMapView()
+            : `
         <div class="customers-container ${this.currentView}">
           ${this.currentView === 'grid' ? this.renderGridView() : this.renderListView()}
         </div>
+        `
+        }
       </div>
 
       ${this.renderFilterModal()}
     `;
 
     container.innerHTML = html;
-    console.log('Render complete');
+
+    if (this.showMap) {
+      setTimeout(() => this.initializeMap(), 100);
+    }
+  }
+
+  renderMapView() {
+    return `
+      <div class="map-container">
+        <div id="customer-map" style="width: 100%; height: 600px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.1);"></div>
+      </div>
+    `;
+  }
+
+  toggleMap() {
+    this.showMap = !this.showMap;
+    this.render();
+    this.attachEventListeners();
+  }
+
+  initializeMap() {
+    if (!window.google) {
+      console.error('Google Maps API not loaded');
+      return;
+    }
+
+    const mapElement = document.getElementById('customer-map');
+    if (!mapElement) return;
+
+    // Calculate center based on geocoded customers
+    const geocodedCustomers = this.filteredCustomers.filter((c) => c.latitude && c.longitude);
+
+    if (geocodedCustomers.length === 0) {
+      // Default to Atlanta
+      const center = { lat: 33.749, lng: -84.388 };
+      this.map = new google.maps.Map(mapElement, {
+        zoom: 4,
+        center: center,
+        styles: this.getMapStyles(),
+      });
+      return;
+    }
+
+    // Calculate bounds
+    const bounds = new google.maps.LatLngBounds();
+    geocodedCustomers.forEach((customer) => {
+      bounds.extend(
+        new google.maps.LatLng(parseFloat(customer.latitude), parseFloat(customer.longitude))
+      );
+    });
+
+    this.map = new google.maps.Map(mapElement, {
+      zoom: 4,
+      center: bounds.getCenter(),
+      styles: this.getMapStyles(),
+    });
+
+    this.map.fitBounds(bounds);
+
+    // Clear existing markers
+    this.markers.forEach((marker) => marker.setMap(null));
+    this.markers = [];
+
+    // Add markers for each customer
+    geocodedCustomers.forEach((customer) => {
+      const marker = new google.maps.Marker({
+        position: {
+          lat: parseFloat(customer.latitude),
+          lng: parseFloat(customer.longitude),
+        },
+        map: this.map,
+        title: this.getFullName(customer),
+        icon: {
+          path: google.maps.SymbolPath.CIRCLE,
+          scale: 8,
+          fillColor: '#f39c12',
+          fillOpacity: 0.9,
+          strokeColor: '#ffffff',
+          strokeWeight: 2,
+        },
+      });
+
+      const infoWindow = new google.maps.InfoWindow({
+        content: `
+          <div style="color: #1a1a2e; padding: 10px; max-width: 200px;">
+            <h3 style="margin: 0 0 8px 0; color: #f39c12; font-size: 16px;">${this.getFullName(customer)}</h3>
+            <p style="margin: 4px 0; font-size: 13px;"><strong>Email:</strong> ${customer.email}</p>
+            ${customer.phone ? `<p style="margin: 4px 0; font-size: 13px;"><strong>Phone:</strong> ${customer.phone}</p>` : ''}
+            <p style="margin: 4px 0; font-size: 13px;"><strong>Location:</strong> ${customer.city}, ${customer.state_code || customer.province}</p>
+            <p style="margin: 4px 0; font-size: 13px;"><strong>Orders:</strong> ${customer.order_count || 0}</p>
+            <p style="margin: 4px 0; font-size: 13px;"><strong>LTV:</strong> ${this.formatCurrency(customer.lifetime_value_cents, customer.currency_code)}</p>
+            <button onclick="customersScreen.viewCustomer('${customer.id}')" style="margin-top: 8px; padding: 6px 12px; background: #f39c12; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">View Details</button>
+          </div>
+        `,
+      });
+
+      marker.addListener('click', () => {
+        infoWindow.open(this.map, marker);
+      });
+
+      this.markers.push(marker);
+    });
+  }
+
+  getMapStyles() {
+    return [
+      {
+        elementType: 'geometry',
+        stylers: [{ color: '#1a1a2e' }],
+      },
+      {
+        elementType: 'labels.text.fill',
+        stylers: [{ color: '#8ec3b9' }],
+      },
+      {
+        elementType: 'labels.text.stroke',
+        stylers: [{ color: '#1a1a2e' }],
+      },
+      {
+        featureType: 'water',
+        elementType: 'geometry',
+        stylers: [{ color: '#16213e' }],
+      },
+    ];
   }
 
   getActiveFilterCount() {
@@ -348,89 +484,13 @@ class CustomersScreen {
     `;
   }
 
-  openFilterModal() {
-    const modal = document.getElementById('filter-modal');
-    if (modal) modal.style.display = 'flex';
-  }
-
-  closeFilterModal() {
-    const modal = document.getElementById('filter-modal');
-    if (modal) modal.style.display = 'none';
-  }
-
-  resetFilters() {
-    this.filters = {
-      customerStatus: [],
-      clubMemberStatus: [],
-      allocationStatus: [],
-      minLTV: null,
-      maxLTV: null,
-      minOrders: null,
-      maxOrders: null,
-      lastOrderDays: null,
-    };
-    this.applyFilters();
-    this.closeFilterModal();
-    this.render();
-    this.attachEventListeners();
-  }
-
-  applyFiltersFromModal() {
-    // Customer status
-    this.filters.customerStatus = Array.from(
-      document.querySelectorAll('.filter-section:nth-of-type(1) input[type="checkbox"]:checked')
-    ).map((cb) => cb.value);
-
-    // Club membership
-    this.filters.clubMemberStatus = Array.from(
-      document.querySelectorAll('.filter-section:nth-of-type(2) input[type="checkbox"]:checked')
-    ).map((cb) => cb.value);
-
-    // Allocation status
-    this.filters.allocationStatus = Array.from(
-      document.querySelectorAll('.filter-section:nth-of-type(3) input[type="checkbox"]:checked')
-    ).map((cb) => cb.value);
-
-    // LTV range
-    const minLTV = document.getElementById('filter-min-ltv').value;
-    const maxLTV = document.getElementById('filter-max-ltv').value;
-    this.filters.minLTV = minLTV ? parseFloat(minLTV) : null;
-    this.filters.maxLTV = maxLTV ? parseFloat(maxLTV) : null;
-
-    // Order count range
-    const minOrders = document.getElementById('filter-min-orders').value;
-    const maxOrders = document.getElementById('filter-max-orders').value;
-    this.filters.minOrders = minOrders ? parseInt(minOrders) : null;
-    this.filters.maxOrders = maxOrders ? parseInt(maxOrders) : null;
-
-    // Last order
-    const lastOrder = document.getElementById('filter-last-order').value;
-    this.filters.lastOrderDays = lastOrder ? parseInt(lastOrder) : null;
-
-    this.applyFilters();
-    this.closeFilterModal();
-    this.render();
-    this.attachEventListeners();
-  }
-
   renderBulkActions() {
     return `
       <div class="bulk-actions">
-        <button class="btn-bulk" onclick="customersScreen.sendBulkSMS()">
-          📱 Send SMS
-        </button>
-        <button class="btn-bulk" onclick="customersScreen.sendBulkEmail()">
-          ✉️ Send Email
-        </button>
-        <button class="btn-bulk" onclick="customersScreen.exportSelected()">
-          📥 Export
-        </button>
-        <button class="btn-bulk" onclick="customersScreen.addTags()">
-          🏷️ Add Tags
-        </button>
-        <button class="btn-bulk btn-danger" onclick="customersScreen.bulkDelete()">
-          🗑️ Delete
-        </button>
+        <button class="btn-bulk" onclick="customersScreen.bulkEmail()">📧 Email Selected</button>
+        <button class="btn-bulk" onclick="customersScreen.bulkExport()">💾 Export Selected</button>
+        <button class="btn-bulk" onclick="customersScreen.bulkAddToClub()">🍷 Add to Club</button>
+        <button class="btn-bulk btn-danger" onclick="customersScreen.bulkDelete()">🗑️ Delete Selected</button>
       </div>
     `;
   }
@@ -444,11 +504,11 @@ class CustomersScreen {
       .map(
         (customer) => `
       <div class="customer-card" onclick="customersScreen.viewCustomer('${customer.id}')">
-        <div class="card-select" onclick="event.stopPropagation()">
+        <div class="card-select">
           <input 
             type="checkbox" 
             ${this.selectedCustomers.has(customer.id) ? 'checked' : ''}
-            onchange="customersScreen.toggleSelection('${customer.id}')"
+            onclick="event.stopPropagation(); customersScreen.toggleSelection('${customer.id}')"
           />
         </div>
         <div class="customer-info">
@@ -485,9 +545,11 @@ class CustomersScreen {
       return '<div class="no-customers">No customers found</div>';
     }
 
-    const getSortIndicator = (field) => {
-      if (this.sortField !== field) return '';
-      return this.sortDirection === 'asc' ? ' ▲' : ' ▼';
+    const getSortIcon = (field) => {
+      if (this.sortField !== field) return '<span class="sort-arrows">⇅</span>';
+      return this.sortDirection === 'asc'
+        ? '<span class="sort-arrow-active">↑</span>'
+        : '<span class="sort-arrow-active">↓</span>';
     };
 
     return `
@@ -501,22 +563,25 @@ class CustomersScreen {
               />
             </th>
             <th class="sortable" onclick="customersScreen.sortBy('last_name')">
-              Customer${getSortIndicator('last_name')}
+              Customer ${getSortIcon('last_name')}
             </th>
             <th class="sortable" onclick="customersScreen.sortBy('email')">
-              Email${getSortIndicator('email')}
+              Email ${getSortIcon('email')}
             </th>
             <th class="sortable" onclick="customersScreen.sortBy('phone')">
-              Phone${getSortIndicator('phone')}
+              Phone ${getSortIcon('phone')}
             </th>
             <th class="sortable" onclick="customersScreen.sortBy('city')">
-              Location${getSortIndicator('city')}
+              City ${getSortIcon('city')}
+            </th>
+            <th class="sortable" onclick="customersScreen.sortBy('state_code')">
+              State ${getSortIcon('state_code')}
             </th>
             <th class="sortable" onclick="customersScreen.sortBy('order_count')">
-              Orders${getSortIndicator('order_count')}
+              Orders ${getSortIcon('order_count')}
             </th>
             <th class="sortable" onclick="customersScreen.sortBy('lifetime_value_cents')">
-              LTV${getSortIndicator('lifetime_value_cents')}
+              LTV ${getSortIcon('lifetime_value_cents')}
             </th>
             <th>Status</th>
             <th>Actions</th>
@@ -541,7 +606,8 @@ class CustomersScreen {
               </td>
               <td>${customer.email}</td>
               <td>${customer.phone || '-'}</td>
-              <td>${customer.city ? `${customer.city}, ${customer.state_code || customer.province || ''}` : '-'}</td>
+              <td>${customer.city || '-'}</td>
+              <td>${customer.state_code || customer.province || '-'}</td>
               <td>${customer.order_count || 0}</td>
               <td>${this.formatCurrency(customer.lifetime_value_cents, customer.currency_code)}</td>
               <td>
@@ -561,35 +627,19 @@ class CustomersScreen {
     `;
   }
 
-  sortBy(field) {
-    if (this.sortField === field) {
-      this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
-    } else {
-      this.sortField = field;
-      this.sortDirection = 'asc';
-    }
-    this.applyFilters();
-    this.render();
-    this.attachEventListeners();
-  }
-
   attachEventListeners() {
-    console.log('Attaching event listeners...');
-
-    // FIXED: Store reference to search input and only attach listener once
     const searchInput = document.getElementById('customer-search');
-    if (searchInput && !searchInput.dataset.listenerAttached) {
-      searchInput.dataset.listenerAttached = 'true';
+    if (searchInput) {
       searchInput.addEventListener('input', (e) => {
         this.searchTerm = e.target.value;
         this.applyFilters();
-        this.renderWithoutReattaching();
+        this.render();
+        this.attachEventListeners();
       });
     }
 
     const groupingSelect = document.getElementById('customer-grouping');
-    if (groupingSelect && !groupingSelect.dataset.listenerAttached) {
-      groupingSelect.dataset.listenerAttached = 'true';
+    if (groupingSelect) {
       groupingSelect.addEventListener('change', (e) => {
         this.currentGrouping = e.target.value;
         localStorage.setItem('customerGrouping', this.currentGrouping);
@@ -597,48 +647,6 @@ class CustomersScreen {
         this.render();
         this.attachEventListeners();
       });
-    }
-  }
-
-  // Render without re-attaching event listeners (for search input)
-  renderWithoutReattaching() {
-    const container = document.getElementById('customersScreen');
-    if (!container) return;
-
-    const activeFilterCount = this.getActiveFilterCount();
-
-    // Update stats
-    const statsEl = container.querySelector('.customers-stats');
-    if (statsEl) {
-      statsEl.innerHTML = `
-        <span>Showing ${this.filteredCustomers.length} of ${this.customers.length} customers</span>
-        ${this.selectedCustomers.size > 0 ? `<span class="selected-count">${this.selectedCustomers.size} selected</span>` : ''}
-      `;
-    }
-
-    // Update filter badge
-    const filterBtn = container.querySelector('#filter-btn');
-    if (filterBtn) {
-      filterBtn.innerHTML = `
-        <span class="filter-icon">⚙</span> Filter
-        ${activeFilterCount > 0 ? `<span class="filter-badge">${activeFilterCount}</span>` : ''}
-      `;
-    }
-
-    // Update customer list
-    const customersContainer = container.querySelector('.customers-container');
-    if (customersContainer) {
-      customersContainer.innerHTML =
-        this.currentView === 'grid' ? this.renderGridView() : this.renderListView();
-    }
-
-    // Update bulk actions
-    const bulkActionsContainer = container.querySelector('.bulk-actions');
-    if (this.selectedCustomers.size > 0 && !bulkActionsContainer) {
-      const toolbar = container.querySelector('.customers-toolbar');
-      toolbar.insertAdjacentHTML('afterend', this.renderBulkActions());
-    } else if (this.selectedCustomers.size === 0 && bulkActionsContainer) {
-      bulkActionsContainer.remove();
     }
   }
 
@@ -670,70 +678,153 @@ class CustomersScreen {
   }
 
   getFullName(customer) {
-    if (customer.first_name || customer.last_name) {
-      return `${customer.first_name || ''} ${customer.last_name || ''}`.trim();
-    }
-    return customer.email;
+    const parts = [];
+    if (customer.first_name) parts.push(customer.first_name);
+    if (customer.last_name) parts.push(customer.last_name);
+    return parts.length > 0 ? parts.join(' ') : customer.email;
   }
 
-  formatCurrency(cents, currencyCode = 'USD') {
+  formatCurrency(cents, currency = 'USD') {
+    if (!cents && cents !== 0) return '$0.00';
     const amount = cents / 100;
-    const currency = currencyCode || 'USD';
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: currency,
+      currency: currency || 'USD',
     }).format(amount);
   }
 
   formatDate(dateString) {
     if (!dateString) return '-';
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
   }
 
-  // Action methods
-  addCustomer() {
-    alert('Add Customer modal - to be implemented');
+  openFilterModal() {
+    const modal = document.getElementById('filter-modal');
+    if (modal) {
+      modal.style.display = 'flex';
+    }
   }
 
-  importCustomers() {
-    alert('Import Customers - to be implemented');
+  closeFilterModal() {
+    const modal = document.getElementById('filter-modal');
+    if (modal) {
+      modal.style.display = 'none';
+    }
   }
 
-  viewCustomer(customerId) {
-    alert(`View customer ${customerId} - to be implemented`);
+  resetFilters() {
+    this.filters = {
+      customerStatus: [],
+      clubMemberStatus: [],
+      allocationStatus: [],
+      minLTV: null,
+      maxLTV: null,
+      minOrders: null,
+      maxOrders: null,
+      lastOrderDays: null,
+    };
+    this.applyFilters();
+    this.render();
+    this.attachEventListeners();
+    this.closeFilterModal();
   }
 
-  editCustomer(customerId) {
-    alert(`Edit customer ${customerId} - to be implemented`);
+  applyFiltersFromModal() {
+    // Customer Status
+    const statusCheckboxes = document.querySelectorAll(
+      '#filter-modal .filter-section:nth-child(1) input[type="checkbox"]'
+    );
+    this.filters.customerStatus = Array.from(statusCheckboxes)
+      .filter((cb) => cb.checked)
+      .map((cb) => cb.value);
+
+    // Club Status
+    const clubCheckboxes = document.querySelectorAll(
+      '#filter-modal .filter-section:nth-child(2) input[type="checkbox"]'
+    );
+    this.filters.clubMemberStatus = Array.from(clubCheckboxes)
+      .filter((cb) => cb.checked)
+      .map((cb) => cb.value);
+
+    // Allocation Status
+    const allocationCheckboxes = document.querySelectorAll(
+      '#filter-modal .filter-section:nth-child(3) input[type="checkbox"]'
+    );
+    this.filters.allocationStatus = Array.from(allocationCheckboxes)
+      .filter((cb) => cb.checked)
+      .map((cb) => cb.value);
+
+    // LTV Range
+    const minLTV = document.getElementById('filter-min-ltv').value;
+    const maxLTV = document.getElementById('filter-max-ltv').value;
+    this.filters.minLTV = minLTV ? parseFloat(minLTV) : null;
+    this.filters.maxLTV = maxLTV ? parseFloat(maxLTV) : null;
+
+    // Order Count Range
+    const minOrders = document.getElementById('filter-min-orders').value;
+    const maxOrders = document.getElementById('filter-max-orders').value;
+    this.filters.minOrders = minOrders ? parseInt(minOrders) : null;
+    this.filters.maxOrders = maxOrders ? parseInt(maxOrders) : null;
+
+    // Last Order
+    const lastOrder = document.getElementById('filter-last-order').value;
+    this.filters.lastOrderDays = lastOrder ? parseInt(lastOrder) : null;
+
+    this.applyFilters();
+    this.render();
+    this.attachEventListeners();
+    this.closeFilterModal();
   }
 
-  createOrder(customerId) {
-    alert(`Create order for customer ${customerId} - to be implemented`);
+  // Placeholder methods
+  viewCustomer(id) {
+    console.log('View customer:', id);
+    alert('Customer details view not yet implemented');
   }
 
-  sendBulkSMS() {
-    alert(`Send SMS to ${this.selectedCustomers.size} customers - to be implemented`);
+  createCustomer() {
+    console.log('Create customer');
+    alert('Create customer not yet implemented');
   }
 
-  sendBulkEmail() {
-    alert(`Send Email to ${this.selectedCustomers.size} customers - to be implemented`);
+  editCustomer(id) {
+    console.log('Edit customer:', id);
+    alert('Edit customer not yet implemented');
   }
 
-  exportSelected() {
-    alert(`Export ${this.selectedCustomers.size} customers - to be implemented`);
+  createOrder(id) {
+    console.log('Create order for customer:', id);
+    alert('Create order not yet implemented');
   }
 
-  addTags() {
-    alert(`Add tags to ${this.selectedCustomers.size} customers - to be implemented`);
+  exportCustomers() {
+    console.log('Export customers');
+    alert('Export not yet implemented');
+  }
+
+  bulkEmail() {
+    console.log('Bulk email:', this.selectedCustomers);
+    alert(`Email ${this.selectedCustomers.size} customers - not yet implemented`);
+  }
+
+  bulkExport() {
+    console.log('Bulk export:', this.selectedCustomers);
+    alert(`Export ${this.selectedCustomers.size} customers - not yet implemented`);
+  }
+
+  bulkAddToClub() {
+    console.log('Bulk add to club:', this.selectedCustomers);
+    alert(`Add ${this.selectedCustomers.size} customers to club - not yet implemented`);
   }
 
   bulkDelete() {
-    if (confirm(`Delete ${this.selectedCustomers.size} customers? This cannot be undone.`)) {
-      alert('Bulk delete - to be implemented');
+    if (confirm(`Are you sure you want to delete ${this.selectedCustomers.size} customers?`)) {
+      console.log('Bulk delete:', this.selectedCustomers);
+      alert('Delete not yet implemented');
     }
   }
 }
 
-// Global instance
-let customersScreen = new CustomersScreen();
+// Initialize
+const customersScreen = new CustomersScreen();
