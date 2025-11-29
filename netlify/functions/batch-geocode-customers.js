@@ -31,7 +31,7 @@ exports.handler = async (event) => {
     };
   }
 
-  const { winery_id, force_regeocode = false } = requestBody;
+  const { winery_id, force_regeocode = false, limit = 20 } = requestBody;
 
   if (!winery_id) {
     return {
@@ -69,8 +69,9 @@ exports.handler = async (event) => {
       `SELECT id, address, address2, city, state_code, province, zip_code, country_code 
        FROM customers 
        WHERE winery_id = $1 AND ${whereClause}
-       ORDER BY created_at DESC`,
-      [winery_id]
+       ORDER BY created_at DESC
+       LIMIT $2`,
+      [winery_id, limit]
     );
 
     const customers = customersResult.rows;
@@ -179,6 +180,7 @@ exports.handler = async (event) => {
       body: JSON.stringify({
         success: true,
         winery_id,
+        limit,
         ...results,
       }),
     };
