@@ -18,6 +18,13 @@
     </script>
     
     <script>
+    // Global callback for Google Maps initialization
+    window.initGoogleMaps = function() {
+        console.log('Google Maps API loaded successfully');
+        window.googleMapsLoaded = true;
+        window.dispatchEvent(new Event('googleMapsReady'));
+    };
+    
     // Load Google Maps API with key from secure function
     (async function() {
         try {
@@ -26,7 +33,7 @@
             
             if (config.apiKey) {
                 const script = document.createElement('script');
-                script.src = `https://maps.googleapis.com/maps/api/js?key=${config.apiKey}&libraries=drawing,geometry`;
+                script.src = `https://maps.googleapis.com/maps/api/js?key=${config.apiKey}&libraries=drawing,geometry,marker&loading=async&callback=initGoogleMaps`;
                 script.async = true;
                 script.defer = true;
                 document.head.appendChild(script);
