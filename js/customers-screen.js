@@ -193,6 +193,11 @@ class CustomersScreen {
   }
 
   render() {
+    console.log('=== RENDER ===');
+    console.log('showMap:', this.showMap);
+    console.log('currentPolygon exists:', !!this.currentPolygon);
+    console.log('map instance exists:', !!this.map);
+
     const container = document.getElementById('customersScreen');
     if (!container) return;
 
@@ -292,8 +297,10 @@ class CustomersScreen {
     `;
 
     container.innerHTML = html;
+    console.log('HTML rendered, showMap:', this.showMap);
 
     if (this.showMap) {
+      console.log('Map should be visible, calling initializeMap in 100ms');
       setTimeout(() => this.initializeMap(), 100);
     }
   }
@@ -336,31 +343,57 @@ class CustomersScreen {
   }
 
   async initializeMap() {
+    console.log('=== INITIALIZE MAP ===');
+    console.log('Google Maps available:', !!window.google);
+    console.log('Map element exists:', !!document.getElementById('customer-map'));
+    console.log('Existing map instance:', !!this.map);
+    console.log('Current polygon exists:', !!this.currentPolygon);
+
     if (!window.google) {
       console.error('Google Maps API not loaded');
       return;
     }
 
     const mapElement = document.getElementById('customer-map');
-    if (!mapElement) return;
-
-    // If map already exists and polygon is drawn, just update markers
-    if (this.map && this.currentPolygon) {
-      await this.updateMarkers();
+    if (!mapElement) {
+      console.error('Map element not found in DOM');
       return;
     }
 
+    // If map already exists and polygon is drawn, just update markers
+    if (this.map && this.currentPolygon) {
+      console.log('Map exists with polygon - updating markers only');
+      await this.updateMarkers();
+
+      // Re-attach polygon to map if it's not visible
+      if (!this.currentPolygon.getMap()) {
+        console.log('Re-attaching polygon to map');
+        this.currentPolygon.setMap(this.map);
+      }
+
+      // Ensure map is in the correct container
+      console.log('Setting map div to:', mapElement);
+      this.map.setOptions({ div: mapElement });
+
+      return;
+    }
+
+    console.log('Creating new map instance');
+
     // Calculate center based on geocoded customers
     const geocodedCustomers = this.getGeocodedCustomers();
+    console.log('Geocoded customers count:', geocodedCustomers.length);
 
     if (geocodedCustomers.length === 0) {
       const center = { lat: 33.749, lng: -84.388 };
+      console.log('No geocoded customers, using default center:', center);
       this.map = new google.maps.Map(mapElement, {
         zoom: 4,
         center: center,
         mapId: 'HEAVY_POUR_CUSTOMER_MAP',
       });
       this.initializeDrawingTools();
+      console.log('Map initialized (no customers)');
       return;
     }
 
@@ -371,6 +404,7 @@ class CustomersScreen {
       );
     });
 
+    console.log('Creating map with bounds:', bounds.toString());
     this.map = new google.maps.Map(mapElement, {
       zoom: 4,
       center: bounds.getCenter(),
@@ -378,10 +412,13 @@ class CustomersScreen {
     });
 
     this.map.fitBounds(bounds);
+    console.log('Map bounds fitted');
 
     this.initializeDrawingTools();
+    console.log('Drawing tools initialized');
 
     await this.updateMarkers();
+    console.log('Markers updated');
   }
 
   getGeocodedCustomers() {
