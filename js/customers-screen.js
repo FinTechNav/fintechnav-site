@@ -203,10 +203,6 @@ class CustomersScreen {
         <div class="customers-header">
           <h1>Customers</h1>
           <p>Manage your customer relationships and sales data</p>
-          <div class="header-actions">
-            <button class="btn-primary" onclick="customersScreen.createCustomer()">+ Add Customer</button>
-            <button class="btn-secondary" onclick="customersScreen.exportCustomers()">Export</button>
-          </div>
         </div>
 
         <div class="customers-toolbar">
@@ -258,6 +254,9 @@ class CustomersScreen {
               ☰
             </button>
           </div>
+
+          <button class="btn-primary" onclick="customersScreen.createCustomer()">+ Add Customer</button>
+          <button class="btn-secondary" onclick="customersScreen.exportCustomers()">Export</button>
         </div>
 
         ${this.selectedCustomers.size > 0 ? this.renderBulkActions() : ''}
@@ -345,11 +344,16 @@ class CustomersScreen {
     const mapElement = document.getElementById('customer-map');
     if (!mapElement) return;
 
+    // If map already exists and polygon is drawn, just update markers
+    if (this.map && this.currentPolygon) {
+      await this.updateMarkers();
+      return;
+    }
+
     // Calculate center based on geocoded customers
     const geocodedCustomers = this.getGeocodedCustomers();
 
     if (geocodedCustomers.length === 0) {
-      // Default to Atlanta
       const center = { lat: 33.749, lng: -84.388 };
       this.map = new google.maps.Map(mapElement, {
         zoom: 4,
@@ -360,7 +364,6 @@ class CustomersScreen {
       return;
     }
 
-    // Calculate bounds
     const bounds = new google.maps.LatLngBounds();
     geocodedCustomers.forEach((customer) => {
       bounds.extend(
@@ -376,10 +379,8 @@ class CustomersScreen {
 
     this.map.fitBounds(bounds);
 
-    // Initialize drawing tools
     this.initializeDrawingTools();
 
-    // Add markers for each customer
     await this.updateMarkers();
   }
 
@@ -1061,9 +1062,22 @@ class CustomersScreen {
       return '<div class="no-customers">No customers found</div>';
     }
 
-    return this.filteredCustomers
-      .map(
-        (customer) => `
+    const allSelected = this.filteredCustomers.every((c) => this.selectedCustomers.has(c.id));
+
+    return `
+      <div class="grid-select-all">
+        <label>
+          <input 
+            type="checkbox" 
+            ${allSelected ? 'checked' : ''}
+            onchange="customersScreen.toggleSelectAll(this.checked)"
+          />
+          Select All
+        </label>
+      </div>
+      ${this.filteredCustomers
+        .map(
+          (customer) => `
       <div class="customer-card" onclick="customersScreen.viewCustomer('${customer.id}')">
         <div class="card-select">
           <input 
@@ -1097,8 +1111,9 @@ class CustomersScreen {
         </div>
       </div>
     `
-      )
-      .join('');
+        )
+        .join('')}
+    `;
   }
 
   renderListView() {
