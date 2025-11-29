@@ -16,6 +16,36 @@
         });
     });
     </script>
+    
+    <script>
+    // Global callback for Google Maps initialization
+    window.initGoogleMaps = function() {
+        console.log('Google Maps API loaded successfully');
+        window.googleMapsLoaded = true;
+        window.dispatchEvent(new Event('googleMapsReady'));
+    };
+    
+    // Load Google Maps API with key from secure function
+    (async function() {
+        try {
+            const response = await fetch('/.netlify/functions/get-maps-config');
+            const config = await response.json();
+            
+            if (config.apiKey) {
+                const script = document.createElement('script');
+                script.src = `https://maps.googleapis.com/maps/api/js?key=${config.apiKey}&libraries=drawing,geometry,marker&loading=async&callback=initGoogleMaps`;
+                script.async = true;
+                script.defer = true;
+                document.head.appendChild(script);
+            } else {
+                console.error('Failed to load Google Maps API key');
+            }
+        } catch (error) {
+            console.error('Error loading Google Maps configuration:', error);
+        }
+    })();
+    </script>
+    
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -317,14 +347,5 @@
     <script src="js/settings-screen.js"></script>
     <script src="js/mobile-pos.js"></script>
     <script src="js/app.js"></script>
-    
-    <script src="config.js"></script>
-    <script>
-    const script = document.createElement('script');
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${CONFIG.GOOGLE_MAPS_API_KEY}&libraries=drawing,geometry&callback=Function.prototype`;
-    script.async = true;
-    script.defer = true;
-    document.head.appendChild(script);
-    </script>
 </body>
 </html>
