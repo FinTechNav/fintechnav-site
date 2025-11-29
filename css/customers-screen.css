@@ -205,11 +205,6 @@
   font-size: 18px;
 }
 
-.map-container {
-  padding: 10px 0;
-  position: relative;
-}
-
 .map-controls {
   display: flex;
   gap: 10px;
@@ -265,25 +260,8 @@
   font-weight: 600;
 }
 
-.drawing-instructions {
-  padding: 8px 16px;
-  background: rgba(52, 152, 219, 0.2);
-  border: 1px solid rgba(52, 152, 219, 0.5);
-  border-radius: 8px;
-  color: #3498db;
-  font-size: 13px;
-  font-style: italic;
-}
-
 .draw-icon {
   font-size: 16px;
-}
-
-#customer-map {
-  width: 100%;
-  height: 600px;
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .view-toggle {
@@ -362,6 +340,45 @@
 .selected-count {
   font-weight: 600;
   color: #f39c12;
+}
+
+/* Split View Layout */
+.split-view-container {
+  display: flex;
+  gap: 20px;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.customers-panel {
+  flex: 0 0 45%;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.map-panel {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.map-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+#customer-map {
+  flex: 1;
+  min-height: 0;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .customers-container {
