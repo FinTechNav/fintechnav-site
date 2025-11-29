@@ -14,6 +14,10 @@ class CustomersScreen {
     this.showMap = false;
     this.map = null;
     this.markers = [];
+    this.drawingManager = null;
+    this.currentPolygon = null;
+    this.isDrawingMode = false;
+    this.polygonFilter = null;
     this.filters = {
       customerStatus: [],
       clubMemberStatus: [],
@@ -144,6 +148,11 @@ class CustomersScreen {
       );
     }
 
+    // Apply polygon filter if exists
+    if (this.polygonFilter) {
+      filtered = filtered.filter(this.polygonFilter);
+    }
+
     this.filteredCustomers = this.sortCustomers(filtered);
   }
 
@@ -260,7 +269,18 @@ class CustomersScreen {
 
         ${
           this.showMap
-            ? this.renderMapView()
+            ? `
+        <div class="split-view-container">
+          <div class="customers-panel">
+            <div class="customers-container ${this.currentView}">
+              ${this.currentView === 'grid' ? this.renderGridView() : this.renderListView()}
+            </div>
+          </div>
+          <div class="map-panel">
+            ${this.renderMapView()}
+          </div>
+        </div>
+        `
             : `
         <div class="customers-container ${this.currentView}">
           ${this.currentView === 'grid' ? this.renderGridView() : this.renderListView()}
@@ -282,7 +302,30 @@ class CustomersScreen {
   renderMapView() {
     return `
       <div class="map-container">
-        <div id="customer-map" style="width: 100%; height: 600px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.1);"></div>
+        <div class="map-controls">
+          <button class="btn-map-control ${this.isDrawingMode ? 'active' : ''}" onclick="customersScreen.toggleDrawingMode()" title="Draw boundary">
+            <span class="draw-icon">✏️</span> Draw Area
+          </button>
+          ${
+            this.currentPolygon || this.polygonFilter
+              ? `
+            <button class="btn-map-control btn-remove" onclick="customersScreen.removePolygon()" title="Remove boundary">
+              <span>🗑️</span> Remove Outline
+            </button>
+            ${
+              this.polygonFilter
+                ? `
+              <div class="map-filter-count">
+                ${this.filteredCustomers.length} customers in area
+              </div>
+            `
+                : ''
+            }
+          `
+              : ''
+          }
+        </div>
+        <div id="customer-map"></div>
       </div>
     `;
   }
@@ -293,7 +336,7 @@ class CustomersScreen {
     this.attachEventListeners();
   }
 
-  async initializeMap() {
+  initializeMap() {
     if (!window.google) {
       console.error('Google Maps API not loaded');
       return;
@@ -303,7 +346,7 @@ class CustomersScreen {
     if (!mapElement) return;
 
     // Calculate center based on geocoded customers
-    const geocodedCustomers = this.filteredCustomers.filter((c) => c.latitude && c.longitude);
+    const geocodedCustomers = this.getGeocodedCustomers();
 
     if (geocodedCustomers.length === 0) {
       // Default to Atlanta
@@ -311,8 +354,9 @@ class CustomersScreen {
       this.map = new google.maps.Map(mapElement, {
         zoom: 4,
         center: center,
-        mapId: 'HEAVY_POUR_CUSTOMER_MAP', // Required for AdvancedMarkerElement
+        styles: this.getMapStyles(),
       });
+      this.initializeDrawingTools();
       return;
     }
 
@@ -327,36 +371,149 @@ class CustomersScreen {
     this.map = new google.maps.Map(mapElement, {
       zoom: 4,
       center: bounds.getCenter(),
-      mapId: 'HEAVY_POUR_CUSTOMER_MAP', // Required for AdvancedMarkerElement
+      styles: this.getMapStyles(),
     });
 
     this.map.fitBounds(bounds);
 
-    // Clear existing markers
-    this.markers.forEach((marker) => (marker.map = null));
-    this.markers = [];
-
-    // Load the marker library for AdvancedMarkerElement
-    const { AdvancedMarkerElement, PinElement } = await google.maps.importLibrary('marker');
+    // Initialize drawing tools
+    this.initializeDrawingTools();
 
     // Add markers for each customer
-    geocodedCustomers.forEach((customer) => {
-      // Create custom pin element
-      const pinElement = new PinElement({
-        background: '#f39c12',
-        borderColor: '#ffffff',
-        glyphColor: '#ffffff',
-        scale: 1.2,
+    this.updateMarkers();
+  }
+
+  getGeocodedCustomers() {
+    return this.filteredCustomers.filter((c) => c.latitude && c.longitude);
+  }
+
+  initializeDrawingTools() {
+    // Initialize Drawing Manager
+    this.drawingManager = new google.maps.drawing.DrawingManager({
+      drawingMode: null,
+      drawingControl: false,
+      polygonOptions: {
+        fillColor: '#f39c12',
+        fillOpacity: 0.2,
+        strokeWeight: 2,
+        strokeColor: '#f39c12',
+        clickable: true,
+        editable: true,
+        zIndex: 1,
+      },
+    });
+
+    this.drawingManager.setMap(this.map);
+
+    // Listen for polygon complete
+    google.maps.event.addListener(this.drawingManager, 'polygoncomplete', (polygon) => {
+      // Remove previous polygon if exists
+      if (this.currentPolygon) {
+        this.currentPolygon.setMap(null);
+      }
+
+      this.currentPolygon = polygon;
+      this.isDrawingMode = false;
+      this.drawingManager.setDrawingMode(null);
+
+      // Apply polygon filter
+      this.applyPolygonFilter();
+
+      // Re-render to update UI
+      this.render();
+      this.attachEventListeners();
+
+      // Add listener for polygon edits
+      google.maps.event.addListener(polygon.getPath(), 'set_at', () => {
+        this.applyPolygonFilter();
+        this.updateMarkers();
       });
 
-      const marker = new AdvancedMarkerElement({
+      google.maps.event.addListener(polygon.getPath(), 'insert_at', () => {
+        this.applyPolygonFilter();
+        this.updateMarkers();
+      });
+    });
+  }
+
+  toggleDrawingMode() {
+    this.isDrawingMode = !this.isDrawingMode;
+
+    if (this.isDrawingMode) {
+      this.drawingManager.setDrawingMode(google.maps.drawing.OverlayType.POLYGON);
+    } else {
+      this.drawingManager.setDrawingMode(null);
+    }
+
+    this.render();
+    this.attachEventListeners();
+  }
+
+  removePolygon() {
+    if (this.currentPolygon) {
+      this.currentPolygon.setMap(null);
+      this.currentPolygon = null;
+    }
+
+    this.polygonFilter = null;
+    this.isDrawingMode = false;
+    this.drawingManager.setDrawingMode(null);
+
+    // Re-apply filters without polygon
+    this.applyFilters();
+    this.render();
+    this.attachEventListeners();
+  }
+
+  applyPolygonFilter() {
+    if (!this.currentPolygon) {
+      this.polygonFilter = null;
+      return;
+    }
+
+    const polygonPath = this.currentPolygon.getPath();
+
+    // Store the polygon filter
+    this.polygonFilter = (customer) => {
+      if (!customer.latitude || !customer.longitude) return false;
+
+      const point = new google.maps.LatLng(
+        parseFloat(customer.latitude),
+        parseFloat(customer.longitude)
+      );
+
+      return google.maps.geometry.poly.containsLocation(point, this.currentPolygon);
+    };
+
+    // Re-apply all filters including polygon
+    this.applyFilters();
+    this.updateMarkers();
+  }
+
+  updateMarkers() {
+    // Clear existing markers
+    this.markers.forEach((marker) => marker.setMap(null));
+    this.markers = [];
+
+    const geocodedCustomers = this.getGeocodedCustomers();
+
+    // Add markers for filtered customers
+    geocodedCustomers.forEach((customer) => {
+      const marker = new google.maps.Marker({
         position: {
           lat: parseFloat(customer.latitude),
           lng: parseFloat(customer.longitude),
         },
         map: this.map,
         title: this.getFullName(customer),
-        content: pinElement.element,
+        icon: {
+          path: google.maps.SymbolPath.CIRCLE,
+          scale: 8,
+          fillColor: '#f39c12',
+          fillOpacity: 0.9,
+          strokeColor: '#ffffff',
+          strokeWeight: 2,
+        },
       });
 
       const infoWindow = new google.maps.InfoWindow({
@@ -374,14 +531,33 @@ class CustomersScreen {
       });
 
       marker.addListener('click', () => {
-        infoWindow.open({
-          anchor: marker,
-          map: this.map,
-        });
+        infoWindow.open(this.map, marker);
       });
 
       this.markers.push(marker);
     });
+  }
+
+  getMapStyles() {
+    return [
+      {
+        elementType: 'geometry',
+        stylers: [{ color: '#1a1a2e' }],
+      },
+      {
+        elementType: 'labels.text.fill',
+        stylers: [{ color: '#8ec3b9' }],
+      },
+      {
+        elementType: 'labels.text.stroke',
+        stylers: [{ color: '#1a1a2e' }],
+      },
+      {
+        featureType: 'water',
+        elementType: 'geometry',
+        stylers: [{ color: '#16213e' }],
+      },
+    ];
   }
 
   getActiveFilterCount() {
