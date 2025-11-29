@@ -336,7 +336,7 @@ class CustomersScreen {
     this.attachEventListeners();
   }
 
-  initializeMap() {
+  async initializeMap() {
     if (!window.google) {
       console.error('Google Maps API not loaded');
       return;
@@ -354,7 +354,7 @@ class CustomersScreen {
       this.map = new google.maps.Map(mapElement, {
         zoom: 4,
         center: center,
-        styles: this.getMapStyles(),
+        mapId: 'HEAVY_POUR_CUSTOMER_MAP',
       });
       this.initializeDrawingTools();
       return;
@@ -371,7 +371,7 @@ class CustomersScreen {
     this.map = new google.maps.Map(mapElement, {
       zoom: 4,
       center: bounds.getCenter(),
-      styles: this.getMapStyles(),
+      mapId: 'HEAVY_POUR_CUSTOMER_MAP',
     });
 
     this.map.fitBounds(bounds);
@@ -380,7 +380,7 @@ class CustomersScreen {
     this.initializeDrawingTools();
 
     // Add markers for each customer
-    this.updateMarkers();
+    await this.updateMarkers();
   }
 
   getGeocodedCustomers() {
@@ -490,30 +490,33 @@ class CustomersScreen {
     this.updateMarkers();
   }
 
-  updateMarkers() {
+  async updateMarkers() {
     // Clear existing markers
-    this.markers.forEach((marker) => marker.setMap(null));
+    this.markers.forEach((marker) => (marker.map = null));
     this.markers = [];
 
     const geocodedCustomers = this.getGeocodedCustomers();
 
+    // Load marker library
+    const { AdvancedMarkerElement, PinElement } = await google.maps.importLibrary('marker');
+
     // Add markers for filtered customers
     geocodedCustomers.forEach((customer) => {
-      const marker = new google.maps.Marker({
+      const pinElement = new PinElement({
+        background: '#f39c12',
+        borderColor: '#ffffff',
+        glyphColor: '#ffffff',
+        scale: 1.2,
+      });
+
+      const marker = new AdvancedMarkerElement({
         position: {
           lat: parseFloat(customer.latitude),
           lng: parseFloat(customer.longitude),
         },
         map: this.map,
         title: this.getFullName(customer),
-        icon: {
-          path: google.maps.SymbolPath.CIRCLE,
-          scale: 8,
-          fillColor: '#f39c12',
-          fillOpacity: 0.9,
-          strokeColor: '#ffffff',
-          strokeWeight: 2,
-        },
+        content: pinElement.element,
       });
 
       const infoWindow = new google.maps.InfoWindow({
@@ -531,33 +534,14 @@ class CustomersScreen {
       });
 
       marker.addListener('click', () => {
-        infoWindow.open(this.map, marker);
+        infoWindow.open({
+          anchor: marker,
+          map: this.map,
+        });
       });
 
       this.markers.push(marker);
     });
-  }
-
-  getMapStyles() {
-    return [
-      {
-        elementType: 'geometry',
-        stylers: [{ color: '#1a1a2e' }],
-      },
-      {
-        elementType: 'labels.text.fill',
-        stylers: [{ color: '#8ec3b9' }],
-      },
-      {
-        elementType: 'labels.text.stroke',
-        stylers: [{ color: '#1a1a2e' }],
-      },
-      {
-        featureType: 'water',
-        elementType: 'geometry',
-        stylers: [{ color: '#16213e' }],
-      },
-    ];
   }
 
   getActiveFilterCount() {
