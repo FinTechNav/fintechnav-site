@@ -393,6 +393,8 @@ class CustomersScreen {
     this.tempMarkers = [];
     this.tempPolyline = null;
     this.drawingClickListener = null;
+    this.isFreehandDrawing = false;
+    this.freehandPath = [];
   }
 
   toggleDrawingMode() {
@@ -404,17 +406,22 @@ class CustomersScreen {
 
     if (this.isDrawingMode) {
       console.log('Enabling drawing mode with crosshair cursor');
-      // Enable drawing mode
-      this.map.setOptions({ draggableCursor: 'crosshair' });
+      this.map.setOptions({
+        draggableCursor: 'crosshair',
+        draggable: false,
+        gestureHandling: 'none',
+      });
       this.startDrawing();
     } else {
       console.log('Disabling drawing mode');
-      // Disable drawing mode
-      this.map.setOptions({ draggableCursor: null });
+      this.map.setOptions({
+        draggableCursor: null,
+        draggable: true,
+        gestureHandling: 'auto',
+      });
       this.stopDrawing();
     }
 
-    // Just update the button state, don't re-render entire screen
     const drawBtn = document.querySelector('.btn-map-control');
     if (drawBtn) {
       if (this.isDrawingMode) {
@@ -426,83 +433,250 @@ class CustomersScreen {
   }
 
   startDrawing() {
-    console.log('startDrawing called');
+    console.log('startDrawing called - freehand mode enabled');
     this.polygonPath = [];
+    this.freehandPath = [];
     this.clearTempDrawing();
 
-    // Add click listener to map
-    this.drawingClickListener = google.maps.event.addListener(this.map, 'click', (event) => {
-      console.log('Map clicked at:', event.latLng.toString());
-      this.addPolygonPoint(event.latLng);
+    const mapDiv = this.map.getDiv();
+
+    this.mouseDownListener = google.maps.event.addDomListener(mapDiv, 'mousedown', (e) => {
+      this.handleMouseDown(e);
     });
-    console.log('Drawing click listener added');
+
+    this.touchStartListener = google.maps.event.addDomListener(mapDiv, 'touchstart', (e) => {
+      this.handleTouchStart(e);
+    });
+
+    console.log('Freehand drawing listeners added');
   }
 
   stopDrawing() {
     console.log('stopDrawing called');
-    if (this.drawingClickListener) {
-      google.maps.event.removeListener(this.drawingClickListener);
-      this.drawingClickListener = null;
-      console.log('Drawing click listener removed');
+
+    if (this.mouseDownListener) {
+      google.maps.event.removeListener(this.mouseDownListener);
+      this.mouseDownListener = null;
     }
+    if (this.mouseMoveListener) {
+      google.maps.event.removeListener(this.mouseMoveListener);
+      this.mouseMoveListener = null;
+    }
+    if (this.mouseUpListener) {
+      google.maps.event.removeListener(this.mouseUpListener);
+      this.mouseUpListener = null;
+    }
+    if (this.touchStartListener) {
+      google.maps.event.removeListener(this.touchStartListener);
+      this.touchStartListener = null;
+    }
+    if (this.touchMoveListener) {
+      google.maps.event.removeListener(this.touchMoveListener);
+      this.touchMoveListener = null;
+    }
+    if (this.touchEndListener) {
+      google.maps.event.removeListener(this.touchEndListener);
+      this.touchEndListener = null;
+    }
+
     this.clearTempDrawing();
+    this.isFreehandDrawing = false;
+    this.freehandPath = [];
   }
 
-  addPolygonPoint(latLng) {
-    console.log('addPolygonPoint called, point count:', this.polygonPath.length + 1);
-    this.polygonPath.push(latLng);
+  handleMouseDown(e) {
+    e.preventDefault();
+    this.isFreehandDrawing = true;
+    this.freehandPath = [];
 
-    // Add marker at click point
-    const marker = new google.maps.Marker({
-      position: latLng,
-      map: this.map,
-      icon: {
-        path: google.maps.SymbolPath.CIRCLE,
-        scale: 5,
-        fillColor: '#f39c12',
-        fillOpacity: 1,
-        strokeColor: '#ffffff',
-        strokeWeight: 2,
-      },
-    });
-    this.tempMarkers.push(marker);
+    const latLng = this.getLatLngFromMouseEvent(e);
+    if (latLng) {
+      this.freehandPath.push(latLng);
 
-    // Update polyline
-    if (this.tempPolyline) {
-      this.tempPolyline.setMap(null);
-    }
+      if (this.tempPolyline) {
+        this.tempPolyline.setMap(null);
+      }
 
-    if (this.polygonPath.length > 1) {
       this.tempPolyline = new google.maps.Polyline({
-        path: this.polygonPath,
+        path: this.freehandPath,
         strokeColor: '#f39c12',
         strokeWeight: 2,
         map: this.map,
       });
     }
 
-    // If clicked near first point and have at least 3 points, complete polygon
-    if (this.polygonPath.length >= 3) {
-      const firstPoint = this.polygonPath[0];
-      const distance = google.maps.geometry.spherical.computeDistanceBetween(latLng, firstPoint);
-
-      // If within 20 meters of first point, complete the polygon
-      if (distance < 20) {
-        this.completePolygon();
+    this.mouseMoveListener = google.maps.event.addDomListener(
+      this.map.getDiv(),
+      'mousemove',
+      (e) => {
+        this.handleMouseMove(e);
       }
+    );
+
+    this.mouseUpListener = google.maps.event.addDomListener(this.map.getDiv(), 'mouseup', (e) => {
+      this.handleMouseUp(e);
+    });
+  }
+
+  handleMouseMove(e) {
+    if (!this.isFreehandDrawing) return;
+    e.preventDefault();
+
+    const latLng = this.getLatLngFromMouseEvent(e);
+    if (latLng && this.tempPolyline) {
+      this.freehandPath.push(latLng);
+      this.tempPolyline.setPath(this.freehandPath);
     }
+  }
+
+  handleMouseUp(e) {
+    e.preventDefault();
+    this.isFreehandDrawing = false;
+
+    if (this.mouseMoveListener) {
+      google.maps.event.removeListener(this.mouseMoveListener);
+      this.mouseMoveListener = null;
+    }
+    if (this.mouseUpListener) {
+      google.maps.event.removeListener(this.mouseUpListener);
+      this.mouseUpListener = null;
+    }
+
+    if (this.freehandPath.length >= 3) {
+      this.polygonPath = this.simplifyPath(this.freehandPath);
+      this.completePolygon();
+    } else {
+      this.clearTempDrawing();
+    }
+  }
+
+  handleTouchStart(e) {
+    e.preventDefault();
+    this.isFreehandDrawing = true;
+    this.freehandPath = [];
+
+    const latLng = this.getLatLngFromTouchEvent(e);
+    if (latLng) {
+      this.freehandPath.push(latLng);
+
+      if (this.tempPolyline) {
+        this.tempPolyline.setMap(null);
+      }
+
+      this.tempPolyline = new google.maps.Polyline({
+        path: this.freehandPath,
+        strokeColor: '#f39c12',
+        strokeWeight: 2,
+        map: this.map,
+      });
+    }
+
+    this.touchMoveListener = google.maps.event.addDomListener(
+      this.map.getDiv(),
+      'touchmove',
+      (e) => {
+        this.handleTouchMove(e);
+      }
+    );
+
+    this.touchEndListener = google.maps.event.addDomListener(this.map.getDiv(), 'touchend', (e) => {
+      this.handleTouchEnd(e);
+    });
+  }
+
+  handleTouchMove(e) {
+    if (!this.isFreehandDrawing) return;
+    e.preventDefault();
+
+    const latLng = this.getLatLngFromTouchEvent(e);
+    if (latLng && this.tempPolyline) {
+      this.freehandPath.push(latLng);
+      this.tempPolyline.setPath(this.freehandPath);
+    }
+  }
+
+  handleTouchEnd(e) {
+    e.preventDefault();
+    this.isFreehandDrawing = false;
+
+    if (this.touchMoveListener) {
+      google.maps.event.removeListener(this.touchMoveListener);
+      this.touchMoveListener = null;
+    }
+    if (this.touchEndListener) {
+      google.maps.event.removeListener(this.touchEndListener);
+      this.touchEndListener = null;
+    }
+
+    if (this.freehandPath.length >= 3) {
+      this.polygonPath = this.simplifyPath(this.freehandPath);
+      this.completePolygon();
+    } else {
+      this.clearTempDrawing();
+    }
+  }
+
+  getLatLngFromMouseEvent(e) {
+    const bounds = this.map.getBounds();
+    const projection = this.map.getProjection();
+    if (!bounds || !projection) return null;
+
+    const ne = projection.fromLatLngToPoint(bounds.getNorthEast());
+    const sw = projection.fromLatLngToPoint(bounds.getSouthWest());
+    const scale = Math.pow(2, this.map.getZoom());
+
+    const point = new google.maps.Point(e.offsetX / scale + sw.x, e.offsetY / scale + ne.y);
+
+    return projection.fromPointToLatLng(point);
+  }
+
+  getLatLngFromTouchEvent(e) {
+    if (!e.touches || e.touches.length === 0) return null;
+
+    const touch = e.touches[0];
+    const rect = this.map.getDiv().getBoundingClientRect();
+
+    const bounds = this.map.getBounds();
+    const projection = this.map.getProjection();
+    if (!bounds || !projection) return null;
+
+    const ne = projection.fromLatLngToPoint(bounds.getNorthEast());
+    const sw = projection.fromLatLngToPoint(bounds.getSouthWest());
+    const scale = Math.pow(2, this.map.getZoom());
+
+    const offsetX = touch.clientX - rect.left;
+    const offsetY = touch.clientY - rect.top;
+
+    const point = new google.maps.Point(offsetX / scale + sw.x, offsetY / scale + ne.y);
+
+    return projection.fromPointToLatLng(point);
+  }
+
+  simplifyPath(path) {
+    if (path.length <= 10) return path;
+
+    const simplified = [];
+    const step = Math.max(1, Math.floor(path.length / 50));
+
+    for (let i = 0; i < path.length; i += step) {
+      simplified.push(path[i]);
+    }
+
+    if (simplified[simplified.length - 1] !== path[path.length - 1]) {
+      simplified.push(path[path.length - 1]);
+    }
+
+    return simplified;
   }
 
   completePolygon() {
     console.log('completePolygon called with', this.polygonPath.length, 'points');
 
-    // Remove previous polygon if exists
     if (this.currentPolygon) {
       console.log('Removing previous polygon');
       this.currentPolygon.setMap(null);
     }
 
-    // Create the polygon
     console.log('Creating new polygon');
     this.currentPolygon = new google.maps.Polygon({
       paths: this.polygonPath,
@@ -517,7 +691,6 @@ class CustomersScreen {
 
     console.log('Polygon created, adding edit listeners');
 
-    // Add listeners for polygon edits
     google.maps.event.addListener(this.currentPolygon.getPath(), 'set_at', () => {
       console.log('Polygon point moved');
       this.applyPolygonFilter();
@@ -529,20 +702,18 @@ class CustomersScreen {
       this.updateMarkers();
     });
 
-    // Clear temp drawing
-    console.log('Clearing temporary drawing elements');
     this.clearTempDrawing();
 
-    // Stop drawing mode
-    console.log('Stopping drawing mode');
     this.isDrawingMode = false;
+    this.map.setOptions({
+      draggableCursor: null,
+      draggable: true,
+      gestureHandling: 'auto',
+    });
     this.stopDrawing();
 
-    // Apply filter
-    console.log('Applying polygon filter');
     this.applyPolygonFilter();
 
-    // Update the controls UI only
     const controlsContainer = document.querySelector('.map-controls');
     if (controlsContainer) {
       controlsContainer.innerHTML = `
@@ -558,7 +729,6 @@ class CustomersScreen {
       `;
     }
 
-    // Update the customer list view
     const customersContainer = document.querySelector('.customers-container');
     if (customersContainer) {
       customersContainer.innerHTML =
@@ -567,8 +737,8 @@ class CustomersScreen {
   }
 
   clearTempDrawing() {
-    // Clear temp markers
-    this.tempMarkers.forEach((marker) => marker.setMap(null));
+    // Clear temp markers (AdvancedMarkerElement)
+    this.tempMarkers.forEach((marker) => (marker.map = null));
     this.tempMarkers = [];
 
     // Clear temp polyline
@@ -779,6 +949,7 @@ class CustomersScreen {
         <button class="btn-bulk" onclick="customersScreen.bulkEmail()">📧 Email Selected</button>
         <button class="btn-bulk" onclick="customersScreen.bulkExport()">💾 Export Selected</button>
         <button class="btn-bulk" onclick="customersScreen.bulkAddToClub()">🍷 Add to Club</button>
+        <button class="btn-bulk" onclick="customersScreen.deselectAll()">✕ Deselect All</button>
         <button class="btn-bulk btn-danger" onclick="customersScreen.bulkDelete()">🗑️ Delete Selected</button>
       </div>
     `;
@@ -1105,6 +1276,12 @@ class CustomersScreen {
   bulkAddToClub() {
     console.log('Bulk add to club:', this.selectedCustomers);
     alert(`Add ${this.selectedCustomers.size} customers to club - not yet implemented`);
+  }
+
+  deselectAll() {
+    this.selectedCustomers.clear();
+    this.render();
+    this.attachEventListeners();
   }
 
   bulkDelete() {
