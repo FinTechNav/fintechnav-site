@@ -408,6 +408,13 @@ class CustomersScreen {
       return;
     }
 
+    // If map instance exists but was detached from DOM, recreate it
+    if (this.map && !mapElement.hasChildNodes()) {
+      console.log('Map instance exists but detached from DOM - resetting');
+      this.map = null;
+      this.currentPolygon = null;
+    }
+
     // If map already exists, just update markers and ensure polygon visibility
     if (this.map) {
       console.log('Map exists - updating markers only, preserving zoom/position');
