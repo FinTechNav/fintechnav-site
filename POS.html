@@ -318,9 +318,13 @@
     <script src="js/mobile-pos.js"></script>
     <script src="js/app.js"></script>
     
-    <!-- Google Maps API for Customer Map -->
-    <script async defer
-        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA1tLgazrgX-E7thmO74_xCfB4ioKi7_jE&callback=Function.prototype">
+    <script src="config.js"></script>
+    <script>
+    const script = document.createElement('script');
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${CONFIG.GOOGLE_MAPS_API_KEY}&libraries=drawing,geometry&callback=Function.prototype`;
+    script.async = true;
+    script.defer = true;
+    document.head.appendChild(script);
     </script>
 </body>
 </html>
