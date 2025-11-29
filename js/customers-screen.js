@@ -219,15 +219,17 @@ class CustomersScreen {
         `;
       }
 
-      // Update bulk actions bar
+      // Update bulk actions bar - remove old one first
       const existingBulkActions = document.querySelector('.bulk-actions-bar');
-      if (this.selectedCustomers.size > 0 && !existingBulkActions) {
+      if (existingBulkActions) {
+        existingBulkActions.remove();
+      }
+
+      if (this.selectedCustomers.size > 0) {
         const statsContainer = document.querySelector('.customers-stats');
         if (statsContainer) {
           statsContainer.insertAdjacentHTML('afterend', this.renderBulkActions());
         }
-      } else if (this.selectedCustomers.size === 0 && existingBulkActions) {
-        existingBulkActions.remove();
       }
 
       // Update markers on map
