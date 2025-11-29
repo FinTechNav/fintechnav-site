@@ -388,65 +388,145 @@ class CustomersScreen {
   }
 
   initializeDrawingTools() {
-    // Initialize Drawing Manager
-    this.drawingManager = new google.maps.drawing.DrawingManager({
-      drawingMode: null,
-      drawingControl: false,
-      polygonOptions: {
-        fillColor: '#f39c12',
-        fillOpacity: 0.2,
-        strokeWeight: 2,
-        strokeColor: '#f39c12',
-        clickable: true,
-        editable: true,
-        zIndex: 1,
-      },
-    });
-
-    this.drawingManager.setMap(this.map);
-
-    // Listen for polygon complete
-    google.maps.event.addListener(this.drawingManager, 'polygoncomplete', (polygon) => {
-      // Remove previous polygon if exists
-      if (this.currentPolygon) {
-        this.currentPolygon.setMap(null);
-      }
-
-      this.currentPolygon = polygon;
-      this.isDrawingMode = false;
-      this.drawingManager.setDrawingMode(null);
-
-      // Apply polygon filter
-      this.applyPolygonFilter();
-
-      // Re-render to update UI
-      this.render();
-      this.attachEventListeners();
-
-      // Add listener for polygon edits
-      google.maps.event.addListener(polygon.getPath(), 'set_at', () => {
-        this.applyPolygonFilter();
-        this.updateMarkers();
-      });
-
-      google.maps.event.addListener(polygon.getPath(), 'insert_at', () => {
-        this.applyPolygonFilter();
-        this.updateMarkers();
-      });
-    });
+    // Manual polygon drawing (DrawingManager is deprecated)
+    this.polygonPath = [];
+    this.tempMarkers = [];
+    this.tempPolyline = null;
+    this.drawingClickListener = null;
   }
 
   toggleDrawingMode() {
     this.isDrawingMode = !this.isDrawingMode;
 
     if (this.isDrawingMode) {
-      this.drawingManager.setDrawingMode(google.maps.drawing.OverlayType.POLYGON);
+      // Enable drawing mode
+      this.map.setOptions({ draggableCursor: 'crosshair' });
+      this.startDrawing();
     } else {
-      this.drawingManager.setDrawingMode(null);
+      // Disable drawing mode
+      this.map.setOptions({ draggableCursor: null });
+      this.stopDrawing();
     }
 
     this.render();
     this.attachEventListeners();
+  }
+
+  startDrawing() {
+    this.polygonPath = [];
+    this.clearTempDrawing();
+
+    // Add click listener to map
+    this.drawingClickListener = google.maps.event.addListener(this.map, 'click', (event) => {
+      this.addPolygonPoint(event.latLng);
+    });
+  }
+
+  stopDrawing() {
+    if (this.drawingClickListener) {
+      google.maps.event.removeListener(this.drawingClickListener);
+      this.drawingClickListener = null;
+    }
+    this.clearTempDrawing();
+  }
+
+  addPolygonPoint(latLng) {
+    this.polygonPath.push(latLng);
+
+    // Add marker at click point
+    const marker = new google.maps.Marker({
+      position: latLng,
+      map: this.map,
+      icon: {
+        path: google.maps.SymbolPath.CIRCLE,
+        scale: 5,
+        fillColor: '#f39c12',
+        fillOpacity: 1,
+        strokeColor: '#ffffff',
+        strokeWeight: 2,
+      },
+    });
+    this.tempMarkers.push(marker);
+
+    // Update polyline
+    if (this.tempPolyline) {
+      this.tempPolyline.setMap(null);
+    }
+
+    if (this.polygonPath.length > 1) {
+      this.tempPolyline = new google.maps.Polyline({
+        path: this.polygonPath,
+        strokeColor: '#f39c12',
+        strokeWeight: 2,
+        map: this.map,
+      });
+    }
+
+    // If clicked near first point and have at least 3 points, complete polygon
+    if (this.polygonPath.length >= 3) {
+      const firstPoint = this.polygonPath[0];
+      const distance = google.maps.geometry.spherical.computeDistanceBetween(latLng, firstPoint);
+
+      // If within 20 meters of first point, complete the polygon
+      if (distance < 20) {
+        this.completePolygon();
+      }
+    }
+  }
+
+  completePolygon() {
+    // Remove previous polygon if exists
+    if (this.currentPolygon) {
+      this.currentPolygon.setMap(null);
+    }
+
+    // Create the polygon
+    this.currentPolygon = new google.maps.Polygon({
+      paths: this.polygonPath,
+      fillColor: '#f39c12',
+      fillOpacity: 0.2,
+      strokeWeight: 2,
+      strokeColor: '#f39c12',
+      editable: true,
+      draggable: false,
+      map: this.map,
+    });
+
+    // Add listeners for polygon edits
+    google.maps.event.addListener(this.currentPolygon.getPath(), 'set_at', () => {
+      this.applyPolygonFilter();
+      this.updateMarkers();
+    });
+    google.maps.event.addListener(this.currentPolygon.getPath(), 'insert_at', () => {
+      this.applyPolygonFilter();
+      this.updateMarkers();
+    });
+
+    // Clear temp drawing
+    this.clearTempDrawing();
+
+    // Stop drawing mode
+    this.isDrawingMode = false;
+    this.stopDrawing();
+
+    // Apply filter
+    this.applyPolygonFilter();
+
+    // Re-render
+    this.render();
+    this.attachEventListeners();
+  }
+
+  clearTempDrawing() {
+    // Clear temp markers
+    this.tempMarkers.forEach((marker) => marker.setMap(null));
+    this.tempMarkers = [];
+
+    // Clear temp polyline
+    if (this.tempPolyline) {
+      this.tempPolyline.setMap(null);
+      this.tempPolyline = null;
+    }
   }
 
   removePolygon() {
@@ -457,7 +537,7 @@ class CustomersScreen {
 
     this.polygonFilter = null;
     this.isDrawingMode = false;
-    this.drawingManager.setDrawingMode(null);
+    this.stopDrawing();
 
     // Re-apply filters without polygon
     this.applyFilters();
