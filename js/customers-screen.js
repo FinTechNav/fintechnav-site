@@ -269,18 +269,7 @@ class CustomersScreen {
 
         ${
           this.showMap
-            ? `
-        <div class="split-view-container">
-          <div class="customers-panel">
-            <div class="customers-container ${this.currentView}">
-              ${this.currentView === 'grid' ? this.renderGridView() : this.renderListView()}
-            </div>
-          </div>
-          <div class="map-panel">
-            ${this.renderMapView()}
-          </div>
-        </div>
-        `
+            ? this.renderMapView()
             : `
         <div class="customers-container ${this.currentView}">
           ${this.currentView === 'grid' ? this.renderGridView() : this.renderListView()}
@@ -304,7 +293,7 @@ class CustomersScreen {
       <div class="map-container">
         <div class="map-controls">
           <button class="btn-map-control ${this.isDrawingMode ? 'active' : ''}" onclick="customersScreen.toggleDrawingMode()" title="Draw boundary">
-            <span class="draw-icon">✏️</span> Draw Area
+            <span class="draw-icon">✏️</span> ${this.isDrawingMode ? 'Stop Drawing' : 'Draw Area'}
           </button>
           ${
             this.currentPolygon || this.polygonFilter
@@ -324,8 +313,17 @@ class CustomersScreen {
           `
               : ''
           }
+          ${
+            this.isDrawingMode
+              ? `
+            <div class="drawing-instructions">
+              Click on the map to add points. Click near the first point to complete the shape.
+            </div>
+          `
+              : ''
+          }
         </div>
-        <div id="customer-map"></div>
+        <div id="customer-map" style="width: 100%; height: 600px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.1);"></div>
       </div>
     `;
   }
@@ -388,65 +386,142 @@ class CustomersScreen {
   }
 
   initializeDrawingTools() {
-    // Initialize Drawing Manager
-    this.drawingManager = new google.maps.drawing.DrawingManager({
-      drawingMode: null,
-      drawingControl: false,
-      polygonOptions: {
-        fillColor: '#f39c12',
-        fillOpacity: 0.2,
-        strokeWeight: 2,
-        strokeColor: '#f39c12',
-        clickable: true,
-        editable: true,
-        zIndex: 1,
-      },
-    });
+    // Manual polygon drawing (no deprecated library needed)
+    this.drawingListeners = [];
+    this.currentPath = [];
 
-    this.drawingManager.setMap(this.map);
-
-    // Listen for polygon complete
-    google.maps.event.addListener(this.drawingManager, 'polygoncomplete', (polygon) => {
-      // Remove previous polygon if exists
-      if (this.currentPolygon) {
-        this.currentPolygon.setMap(null);
-      }
-
-      this.currentPolygon = polygon;
-      this.isDrawingMode = false;
-      this.drawingManager.setDrawingMode(null);
-
-      // Apply polygon filter
-      this.applyPolygonFilter();
-
-      // Re-render to update UI
-      this.render();
-      this.attachEventListeners();
-
-      // Add listener for polygon edits
-      google.maps.event.addListener(polygon.getPath(), 'set_at', () => {
-        this.applyPolygonFilter();
-        this.updateMarkers();
-      });
-
-      google.maps.event.addListener(polygon.getPath(), 'insert_at', () => {
-        this.applyPolygonFilter();
-        this.updateMarkers();
-      });
-    });
+    // We'll handle polygon drawing manually via map clicks
   }
 
   toggleDrawingMode() {
     this.isDrawingMode = !this.isDrawingMode;
 
     if (this.isDrawingMode) {
-      this.drawingManager.setDrawingMode(google.maps.drawing.OverlayType.POLYGON);
+      // Start drawing mode
+      this.currentPath = [];
+      this.map.setOptions({ draggableCursor: 'crosshair' });
+
+      // Add click listener for drawing
+      const clickListener = this.map.addListener('click', (e) => {
+        this.addPointToPolygon(e.latLng);
+      });
+      this.drawingListeners.push(clickListener);
     } else {
-      this.drawingManager.setDrawingMode(null);
+      // End drawing mode
+      this.map.setOptions({ draggableCursor: null });
+      this.clearDrawingListeners();
     }
 
     this.render();
     this.attachEventListeners();
+  }
+
+  addPointToPolygon(latLng) {
+    this.currentPath.push(latLng);
+
+    // Draw temporary markers for each point
+    const marker = new google.maps.Marker({
+      position: latLng,
+      map: this.map,
+      icon: {
+        path: google.maps.SymbolPath.CIRCLE,
+        scale: 5,
+        fillColor: '#f39c12',
+        fillOpacity: 1,
+        strokeColor: '#ffffff',
+        strokeWeight: 2,
+      },
+    });
+
+    if (!this.tempMarkers) this.tempMarkers = [];
+    this.tempMarkers.push(marker);
+
+    // If we have at least 3 points, show a line preview
+    if (this.currentPath.length >= 2) {
+      if (this.tempPolyline) {
+        this.tempPolyline.setMap(null);
+      }
+
+      this.tempPolyline = new google.maps.Polyline({
+        path: this.currentPath,
+        strokeColor: '#f39c12',
+        strokeOpacity: 0.8,
+        strokeWeight: 2,
+        map: this.map,
+      });
+    }
+
+    // Check if clicking near first point to close polygon
+    if (this.currentPath.length >= 3) {
+      const firstPoint = this.currentPath[0];
+      const distance = google.maps.geometry.spherical.computeDistanceBetween(latLng, firstPoint);
+
+      // If within 50 meters of first point, close the polygon
+      if (distance < 50) {
+        this.completePolygon();
+      }
+    }
+  }
+
+  completePolygon() {
+    // Remove temporary markers and line
+    if (this.tempMarkers) {
+      this.tempMarkers.forEach((m) => m.setMap(null));
+      this.tempMarkers = [];
+    }
+    if (this.tempPolyline) {
+      this.tempPolyline.setMap(null);
+      this.tempPolyline = null;
+    }
+
+    // Remove previous polygon if exists
+    if (this.currentPolygon) {
+      this.currentPolygon.setMap(null);
+    }
+
+    // Create the actual polygon
+    this.currentPolygon = new google.maps.Polygon({
+      paths: this.currentPath,
+      fillColor: '#f39c12',
+      fillOpacity: 0.2,
+      strokeWeight: 2,
+      strokeColor: '#f39c12',
+      editable: true,
+      map: this.map,
+    });
+
+    // End drawing mode
+    this.isDrawingMode = false;
+    this.map.setOptions({ draggableCursor: null });
+    this.clearDrawingListeners();
+    this.currentPath = [];
+
+    // Apply polygon filter
+    this.applyPolygonFilter();
+
+    // Re-render to update UI
+    this.render();
+    this.attachEventListeners();
+
+    // Add listeners for polygon edits
+    google.maps.event.addListener(this.currentPolygon.getPath(), 'set_at', () => {
+      this.applyPolygonFilter();
+      this.updateMarkers();
+    });
+
+    google.maps.event.addListener(this.currentPolygon.getPath(), 'insert_at', () => {
+      this.applyPolygonFilter();
+      this.updateMarkers();
+    });
+  }
+
+  clearDrawingListeners() {
+    if (this.drawingListeners) {
+      this.drawingListeners.forEach((listener) => {
+        google.maps.event.removeListener(listener);
+      });
+      this.drawingListeners = [];
+    }
   }
 
   removePolygon() {
@@ -455,9 +530,21 @@ class CustomersScreen {
       this.currentPolygon = null;
     }
 
+    // Clean up any temporary drawing artifacts
+    if (this.tempMarkers) {
+      this.tempMarkers.forEach((m) => m.setMap(null));
+      this.tempMarkers = [];
+    }
+    if (this.tempPolyline) {
+      this.tempPolyline.setMap(null);
+      this.tempPolyline = null;
+    }
+
     this.polygonFilter = null;
     this.isDrawingMode = false;
-    this.drawingManager.setDrawingMode(null);
+    this.currentPath = [];
+    this.map.setOptions({ draggableCursor: null });
+    this.clearDrawingListeners();
 
     // Re-apply filters without polygon
     this.applyFilters();
