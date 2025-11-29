@@ -31,15 +31,7 @@ exports.handler = async (event) => {
     };
   }
 
-  const { winery_id, force_regeocode = false, limit = 20 } = requestBody;
-
-  if (!winery_id) {
-    return {
-      statusCode: 400,
-      headers,
-      body: JSON.stringify({ error: 'winery_id is required' }),
-    };
-  }
+  const { force_regeocode = false, limit = 20 } = requestBody;
 
   if (!process.env.GOOGLE_MAPS_API_KEY) {
     return {
@@ -68,10 +60,10 @@ exports.handler = async (event) => {
     const customersResult = await client.query(
       `SELECT id, address, address2, city, state_code, province, zip_code, country_code 
        FROM customers 
-       WHERE winery_id = $1 AND ${whereClause}
+       WHERE ${whereClause}
        ORDER BY created_at DESC
-       LIMIT $2`,
-      [winery_id, limit]
+       LIMIT $1`,
+      [limit]
     );
 
     const customers = customersResult.rows;
@@ -179,7 +171,6 @@ exports.handler = async (event) => {
       headers,
       body: JSON.stringify({
         success: true,
-        winery_id,
         limit,
         ...results,
       }),
