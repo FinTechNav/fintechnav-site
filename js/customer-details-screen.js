@@ -94,15 +94,15 @@ class CustomerDetailsScreen {
   }
 
   render() {
-    const container = document.getElementById('customerDetailsModal');
-    if (container) {
-      container.remove();
+    const container = document.getElementById('customersScreen');
+    if (!container) return;
+
+    // Store the original customers screen content so we can restore it
+    if (!this.originalContent) {
+      this.originalContent = container.innerHTML;
     }
 
-    const modal = document.createElement('div');
-    modal.id = 'customerDetailsModal';
-    modal.innerHTML = this.getHTML();
-    document.body.appendChild(modal);
+    container.innerHTML = this.getHTML();
 
     // Attach event listeners
     this.attachEventListeners();
@@ -115,37 +115,20 @@ class CustomerDetailsScreen {
 
     return `
       <div style="
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: rgba(0, 0, 0, 0.8);
-        z-index: 10000;
-        display: flex;
-        align-items: center;
-        justify-content: center;
+        background: #2c3e50;
+        min-height: 100vh;
+        padding: 20px;
       ">
+        ${this.renderHeader(fullName)}
+        
         <div style="
-          background: #2c3e50;
-          width: 95%;
-          height: 95%;
-          border-radius: 12px;
           display: flex;
-          flex-direction: column;
-          overflow: hidden;
+          gap: 20px;
+          margin-top: 20px;
         ">
-          ${this.renderHeader(fullName)}
-          
-          <div style="
-            display: flex;
-            flex: 1;
-            overflow: hidden;
-          ">
-            ${this.renderLeftPane(customer, initials, fullName)}
-            ${this.renderMiddlePane(customer)}
-            ${this.renderRightPane(customer)}
-          </div>
+          ${this.renderLeftPane(customer, initials, fullName)}
+          ${this.renderMiddlePane(customer)}
+          ${this.renderRightPane(customer)}
         </div>
       </div>
     `;
@@ -156,7 +139,7 @@ class CustomerDetailsScreen {
       <div style="
         background: #34495e;
         padding: 20px 30px;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
         display: flex;
         justify-content: space-between;
         align-items: center;
@@ -170,16 +153,8 @@ class CustomerDetailsScreen {
             cursor: pointer;
             padding: 0;
           ">←</button>
-          <h2 style="color: #ecf0f1; margin: 0; font-family: Georgia, serif;">Customer Details</h2>
+          <h2 style="color: #ecf0f1; margin: 0; font-family: Georgia, serif;">${fullName}</h2>
         </div>
-        <button onclick="customerDetailsScreen.close()" style="
-          background: transparent;
-          border: none;
-          color: #ecf0f1;
-          font-size: 28px;
-          cursor: pointer;
-          padding: 0;
-        ">✕</button>
       </div>
     `;
   }
@@ -191,14 +166,14 @@ class CustomerDetailsScreen {
         background: #34495e;
         padding: 20px;
         overflow-y: auto;
-        border-right: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
       ">
         <!-- Avatar -->
         <div style="
           width: 80px;
           height: 80px;
           border-radius: 50%;
-          background: linear-gradient(135deg, #f39c12, #e67e22);
+          background: linear-gradient(135deg, #D2B48C, #8B7355);
           color: white;
           display: flex;
           align-items: center;
@@ -255,9 +230,9 @@ class CustomerDetailsScreen {
         width: 100%;
         padding: 10px;
         background: transparent;
-        border: 1px solid rgba(255, 255, 255, 0.2);
+        border: 1px solid rgba(210, 180, 140, 0.3);
         border-radius: 6px;
-        color: #f39c12;
+        color: #D2B48C;
         font-size: 14px;
         cursor: pointer;
         margin-top: 15px;
@@ -271,7 +246,8 @@ class CustomerDetailsScreen {
         flex: 1;
         padding: 20px;
         overflow-y: auto;
-        background: #2c3e50;
+        background: #34495e;
+        border-radius: 8px;
       ">
         ${this.renderActionButtons()}
         ${this.renderActivityTimeline()}
@@ -321,10 +297,10 @@ class CustomerDetailsScreen {
         
         <button onclick="customerDetailsScreen.createOrder()" style="
           padding: 10px 20px;
-          background: #27ae60;
+          background: #D2B48C;
           border: none;
           border-radius: 6px;
-          color: white;
+          color: #2c3e50;
           font-size: 14px;
           cursor: pointer;
           font-weight: 600;
@@ -427,7 +403,7 @@ class CustomerDetailsScreen {
               width: 32px;
               height: 32px;
               border-radius: 50%;
-              background: #3498db;
+              background: #D2B48C;
               display: flex;
               align-items: center;
               justify-content: center;
@@ -478,18 +454,18 @@ class CustomerDetailsScreen {
             <button onclick="customerDetailsScreen.filterOrders()" style="
               padding: 8px 16px;
               background: transparent;
-              border: 1px solid rgba(255, 255, 255, 0.2);
+              border: 1px solid rgba(210, 180, 140, 0.3);
               border-radius: 6px;
-              color: #f39c12;
+              color: #D2B48C;
               font-size: 14px;
               cursor: pointer;
             ">Filter</button>
             <button onclick="customerDetailsScreen.sortOrders()" style="
               padding: 8px 16px;
               background: transparent;
-              border: 1px solid rgba(255, 255, 255, 0.2);
+              border: 1px solid rgba(210, 180, 140, 0.3);
               border-radius: 6px;
-              color: #f39c12;
+              color: #D2B48C;
               font-size: 14px;
               cursor: pointer;
             ">Sort</button>
@@ -579,7 +555,7 @@ class CustomerDetailsScreen {
         background: #34495e;
         padding: 20px;
         overflow-y: auto;
-        border-left: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
       ">
         ${this.renderLTVCard(customer)}
         ${this.renderPaymentMethods()}
@@ -656,7 +632,7 @@ class CustomerDetailsScreen {
                 (detail) => `
               <div style="margin-bottom: 8px;">
                 <span style="color: #95a5a6; font-size: 12px;">${detail.label}:</span>
-                <span style="color: #f39c12; font-size: 14px; margin-left: 5px;">${detail.value}</span>
+                <span style="color: #D2B48C; font-size: 14px; margin-left: 5px;">${detail.value}</span>
               </div>
             `
               )
@@ -698,12 +674,13 @@ class CustomerDetailsScreen {
           <h4 style="color: #ecf0f1; margin: 0; font-size: 16px; font-weight: 600;">SAVED PAYMENT METHODS</h4>
           <button onclick="customerDetailsScreen.addPaymentMethod()" style="
             padding: 6px 12px;
-            background: #27ae60;
+            background: #D2B48C;
             border: none;
             border-radius: 4px;
-            color: white;
+            color: #2c3e50;
             font-size: 12px;
             cursor: pointer;
+            font-weight: 600;
           ">+ Add</button>
         </div>
         
@@ -830,11 +807,16 @@ class CustomerDetailsScreen {
 
   // Action methods
   close() {
-    const modal = document.getElementById('customerDetailsModal');
-    if (modal) {
-      modal.remove();
+    const container = document.getElementById('customersScreen');
+    if (container && this.originalContent) {
+      container.innerHTML = this.originalContent;
+      // Re-initialize customers screen
+      if (window.customersScreen && window.customersScreen.init) {
+        customersScreen.init();
+      }
     }
     this.currentCustomer = null;
+    this.originalContent = null;
   }
 
   showAllContactInfo() {
