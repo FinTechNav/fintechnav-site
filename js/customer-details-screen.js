@@ -390,7 +390,7 @@ class CustomerDetailsScreen {
         type: 'order',
         icon: '🛒',
         title: 'Order Placed',
-        description: `Order #${this.orders[0]?.order_number || 'N/A'} • ${this.formatCurrency(this.orders[0]?.total_amount_cents || 0)}`,
+        description: `Order #${this.orders[0]?.order_number || 'N/A'} • ${this.formatCurrency(this.orders[0]?.total || 0)}`,
         timestamp: this.orders[0]?.created_at || new Date().toISOString(),
       },
       {
@@ -544,14 +544,14 @@ class CustomerDetailsScreen {
           ">
             <div style="font-weight: 600;">${order.order_number}</div>
             <div>${this.formatDate(order.created_at)}</div>
-            <div>${this.formatCurrency(order.total_amount_cents)}</div>
+            <div>${this.formatCurrency(order.total)}</div>
             <div>
               <span style="
                 padding: 4px 8px;
-                background: #27ae60;
+                background: ${order.status === 'completed' ? '#27ae60' : '#f39c12'};
                 border-radius: 4px;
                 font-size: 12px;
-              ">Complete</span>
+              ">${order.status || 'Pending'}</span>
             </div>
             <div style="display: flex; gap: 8px;">
               <button onclick="customerDetailsScreen.viewOrder('${order.id}')" style="
@@ -563,21 +563,6 @@ class CustomerDetailsScreen {
                 font-size: 12px;
                 cursor: pointer;
               ">View</button>
-              ${
-                order.shipped_at
-                  ? ''
-                  : `
-                <button onclick="customerDetailsScreen.shipOrder('${order.id}')" style="
-                  padding: 4px 8px;
-                  background: #f39c12;
-                  border: none;
-                  border-radius: 4px;
-                  color: white;
-                  font-size: 12px;
-                  cursor: pointer;
-                ">Ship</button>
-              `
-              }
             </div>
           </div>
         `
@@ -606,12 +591,18 @@ class CustomerDetailsScreen {
     const stats = [
       {
         label: 'Lifetime Value',
-        value: this.formatCurrency(customer.lifetime_value_cents || 0, customer.currency_code),
+        value: this.formatCurrency(
+          (customer.lifetime_value_cents || 0) / 100,
+          customer.currency_code
+        ),
       },
       { label: 'Total Orders', value: customer.order_count || 0 },
       {
         label: 'Avg Order Value',
-        value: this.formatCurrency(customer.average_order_value_cents || 0, customer.currency_code),
+        value: this.formatCurrency(
+          (customer.average_order_value_cents || 0) / 100,
+          customer.currency_code
+        ),
       },
       { label: 'Last Order', value: this.formatDate(customer.last_order_date) },
       {
@@ -792,11 +783,12 @@ class CustomerDetailsScreen {
     return parts.length > 0 ? parts.join(', ') : '-';
   }
 
-  formatCurrency(cents, currencyCode = 'USD') {
-    const amount = cents / 100;
+  formatCurrency(amount, currencyCode = 'USD') {
+    // Amount is already in dollars (not cents)
+    const currency = currencyCode || 'USD';
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: currencyCode || 'USD',
+      currency: currency,
     }).format(amount);
   }
 
