@@ -3,10 +3,21 @@ const ReservationsScreen = {
   currentDate: new Date(),
   reservations: [],
   serviceOfferings: [],
+  loadingState: {
+    serviceOfferings: false,
+    reservations: false,
+  },
 
   async init() {
+    this.loadingState.serviceOfferings = true;
+    this.loadingState.reservations = true;
+    this.render();
+
     await this.loadServiceOfferings();
+    this.loadingState.serviceOfferings = false;
+
     await this.loadReservations();
+    this.loadingState.reservations = false;
     this.render();
   },
 
@@ -50,6 +61,23 @@ const ReservationsScreen = {
       month: 'long',
       day: 'numeric',
     });
+
+    if (this.loadingState.reservations) {
+      container.innerHTML = `
+        <div class="reservations-header">
+          <div class="date-navigation">
+            <button class="date-nav-btn" onclick="ReservationsScreen.previousDay()">←</button>
+            <h3 class="current-date">${dateStr}</h3>
+            <button class="date-nav-btn" onclick="ReservationsScreen.nextDay()">→</button>
+          </div>
+          <button class="add-reservation-btn" onclick="ReservationsScreen.showAddReservation()">
+            ➕ Add Reservation
+          </button>
+        </div>
+        <p style="text-align: center; color: #95a5a6; padding: 40px;">Loading reservations...</p>
+      `;
+      return;
+    }
 
     container.innerHTML = `
       <div class="reservations-header">
@@ -201,12 +229,22 @@ const ReservationsScreen = {
 
   previousDay() {
     this.currentDate.setDate(this.currentDate.getDate() - 1);
-    this.loadReservations().then(() => this.render());
+    this.loadingState.reservations = true;
+    this.render();
+    this.loadReservations().then(() => {
+      this.loadingState.reservations = false;
+      this.render();
+    });
   },
 
   nextDay() {
     this.currentDate.setDate(this.currentDate.getDate() + 1);
-    this.loadReservations().then(() => this.render());
+    this.loadingState.reservations = true;
+    this.render();
+    this.loadReservations().then(() => {
+      this.loadingState.reservations = false;
+      this.render();
+    });
   },
 
   showAddReservation() {

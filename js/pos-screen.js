@@ -8,12 +8,25 @@ const POSScreen = {
   pollingInterval: null,
   pollingStartTime: null,
   currentReferenceId: null,
+  loadingState: {
+    products: false,
+    customers: false,
+  },
 
   async init() {
-    await this.loadProducts();
-    await this.loadCustomers();
+    this.loadingState.products = true;
+    this.loadingState.customers = true;
     this.renderProducts();
     this.renderCustomerSelector();
+
+    await this.loadProducts();
+    this.loadingState.products = false;
+    this.renderProducts();
+
+    await this.loadCustomers();
+    this.loadingState.customers = false;
+    this.renderCustomerSelector();
+
     this.setupPayButton();
   },
 
@@ -55,6 +68,11 @@ const POSScreen = {
     const container = document.getElementById('customerSelector');
     if (!container) return;
 
+    if (this.loadingState.customers) {
+      container.innerHTML = '<option value="">Loading customers...</option>';
+      return;
+    }
+
     const options = [
       '<option value="">Guest Checkout</option>',
       ...this.customers.map((c) => {
@@ -75,6 +93,12 @@ const POSScreen = {
 
   renderProducts() {
     const grid = document.getElementById('productsGrid');
+
+    if (this.loadingState.products) {
+      grid.innerHTML =
+        '<p style="text-align: center; color: #95a5a6; padding: 40px;">Loading products...</p>';
+      return;
+    }
 
     if (this.products.length === 0) {
       grid.innerHTML =
