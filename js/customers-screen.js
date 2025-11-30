@@ -18,6 +18,7 @@ class CustomersScreen {
     this.currentPolygon = null;
     this.isDrawingMode = false;
     this.polygonFilter = null;
+    this.eventListenersAttached = false;
     this.filters = {
       customerStatus: [],
       clubMemberStatus: [],
@@ -180,7 +181,6 @@ class CustomersScreen {
     }
     this.filteredCustomers = this.sortCustomers(this.filteredCustomers);
     this.render();
-    this.attachEventListeners();
     if (this.showMap) {
       this.initializeMap();
     }
@@ -389,6 +389,10 @@ class CustomersScreen {
       this.showMap
     );
 
+    // Reset flag since we've recreated the HTML - need to reattach listeners
+    this.eventListenersAttached = false;
+    this.attachEventListeners();
+
     if (this.showMap) {
       console.log(
         `[${new Date().toISOString()}] Map should be visible, calling initializeMap in 100ms`
@@ -432,7 +436,6 @@ class CustomersScreen {
     this.showMap = !this.showMap;
     localStorage.setItem('showMap', this.showMap);
     this.render();
-    this.attachEventListeners();
   }
 
   async initializeMap() {
@@ -1352,13 +1355,18 @@ class CustomersScreen {
   }
 
   attachEventListeners() {
+    // Prevent attaching duplicate event listeners
+    if (this.eventListenersAttached) {
+      return;
+    }
+    this.eventListenersAttached = true;
+
     const searchInput = document.getElementById('customer-search');
     if (searchInput) {
       searchInput.addEventListener('input', (e) => {
         this.searchTerm = e.target.value;
         this.applyFilters();
         this.render();
-        this.attachEventListeners();
       });
     }
 
@@ -1369,7 +1377,6 @@ class CustomersScreen {
         localStorage.setItem('customerGrouping', this.currentGrouping);
         this.applyFilters();
         this.render();
-        this.attachEventListeners();
       });
     }
   }
@@ -1378,7 +1385,6 @@ class CustomersScreen {
     this.currentView = view;
     localStorage.setItem('customerView', view);
     this.render();
-    this.attachEventListeners();
   }
 
   toggleSelection(customerId) {
@@ -1388,7 +1394,6 @@ class CustomersScreen {
       this.selectedCustomers.add(customerId);
     }
     this.render();
-    this.attachEventListeners();
   }
 
   toggleSelectAll(checked) {
@@ -1398,7 +1403,6 @@ class CustomersScreen {
       this.selectedCustomers.clear();
     }
     this.render();
-    this.attachEventListeners();
   }
 
   getFullName(customer) {
@@ -1450,7 +1454,6 @@ class CustomersScreen {
     };
     this.applyFilters();
     this.render();
-    this.attachEventListeners();
     this.closeFilterModal();
   }
 
@@ -1497,7 +1500,6 @@ class CustomersScreen {
 
     this.applyFilters();
     this.render();
-    this.attachEventListeners();
     this.closeFilterModal();
   }
 
@@ -1545,7 +1547,6 @@ class CustomersScreen {
   deselectAll() {
     this.selectedCustomers.clear();
     this.render();
-    this.attachEventListeners();
   }
 
   bulkDelete() {
