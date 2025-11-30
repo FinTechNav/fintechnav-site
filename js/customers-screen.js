@@ -322,13 +322,14 @@ class CustomersScreen {
             </select>
           </div>
 
-          <button class="btn-filter" id="filter-btn" onclick="customersScreen.openFilterModal()">
+          <button class="btn-filter ${activeFilterCount > 0 ? 'active' : ''}" id="filter-btn" onclick="customersScreen.openFilterModal()">
             <span class="filter-icon">⚙</span> Filter
             ${activeFilterCount > 0 ? `<span class="filter-badge">${activeFilterCount}</span>` : ''}
           </button>
 
           <button class="btn-map ${this.showMap ? 'active' : ''}" onclick="customersScreen.toggleMap()" title="Map View">
             <span class="map-icon">🗺</span> Map
+            ${this.polygonFilter ? '<span class="filter-badge">1</span>' : ''}
           </button>
 
           <div class="view-toggle">
