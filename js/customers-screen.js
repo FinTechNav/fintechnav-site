@@ -383,6 +383,7 @@ class CustomersScreen {
       </div>
 
       ${this.renderFilterModal()}
+      ${this.renderClearFilterModal()}
     `;
 
     container.innerHTML = html;
@@ -435,22 +436,43 @@ class CustomersScreen {
   }
 
   toggleMap() {
-    // If closing map and polygon filter is active, prompt user
+    // If closing map and polygon filter is active, show modal
     if (this.showMap && this.polygonFilter) {
-      const clearFilter = confirm(
-        'You have an active map filter. Would you like to clear it?\n\n' +
-          'Click OK to clear the filter, or Cancel to keep it.\n' +
-          '(If you choose Cancel, you can clear it later by reopening the map and clicking "Remove Outline")'
-      );
-
-      if (clearFilter) {
-        // Clear the polygon filter
-        this.clearPolygon();
-      }
+      this.showClearFilterModal();
+      return; // Don't toggle yet - wait for user response
     }
 
     this.showMap = !this.showMap;
     localStorage.setItem('showMap', this.showMap);
+    this.render();
+  }
+
+  showClearFilterModal() {
+    const modal = document.getElementById('clear-filter-modal');
+    if (modal) {
+      modal.style.display = 'flex';
+    }
+  }
+
+  closeClearFilterModal() {
+    const modal = document.getElementById('clear-filter-modal');
+    if (modal) {
+      modal.style.display = 'none';
+    }
+  }
+
+  clearFilterAndCloseMap() {
+    this.clearPolygon();
+    this.showMap = false;
+    localStorage.setItem('showMap', this.showMap);
+    this.closeClearFilterModal();
+    this.render();
+  }
+
+  keepFilterAndCloseMap() {
+    this.showMap = false;
+    localStorage.setItem('showMap', this.showMap);
+    this.closeClearFilterModal();
     this.render();
   }
 
@@ -1213,6 +1235,29 @@ class CustomersScreen {
           <div class="modal-footer">
             <button class="btn-secondary" onclick="customersScreen.resetFilters()">Reset Filters</button>
             <button class="btn-primary" onclick="customersScreen.applyFiltersFromModal()">Apply Changes</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  renderClearFilterModal() {
+    return `
+      <div id="clear-filter-modal" class="modal" style="display: none;">
+        <div class="modal-content" style="max-width: 500px;">
+          <div class="modal-header">
+            <h2>Clear Map Filter?</h2>
+            <button class="modal-close" onclick="customersScreen.closeClearFilterModal()">×</button>
+          </div>
+          
+          <div class="modal-body">
+            <p style="margin-bottom: 16px;">You have an active map filter. Would you like to clear it?</p>
+            <p style="color: #666; font-size: 14px;">If you choose to keep it, you can clear it later by reopening the map and clicking "Remove Outline".</p>
+          </div>
+
+          <div class="modal-footer">
+            <button class="btn-secondary" onclick="customersScreen.keepFilterAndCloseMap()">Keep Filter</button>
+            <button class="btn-primary" onclick="customersScreen.clearFilterAndCloseMap()">Clear Filter</button>
           </div>
         </div>
       </div>
