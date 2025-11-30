@@ -19,6 +19,7 @@ class CustomersScreen {
     this.isDrawingMode = false;
     this.polygonFilter = null;
     this.eventListenersAttached = false;
+    this.currentInfoWindow = null;
     this.filters = {
       customerStatus: [],
       clubMemberStatus: [],
@@ -1100,10 +1101,18 @@ class CustomersScreen {
       });
 
       marker.addListener('click', () => {
+        // Close previously open info window
+        if (this.currentInfoWindow) {
+          this.currentInfoWindow.close();
+        }
+
         infoWindow.open({
           anchor: marker,
           map: this.map,
         });
+
+        // Store reference to currently open window
+        this.currentInfoWindow = infoWindow;
       });
 
       this.markers.push(marker);
