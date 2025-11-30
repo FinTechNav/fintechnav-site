@@ -5,6 +5,7 @@ class CustomerDetailsScreen {
     this.activityFilter = 'all';
     this.orders = [];
     this.savedPaymentMethods = [];
+    this.activities = [];
   }
 
   async show(customerId) {
@@ -52,6 +53,10 @@ class CustomerDetailsScreen {
       console.log('Loading payment methods...');
       await this.loadPaymentMethods(customerId);
 
+      // Fetch activities
+      console.log('Loading activities...');
+      await this.loadActivities(customerId);
+
       console.log('Rendering customer details screen...');
       this.render();
       console.log('=== CustomerDetailsScreen.show completed successfully ===');
@@ -90,6 +95,33 @@ class CustomerDetailsScreen {
       console.error('Error loading payment methods:', error);
       console.error('This is non-fatal - continuing without payment methods');
       this.savedPaymentMethods = [];
+    }
+  }
+
+  async loadActivities(customerId) {
+    console.log('Loading activities for customer:', customerId);
+    try {
+      const filterParam = this.activityFilter === 'all' ? '' : `&type=${this.activityFilter}`;
+      const url = `/.netlify/functions/get-customer-activities?customer_id=${customerId}${filterParam}`;
+      console.log('Activities URL:', url);
+
+      const response = await fetch(url);
+      console.log('Activities response status:', response.status);
+
+      const data = await response.json();
+      console.log('Activities data:', data);
+
+      if (data.success) {
+        this.activities = data.activities || [];
+        console.log('Loaded activities count:', this.activities.length);
+      } else {
+        console.warn('Activities API returned success=false:', data);
+        this.activities = [];
+      }
+    } catch (error) {
+      console.error('Error loading activities:', error);
+      console.error('This is non-fatal - continuing without activities');
+      this.activities = [];
     }
   }
 
@@ -327,10 +359,10 @@ class CustomerDetailsScreen {
   renderActivityFilter() {
     const filters = [
       { value: 'all', label: 'All' },
-      { value: 'orders', label: 'Orders' },
-      { value: 'notes', label: 'Notes' },
-      { value: 'emails', label: 'Emails' },
-      { value: 'payments', label: 'Payments' },
+      { value: 'order_placed', label: 'Orders' },
+      { value: 'note_added', label: 'Notes' },
+      { value: 'email_sent', label: 'Emails' },
+      { value: 'payment_method_added', label: 'Payments' },
     ];
 
     return `
@@ -355,40 +387,19 @@ class CustomerDetailsScreen {
   }
 
   renderActivityItems() {
-    // Mock activity data - in real implementation, fetch from backend
-    const activities = [
-      {
-        type: 'order',
-        icon: '🛒',
-        title: 'Order Placed',
-        description: `Order #${this.orders[0]?.order_number || 'N/A'} • ${this.formatCurrency(this.orders[0]?.total || 0)}`,
-        timestamp: this.orders[0]?.created_at || new Date().toISOString(),
-      },
-      {
-        type: 'payment',
-        icon: '💳',
-        title: 'Payment Method Added',
-        description: 'Visa ending in 4002',
-        timestamp: new Date(Date.now() - 86400000 * 2).toISOString(),
-      },
-      {
-        type: 'note',
-        icon: '📝',
-        title: 'Note Added',
-        description: 'Prefers red wines, allergic to sulfites',
-        timestamp: new Date(Date.now() - 86400000 * 5).toISOString(),
-      },
-    ];
+    if (this.activities.length === 0) {
+      return '<p style="color: #95a5a6; text-align: center; padding: 40px;">No activity yet</p>';
+    }
 
     return `
       <div style="position: relative;">
-        ${activities
+        ${this.activities
           .map(
             (activity, index) => `
           <div style="
             position: relative;
             padding-left: 40px;
-            padding-bottom: ${index < activities.length - 1 ? '20px' : '0'};
+            padding-bottom: ${index < this.activities.length - 1 ? '20px' : '0'};
           ">
             <!-- Timeline dot -->
             <div style="
@@ -403,11 +414,11 @@ class CustomerDetailsScreen {
               align-items: center;
               justify-content: center;
               font-size: 16px;
-            ">${activity.icon}</div>
+            ">${this.getActivityIcon(activity.activity_type)}</div>
             
             <!-- Timeline line -->
             ${
-              index < activities.length - 1
+              index < this.activities.length - 1
                 ? `
               <div style="
                 position: absolute;
@@ -423,9 +434,12 @@ class CustomerDetailsScreen {
             
             <!-- Content -->
             <div>
-              <div style="color: #ecf0f1; font-weight: 600; margin-bottom: 3px;">${activity.title}</div>
-              <div style="color: #95a5a6; font-size: 14px; margin-bottom: 3px;">${activity.description}</div>
-              <div style="color: #7f8c8d; font-size: 12px;">${this.formatDateTime(activity.timestamp)}</div>
+              <div style="color: #ecf0f1; font-weight: 600; margin-bottom: 3px;">${activity.activity_title}</div>
+              <div style="color: #95a5a6; font-size: 14px; margin-bottom: 3px;">${activity.activity_description}</div>
+              <div style="color: #7f8c8d; font-size: 12px;">
+                ${this.formatDateTime(activity.created_at)}
+                ${activity.employee_first_name ? ` • by ${activity.employee_first_name} ${activity.employee_last_name || ''}` : ''}
+              </div>
             </div>
           </div>
         `
@@ -433,6 +447,25 @@ class CustomerDetailsScreen {
           .join('')}
       </div>
     `;
+  }
+
+  getActivityIcon(activityType) {
+    const icons = {
+      order_placed: '🛒',
+      payment_received: '💰',
+      note_added: '📝',
+      email_sent: '📧',
+      sms_sent: '💬',
+      payment_method_added: '💳',
+      payment_method_deleted: '🗑️',
+      profile_updated: '✏️',
+      reservation_created: '📅',
+      reservation_completed: '✅',
+      club_joined: '🍷',
+      club_cancelled: '❌',
+      allocation_joined: '⭐',
+    };
+    return icons[activityType] || '📌';
   }
 
   renderOrdersSection() {
@@ -840,11 +873,19 @@ class CustomerDetailsScreen {
     }
   }
 
-  filterActivity(filterValue) {
+  async filterActivity(filterValue) {
+    console.log('Filtering activities:', filterValue);
     this.activityFilter = filterValue;
-    const content = document.getElementById('activityTimelineContent');
-    if (content) {
-      content.innerHTML = this.renderActivityItems();
+
+    // Reload activities with new filter
+    if (this.currentCustomer) {
+      await this.loadActivities(this.currentCustomer.id);
+
+      // Update just the timeline content
+      const content = document.getElementById('activityTimelineContent');
+      if (content) {
+        content.innerHTML = this.renderActivityItems();
+      }
     }
   }
 
