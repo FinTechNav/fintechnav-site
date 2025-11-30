@@ -8,40 +8,88 @@ class CustomerDetailsScreen {
   }
 
   async show(customerId) {
+    console.log('=== CustomerDetailsScreen.show called ===');
+    console.log('Customer ID:', customerId);
+
     try {
       // Fetch customer data
-      const response = await fetch(`/.netlify/functions/get-customer-stats?id=${customerId}`);
+      console.log('Fetching customer stats from API...');
+      const url = `/.netlify/functions/get-customer-stats?id=${customerId}`;
+      console.log('URL:', url);
+
+      const response = await fetch(url);
+      console.log('Response status:', response.status);
+      console.log('Response ok:', response.ok);
+
       const data = await response.json();
+      console.log('Response data:', data);
+
+      if (!response.ok) {
+        console.error('HTTP error response:', {
+          status: response.status,
+          statusText: response.statusText,
+          data: data,
+        });
+        throw new Error(
+          data.error || data.details || `HTTP ${response.status}: ${response.statusText}`
+        );
+      }
 
       if (!data.success) {
-        throw new Error(data.error || 'Failed to load customer');
+        console.error('API returned success=false:', data);
+        throw new Error(data.error || data.details || 'Failed to load customer');
       }
+
+      console.log('Customer data loaded successfully');
+      console.log('Customer:', data.customer);
+      console.log('Order stats:', data.order_stats);
+      console.log('Recent orders count:', (data.recent_orders || []).length);
 
       this.currentCustomer = data.customer;
       this.orders = data.recent_orders || [];
 
       // Fetch payment methods
+      console.log('Loading payment methods...');
       await this.loadPaymentMethods(customerId);
 
+      console.log('Rendering customer details screen...');
       this.render();
+      console.log('=== CustomerDetailsScreen.show completed successfully ===');
     } catch (error) {
-      console.error('Error loading customer details:', error);
-      alert('Failed to load customer details');
+      console.error('=== ERROR in CustomerDetailsScreen.show ===');
+      console.error('Error name:', error.name);
+      console.error('Error message:', error.message);
+      console.error('Error stack:', error.stack);
+
+      alert(
+        `Failed to load customer details:\n\n${error.message}\n\nCheck browser console for details.`
+      );
     }
   }
 
   async loadPaymentMethods(customerId) {
+    console.log('Loading payment methods for customer:', customerId);
     try {
-      const response = await fetch(
-        `/.netlify/functions/get-payment-methods?customer_id=${customerId}`
-      );
+      const url = `/.netlify/functions/get-payment-methods?customer_id=${customerId}`;
+      console.log('Payment methods URL:', url);
+
+      const response = await fetch(url);
+      console.log('Payment methods response status:', response.status);
+
       const data = await response.json();
+      console.log('Payment methods data:', data);
 
       if (data.success) {
         this.savedPaymentMethods = data.payment_methods || [];
+        console.log('Loaded payment methods count:', this.savedPaymentMethods.length);
+      } else {
+        console.warn('Payment methods API returned success=false:', data);
+        this.savedPaymentMethods = [];
       }
     } catch (error) {
       console.error('Error loading payment methods:', error);
+      console.error('This is non-fatal - continuing without payment methods');
+      this.savedPaymentMethods = [];
     }
   }
 
