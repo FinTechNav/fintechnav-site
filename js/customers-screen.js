@@ -36,6 +36,21 @@ class CustomersScreen {
     await this.loadCustomers();
     this.render();
     this.attachEventListeners();
+
+    // Handle window resize (e.g., when DevTools opens/closes)
+    let resizeTimer;
+    window.addEventListener('resize', () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => {
+        // Force layout recalculation for flexbox containers
+        const customersContainer = document.querySelector('.customers-container');
+        if (customersContainer) {
+          customersContainer.style.display = 'none';
+          customersContainer.offsetHeight; // Force reflow
+          customersContainer.style.display = '';
+        }
+      }, 250);
+    });
   }
 
   async loadCountrySettings() {
@@ -193,24 +208,43 @@ class CustomersScreen {
   }
 
   render() {
-    console.log('=== RENDER ===');
-    console.log('showMap:', this.showMap);
-    console.log('currentPolygon exists:', !!this.currentPolygon);
-    console.log('map instance exists:', !!this.map);
-    console.log('selectedCustomers.size:', this.selectedCustomers.size);
+    console.log(`[${new Date().toISOString()}] === RENDER ===`);
+    console.log(`[${new Date().toISOString()}] showMap:`, this.showMap);
+    console.log(`[${new Date().toISOString()}] currentPolygon exists:`, !!this.currentPolygon);
+    console.log(`[${new Date().toISOString()}] map instance exists:`, !!this.map);
+    console.log(
+      `[${new Date().toISOString()}] selectedCustomers.size:`,
+      this.selectedCustomers.size
+    );
 
     const container = document.getElementById('customersScreen');
     if (!container) return;
 
     // Check if map panel actually exists in DOM
     const mapPanelExists = !!document.querySelector('.map-panel');
-    console.log('map panel exists in DOM:', mapPanelExists);
+    console.log(`[${new Date().toISOString()}] map panel exists in DOM:`, mapPanelExists);
 
     // If map is visible and already initialized AND map panel exists, just update the customer list
     if (this.showMap && this.map && mapPanelExists) {
-      console.log('Map visible and initialized - updating customer list only');
+      console.log(
+        `[${new Date().toISOString()}] Map visible and initialized - updating customer list only`
+      );
+
+      // Update view toggle buttons
+      document.querySelectorAll('.view-btn').forEach((btn) => {
+        btn.classList.remove('active');
+      });
+      const activeViewBtn =
+        this.currentView === 'grid'
+          ? document.querySelector('.view-btn[onclick*="grid"]')
+          : document.querySelector('.view-btn[onclick*="list"]');
+      if (activeViewBtn) {
+        activeViewBtn.classList.add('active');
+      }
+
       const customersContainer = document.querySelector('.customers-container');
       if (customersContainer) {
+        customersContainer.className = `customers-container ${this.currentView}`;
         customersContainer.innerHTML =
           this.currentView === 'grid' ? this.renderGridView() : this.renderListView();
       }
@@ -226,18 +260,24 @@ class CustomersScreen {
 
       // Update bulk actions bar - remove old one first
       const existingBulkActions = document.querySelector('.bulk-actions-bar');
-      console.log('Existing bulk actions bar found:', !!existingBulkActions);
-      console.log('Should show bulk actions:', this.selectedCustomers.size > 0);
+      console.log(
+        `[${new Date().toISOString()}] Existing bulk actions bar found:`,
+        !!existingBulkActions
+      );
+      console.log(
+        `[${new Date().toISOString()}] Should show bulk actions:`,
+        this.selectedCustomers.size > 0
+      );
 
       if (existingBulkActions) {
-        console.log('Removing existing bulk actions bar');
+        console.log(`[${new Date().toISOString()}] Removing existing bulk actions bar`);
         existingBulkActions.remove();
       }
 
       if (this.selectedCustomers.size > 0) {
         const statsContainer = document.querySelector('.customers-stats');
         if (statsContainer) {
-          console.log('Adding new bulk actions bar after stats');
+          console.log(`[${new Date().toISOString()}] Adding new bulk actions bar after stats`);
           statsContainer.insertAdjacentHTML('afterend', this.renderBulkActions());
         }
       }
@@ -247,7 +287,7 @@ class CustomersScreen {
       return;
     }
 
-    console.log('Full render - recreating entire HTML');
+    console.log(`[${new Date().toISOString()}] Full render - recreating entire HTML`);
     const activeFilterCount = this.getActiveFilterCount();
 
     const html = `
@@ -344,10 +384,15 @@ class CustomersScreen {
     `;
 
     container.innerHTML = html;
-    console.log('HTML rendered (full render), showMap:', this.showMap);
+    console.log(
+      `[${new Date().toISOString()}] HTML rendered (full render), showMap:`,
+      this.showMap
+    );
 
     if (this.showMap) {
-      console.log('Map should be visible, calling initializeMap in 100ms');
+      console.log(
+        `[${new Date().toISOString()}] Map should be visible, calling initializeMap in 100ms`
+      );
       setTimeout(() => this.initializeMap(), 100);
     }
   }
@@ -391,11 +436,14 @@ class CustomersScreen {
   }
 
   async initializeMap() {
-    console.log('=== INITIALIZE MAP ===');
-    console.log('Google Maps available:', !!window.google);
-    console.log('Map element exists:', !!document.getElementById('customer-map'));
-    console.log('Existing map instance:', !!this.map);
-    console.log('Current polygon exists:', !!this.currentPolygon);
+    console.log(`[${new Date().toISOString()}] === INITIALIZE MAP ===`);
+    console.log(`[${new Date().toISOString()}] Google Maps available:`, !!window.google);
+    console.log(
+      `[${new Date().toISOString()}] Map element exists:`,
+      !!document.getElementById('customer-map')
+    );
+    console.log(`[${new Date().toISOString()}] Existing map instance:`, !!this.map);
+    console.log(`[${new Date().toISOString()}] Current polygon exists:`, !!this.currentPolygon);
 
     if (!window.google) {
       console.error('Google Maps API not loaded');
@@ -410,42 +458,52 @@ class CustomersScreen {
 
     // If map instance exists but was detached from DOM, recreate it
     if (this.map && !mapElement.hasChildNodes()) {
-      console.log('Map instance exists but detached from DOM - resetting');
+      console.log(
+        `[${new Date().toISOString()}] Map instance exists but detached from DOM - resetting`
+      );
       this.map = null;
       this.currentPolygon = null;
     }
 
     // If map already exists, just update markers and ensure polygon visibility
     if (this.map) {
-      console.log('Map exists - updating markers only, preserving zoom/position');
+      console.log(
+        `[${new Date().toISOString()}] Map exists - updating markers only, preserving zoom/position`
+      );
       await this.updateMarkers();
 
       // Re-attach polygon to map if it exists and isn't visible
       if (this.currentPolygon && !this.currentPolygon.getMap()) {
-        console.log('Re-attaching polygon to map');
+        console.log(`[${new Date().toISOString()}] Re-attaching polygon to map`);
         this.currentPolygon.setMap(this.map);
       }
 
-      console.log('Map update complete - zoom/position preserved');
+      console.log(`[${new Date().toISOString()}] Map update complete - zoom/position preserved`);
       return;
     }
 
-    console.log('Creating new map instance');
+    console.log(`[${new Date().toISOString()}] Creating new map instance`);
 
     // Calculate center based on geocoded customers
     const geocodedCustomers = this.getGeocodedCustomers();
-    console.log('Geocoded customers count:', geocodedCustomers.length);
+    console.log(
+      `[${new Date().toISOString()}] Geocoded customers count:`,
+      geocodedCustomers.length
+    );
 
     if (geocodedCustomers.length === 0) {
       const center = { lat: 33.749, lng: -84.388 };
-      console.log('No geocoded customers, using default center:', center);
+      console.log(
+        `[${new Date().toISOString()}] No geocoded customers, using default center:`,
+        center
+      );
       this.map = new google.maps.Map(mapElement, {
         zoom: 4,
         center: center,
         mapId: 'HEAVY_POUR_CUSTOMER_MAP',
       });
       this.initializeDrawingTools();
-      console.log('Map initialized (no customers)');
+      console.log(`[${new Date().toISOString()}] Map initialized (no customers)`);
       return;
     }
 
@@ -456,7 +514,7 @@ class CustomersScreen {
       );
     });
 
-    console.log('Creating map with bounds:', bounds.toString());
+    console.log(`[${new Date().toISOString()}] Creating map with bounds:`, bounds.toString());
     this.map = new google.maps.Map(mapElement, {
       zoom: 4,
       center: bounds.getCenter(),
@@ -464,13 +522,13 @@ class CustomersScreen {
     });
 
     this.map.fitBounds(bounds);
-    console.log('Map bounds fitted');
+    console.log(`[${new Date().toISOString()}] Map bounds fitted`);
 
     this.initializeDrawingTools();
-    console.log('Drawing tools initialized');
+    console.log(`[${new Date().toISOString()}] Drawing tools initialized`);
 
     await this.updateMarkers();
-    console.log('Markers updated');
+    console.log(`[${new Date().toISOString()}] Markers updated`);
   }
 
   getGeocodedCustomers() {
