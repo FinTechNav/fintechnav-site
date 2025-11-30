@@ -1021,26 +1021,8 @@ class CustomersScreen {
 
     this.applyPolygonFilter();
 
-    const controlsContainer = document.querySelector('.map-controls');
-    if (controlsContainer) {
-      controlsContainer.innerHTML = `
-        <button class="btn-map-control" onclick="customersScreen.toggleDrawingMode()" title="Draw boundary">
-          <span class="draw-icon">✏️</span> Draw Area
-        </button>
-        <button class="btn-map-control btn-remove" onclick="customersScreen.removePolygon()" title="Remove boundary">
-          <span>🗑️</span> Remove Outline
-        </button>
-        <div class="map-filter-count">
-          ${this.filteredCustomers.length} customers in area
-        </div>
-      `;
-    }
-
-    const customersContainer = document.querySelector('.customers-container');
-    if (customersContainer) {
-      customersContainer.innerHTML =
-        this.currentView === 'grid' ? this.renderGridView() : this.renderListView();
-    }
+    // Render to update toolbar badges
+    this.render();
   }
 
   clearTempDrawing() {
@@ -1068,22 +1050,8 @@ class CustomersScreen {
     // Re-apply filters without polygon
     this.applyFilters();
 
-    // Update controls UI
-    const controlsContainer = document.querySelector('.map-controls');
-    if (controlsContainer) {
-      controlsContainer.innerHTML = `
-        <button class="btn-map-control" onclick="customersScreen.toggleDrawingMode()" title="Draw boundary">
-          <span class="draw-icon">✏️</span> Draw Area
-        </button>
-      `;
-    }
-
-    // Update customer list
-    const customersContainer = document.querySelector('.customers-container');
-    if (customersContainer) {
-      customersContainer.innerHTML =
-        this.currentView === 'grid' ? this.renderGridView() : this.renderListView();
-    }
+    // Render to update toolbar badges and customer list
+    this.render();
   }
 
   applyPolygonFilter() {
