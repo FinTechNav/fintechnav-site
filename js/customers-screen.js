@@ -1556,12 +1556,10 @@ class CustomersScreen {
     this.render();
     this.closeFilterModal();
   }
-
-  // Placeholder methods
-  viewCustomer(id) {
-    console.log('View customer:', id);
-    alert('Customer details view not yet implemented');
+  viewCustomer(customerId) {
+    customerDetailsScreen.show(customerId);
   }
+  // Placeholder methods
 
   createCustomer() {
     console.log('Create customer');
