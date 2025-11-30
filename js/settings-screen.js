@@ -8,12 +8,25 @@ const SettingsScreen = {
     cash: true,
     check: false,
   },
+  loadingState: {
+    terminals: false,
+    paymentTypes: false,
+  },
 
   async init() {
-    await this.loadTerminals();
-    await this.loadPaymentTypes();
+    this.loadingState.terminals = true;
+    this.loadingState.paymentTypes = true;
     this.loadPOSPreferences();
     this.render();
+
+    await this.loadTerminals();
+    this.loadingState.terminals = false;
+    this.render();
+
+    await this.loadPaymentTypes();
+    this.loadingState.paymentTypes = false;
+    this.render();
+
     // Auto-check terminal status on screen load
     await this.checkAllTerminalStatuses();
   },
@@ -118,6 +131,10 @@ const SettingsScreen = {
 
   renderGeneralTab() {
     if (!App.currentWinery) return '<p style="color: #95a5a6;">No winery selected</p>';
+
+    if (this.loadingState.terminals) {
+      return '<p style="text-align: center; color: #95a5a6; padding: 40px;">Loading settings...</p>';
+    }
 
     return `
       <h2 style="color: #f39c12; margin-bottom: 10px; font-size: 28px;">General Settings</h2>

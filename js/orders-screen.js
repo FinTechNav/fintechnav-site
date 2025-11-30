@@ -1,12 +1,15 @@
 // Orders Screen functionality
 const OrdersScreen = {
   orders: [],
+  loadingState: {
+    orders: false,
+  },
 
   async load() {
     if (!App.currentWinery) return;
 
-    const container = document.getElementById('ordersContainer');
-    container.innerHTML = '<p style="text-align: center; color: #95a5a6;">Loading orders...</p>';
+    this.loadingState.orders = true;
+    this.renderOrders();
 
     try {
       const response = await fetch(
@@ -16,17 +19,22 @@ const OrdersScreen = {
 
       if (data.success) {
         this.orders = data.orders;
-        this.renderOrders();
       }
     } catch (error) {
       console.error('Failed to load orders:', error);
-      container.innerHTML =
-        '<p style="text-align: center; color: #e74c3c;">Failed to load orders</p>';
+    } finally {
+      this.loadingState.orders = false;
+      this.renderOrders();
     }
   },
 
   renderOrders() {
     const container = document.getElementById('ordersContainer');
+
+    if (this.loadingState.orders) {
+      container.innerHTML = '<p style="text-align: center; color: #95a5a6;">Loading orders...</p>';
+      return;
+    }
 
     if (this.orders.length === 0) {
       container.innerHTML = '<p style="text-align: center; color: #95a5a6;">No orders found</p>';

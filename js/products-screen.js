@@ -9,9 +9,16 @@ const ProductsScreen = {
   filterStatus: 'all',
   sortBy: 'name',
   sortOrder: 'asc',
+  loadingState: {
+    products: false,
+  },
 
   async init() {
+    this.loadingState.products = true;
+    this.renderProducts();
+
     await this.loadProducts();
+    this.loadingState.products = false;
     this.renderProducts();
   },
 
@@ -103,6 +110,12 @@ const ProductsScreen = {
     const container = document.getElementById('productsContainer');
 
     if (!container) return;
+
+    if (this.loadingState.products) {
+      container.innerHTML =
+        '<p style="text-align: center; color: #95a5a6; padding: 40px;">Loading products...</p>';
+      return;
+    }
 
     const filtered = this.getFilteredAndSortedProducts();
 
