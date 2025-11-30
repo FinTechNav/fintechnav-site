@@ -97,11 +97,6 @@ class CustomerDetailsScreen {
     const container = document.getElementById('customersScreen');
     if (!container) return;
 
-    // Store the original customers screen content so we can restore it
-    if (!this.originalContent) {
-      this.originalContent = container.innerHTML;
-    }
-
     container.innerHTML = this.getHTML();
 
     // Attach event listeners
@@ -807,16 +802,13 @@ class CustomerDetailsScreen {
 
   // Action methods
   close() {
-    const container = document.getElementById('customersScreen');
-    if (container && this.originalContent) {
-      container.innerHTML = this.originalContent;
-      // Re-initialize customers screen
-      if (window.customersScreen && window.customersScreen.init) {
-        customersScreen.init();
-      }
-    }
+    // Instead of restoring innerHTML (which destroys map), just re-render customers screen
     this.currentCustomer = null;
     this.originalContent = null;
+
+    if (window.customersScreen) {
+      customersScreen.render();
+    }
   }
 
   showAllContactInfo() {
