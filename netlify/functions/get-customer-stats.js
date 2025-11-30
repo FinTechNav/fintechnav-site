@@ -82,57 +82,43 @@ exports.handler = async (event) => {
       last_name: customer.last_name,
     });
 
-    // Get order statistics - handle both total_amount and total_amount_cents
+    // Get order statistics - use actual column names: subtotal, tax, total
     console.log('Fetching order statistics...');
     const orderStatsQuery = `
       SELECT 
         COUNT(*) as total_orders,
-        COALESCE(SUM(CASE 
-          WHEN total_amount_cents IS NOT NULL THEN total_amount_cents 
-          WHEN total_amount IS NOT NULL THEN total_amount * 100 
-          ELSE 0 
-        END), 0) as total_spent_cents,
-        COALESCE(AVG(CASE 
-          WHEN total_amount_cents IS NOT NULL THEN total_amount_cents 
-          WHEN total_amount IS NOT NULL THEN total_amount * 100 
-          ELSE 0 
-        END), 0) as average_order_value_cents,
+        COALESCE(SUM(total), 0) as total_spent,
+        COALESCE(AVG(total), 0) as average_order_value,
         MIN(created_at) as first_order_date,
         MAX(created_at) as last_order_date
       FROM orders
-      WHERE customer_id = $1 AND deleted_at IS NULL
+      WHERE customer_id = $1
     `;
 
     const orderStatsResult = await client.query(orderStatsQuery, [id]);
     const orderStats = orderStatsResult.rows[0];
     console.log('Order stats:', {
       total_orders: orderStats.total_orders,
-      total_spent_cents: orderStats.total_spent_cents,
+      total_spent: orderStats.total_spent,
       first_order: orderStats.first_order_date,
       last_order: orderStats.last_order_date,
     });
 
-    // Get recent orders - handle both amount fields
+    // Get recent orders - use actual column names
     console.log('Fetching recent orders...');
     const recentOrdersQuery = `
       SELECT 
         id,
         order_number,
-        CASE 
-          WHEN total_amount_cents IS NOT NULL THEN total_amount_cents 
-          WHEN total_amount IS NOT NULL THEN total_amount * 100 
-          ELSE 0 
-        END as total_amount_cents,
-        CASE 
-          WHEN tax_amount_cents IS NOT NULL THEN tax_amount_cents 
-          WHEN tax_amount IS NOT NULL THEN tax_amount * 100 
-          ELSE 0 
-        END as tax_amount_cents,
+        total,
+        tax,
+        subtotal,
         order_source,
         created_at,
-        shipped_at
+        payment_status,
+        status
       FROM orders
-      WHERE customer_id = $1 AND deleted_at IS NULL
+      WHERE customer_id = $1
       ORDER BY created_at DESC
       LIMIT 10
     `;
@@ -167,8 +153,8 @@ exports.handler = async (event) => {
       customer,
       order_stats: {
         total_orders: parseInt(orderStats.total_orders),
-        total_spent_cents: parseInt(orderStats.total_spent_cents),
-        average_order_value_cents: Math.round(parseFloat(orderStats.average_order_value_cents)),
+        total_spent: parseFloat(orderStats.total_spent),
+        average_order_value: parseFloat(orderStats.average_order_value),
         first_order_date: orderStats.first_order_date,
         last_order_date: orderStats.last_order_date,
       },
