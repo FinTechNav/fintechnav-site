@@ -6,11 +6,30 @@ class CustomerDetailsScreen {
     this.orders = [];
     this.savedPaymentMethods = [];
     this.activities = [];
+    this.loadingState = {
+      customer: false,
+      orders: false,
+      paymentMethods: false,
+      activities: false,
+    };
   }
 
   async show(customerId) {
     console.log('=== CustomerDetailsScreen.show called ===');
     console.log('Customer ID:', customerId);
+
+    // Set loading state and render immediately
+    this.loadingState = {
+      customer: true,
+      orders: true,
+      paymentMethods: true,
+      activities: true,
+    };
+    this.currentCustomer = { id: customerId };
+    this.orders = [];
+    this.savedPaymentMethods = [];
+    this.activities = [];
+    this.render();
 
     try {
       // Fetch customer data
@@ -48,23 +67,35 @@ class CustomerDetailsScreen {
 
       this.currentCustomer = data.customer;
       this.orders = data.recent_orders || [];
+      this.loadingState.customer = false;
+      this.loadingState.orders = false;
+      this.render();
 
       // Fetch payment methods
       console.log('Loading payment methods...');
       await this.loadPaymentMethods(customerId);
+      this.loadingState.paymentMethods = false;
+      this.render();
 
       // Fetch activities
       console.log('Loading activities...');
       await this.loadActivities(customerId);
-
-      console.log('Rendering customer details screen...');
+      this.loadingState.activities = false;
       this.render();
+
       console.log('=== CustomerDetailsScreen.show completed successfully ===');
     } catch (error) {
       console.error('=== ERROR in CustomerDetailsScreen.show ===');
       console.error('Error name:', error.name);
       console.error('Error message:', error.message);
       console.error('Error stack:', error.stack);
+
+      this.loadingState = {
+        customer: false,
+        orders: false,
+        paymentMethods: false,
+        activities: false,
+      };
 
       alert(
         `Failed to load customer details:\n\n${error.message}\n\nCheck browser console for details.`
@@ -187,6 +218,85 @@ class CustomerDetailsScreen {
   }
 
   renderLeftPane(customer, initials, fullName) {
+    if (this.loadingState.customer) {
+      return `
+        <div style="
+          width: 280px;
+          background: #34495e;
+          padding: 20px;
+          overflow-y: auto;
+          border-radius: 8px;
+        ">
+          <!-- Avatar skeleton -->
+          <div style="
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+            margin: 0 auto 20px;
+          "></div>
+
+          <!-- Name skeleton -->
+          <div style="
+            height: 24px;
+            width: 70%;
+            margin: 0 auto 10px;
+            background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+            border-radius: 4px;
+          "></div>
+
+          <!-- Email skeleton -->
+          <div style="
+            height: 16px;
+            width: 80%;
+            margin: 0 auto 20px;
+            background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+            border-radius: 4px;
+          "></div>
+
+          <!-- Contact info skeletons -->
+          ${[1, 2, 3, 4]
+            .map(
+              () => `
+            <div style="margin-bottom: 15px;">
+              <div style="
+                height: 12px;
+                width: 40%;
+                margin-bottom: 5px;
+                background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%);
+                background-size: 200% 100%;
+                animation: shimmer 1.5s infinite;
+                border-radius: 4px;
+              "></div>
+              <div style="
+                height: 16px;
+                width: 70%;
+                background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%);
+                background-size: 200% 100%;
+                animation: shimmer 1.5s infinite;
+                border-radius: 4px;
+              "></div>
+            </div>
+          `
+            )
+            .join('')}
+          
+          <style>
+            @keyframes shimmer {
+              0% { background-position: -200% 0; }
+              100% { background-position: 200% 0; }
+            }
+          </style>
+        </div>
+      `;
+    }
+
     return `
       <div style="
         width: 280px;
@@ -211,7 +321,7 @@ class CustomerDetailsScreen {
         ">${initials}</div>
 
         <h3 style="color: #ecf0f1; text-align: center; margin: 0 0 5px; font-family: Georgia, serif;">${fullName}</h3>
-        <p style="color: #95a5a6; text-align: center; margin: 0 0 20px; font-size: 14px;">${customer.email}</p>
+        <p style="color: #95a5a6; text-align: center; margin: 0 0 20px; font-size: 14px;">${customer.email || ''}</p>
 
         ${this.renderContactInfo(customer)}
         ${this.renderShowMoreButton()}
@@ -387,6 +497,82 @@ class CustomerDetailsScreen {
   }
 
   renderActivityItems() {
+    if (this.loadingState.activities) {
+      return `
+        <div style="position: relative;">
+          ${[1, 2, 3]
+            .map(
+              (_, index) => `
+            <div style="
+              position: relative;
+              padding-left: 40px;
+              padding-bottom: ${index < 2 ? '20px' : '0'};
+            ">
+              <!-- Timeline dot skeleton -->
+              <div style="
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 32px;
+                height: 32px;
+                border-radius: 50%;
+                background: linear-gradient(90deg, rgba(210,180,140,0.3) 25%, rgba(210,180,140,0.5) 50%, rgba(210,180,140,0.3) 75%);
+                background-size: 200% 100%;
+                animation: shimmer 1.5s infinite;
+              "></div>
+              
+              ${
+                index < 2
+                  ? `
+                <div style="
+                  position: absolute;
+                  left: 15px;
+                  top: 32px;
+                  width: 2px;
+                  height: calc(100% - 32px);
+                  background: rgba(255, 255, 255, 0.1);
+                "></div>
+              `
+                  : ''
+              }
+              
+              <!-- Content skeleton -->
+              <div>
+                <div style="
+                  height: 16px;
+                  width: 120px;
+                  margin-bottom: 5px;
+                  background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%);
+                  background-size: 200% 100%;
+                  animation: shimmer 1.5s infinite;
+                  border-radius: 4px;
+                "></div>
+                <div style="
+                  height: 14px;
+                  width: 200px;
+                  margin-bottom: 5px;
+                  background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%);
+                  background-size: 200% 100%;
+                  animation: shimmer 1.5s infinite;
+                  border-radius: 4px;
+                "></div>
+                <div style="
+                  height: 12px;
+                  width: 80px;
+                  background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%);
+                  background-size: 200% 100%;
+                  animation: shimmer 1.5s infinite;
+                  border-radius: 4px;
+                "></div>
+              </div>
+            </div>
+          `
+            )
+            .join('')}
+        </div>
+      `;
+    }
+
     if (this.activities.length === 0) {
       return '<p style="color: #95a5a6; text-align: center; padding: 40px;">No activity yet</p>';
     }
@@ -506,6 +692,90 @@ class CustomerDetailsScreen {
   }
 
   renderOrdersTable() {
+    if (this.loadingState.orders) {
+      return `
+        <div style="
+          background: #34495e;
+          border-radius: 8px;
+          overflow: hidden;
+        ">
+          <!-- Header -->
+          <div style="
+            display: grid;
+            grid-template-columns: 150px 120px 120px 120px 100px;
+            gap: 15px;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.2);
+            font-weight: 600;
+            color: #95a5a6;
+            font-size: 12px;
+          ">
+            <div>ORDER #</div>
+            <div>DATE</div>
+            <div>TOTAL</div>
+            <div>STATUS</div>
+            <div>ACTIONS</div>
+          </div>
+          
+          <!-- Loading rows -->
+          ${[1, 2, 3]
+            .map(
+              () => `
+            <div style="
+              display: grid;
+              grid-template-columns: 150px 120px 120px 120px 100px;
+              gap: 15px;
+              padding: 15px;
+              border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            ">
+              <div style="
+                height: 16px;
+                width: 100px;
+                background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%);
+                background-size: 200% 100%;
+                animation: shimmer 1.5s infinite;
+                border-radius: 4px;
+              "></div>
+              <div style="
+                height: 16px;
+                width: 80px;
+                background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%);
+                background-size: 200% 100%;
+                animation: shimmer 1.5s infinite;
+                border-radius: 4px;
+              "></div>
+              <div style="
+                height: 16px;
+                width: 60px;
+                background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%);
+                background-size: 200% 100%;
+                animation: shimmer 1.5s infinite;
+                border-radius: 4px;
+              "></div>
+              <div style="
+                height: 24px;
+                width: 70px;
+                background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%);
+                background-size: 200% 100%;
+                animation: shimmer 1.5s infinite;
+                border-radius: 4px;
+              "></div>
+              <div style="
+                height: 24px;
+                width: 50px;
+                background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%);
+                background-size: 200% 100%;
+                animation: shimmer 1.5s infinite;
+                border-radius: 4px;
+              "></div>
+            </div>
+          `
+            )
+            .join('')}
+        </div>
+      `;
+    }
+
     if (this.orders.length === 0) {
       return '<p style="color: #95a5a6; text-align: center; padding: 40px;">No orders yet</p>';
     }
@@ -713,11 +983,58 @@ class CustomerDetailsScreen {
         </div>
         
         ${
-          this.savedPaymentMethods.length === 0
+          this.loadingState.paymentMethods
             ? `
+          <div style="display: flex; flex-direction: column; gap: 10px;">
+            ${[1, 2]
+              .map(
+                () => `
+              <div style="
+                background: rgba(0, 0, 0, 0.2);
+                border-radius: 8px;
+                padding: 15px;
+                border: 1px solid rgba(255, 255, 255, 0.1);
+              ">
+                <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 10px;">
+                  <div style="
+                    width: 24px;
+                    height: 24px;
+                    background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%);
+                    background-size: 200% 100%;
+                    animation: shimmer 1.5s infinite;
+                    border-radius: 4px;
+                  "></div>
+                  <div style="flex: 1;">
+                    <div style="
+                      height: 16px;
+                      width: 120px;
+                      margin-bottom: 5px;
+                      background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%);
+                      background-size: 200% 100%;
+                      animation: shimmer 1.5s infinite;
+                      border-radius: 4px;
+                    "></div>
+                    <div style="
+                      height: 12px;
+                      width: 80px;
+                      background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%);
+                      background-size: 200% 100%;
+                      animation: shimmer 1.5s infinite;
+                      border-radius: 4px;
+                    "></div>
+                  </div>
+                </div>
+              </div>
+            `
+              )
+              .join('')}
+          </div>
+        `
+            : this.savedPaymentMethods.length === 0
+              ? `
           <p style="color: #95a5a6; text-align: center; padding: 20px; font-size: 14px;">No saved payment methods</p>
         `
-            : `
+              : `
           <div style="display: flex; flex-direction: column; gap: 10px;">
             ${this.savedPaymentMethods.map((pm) => this.renderPaymentMethodCard(pm)).join('')}
           </div>
@@ -769,12 +1086,14 @@ class CustomerDetailsScreen {
 
   // Helper methods
   getInitials(customer) {
+    if (!customer || !customer.email) return '?';
     const first = customer.first_name ? customer.first_name[0] : '';
     const last = customer.last_name ? customer.last_name[0] : '';
     return (first + last).toUpperCase() || customer.email[0].toUpperCase();
   }
 
   getFullName(customer) {
+    if (!customer || !customer.email) return 'Loading...';
     if (customer.first_name || customer.last_name) {
       return `${customer.first_name || ''} ${customer.last_name || ''}`.trim();
     }
