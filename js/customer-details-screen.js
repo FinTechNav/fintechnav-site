@@ -12,6 +12,9 @@ class CustomerDetailsScreen {
       paymentMethods: false,
       activities: false,
     };
+    this.viewMode = 'split'; // 'split', 'timeline-max', 'orders-max'
+    this.activitySortOrder = 'desc'; // 'desc' = newest first, 'asc' = oldest first
+    this.ordersSortOrder = 'desc'; // 'desc' = newest first, 'asc' = oldest first
   }
 
   async show(customerId) {
@@ -378,17 +381,62 @@ class CustomerDetailsScreen {
   }
 
   renderMiddlePane(customer) {
+    const timelineHeight =
+      this.viewMode === 'timeline-max'
+        ? 'calc(100vh - 200px)'
+        : this.viewMode === 'orders-max'
+          ? '0'
+          : '400px';
+    const ordersHeight =
+      this.viewMode === 'orders-max'
+        ? 'calc(100vh - 200px)'
+        : this.viewMode === 'timeline-max'
+          ? '0'
+          : '400px';
+
     return `
       <div style="
         flex: 1;
-        padding: 20px;
-        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
         background: #34495e;
         border-radius: 8px;
+        overflow: hidden;
       ">
         ${this.renderActionButtons()}
-        ${this.renderActivityTimeline()}
-        ${this.renderOrdersSection()}
+        
+        <!-- Activity Timeline Section -->
+        ${
+          this.viewMode !== 'orders-max'
+            ? `
+          <div style="
+            height: ${timelineHeight};
+            display: flex;
+            flex-direction: column;
+            padding: 0 20px;
+            margin-bottom: ${this.viewMode === 'split' ? '20px' : '0'};
+          ">
+            ${this.renderActivityTimeline()}
+          </div>
+        `
+            : ''
+        }
+        
+        <!-- Orders Section -->
+        ${
+          this.viewMode !== 'timeline-max'
+            ? `
+          <div style="
+            height: ${ordersHeight};
+            display: flex;
+            flex-direction: column;
+            padding: 0 20px 20px;
+          ">
+            ${this.renderOrdersSection()}
+          </div>
+        `
+            : ''
+        }
       </div>
     `;
   }
@@ -398,8 +446,7 @@ class CustomerDetailsScreen {
       <div style="
         display: flex;
         gap: 10px;
-        margin-bottom: 20px;
-        padding-bottom: 20px;
+        padding: 20px 20px 15px;
         border-bottom: 1px solid rgba(255, 255, 255, 0.1);
       ">
         <button onclick="customerDetailsScreen.addNote()" style="
@@ -448,18 +495,43 @@ class CustomerDetailsScreen {
 
   renderActivityTimeline() {
     return `
-      <div style="margin-bottom: 30px;">
+      <div style="display: flex; flex-direction: column; height: 100%;">
         <div style="
           display: flex;
           justify-content: space-between;
           align-items: center;
           margin-bottom: 15px;
+          padding-top: 15px;
         ">
           <h3 style="color: #ecf0f1; margin: 0; font-family: Georgia, serif;">Activity Timeline</h3>
-          ${this.renderActivityFilter()}
+          <div style="display: flex; gap: 10px; align-items: center;">
+            ${this.renderActivityFilter()}
+            <button onclick="customerDetailsScreen.toggleActivitySort()" style="
+              background: transparent;
+              border: 1px solid rgba(255, 255, 255, 0.2);
+              border-radius: 6px;
+              color: #ecf0f1;
+              padding: 8px 12px;
+              font-size: 14px;
+              cursor: pointer;
+            " title="Sort ${this.activitySortOrder === 'desc' ? 'oldest first' : 'newest first'}">${this.activitySortOrder === 'desc' ? '↓' : '↑'}</button>
+            <button onclick="customerDetailsScreen.toggleViewMode('${this.viewMode === 'timeline-max' ? 'split' : 'timeline-max'}')" style="
+              background: transparent;
+              border: 1px solid rgba(255, 255, 255, 0.2);
+              border-radius: 6px;
+              color: #ecf0f1;
+              padding: 8px 12px;
+              font-size: 14px;
+              cursor: pointer;
+            " title="${this.viewMode === 'timeline-max' ? 'Show both' : 'Maximize timeline'}">${this.viewMode === 'timeline-max' ? '⊟' : '⊞'}</button>
+          </div>
         </div>
         
-        <div id="activityTimelineContent">
+        <div id="activityTimelineContent" style="
+          flex: 1;
+          overflow-y: auto;
+          overflow-x: hidden;
+        ">
           ${this.renderActivityItems()}
         </div>
       </div>
@@ -656,7 +728,7 @@ class CustomerDetailsScreen {
 
   renderOrdersSection() {
     return `
-      <div>
+      <div style="display: flex; flex-direction: column; height: 100%;">
         <div style="
           display: flex;
           justify-content: space-between;
@@ -674,19 +746,34 @@ class CustomerDetailsScreen {
               font-size: 14px;
               cursor: pointer;
             ">Filter</button>
-            <button onclick="customerDetailsScreen.sortOrders()" style="
-              padding: 8px 16px;
+            <button onclick="customerDetailsScreen.toggleOrdersSort()" style="
               background: transparent;
-              border: 1px solid rgba(210, 180, 140, 0.3);
+              border: 1px solid rgba(255, 255, 255, 0.2);
               border-radius: 6px;
-              color: #D2B48C;
+              color: #ecf0f1;
+              padding: 8px 12px;
               font-size: 14px;
               cursor: pointer;
-            ">Sort</button>
+            " title="Sort ${this.ordersSortOrder === 'desc' ? 'oldest first' : 'newest first'}">${this.ordersSortOrder === 'desc' ? '↓' : '↑'}</button>
+            <button onclick="customerDetailsScreen.toggleViewMode('${this.viewMode === 'orders-max' ? 'split' : 'orders-max'}')" style="
+              background: transparent;
+              border: 1px solid rgba(255, 255, 255, 0.2);
+              border-radius: 6px;
+              color: #ecf0f1;
+              padding: 8px 12px;
+              font-size: 14px;
+              cursor: pointer;
+            " title="${this.viewMode === 'orders-max' ? 'Show both' : 'Maximize orders'}">${this.viewMode === 'orders-max' ? '⊟' : '⊞'}</button>
           </div>
         </div>
         
-        ${this.renderOrdersTable()}
+        <div style="
+          flex: 1;
+          overflow-y: auto;
+          overflow-x: hidden;
+        ">
+          ${this.renderOrdersTable()}
+        </div>
       </div>
     `;
   }
@@ -852,11 +939,18 @@ class CustomerDetailsScreen {
         width: 320px;
         background: #34495e;
         padding: 20px;
-        overflow-y: auto;
         border-radius: 8px;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
       ">
-        ${this.renderLTVCard(customer)}
-        ${this.renderPaymentMethods()}
+        <div style="flex-shrink: 0;">
+          ${this.renderLTVCard(customer)}
+        </div>
+        <div style="flex: 1; min-height: 0;"></div>
+        <div style="flex-shrink: 0;">
+          ${this.renderPaymentMethods()}
+        </div>
       </div>
     `;
   }
@@ -1208,12 +1302,25 @@ class CustomerDetailsScreen {
     }
   }
 
-  filterOrders() {
-    alert('Filter orders - to be implemented');
+  toggleActivitySort() {
+    this.activitySortOrder = this.activitySortOrder === 'desc' ? 'asc' : 'desc';
+    this.activities.reverse();
+    this.render();
   }
 
-  sortOrders() {
-    alert('Sort orders - to be implemented');
+  toggleOrdersSort() {
+    this.ordersSortOrder = this.ordersSortOrder === 'desc' ? 'asc' : 'desc';
+    this.orders.reverse();
+    this.render();
+  }
+
+  toggleViewMode(newMode) {
+    this.viewMode = newMode;
+    this.render();
+  }
+
+  filterOrders() {
+    alert('Filter orders - to be implemented');
   }
 
   viewOrder(orderId) {
