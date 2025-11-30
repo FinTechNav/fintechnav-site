@@ -462,7 +462,7 @@ class CustomersScreen {
   }
 
   clearFilterAndCloseMap() {
-    this.clearPolygon();
+    this.removePolygon();
     this.showMap = false;
     localStorage.setItem('showMap', this.showMap);
     this.closeClearFilterModal();
