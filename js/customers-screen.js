@@ -434,6 +434,20 @@ class CustomersScreen {
   }
 
   toggleMap() {
+    // If closing map and polygon filter is active, prompt user
+    if (this.showMap && this.polygonFilter) {
+      const clearFilter = confirm(
+        'You have an active map filter. Would you like to clear it?\n\n' +
+          'Click OK to clear the filter, or Cancel to keep it.\n' +
+          '(If you choose Cancel, you can clear it later by reopening the map and clicking "Remove Outline")'
+      );
+
+      if (clearFilter) {
+        // Clear the polygon filter
+        this.clearPolygon();
+      }
+    }
+
     this.showMap = !this.showMap;
     localStorage.setItem('showMap', this.showMap);
     this.render();
