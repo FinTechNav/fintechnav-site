@@ -500,10 +500,14 @@ class CustomersScreen {
     // If map instance exists but was detached from DOM, recreate it
     if (this.map && !mapElement.hasChildNodes()) {
       console.log(
-        `[${new Date().toISOString()}] Map instance exists but detached from DOM - resetting`
+        `[${new Date().toISOString()}] Map instance exists but detached from DOM - resetting map only`
       );
+      // Clear the polygon's map reference but keep the polygon object
+      if (this.currentPolygon) {
+        this.currentPolygon.setMap(null);
+      }
       this.map = null;
-      this.currentPolygon = null;
+      // Don't clear currentPolygon - we'll re-attach it after map is recreated
     }
 
     // If map already exists, just update markers and ensure polygon visibility
@@ -544,6 +548,13 @@ class CustomersScreen {
         mapId: 'HEAVY_POUR_CUSTOMER_MAP',
       });
       this.initializeDrawingTools();
+
+      // Re-attach polygon if it exists
+      if (this.currentPolygon) {
+        console.log(`[${new Date().toISOString()}] Re-attaching existing polygon to new map`);
+        this.currentPolygon.setMap(this.map);
+      }
+
       console.log(`[${new Date().toISOString()}] Map initialized (no customers)`);
       return;
     }
@@ -567,6 +578,12 @@ class CustomersScreen {
 
     this.initializeDrawingTools();
     console.log(`[${new Date().toISOString()}] Drawing tools initialized`);
+
+    // Re-attach polygon if it exists
+    if (this.currentPolygon) {
+      console.log(`[${new Date().toISOString()}] Re-attaching existing polygon to new map`);
+      this.currentPolygon.setMap(this.map);
+    }
 
     await this.updateMarkers();
     console.log(`[${new Date().toISOString()}] Markers updated`);
