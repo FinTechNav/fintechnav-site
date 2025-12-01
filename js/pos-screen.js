@@ -92,26 +92,19 @@ const POSScreen = {
   },
 
   renderProducts() {
-    console.log('🎨 renderProducts() called');
     const grid = document.getElementById('productsGrid');
-    console.log('📦 Products grid element:', grid);
-    console.log('📊 Products array length:', this.products.length);
-    console.log('⏳ Loading state:', this.loadingState.products);
 
     if (this.loadingState.products) {
-      console.log('⏳ Showing loading state');
       grid.innerHTML = this.renderProductsLoadingState();
       return;
     }
 
     if (this.products.length === 0) {
-      console.log('❌ No products to display');
       grid.innerHTML =
         '<p style="text-align: center; color: #95a5a6; padding: 40px;">No products available for sale</p>';
       return;
     }
 
-    console.log('✅ Rendering', this.products.length, 'products');
     grid.innerHTML = this.products
       .map((product) => {
         // Determine icon and details based on product type
@@ -146,7 +139,6 @@ const POSScreen = {
           `;
       })
       .join('');
-    console.log('✅ Products rendered to DOM');
   },
 
   addToCart(productId) {
