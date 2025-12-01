@@ -878,7 +878,7 @@ body {
     
     .product-card {
         padding: 10px;
-        min-height: 165px;
+        min-height: 165px !important;
         gap: 8px;
     }
     
