@@ -108,6 +108,71 @@ const App = {
       });
     }
 
+    // Check right panel and payment buttons
+    const rightPanel = document.querySelector('.right-panel');
+    if (rightPanel) {
+      const styles = window.getComputedStyle(rightPanel);
+      console.log('📱 Right panel computed styles:', {
+        width: styles.width,
+        maxHeight: styles.maxHeight,
+        minHeight: styles.minHeight,
+        padding: styles.padding,
+      });
+    }
+
+    const cardButton = document.querySelector('.pay-button-card');
+    const cashButton = document.querySelector('.pay-button-cash');
+    if (cardButton && cashButton) {
+      const cardStyles = window.getComputedStyle(cardButton);
+      const cashStyles = window.getComputedStyle(cashButton);
+      console.log('💳 Payment button computed styles:', {
+        card: {
+          width: cardStyles.width,
+          padding: cardStyles.padding,
+          fontSize: cardStyles.fontSize,
+          minHeight: cardStyles.minHeight,
+          display: cardStyles.display,
+        },
+        cash: {
+          width: cashStyles.width,
+          padding: cashStyles.padding,
+          fontSize: cashStyles.fontSize,
+          minHeight: cashStyles.minHeight,
+          display: cashStyles.display,
+        },
+      });
+
+      console.log('💳 Payment button actual dimensions:', {
+        card: {
+          offsetWidth: cardButton.offsetWidth,
+          offsetHeight: cardButton.offsetHeight,
+          clientWidth: cardButton.clientWidth,
+          clientHeight: cardButton.clientHeight,
+        },
+        cash: {
+          offsetWidth: cashButton.offsetWidth,
+          offsetHeight: cashButton.offsetHeight,
+          clientWidth: cashButton.clientWidth,
+          clientHeight: cashButton.clientHeight,
+        },
+      });
+
+      // Check parent container
+      const buttonParent = cardButton.parentElement;
+      if (buttonParent) {
+        const parentStyles = window.getComputedStyle(buttonParent);
+        console.log('📦 Payment buttons parent container:', {
+          className: buttonParent.className,
+          display: parentStyles.display,
+          gap: parentStyles.gap,
+          width: parentStyles.width,
+          gridTemplateColumns: parentStyles.gridTemplateColumns,
+        });
+      }
+    } else {
+      console.log('❌ Payment buttons not found in DOM');
+    }
+
     console.log('=== END DIAGNOSTICS ===\n');
   },
 
