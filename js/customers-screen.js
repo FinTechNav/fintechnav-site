@@ -599,56 +599,39 @@ class CustomersScreen {
       `[${new Date().toISOString()}] Geocoded customers count:`,
       geocodedCustomers.length
     );
+    console.log(`[${new Date().toISOString()}] Winery data:`, this.winery);
 
-    if (geocodedCustomers.length === 0) {
-      // Use winery location if available, otherwise default to Atlanta
-      const center =
-        this.winery && this.winery.latitude && this.winery.longitude
-          ? { lat: parseFloat(this.winery.latitude), lng: parseFloat(this.winery.longitude) }
-          : { lat: 33.749, lng: -84.388 };
+    // Always use winery location as center if available
+    let center;
+    let zoom;
 
-      // Use zoom 11 for winery location (matching your screenshot), 4 for default
-      const zoom = this.winery && this.winery.latitude && this.winery.longitude ? 11 : 4;
-
+    if (this.winery && this.winery.latitude && this.winery.longitude) {
+      center = {
+        lat: parseFloat(this.winery.latitude),
+        lng: parseFloat(this.winery.longitude),
+      };
+      zoom = 11; // Zoom level from your screenshot
+      console.log(`[${new Date().toISOString()}] Using winery center:`, center, 'zoom:', zoom);
+    } else {
+      // Fallback to Atlanta if no winery data
+      center = { lat: 33.749, lng: -84.388 };
+      zoom = 4;
       console.log(
-        `[${new Date().toISOString()}] No geocoded customers, using center:`,
+        `[${new Date().toISOString()}] No winery data, using default center:`,
         center,
         'zoom:',
         zoom
       );
-      this.map = new google.maps.Map(mapElement, {
-        zoom: zoom,
-        center: center,
-        mapId: 'HEAVY_POUR_CUSTOMER_MAP',
-      });
-      this.initializeDrawingTools();
-
-      // Re-attach polygon if it exists
-      if (this.currentPolygon) {
-        console.log(`[${new Date().toISOString()}] Re-attaching existing polygon to new map`);
-        this.currentPolygon.setMap(this.map);
-      }
-
-      console.log(`[${new Date().toISOString()}] Map initialized (no customers)`);
-      return;
     }
 
-    const bounds = new google.maps.LatLngBounds();
-    geocodedCustomers.forEach((customer) => {
-      bounds.extend(
-        new google.maps.LatLng(parseFloat(customer.latitude), parseFloat(customer.longitude))
-      );
-    });
-
-    console.log(`[${new Date().toISOString()}] Creating map with bounds:`, bounds.toString());
+    console.log(`[${new Date().toISOString()}] Creating map with center:`, center, 'zoom:', zoom);
     this.map = new google.maps.Map(mapElement, {
-      zoom: 4,
-      center: bounds.getCenter(),
+      zoom: zoom,
+      center: center,
       mapId: 'HEAVY_POUR_CUSTOMER_MAP',
     });
 
-    this.map.fitBounds(bounds);
-    console.log(`[${new Date().toISOString()}] Map bounds fitted`);
+    console.log(`[${new Date().toISOString()}] Map created with initial center and zoom`);
 
     this.initializeDrawingTools();
     console.log(`[${new Date().toISOString()}] Drawing tools initialized`);
