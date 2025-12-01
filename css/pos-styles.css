@@ -175,8 +175,9 @@ body {
 .container {
     display: flex;
     flex: 1;
-    padding: 20px;
+    padding: 10px;
     gap: 20px;
+    background: var(--bg-primary);
 }
 
 .left-panel {
@@ -1635,4 +1636,164 @@ body {
 /* Add subtle transition to all interactive elements */
 button, .menu-item, .product-card, .cart-item {
     transition: all 0.2s ease;
+}
+
+/* Typography Specifications from Style Guide */
+
+/* Product Cards */
+.product-name {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 600; /* Semibold */
+    font-size: 14px;
+    color: var(--text-primary);
+    text-align: center;
+}
+
+.product-vintage {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 400; /* Regular */
+    font-size: 12px;
+    color: var(--text-primary);
+    text-align: center;
+}
+
+.product-price {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 600; /* Semibold */
+    font-size: 20px;
+    color: var(--accent-primary);
+    text-align: center;
+}
+
+/* Header */
+.header h1 {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 500; /* Medium */
+    font-size: 17px;
+    color: var(--accent-primary);
+    margin-bottom: 5px;
+}
+
+.header p {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 400; /* Regular */
+    font-size: 14px;
+    color: var(--text-primary);
+}
+
+/* Cart Header */
+.cart-header h2 {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700; /* Bold */
+    font-size: 23px;
+    color: var(--accent-primary);
+}
+
+.customer-name,
+.cart-header .customer-name {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 600; /* Semibold */
+    font-size: 13px;
+    color: var(--text-primary);
+}
+
+/* Cart Items */
+.cart-item-name {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 600; /* Semibold */
+    font-size: 14px;
+    color: var(--text-primary);
+}
+
+.cart-item-details {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 400; /* Regular */
+    font-size: 12px;
+    color: var(--text-primary);
+}
+
+.cart-item-price {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 600; /* Semibold */
+    font-size: 20px;
+    color: var(--accent-secondary);
+}
+
+/* Summary */
+.summary-label {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 600; /* Semibold */
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+
+.summary-value {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 600; /* Semibold */
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+
+.summary-total .summary-label {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700; /* Bold */
+    font-size: 23px;
+    color: var(--accent-primary);
+}
+
+.summary-total .summary-value {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700; /* Bold */
+    font-size: 23px;
+    color: var(--accent-primary);
+}
+
+/* Subtotal Price */
+.summary-row:first-child .summary-value {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700; /* Bold */
+    font-size: 35px;
+    color: var(--text-secondary);
+}
+
+/* Payment Buttons */
+.pay-button-card,
+.pay-button-cash {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700; /* Bold */
+    font-size: 20px;
+}
+
+/* Menu Items */
+.menu-label {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 500; /* Medium */
+    font-size: 15px;
+}
+
+/* Empty Cart Message */
+.empty-cart {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 600; /* Semibold */
+    font-size: 14px;
+    color: var(--accent-primary);
+}
+
+/* Order Subtitle "Add items to start order" */
+.empty-cart,
+[class*="add-items"],
+[class*="empty"] {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 600; /* Semibold */
+    font-size: 14px;
+}
+
+[data-theme="light"] .empty-cart,
+[data-theme="light"] [class*="add-items"] {
+    color: #b75c11;
+}
+
+[data-theme="dark"] .empty-cart,
+[data-theme="dark"] [class*="add-items"] {
+    color: #c98235;
 }
