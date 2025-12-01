@@ -13,6 +13,10 @@ const App = {
     console.log('🚀 App.init() - Starting application initialization');
     this.verifyThemeCSS();
     this.initializeTheme();
+    // Check CSS variables AFTER theme is initialized
+    setTimeout(() => {
+      this.checkCSSVariables();
+    }, 100);
     await this.loadWineries();
     this.registerServiceWorker();
     this.initMobileHandlers();
@@ -41,29 +45,6 @@ const App = {
         .catch((err) => {
           console.error('❌ Failed to fetch CSS file:', err);
         });
-
-      // Check if already loaded
-      if (themeLink.sheet) {
-        console.log('✅ Theme CSS already loaded');
-        this.checkCSSVariables();
-      } else {
-        // Wait for load
-        themeLink.addEventListener('load', () => {
-          console.log('✅ Theme CSS loaded successfully');
-          this.checkCSSVariables();
-        });
-        themeLink.addEventListener('error', () => {
-          console.error('❌ Theme CSS failed to load');
-        });
-      }
-
-      // Also check after a delay as backup
-      setTimeout(() => {
-        if (!this.cssVariablesChecked) {
-          console.log('⏰ Backup check - forcing CSS variable verification');
-          this.checkCSSVariables();
-        }
-      }, 1000);
     } else {
       console.error('❌ Theme CSS link not found in document');
     }
