@@ -1598,352 +1598,54 @@ body {
 
 #customerSelector option {
     background: var(--bg-secondary);
-    color: var(--text-primary);
-}
 
-/* Cart header subtitle */
-.cart-header .customer-name {
-    font-size: 13px;
-    color: var(--text-tertiary);
-    opacity: 0.7;
-}
+/* ===================================
+   THEME-SPECIFIC COLOR OVERRIDES
+   =================================== */
 
-/* Product name in cart */
-.cart-item-name {
-    font-weight: 600;
-    font-family: 'Montserrat', sans-serif;
-}
-
-/* Summary labels sizing */
-.summary-row {
-    font-family: 'Montserrat', sans-serif;
-}
-
-.summary-label {
-    font-size: 14px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.summary-total .summary-label {
-    font-size: 18px;
-}
-
-.summary-total .summary-value {
-    font-size: 28px;
-}
-
-/* Add subtle transition to all interactive elements */
-button, .menu-item, .product-card, .cart-item {
-    transition: all 0.2s ease;
-}
-
-/* Typography Specifications from Style Guide */
-
-/* Product Cards */
-.product-name {
-    font-family: 'Montserrat', sans-serif;
-    font-weight: 600; /* Semibold */
-    font-size: 14px;
-    color: var(--text-primary);
-    text-align: center;
-}
-
-.product-vintage {
-    font-family: 'Montserrat', sans-serif;
-    font-weight: 400; /* Regular */
-    font-size: 12px;
-    color: var(--text-primary);
-    text-align: center;
-}
-
-.product-price {
-    font-family: 'Montserrat', sans-serif;
-    font-weight: 600; /* Semibold */
-    font-size: 20px;
-    color: var(--accent-primary);
-    text-align: center;
-}
-
-/* Header */
-.header h1 {
-    font-family: 'Montserrat', sans-serif;
-    font-weight: 500; /* Medium */
-    font-size: 17px;
-    color: var(--accent-primary);
-    margin-bottom: 5px;
-}
-
-.header p {
-    font-family: 'Montserrat', sans-serif;
-    font-weight: 400; /* Regular */
-    font-size: 14px;
-    color: var(--text-primary);
-}
-
-/* Cart Header */
-.cart-header h2 {
-    font-family: 'Montserrat', sans-serif;
-    font-weight: 700; /* Bold */
-    font-size: 23px;
-    color: var(--accent-primary);
-}
-
-.customer-name,
-.cart-header .customer-name {
-    font-family: 'Montserrat', sans-serif;
-    font-weight: 600; /* Semibold */
-    font-size: 13px;
-    color: var(--text-primary);
-}
-
-/* Cart Items */
-.cart-item-name {
-    font-family: 'Montserrat', sans-serif;
-    font-weight: 600; /* Semibold */
-    font-size: 14px;
-    color: var(--text-primary);
-}
-
-.cart-item-details {
-    font-family: 'Montserrat', sans-serif;
-    font-weight: 400; /* Regular */
-    font-size: 12px;
-    color: var(--text-primary);
-}
-
-.cart-item-price {
-    font-family: 'Montserrat', sans-serif;
-    font-weight: 600; /* Semibold */
-    font-size: 20px;
-    color: var(--accent-secondary);
-}
-
-/* Summary */
-.summary-label {
-    font-family: 'Montserrat', sans-serif;
-    font-weight: 600; /* Semibold */
-    font-size: 14px;
-    color: var(--text-secondary);
-}
-
-.summary-value {
-    font-family: 'Montserrat', sans-serif;
-    font-weight: 600; /* Semibold */
-    font-size: 14px;
-    color: var(--text-secondary);
-}
-
-.summary-total .summary-label {
-    font-family: 'Montserrat', sans-serif;
-    font-weight: 700; /* Bold */
-    font-size: 23px;
-    color: var(--accent-primary);
-}
-
-.summary-total .summary-value {
-    font-family: 'Montserrat', sans-serif;
-    font-weight: 700; /* Bold */
-    font-size: 23px;
-    color: var(--accent-primary);
-}
-
-/* Subtotal Price */
-.summary-row:first-child .summary-value {
-    font-family: 'Montserrat', sans-serif;
-    font-weight: 700; /* Bold */
-    font-size: 35px;
-    color: var(--text-secondary);
-}
-
-/* Payment Buttons */
-.pay-button-card,
-.pay-button-cash {
-    font-family: 'Montserrat', sans-serif;
-    font-weight: 700; /* Bold */
-    font-size: 20px;
-}
-
-/* Menu Items */
-.menu-label {
-    font-family: 'Montserrat', sans-serif;
-    font-weight: 500; /* Medium */
-    font-size: 15px;
-}
-
-/* Empty Cart Message */
-.empty-cart {
-    font-family: 'Montserrat', sans-serif;
-    font-weight: 600; /* Semibold */
-    font-size: 14px;
-    color: var(--accent-primary);
-}
-
-/* Order Subtitle "Add items to start order" */
-.empty-cart,
-[class*="add-items"],
-[class*="empty"] {
-    font-family: 'Montserrat', sans-serif;
-    font-weight: 600; /* Semibold */
-    font-size: 14px;
-}
-
-[data-theme="light"] .empty-cart,
-[data-theme="light"] [class*="add-items"] {
-    color: #b75c11;
-}
-
-[data-theme="dark"] .empty-cart,
-[data-theme="dark"] [class*="add-items"] {
-    color: #c98235;
-}
-/* Product Card Text Colors - Based on Style Guide */
-
-/* Product Title */
+/* Product Card Text Colors */
 [data-theme="dark"] .product-name {
-    color: #ffffff !important;
+    color: #ffffff;
 }
 
 [data-theme="light"] .product-name {
-    color: #444443 !important;
+    color: #444443;
 }
 
-/* Product Subtitle (vintage/category) */
 [data-theme="dark"] .product-vintage {
-    color: #dcdcdc !important;
+    color: #dcdcdc;
 }
 
 [data-theme="light"] .product-vintage {
-    color: #444443 !important;
+    color: #444443;
 }
 
-/* Product Price */
 [data-theme="dark"] .product-price {
-    color: #c9925b !important;
+    color: #c9925b;
 }
 
 [data-theme="light"] .product-price {
-    color: #b75c11 !important;
+    color: #b75c11;
 }
 
-/* Header with Logo Section */
-.header {
-    display: flex;
-    align-items: center;
-    gap: 20px;
-}
-
-.header-logo-section {
-    display: flex;
-    align-items: center;
-    gap: 20px;
-    padding-right: 20px;
-    border-right: 1px solid var(--border-color);
-}
-
-.header-logo-section img {
-    height: 60px;
-    width: auto;
-}
-
-.header-text-section {
-    flex: 1;
-}
-
-.header-text-section h1 {
-    font-family: 'Montserrat', sans-serif;
-    font-weight: 500;
-    font-size: 17px;
-    margin-bottom: 5px;
-}
-
-[data-theme="dark"] .header-text-section h1 {
+/* Header Text Colors */
+[data-theme="dark"] .header h1,
+[data-theme="dark"] .header p {
     color: #dcdcdc;
 }
 
-[data-theme="light"] .header-text-section h1 {
+[data-theme="light"] .header h1,
+[data-theme="light"] .header p {
     color: #444443;
 }
 
-.header-text-section p {
-    font-family: 'Montserrat', sans-serif;
-    font-weight: 400;
-    font-size: 14px;
-}
-
-[data-theme="dark"] .header-text-section p {
-    color: #dcdcdc;
-}
-
-[data-theme="light"] .header-text-section p {
-    color: #444443;
-}
-/* FINAL THEME CORRECTIONS */
-
-/* Ensure proper contrast and colors for dark mode */
-[data-theme="dark"] {
-    color-scheme: dark;
-}
-
-[data-theme="light"] {
-    color-scheme: light;
-}
-
-/* Force correct backgrounds */
+/* Ensure proper backgrounds */
 [data-theme="dark"] body,
-[data-theme="dark"] .main-content,
 [data-theme="dark"] .container {
-    background: #4a4a4a !important;
+    background: #4a4a4a;
 }
 
 [data-theme="light"] body,
-[data-theme="light"] .main-content,
 [data-theme="light"] .container {
-    background: #f5f5f5 !important;
-}
-
-/* Product cards must be distinct from background */
-[data-theme="dark"] .product-card {
-    background: #5a5a5a !important;
-    border: 1px solid rgba(255, 255, 255, 0.1) !important;
-}
-
-[data-theme="light"] .product-card {
-    background: #ffffff !important;
-    border: 1px solid #e0e0e0 !important;
-}
-
-/* Header and right panel same as cards */
-[data-theme="dark"] .header,
-[data-theme="dark"] .right-panel {
-    background: #5a5a5a !important;
-}
-
-[data-theme="light"] .header,
-[data-theme="light"] .right-panel {
-    background: #ffffff !important;
-}
-
-/* Cart items */
-[data-theme="dark"] .cart-item {
-    background: rgba(255, 255, 255, 0.08) !important;
-    border-color: rgba(255, 255, 255, 0.1) !important;
-}
-
-[data-theme="light"] .cart-item {
-    background: #f9f9f9 !important;
-    border-color: #e0e0e0 !important;
-}
-
-/* Dropdown styling */
-[data-theme="dark"] #customerSelector {
-    background: rgba(255, 255, 255, 0.08) !important;
-    color: #dcdcdc !important;
-    border-color: rgba(255, 255, 255, 0.1) !important;
-}
-
-[data-theme="light"] #customerSelector {
-    background: #ffffff !important;
-    color: #444443 !important;
-    border-color: #e0e0e0 !important;
+    background: #f5f5f5;
 }
