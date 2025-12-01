@@ -2,12 +2,12 @@
 /* Supports dark mode and light mode with toggle capability */
 
 :root[data-theme="dark"] {
-  /* Backgrounds */
-  --bg-primary: #4a4a4a;
-  --bg-secondary: #5a5a5a;
-  --bg-tertiary: #3a3a3a;
-  --bg-card: rgba(255, 255, 255, 0.08);
-  --bg-hover: rgba(255, 255, 255, 0.12);
+  /* Backgrounds - all same base color, shadows create depth */
+  --bg-primary: #444443;
+  --bg-secondary: #444443;
+  --bg-tertiary: #444443;
+  --bg-card: #444443;
+  --bg-hover: rgba(255, 255, 255, 0.05);
   --bg-modal: #8e8e8e;
   --bg-modal-dark: #727272;
   --bg-modal-overlay: rgba(0, 0, 0, 0.5);
@@ -43,9 +43,9 @@
   --border-modal: #dcdcdc;
   
   /* Sidebar */
-  --sidebar-bg: #666056;
-  --sidebar-highlight: #575859;
-  --sidebar-border: #575859;
+  --sidebar-bg: #444443;
+  --sidebar-highlight: rgba(255, 255, 255, 0.08);
+  --sidebar-border: rgba(255, 255, 255, 0.1);
   
   /* Logo box */
   --logo-box-bg: #bfbfbf;

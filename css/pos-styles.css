@@ -1748,6 +1748,7 @@ body {
 
 #customerSelector option {
     background: var(--bg-secondary);
+}
 
 /* ===================================
    THEME-SPECIFIC COLOR OVERRIDES
@@ -1832,10 +1833,19 @@ body {
 /* Ensure correct backgrounds */
 [data-theme="light"] body,
 [data-theme="light"] .container {
-    background: #f5f5f5;
+    background: #fafafa;
 }
 
 [data-theme="dark"] body,
 [data-theme="dark"] .container {
-    background: #4a4a4a;
+    background: #444443;
+}
+
+/* Sidebar shadow for depth */
+[data-theme="dark"] .sidebar {
+    box-shadow: 8px 8px 16px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="light"] .sidebar {
+    box-shadow: 8px 8px 16px rgba(0, 0, 0, 0.15);
 }
