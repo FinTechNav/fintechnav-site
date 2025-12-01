@@ -9,32 +9,88 @@ const App = {
   users: [],
 
   async init() {
+    console.log('🚀 App.init() - Starting application initialization');
+    this.verifyThemeCSS();
     this.initializeTheme();
     await this.loadWineries();
     this.registerServiceWorker();
     this.initMobileHandlers();
     this.initKeyboardHandler();
+    console.log('✅ App.init() - Application initialization complete');
+  },
+
+  verifyThemeCSS() {
+    console.log('🔍 verifyThemeCSS() - Checking if theme CSS is loaded');
+    const themeLink = document.querySelector('link[href*="pos-themes.css"]');
+    if (themeLink) {
+      console.log('✅ Theme CSS link found:', themeLink.href);
+      themeLink.addEventListener('load', () => {
+        console.log('✅ Theme CSS loaded successfully');
+        this.checkCSSVariables();
+      });
+      themeLink.addEventListener('error', () => {
+        console.error('❌ Theme CSS failed to load');
+      });
+    } else {
+      console.error('❌ Theme CSS link not found in document');
+    }
+  },
+
+  checkCSSVariables() {
+    console.log('🔍 checkCSSVariables() - Checking if CSS variables are applied');
+    const computedStyle = getComputedStyle(document.documentElement);
+    const bgPrimary = computedStyle.getPropertyValue('--bg-primary').trim();
+    const textPrimary = computedStyle.getPropertyValue('--text-primary').trim();
+    const accentPrimary = computedStyle.getPropertyValue('--accent-primary').trim();
+
+    console.log('📊 CSS Variables:');
+    console.log('  --bg-primary:', bgPrimary || 'NOT SET');
+    console.log('  --text-primary:', textPrimary || 'NOT SET');
+    console.log('  --accent-primary:', accentPrimary || 'NOT SET');
+
+    if (!bgPrimary || !textPrimary || !accentPrimary) {
+      console.error('❌ CSS variables are not properly set! Theme CSS may not be loaded.');
+    } else {
+      console.log('✅ CSS variables are properly set');
+    }
   },
 
   initializeTheme() {
+    console.log('🎨 initializeTheme() - Starting theme initialization');
     // Load theme from localStorage or default to 'dark'
     const savedTheme = localStorage.getItem('appTheme') || 'dark';
+    console.log('📦 Saved theme from localStorage:', savedTheme);
     this.setTheme(savedTheme);
+    console.log('✅ initializeTheme() - Theme initialization complete');
   },
 
   setTheme(theme) {
-    document.documentElement.setAttribute('data-theme', theme);
+    console.log('🎨 setTheme() - Setting theme to:', theme);
+    const htmlElement = document.documentElement;
+    console.log('📍 HTML element:', htmlElement);
+    console.log('📍 Current data-theme attribute:', htmlElement.getAttribute('data-theme'));
+
+    htmlElement.setAttribute('data-theme', theme);
     localStorage.setItem('appTheme', theme);
+
+    console.log('✅ setTheme() - Theme set successfully');
+    console.log('📍 New data-theme attribute:', htmlElement.getAttribute('data-theme'));
+    console.log('📦 Saved to localStorage:', localStorage.getItem('appTheme'));
   },
 
   getCurrentTheme() {
-    return localStorage.getItem('appTheme') || 'dark';
+    const theme = localStorage.getItem('appTheme') || 'dark';
+    console.log('📖 getCurrentTheme() - Returning theme:', theme);
+    return theme;
   },
 
   toggleTheme() {
+    console.log('🔄 toggleTheme() - Starting theme toggle');
     const currentTheme = this.getCurrentTheme();
     const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    console.log('🔄 Toggling from', currentTheme, 'to', newTheme);
     this.setTheme(newTheme);
+    console.log('✅ toggleTheme() - Theme toggle complete');
   },
 
   initMobileHandlers() {
