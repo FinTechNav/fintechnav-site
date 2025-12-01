@@ -73,12 +73,23 @@ class CustomersScreen {
 
   async loadWineryInfo() {
     console.log('Loading winery information...');
+
+    // Get winery_id from global App.currentWinery if available
+    const wineryId = typeof App !== 'undefined' && App.currentWinery ? App.currentWinery.id : null;
+
+    if (!wineryId) {
+      console.log('No winery selected yet, skipping winery info load');
+      return;
+    }
+
     try {
-      const response = await fetch('/.netlify/functions/get-winery-info');
+      const response = await fetch(`/.netlify/functions/get-winery-info?winery_id=${wineryId}`);
       const data = await response.json();
       if (data.success) {
         this.winery = data.winery;
         console.log('Winery info loaded:', this.winery);
+      } else {
+        console.log('No winery info found:', data.error);
       }
     } catch (error) {
       console.error('Failed to load winery info:', error);
@@ -610,7 +621,7 @@ class CustomersScreen {
         lat: parseFloat(this.winery.latitude),
         lng: parseFloat(this.winery.longitude),
       };
-      zoom = 11; // Zoom level from your screenshot
+      zoom = 9; // Regional view showing surrounding wine country
       console.log(`[${new Date().toISOString()}] Using winery center:`, center, 'zoom:', zoom);
     } else {
       // Fallback to Atlanta if no winery data
