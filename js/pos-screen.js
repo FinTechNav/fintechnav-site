@@ -8,12 +8,25 @@ const POSScreen = {
   pollingInterval: null,
   pollingStartTime: null,
   currentReferenceId: null,
+  loadingState: {
+    products: false,
+    customers: false,
+  },
 
   async init() {
-    await this.loadProducts();
-    await this.loadCustomers();
+    this.loadingState.products = true;
+    this.loadingState.customers = true;
     this.renderProducts();
     this.renderCustomerSelector();
+
+    await this.loadProducts();
+    this.loadingState.products = false;
+    this.renderProducts();
+
+    await this.loadCustomers();
+    this.loadingState.customers = false;
+    this.renderCustomerSelector();
+
     this.setupPayButton();
   },
 
@@ -55,6 +68,11 @@ const POSScreen = {
     const container = document.getElementById('customerSelector');
     if (!container) return;
 
+    if (this.loadingState.customers) {
+      container.innerHTML = '<option value="">Loading customers...</option>';
+      return;
+    }
+
     const options = [
       '<option value="">Guest Checkout</option>',
       ...this.customers.map((c) => {
@@ -75,6 +93,11 @@ const POSScreen = {
 
   renderProducts() {
     const grid = document.getElementById('productsGrid');
+
+    if (this.loadingState.products) {
+      grid.innerHTML = this.renderProductsLoadingState();
+      return;
+    }
 
     if (this.products.length === 0) {
       grid.innerHTML =
@@ -1496,5 +1519,59 @@ const POSScreen = {
     document.getElementById('closeDeclineModal').addEventListener('click', () => {
       modal.remove();
     });
+  },
+
+  renderProductsLoadingState() {
+    return Array(12)
+      .fill(0)
+      .map(
+        () => `
+      <div class="product-card" style="cursor: default;">
+        <div style="
+          width: 40px;
+          height: 40px;
+          border-radius: 50%;
+          background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%);
+          background-size: 200% 100%;
+          animation: shimmer 1.5s infinite;
+          margin: 0 auto 10px;
+        "></div>
+        <div style="
+          height: 16px;
+          width: 80%;
+          margin: 0 auto 8px;
+          background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%);
+          background-size: 200% 100%;
+          animation: shimmer 1.5s infinite;
+          border-radius: 4px;
+        "></div>
+        <div style="
+          height: 14px;
+          width: 60%;
+          margin: 0 auto 8px;
+          background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%);
+          background-size: 200% 100%;
+          animation: shimmer 1.5s infinite;
+          border-radius: 4px;
+        "></div>
+        <div style="
+          height: 18px;
+          width: 50%;
+          margin: 10px auto 0;
+          background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%);
+          background-size: 200% 100%;
+          animation: shimmer 1.5s infinite;
+          border-radius: 4px;
+        "></div>
+      </div>
+      <style>
+        @keyframes shimmer {
+          0% { background-position: -200% 0; }
+          100% { background-position: 200% 0; }
+        }
+      </style>
+    `
+      )
+      .join('');
   },
 };

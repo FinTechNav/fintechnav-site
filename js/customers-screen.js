@@ -20,6 +20,10 @@ class CustomersScreen {
     this.polygonFilter = null;
     this.eventListenersAttached = false;
     this.currentInfoWindow = null;
+    this.loadingState = {
+      customers: false,
+      countrySettings: false,
+    };
     this.filters = {
       customerStatus: [],
       clubMemberStatus: [],
@@ -34,9 +38,19 @@ class CustomersScreen {
 
   async init() {
     console.log('Initializing Customers Screen...');
-    await this.loadCountrySettings();
-    await this.loadCustomers();
+
+    this.loadingState.customers = true;
+    this.loadingState.countrySettings = true;
     this.render();
+
+    await this.loadCountrySettings();
+    this.loadingState.countrySettings = false;
+    this.render();
+
+    await this.loadCustomers();
+    this.loadingState.customers = false;
+    this.render();
+
     this.attachEventListeners();
 
     // Handle window resize (e.g., when DevTools opens/closes)
@@ -220,6 +234,12 @@ class CustomersScreen {
 
     const container = document.getElementById('customersScreen');
     if (!container) return;
+
+    // Show skeleton loading state
+    if (this.loadingState.customers) {
+      container.innerHTML = this.renderLoadingState();
+      return;
+    }
 
     // Check if map panel actually exists in DOM
     const mapPanelExists = !!document.querySelector('.map-panel');
@@ -1606,6 +1626,87 @@ class CustomersScreen {
       console.log('Bulk delete:', this.selectedCustomers);
       alert('Delete not yet implemented');
     }
+  }
+
+  renderLoadingState() {
+    return `
+      <div style="padding: 20px; background: #2c3e50; min-height: 100vh;">
+        <!-- Toolbar skeleton -->
+        <div style="background: #34495e; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+          <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+            ${Array(5)
+              .fill(0)
+              .map(
+                () => `
+              <div style="
+                height: 36px;
+                width: 80px;
+                background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%);
+                background-size: 200% 100%;
+                animation: shimmer 1.5s infinite;
+                border-radius: 4px;
+              "></div>
+            `
+              )
+              .join('')}
+          </div>
+          <div style="
+            height: 40px;
+            background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+            border-radius: 4px;
+          "></div>
+        </div>
+
+        <!-- Customer cards skeleton -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 15px;">
+          ${Array(12)
+            .fill(0)
+            .map(
+              () => `
+            <div style="background: #34495e; padding: 20px; border-radius: 8px;">
+              <div style="
+                width: 60px;
+                height: 60px;
+                border-radius: 50%;
+                background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%);
+                background-size: 200% 100%;
+                animation: shimmer 1.5s infinite;
+                margin: 0 auto 15px;
+              "></div>
+              <div style="
+                height: 20px;
+                width: 70%;
+                margin: 0 auto 10px;
+                background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%);
+                background-size: 200% 100%;
+                animation: shimmer 1.5s infinite;
+                border-radius: 4px;
+              "></div>
+              <div style="
+                height: 14px;
+                width: 50%;
+                margin: 0 auto;
+                background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%);
+                background-size: 200% 100%;
+                animation: shimmer 1.5s infinite;
+                border-radius: 4px;
+              "></div>
+            </div>
+          `
+            )
+            .join('')}
+        </div>
+
+        <style>
+          @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+          }
+        </style>
+      </div>
+    `;
   }
 }
 
