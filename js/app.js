@@ -401,11 +401,6 @@ const App = {
   },
 
   async navigateTo(screen) {
-    // Don't reload if already on this screen
-    if (this.currentScreen === screen) {
-      return;
-    }
-
     document.getElementById('posScreen').style.display = 'none';
     document.getElementById('settingsScreen').style.display = 'none';
     document.getElementById('customersScreen').style.display = 'none';
