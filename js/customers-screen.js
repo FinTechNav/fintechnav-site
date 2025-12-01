@@ -279,6 +279,34 @@ class CustomersScreen {
         `;
       }
 
+      // Update map controls (for polygon-dependent buttons)
+      const mapControls = document.querySelector('.map-controls');
+      if (mapControls) {
+        mapControls.innerHTML = `
+          <button class="btn-map-control ${this.isDrawingMode ? 'active' : ''}" onclick="customersScreen.toggleDrawingMode()" title="Draw boundary">
+            <span class="draw-icon">✏️</span> Draw Area
+          </button>
+          ${
+            this.currentPolygon || this.polygonFilter
+              ? `
+            <button class="btn-map-control btn-remove" onclick="customersScreen.removePolygon()" title="Remove boundary">
+              <span>🗑️</span> Remove Outline
+            </button>
+            ${
+              this.polygonFilter
+                ? `
+              <div class="map-filter-count">
+                ${this.filteredCustomers.length} customers in area
+              </div>
+            `
+                : ''
+            }
+          `
+              : ''
+          }
+        `;
+      }
+
       // Update bulk actions bar - remove old one first
       const existingBulkActions = document.querySelector('.bulk-actions-bar');
       console.log(
