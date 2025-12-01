@@ -1797,3 +1797,84 @@ button, .menu-item, .product-card, .cart-item {
 [data-theme="dark"] [class*="add-items"] {
     color: #c98235;
 }
+/* Product Card Text Colors - Based on Style Guide */
+
+/* Product Title */
+[data-theme="dark"] .product-name {
+    color: #ffffff !important;
+}
+
+[data-theme="light"] .product-name {
+    color: #444443 !important;
+}
+
+/* Product Subtitle (vintage/category) */
+[data-theme="dark"] .product-vintage {
+    color: #dcdcdc !important;
+}
+
+[data-theme="light"] .product-vintage {
+    color: #444443 !important;
+}
+
+/* Product Price */
+[data-theme="dark"] .product-price {
+    color: #c9925b !important;
+}
+
+[data-theme="light"] .product-price {
+    color: #b75c11 !important;
+}
+
+/* Header with Logo Section */
+.header {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.header-logo-section {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding-right: 20px;
+    border-right: 1px solid var(--border-color);
+}
+
+.header-logo-section img {
+    height: 60px;
+    width: auto;
+}
+
+.header-text-section {
+    flex: 1;
+}
+
+.header-text-section h1 {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 500;
+    font-size: 17px;
+    margin-bottom: 5px;
+}
+
+[data-theme="dark"] .header-text-section h1 {
+    color: #dcdcdc;
+}
+
+[data-theme="light"] .header-text-section h1 {
+    color: #444443;
+}
+
+.header-text-section p {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 400;
+    font-size: 14px;
+}
+
+[data-theme="dark"] .header-text-section p {
+    color: #dcdcdc;
+}
+
+[data-theme="light"] .header-text-section p {
+    color: #444443;
+}
