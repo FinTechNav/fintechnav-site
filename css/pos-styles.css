@@ -875,6 +875,59 @@ body {
         font-size: 16px;
         margin-top: 4px;
     }
+    
+    /* Cart items - ensure proper layout */
+    .cart-item {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        padding: 12px;
+        gap: 10px;
+    }
+    
+    .cart-item-info {
+        flex: 1;
+        min-width: 0;
+        margin-right: 10px;
+    }
+    
+    .cart-item-name {
+        font-size: 13px;
+        font-weight: 600;
+        margin-bottom: 3px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    
+    .cart-item-details {
+        font-size: 11px;
+    }
+    
+    .cart-item-qty {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-shrink: 0;
+        margin: 0;
+    }
+    
+    .qty-btn {
+        width: 28px;
+        height: 28px;
+        font-size: 14px;
+    }
+    
+    .qty-display {
+        width: 25px;
+        font-size: 14px;
+    }
+    
+    .cart-item-price {
+        font-size: 15px;
+        min-width: 70px;
+        flex-shrink: 0;
+    }
 }
 
 /* Tablet Portrait and Small Laptops (iPad Pro 12.9" portrait, Galaxy Tab S9 FE portrait) */
