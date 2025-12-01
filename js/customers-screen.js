@@ -20,10 +20,6 @@ class CustomersScreen {
     this.polygonFilter = null;
     this.eventListenersAttached = false;
     this.currentInfoWindow = null;
-    this.loadingState = {
-      customers: false,
-      countrySettings: false,
-    };
     this.filters = {
       customerStatus: [],
       clubMemberStatus: [],
@@ -38,20 +34,9 @@ class CustomersScreen {
 
   async init() {
     console.log('Initializing Customers Screen...');
-
-    // Set loading state and render immediately
-    this.loadingState.customers = true;
-    this.loadingState.countrySettings = true;
-    this.render();
-
     await this.loadCountrySettings();
-    this.loadingState.countrySettings = false;
-    this.render();
-
     await this.loadCustomers();
-    this.loadingState.customers = false;
     this.render();
-
     this.attachEventListeners();
 
     // Handle window resize (e.g., when DevTools opens/closes)
@@ -235,16 +220,6 @@ class CustomersScreen {
 
     const container = document.getElementById('customersScreen');
     if (!container) return;
-
-    // Show loading state if customers are loading
-    if (this.loadingState.customers) {
-      container.innerHTML = `
-        <div style="padding: 20px; text-align: center; color: #95a5a6;">
-          <p>Loading customers...</p>
-        </div>
-      `;
-      return;
-    }
 
     // Check if map panel actually exists in DOM
     const mapPanelExists = !!document.querySelector('.map-panel');
