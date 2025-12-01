@@ -21,7 +21,94 @@ const App = {
     this.registerServiceWorker();
     this.initMobileHandlers();
     this.initKeyboardHandler();
+
+    // Add comprehensive diagnostics
+    this.logViewportDiagnostics();
+
+    // Monitor for dynamic changes
+    setTimeout(() => {
+      console.log('🔄 AFTER 2 SECONDS:');
+      this.logViewportDiagnostics();
+    }, 2000);
+
+    setTimeout(() => {
+      console.log('🔄 AFTER 5 SECONDS:');
+      this.logViewportDiagnostics();
+    }, 5000);
+
     console.log('✅ App.init() - Application initialization complete');
+  },
+
+  logViewportDiagnostics() {
+    console.log('=== VIEWPORT & CSS DIAGNOSTICS ===');
+    console.log('📱 Window dimensions:', {
+      innerWidth: window.innerWidth,
+      innerHeight: window.innerHeight,
+      outerWidth: window.outerWidth,
+      outerHeight: window.outerHeight,
+      devicePixelRatio: window.devicePixelRatio,
+    });
+
+    console.log('📐 Screen dimensions:', {
+      width: screen.width,
+      height: screen.height,
+      availWidth: screen.availWidth,
+      availHeight: screen.availHeight,
+    });
+
+    console.log('🎯 Document dimensions:', {
+      clientWidth: document.documentElement.clientWidth,
+      clientHeight: document.documentElement.clientHeight,
+      scrollWidth: document.documentElement.scrollWidth,
+      scrollHeight: document.documentElement.scrollHeight,
+    });
+
+    // Check media queries
+    const mediaQueries = {
+      '1366px-1025px': window.matchMedia('(max-width: 1366px) and (min-width: 1025px)').matches,
+      'max-1024px': window.matchMedia('(max-width: 1024px)').matches,
+      'max-915px-landscape': window.matchMedia('(max-width: 915px) and (orientation: landscape)')
+        .matches,
+      'max-430px': window.matchMedia('(max-width: 430px)').matches,
+      landscape: window.matchMedia('(orientation: landscape)').matches,
+      portrait: window.matchMedia('(orientation: portrait)').matches,
+    };
+    console.log('🔍 Media query matches:', mediaQueries);
+
+    // Check product card styles
+    const productCard = document.querySelector('.product-card');
+    if (productCard) {
+      const styles = window.getComputedStyle(productCard);
+      console.log('🎨 Product card computed styles:', {
+        minHeight: styles.minHeight,
+        height: styles.height,
+        padding: styles.padding,
+        gap: styles.gap,
+        background: styles.background,
+        boxShadow: styles.boxShadow,
+      });
+      console.log('📏 Product card actual dimensions:', {
+        offsetWidth: productCard.offsetWidth,
+        offsetHeight: productCard.offsetHeight,
+        clientWidth: productCard.clientWidth,
+        clientHeight: productCard.clientHeight,
+      });
+    } else {
+      console.log('❌ No product card found in DOM');
+    }
+
+    // Check grid styles
+    const productsGrid = document.querySelector('.products-grid');
+    if (productsGrid) {
+      const styles = window.getComputedStyle(productsGrid);
+      console.log('📦 Products grid computed styles:', {
+        gridTemplateColumns: styles.gridTemplateColumns,
+        gap: styles.gap,
+        padding: styles.padding,
+      });
+    }
+
+    console.log('=== END DIAGNOSTICS ===\n');
   },
 
   verifyThemeCSS() {
@@ -115,7 +202,20 @@ const App = {
   },
 
   initMobileHandlers() {
+    let resizeTimer;
     window.addEventListener('resize', () => {
+      console.log('🔄 Window resized:', {
+        innerWidth: window.innerWidth,
+        innerHeight: window.innerHeight,
+      });
+
+      // Debounce and log after resize completes
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => {
+        console.log('🔄 Resize complete - logging diagnostics:');
+        this.logViewportDiagnostics();
+      }, 500);
+
       const mobileBtn = document.getElementById('mobileMenuBtn');
 
       if (window.innerWidth > 430) {
@@ -375,6 +475,38 @@ const App = {
     } else {
       this.createMobileMenuButton();
       POSScreen.init();
+
+      // Monitor for style changes on product cards
+      setTimeout(() => {
+        const productCards = document.querySelectorAll('.product-card');
+        if (productCards.length > 0) {
+          console.log(`🔍 Monitoring ${productCards.length} product cards for style changes`);
+
+          productCards.forEach((card, index) => {
+            if (index === 0) {
+              // Only monitor first card to reduce noise
+              const observer = new MutationObserver((mutations) => {
+                mutations.forEach((mutation) => {
+                  if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
+                    console.log('⚠️ Product card style changed!', {
+                      oldValue: mutation.oldValue,
+                      newValue: card.getAttribute('style'),
+                      computedHeight: window.getComputedStyle(card).height,
+                      computedMinHeight: window.getComputedStyle(card).minHeight,
+                    });
+                  }
+                });
+              });
+
+              observer.observe(card, {
+                attributes: true,
+                attributeOldValue: true,
+                attributeFilter: ['style'],
+              });
+            }
+          });
+        }
+      }, 1000);
     }
   },
 
