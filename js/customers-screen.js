@@ -9,6 +9,7 @@ class CustomersScreen {
     this.currentGrouping = localStorage.getItem('customerGrouping') || 'all';
     this.searchTerm = '';
     this.countrySettings = null;
+    this.winery = null;
     this.sortField = 'last_name';
     this.sortDirection = 'asc';
     this.showMap = localStorage.getItem('showMap') === 'true';
@@ -43,6 +44,7 @@ class CustomersScreen {
     this.loadingState.countrySettings = true;
     this.render();
 
+    await this.loadWineryInfo();
     await this.loadCountrySettings();
     this.loadingState.countrySettings = false;
     this.render();
@@ -67,6 +69,20 @@ class CustomersScreen {
         }
       }, 250);
     });
+  }
+
+  async loadWineryInfo() {
+    console.log('Loading winery information...');
+    try {
+      const response = await fetch('/.netlify/functions/get-winery-info');
+      const data = await response.json();
+      if (data.success) {
+        this.winery = data.winery;
+        console.log('Winery info loaded:', this.winery);
+      }
+    } catch (error) {
+      console.error('Failed to load winery info:', error);
+    }
   }
 
   async loadCountrySettings() {
@@ -585,13 +601,23 @@ class CustomersScreen {
     );
 
     if (geocodedCustomers.length === 0) {
-      const center = { lat: 33.749, lng: -84.388 };
+      // Use winery location if available, otherwise default to Atlanta
+      const center =
+        this.winery && this.winery.latitude && this.winery.longitude
+          ? { lat: parseFloat(this.winery.latitude), lng: parseFloat(this.winery.longitude) }
+          : { lat: 33.749, lng: -84.388 };
+
+      // Use zoom 11 for winery location (matching your screenshot), 4 for default
+      const zoom = this.winery && this.winery.latitude && this.winery.longitude ? 11 : 4;
+
       console.log(
-        `[${new Date().toISOString()}] No geocoded customers, using default center:`,
-        center
+        `[${new Date().toISOString()}] No geocoded customers, using center:`,
+        center,
+        'zoom:',
+        zoom
       );
       this.map = new google.maps.Map(mapElement, {
-        zoom: 4,
+        zoom: zoom,
         center: center,
         mapId: 'HEAVY_POUR_CUSTOMER_MAP',
       });
