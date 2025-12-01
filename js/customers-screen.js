@@ -73,9 +73,16 @@ class CustomersScreen {
 
   async loadWineryInfo() {
     console.log('Loading winery information...');
+    console.log('App object exists:', typeof App !== 'undefined');
+    console.log(
+      'App.currentWinery:',
+      typeof App !== 'undefined' ? App.currentWinery : 'App not defined'
+    );
 
     // Get winery_id from global App.currentWinery if available
     const wineryId = typeof App !== 'undefined' && App.currentWinery ? App.currentWinery.id : null;
+
+    console.log('Extracted winery_id:', wineryId);
 
     if (!wineryId) {
       console.log('No winery selected yet, skipping winery info load');
@@ -83,8 +90,11 @@ class CustomersScreen {
     }
 
     try {
-      const response = await fetch(`/.netlify/functions/get-winery-info?winery_id=${wineryId}`);
+      const url = `/.netlify/functions/get-winery-info?winery_id=${wineryId}`;
+      console.log('Fetching winery info from:', url);
+      const response = await fetch(url);
       const data = await response.json();
+      console.log('Winery API response:', data);
       if (data.success) {
         this.winery = data.winery;
         console.log('Winery info loaded:', this.winery);
