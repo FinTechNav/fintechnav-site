@@ -140,6 +140,62 @@ body {
     content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/DarkMode/DarkMode-icons-50.svg');
 }
 
+[data-theme="light"] .menu-icon-customers {
+    content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-25.svg');
+}
+
+[data-theme="dark"] .menu-icon-customers {
+    content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/DarkMode/DarkMode-icons-53.svg');
+}
+
+[data-theme="light"] .menu-icon-orders {
+    content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-23.svg');
+}
+
+[data-theme="dark"] .menu-icon-orders {
+    content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/DarkMode/DarkMode-icons-51.svg');
+}
+
+[data-theme="light"] .menu-icon-products {
+    content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-20.svg');
+}
+
+[data-theme="dark"] .menu-icon-products {
+    content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/DarkMode/DarkMode-icons-48.svg');
+}
+
+[data-theme="light"] .menu-icon-reservations {
+    content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-17.svg');
+}
+
+[data-theme="dark"] .menu-icon-reservations {
+    content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/DarkMode/DarkMode-icons-45.svg');
+}
+
+[data-theme="light"] .menu-icon-club {
+    content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-29.svg');
+}
+
+[data-theme="dark"] .menu-icon-club {
+    content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/DarkMode/DarkMode-icons-57.svg');
+}
+
+[data-theme="light"] .menu-icon-reports {
+    content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-19.svg');
+}
+
+[data-theme="dark"] .menu-icon-reports {
+    content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/DarkMode/DarkMode-icons-47.svg');
+}
+
+[data-theme="light"] .menu-icon-settings {
+    content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-28.svg');
+}
+
+[data-theme="dark"] .menu-icon-settings {
+    content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/DarkMode/DarkMode-icons-56.svg');
+}
+
 .menu-label {
     margin-left: 8px;
     opacity: 0;
