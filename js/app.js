@@ -9,10 +9,32 @@ const App = {
   users: [],
 
   async init() {
+    this.initializeTheme();
     await this.loadWineries();
     this.registerServiceWorker();
     this.initMobileHandlers();
     this.initKeyboardHandler();
+  },
+
+  initializeTheme() {
+    // Load theme from localStorage or default to 'dark'
+    const savedTheme = localStorage.getItem('appTheme') || 'dark';
+    this.setTheme(savedTheme);
+  },
+
+  setTheme(theme) {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('appTheme', theme);
+  },
+
+  getCurrentTheme() {
+    return localStorage.getItem('appTheme') || 'dark';
+  },
+
+  toggleTheme() {
+    const currentTheme = this.getCurrentTheme();
+    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    this.setTheme(newTheme);
   },
 
   initMobileHandlers() {

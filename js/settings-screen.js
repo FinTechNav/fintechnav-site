@@ -358,10 +358,31 @@ const SettingsScreen = {
   renderPOSPreferencesTab() {
     const prefs = this.loadPOSPreferences();
     const currentLayout = App.currentUser?.layout_preference || 'commerce';
+    const currentTheme = App.getCurrentTheme();
 
     return `
       <h2 style="color: #f39c12; margin-bottom: 10px; font-size: 28px;">POS Preferences</h2>
       <p style="color: #95a5a6; margin-bottom: 30px;">Configure point of sale behavior and settings</p>
+      
+      <!-- Theme Toggle -->
+      <div style="background: rgba(255, 255, 255, 0.03); padding: 25px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.1); margin-bottom: 20px;">
+        <h3 style="color: #e8e8e8; margin-bottom: 20px; font-size: 18px;">Appearance</h3>
+        
+        <div class="theme-toggle-container">
+          <div class="theme-toggle-label">
+            <div style="font-size: 16px; margin-bottom: 4px;">Theme</div>
+            <div style="font-size: 12px; color: #95a5a6;">Choose your preferred color scheme</div>
+          </div>
+          
+          <div class="theme-icons">
+            <span style="opacity: ${currentTheme === 'light' ? '1' : '0.4'}">☀️</span>
+            <div class="theme-toggle-switch ${currentTheme === 'dark' ? 'active' : ''}" onclick="SettingsScreen.toggleTheme()">
+              <div class="theme-toggle-slider"></div>
+            </div>
+            <span style="opacity: ${currentTheme === 'dark' ? '1' : '0.4'}">🌙</span>
+          </div>
+        </div>
+      </div>
       
       <div style="background: rgba(255, 255, 255, 0.03); padding: 25px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.1); margin-bottom: 20px;">
         <h3 style="color: #e8e8e8; margin-bottom: 20px; font-size: 18px;">Layout Preference</h3>
@@ -465,6 +486,12 @@ const SettingsScreen = {
     } else {
       alert('Failed to update layout preference');
     }
+  },
+
+  toggleTheme() {
+    App.toggleTheme();
+    // Re-render to update the toggle UI
+    this.render();
   },
 
   async loadTerminals() {
