@@ -1030,6 +1030,14 @@ body {
         min-width: 65px;
     }
     
+    /* Payment buttons - ensure proper sizing */
+    .pay-button-card,
+    .pay-button-cash {
+        padding: 14px 16px;
+        font-size: 16px;
+        min-height: 50px;
+    }
+    
     .settings-screen {
         padding: 15px;
     }
