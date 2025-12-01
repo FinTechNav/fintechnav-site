@@ -26,6 +26,22 @@ const App = {
     if (themeLink) {
       console.log('✅ Theme CSS link found:', themeLink.href);
 
+      // Fetch the CSS file to verify content
+      fetch(themeLink.href)
+        .then((response) => response.text())
+        .then((cssContent) => {
+          console.log('📄 CSS file fetched, length:', cssContent.length, 'characters');
+          if (cssContent.includes(':root[data-theme="dark"]')) {
+            console.log('✅ CSS contains theme definitions');
+          } else {
+            console.error('❌ CSS does NOT contain theme definitions!');
+            console.log('📄 First 500 characters:', cssContent.substring(0, 500));
+          }
+        })
+        .catch((err) => {
+          console.error('❌ Failed to fetch CSS file:', err);
+        });
+
       // Check if already loaded
       if (themeLink.sheet) {
         console.log('✅ Theme CSS already loaded');
