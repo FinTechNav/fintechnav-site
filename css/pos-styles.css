@@ -320,7 +320,7 @@ body {
 
 .cart-header {
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
     align-items: center;
     margin-bottom: 20px;
     padding-bottom: 15px;
@@ -330,6 +330,7 @@ body {
 .cart-header h2 {
     font-size: 24px;
     color: var(--accent-primary);
+    margin: 0;
 }
 
 .customer-name {
@@ -431,6 +432,14 @@ body {
     text-align: right;
 }
 
+/* Payment buttons container */
+.payment-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 20px;
+}
+
 .cart-summary {
     border-top: 1px solid var(--border-color);
     padding-top: 20px;
@@ -440,7 +449,7 @@ body {
     display: flex;
     justify-content: space-between;
     margin-bottom: 12px;
-    font-size: 16px;
+    font-size: 24px;
 }
 
 .summary-label {
@@ -449,11 +458,10 @@ body {
 
 .summary-value {
     color: var(--text-primary);
-    font-weight: 600;
+    font-weight: 700;
 }
 
 .summary-total {
-    font-size: 24px;
     color: var(--accent-primary);
     font-weight: 700;
     margin-top: 15px;
@@ -467,15 +475,15 @@ body {
 
 .pay-button-card,
 .pay-button-cash {
-    padding: 18px;
+    padding: 14px;
     border: none;
     border-radius: 10px;
     color: white;
-    font-size: 18px;
+    font-size: 16px;
     font-weight: 700;
     cursor: pointer;
     transition: all 0.3s ease;
-    min-height: 56px;
+    min-height: 50px;
     touch-action: manipulation;
 }
 
@@ -876,6 +884,14 @@ body {
         margin-top: 4px;
     }
     
+    /* Payment buttons - adjust for this screen size */
+    .pay-button-card,
+    .pay-button-cash {
+        padding: 12px;
+        font-size: 15px;
+        min-height: 48px;
+    }
+    
     /* Cart items - ensure proper layout */
     .cart-item {
         display: flex;
@@ -1030,12 +1046,12 @@ body {
         min-width: 65px;
     }
     
-    /* Payment buttons - ensure proper sizing */
+    /* Payment buttons - keep side by side but smaller */
     .pay-button-card,
     .pay-button-cash {
-        padding: 14px 16px;
-        font-size: 16px;
-        min-height: 50px;
+        padding: 12px 14px;
+        font-size: 15px;
+        min-height: 48px;
     }
     
     .settings-screen {

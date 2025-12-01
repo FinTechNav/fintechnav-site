@@ -636,7 +636,6 @@ const App = {
       const userName = `${this.currentUser.first_name} ${this.currentUser.last_name}`;
       document.getElementById('currentWineryName').textContent = this.currentWinery.name;
       document.getElementById('currentUserName').textContent = userName;
-      document.getElementById('cartWineryName').textContent = this.currentWinery.name;
       document.getElementById('settingsWineryName').textContent = this.currentWinery.name;
       document.getElementById('settingsUserName').textContent = userName;
     }
