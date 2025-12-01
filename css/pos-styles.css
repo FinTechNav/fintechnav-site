@@ -1462,3 +1462,76 @@ body {
         min-height: 40px;
     }
 }
+
+/* Payment Modals */
+#cashPaymentModal,
+#processingModal,
+#paymentReceivedModal,
+#cashChangeModal {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    background: var(--bg-modal-overlay) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    z-index: 10000 !important;
+}
+
+#cashPaymentModal > div,
+#cashChangeModal > div {
+    background: var(--bg-modal) !important;
+    padding: 40px !important;
+    border-radius: 25px !important;
+    max-width: 600px !important;
+    width: 90% !important;
+    color: var(--text-modal) !important;
+}
+
+#processingModal > div {
+    background: var(--bg-modal) !important;
+    padding: 40px !important;
+    border-radius: 25px !important;
+    text-align: center !important;
+    max-width: 445px !important;
+    min-height: 194px !important;
+    color: var(--text-modal) !important;
+}
+
+#paymentReceivedModal > div {
+    background: var(--bg-modal) !important;
+    padding: 40px !important;
+    border-radius: 25px !important;
+    max-width: 632px !important;
+    min-height: 472px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 30px !important;
+    color: var(--text-modal) !important;
+}
+
+/* Modal Text Colors */
+#cashPaymentModal h2,
+#cashPaymentModal h3,
+#processingModal h2,
+#paymentReceivedModal h2 {
+    color: var(--accent-primary) !important;
+}
+
+#processingModal p {
+    color: var(--text-modal) !important;
+}
+
+/* Modal Inputs */
+#cashAmountInput {
+    background: var(--bg-modal-dark) !important;
+    border: 2px solid var(--border-modal) !important;
+    color: var(--accent-primary) !important;
+}
+
+/* Payment Success Text */
+.payment-success-text {
+    color: var(--accent-success) !important;
+}
