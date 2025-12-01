@@ -115,9 +115,29 @@ body {
 
 .menu-icon {
     width: 30px;
+    height: 30px;
     font-size: 24px;
     text-align: center;
     flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Menu icon images */
+.menu-icon-img {
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+}
+
+/* Theme-based icon switching */
+[data-theme="light"] .menu-icon-cart {
+    content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-22.svg');
+}
+
+[data-theme="dark"] .menu-icon-cart {
+    content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/DarkMode/DarkMode-icons-50.svg');
 }
 
 .menu-label {
