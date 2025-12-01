@@ -195,6 +195,7 @@ body {
     backdrop-filter: blur(10px);
     border: 1px solid var(--border-color);
     margin: 10px;
+    box-shadow: 8px 8px 16px rgba(0, 0, 0, 0.15);
 }
 
 .header h1 {
@@ -236,7 +237,7 @@ body {
 }
 
 .product-card {
-    background: var(--bg-secondary);
+    background: var(--bg-card);
     border: 1px solid var(--border-color);
     border-radius: 33px;
     padding: 20px;
@@ -246,6 +247,7 @@ body {
     flex-direction: column;
     gap: 10px;
     min-height: 240px;
+    box-shadow: 8px 8px 16px rgba(0, 0, 0, 0.15);
 }
 
 .product-card:hover {
@@ -313,6 +315,7 @@ body {
     padding: 30px;
     max-height: 100%;
     margin: 10px 10px 10px 0;
+    box-shadow: 8px 8px 16px rgba(0, 0, 0, 0.15);
 }
 
 .cart-header {
@@ -1637,32 +1640,25 @@ body {
 }
 
 [data-theme="light"] body,
-[data-theme="light"] .container {
-    background: #f5f5f5;
-}
 /* CORRECT SHADOWS - Single soft drop shadow, not neumorphic */
 
 /* Light Mode - Soft drop shadow bottom-right */
 [data-theme="light"] .product-card {
-    background: #ffffff;
     box-shadow: 8px 8px 16px rgba(0, 0, 0, 0.15);
 }
 
 [data-theme="light"] .header,
 [data-theme="light"] .right-panel {
-    background: #ffffff;
     box-shadow: 8px 8px 16px rgba(0, 0, 0, 0.15);
 }
 
 /* Dark Mode - Soft drop shadow bottom-right */
 [data-theme="dark"] .product-card {
-    background: #5a5a5a;
     box-shadow: 8px 8px 16px rgba(0, 0, 0, 0.4);
 }
 
 [data-theme="dark"] .header,
 [data-theme="dark"] .right-panel {
-    background: #5a5a5a;
     box-shadow: 8px 8px 16px rgba(0, 0, 0, 0.4);
 }
 
