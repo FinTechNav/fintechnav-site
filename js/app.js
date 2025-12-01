@@ -7,6 +7,7 @@ const App = {
   pinEntry: '',
   wineries: [],
   users: [],
+  cssVariablesChecked: false,
 
   async init() {
     console.log('🚀 App.init() - Starting application initialization');
@@ -24,19 +25,40 @@ const App = {
     const themeLink = document.querySelector('link[href*="pos-themes.css"]');
     if (themeLink) {
       console.log('✅ Theme CSS link found:', themeLink.href);
-      themeLink.addEventListener('load', () => {
-        console.log('✅ Theme CSS loaded successfully');
+
+      // Check if already loaded
+      if (themeLink.sheet) {
+        console.log('✅ Theme CSS already loaded');
         this.checkCSSVariables();
-      });
-      themeLink.addEventListener('error', () => {
-        console.error('❌ Theme CSS failed to load');
-      });
+      } else {
+        // Wait for load
+        themeLink.addEventListener('load', () => {
+          console.log('✅ Theme CSS loaded successfully');
+          this.checkCSSVariables();
+        });
+        themeLink.addEventListener('error', () => {
+          console.error('❌ Theme CSS failed to load');
+        });
+      }
+
+      // Also check after a delay as backup
+      setTimeout(() => {
+        if (!this.cssVariablesChecked) {
+          console.log('⏰ Backup check - forcing CSS variable verification');
+          this.checkCSSVariables();
+        }
+      }, 1000);
     } else {
       console.error('❌ Theme CSS link not found in document');
     }
   },
 
   checkCSSVariables() {
+    if (this.cssVariablesChecked) {
+      console.log('⏭️ CSS variables already checked, skipping');
+      return;
+    }
+
     console.log('🔍 checkCSSVariables() - Checking if CSS variables are applied');
     const computedStyle = getComputedStyle(document.documentElement);
     const bgPrimary = computedStyle.getPropertyValue('--bg-primary').trim();
@@ -53,6 +75,8 @@ const App = {
     } else {
       console.log('✅ CSS variables are properly set');
     }
+
+    this.cssVariablesChecked = true;
   },
 
   initializeTheme() {
