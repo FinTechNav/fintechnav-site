@@ -74,7 +74,7 @@ const ReservationsScreen = {
             ➕ Add Reservation
           </button>
         </div>
-        <p style="text-align: center; color: #95a5a6; padding: 40px;">Loading reservations...</p>
+        ${this.renderLoadingState()}
       `;
       return;
     }
@@ -516,5 +516,119 @@ const ReservationsScreen = {
       </div>
     `;
     document.body.appendChild(modal);
+  },
+
+  renderLoadingState() {
+    return `
+      <div style="padding: 20px;">
+        <!-- Summary cards skeleton -->
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 30px;">
+          ${Array(3)
+            .fill(0)
+            .map(
+              () => `
+            <div style="
+              background: rgba(255, 255, 255, 0.05);
+              padding: 20px;
+              border-radius: 8px;
+              text-align: center;
+            ">
+              <div style="
+                height: 40px;
+                width: 60px;
+                margin: 0 auto 10px;
+                background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%);
+                background-size: 200% 100%;
+                animation: shimmer 1.5s infinite;
+                border-radius: 4px;
+              "></div>
+              <div style="
+                height: 14px;
+                width: 100px;
+                margin: 0 auto;
+                background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%);
+                background-size: 200% 100%;
+                animation: shimmer 1.5s infinite;
+                border-radius: 4px;
+              "></div>
+            </div>
+          `
+            )
+            .join('')}
+        </div>
+
+        <!-- Reservation cards skeleton -->
+        <div style="display: flex; flex-direction: column; gap: 15px;">
+          ${Array(6)
+            .fill(0)
+            .map(
+              () => `
+            <div style="
+              background: rgba(255, 255, 255, 0.05);
+              padding: 20px;
+              border-radius: 8px;
+              border-left: 4px solid rgba(255, 255, 255, 0.1);
+            ">
+              <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
+                <div style="flex: 1;">
+                  <div style="
+                    height: 20px;
+                    width: 80px;
+                    background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%);
+                    background-size: 200% 100%;
+                    animation: shimmer 1.5s infinite;
+                    border-radius: 4px;
+                    margin-bottom: 8px;
+                  "></div>
+                  <div style="
+                    height: 16px;
+                    width: 150px;
+                    background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%);
+                    background-size: 200% 100%;
+                    animation: shimmer 1.5s infinite;
+                    border-radius: 4px;
+                  "></div>
+                </div>
+                <div style="
+                  height: 24px;
+                  width: 80px;
+                  background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%);
+                  background-size: 200% 100%;
+                  animation: shimmer 1.5s infinite;
+                  border-radius: 12px;
+                "></div>
+              </div>
+              <div style="display: flex; gap: 20px;">
+                <div style="
+                  height: 14px;
+                  width: 120px;
+                  background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%);
+                  background-size: 200% 100%;
+                  animation: shimmer 1.5s infinite;
+                  border-radius: 4px;
+                "></div>
+                <div style="
+                  height: 14px;
+                  width: 100px;
+                  background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%);
+                  background-size: 200% 100%;
+                  animation: shimmer 1.5s infinite;
+                  border-radius: 4px;
+                "></div>
+              </div>
+            </div>
+          `
+            )
+            .join('')}
+        </div>
+
+        <style>
+          @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+          }
+        </style>
+      </div>
+    `;
   },
 };

@@ -32,7 +32,7 @@ const OrdersScreen = {
     const container = document.getElementById('ordersContainer');
 
     if (this.loadingState.orders) {
-      container.innerHTML = '<p style="text-align: center; color: #95a5a6;">Loading orders...</p>';
+      container.innerHTML = this.renderLoadingState();
       return;
     }
 
@@ -85,5 +85,102 @@ const OrdersScreen = {
   viewOrder(orderId) {
     // Future implementation - show order details
     alert('Order details view coming soon');
+  },
+
+  renderLoadingState() {
+    return `
+      <table class="data-table" style="width: 100%; border-collapse: collapse;">
+        <thead>
+          <tr style="background: rgba(255, 255, 255, 0.05); border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
+            <th style="padding: 12px; text-align: left; color: #f39c12;">Order #</th>
+            <th style="padding: 12px; text-align: left; color: #f39c12;">Date/Time</th>
+            <th style="padding: 12px; text-align: left; color: #f39c12;">Customer</th>
+            <th style="padding: 12px; text-align: left; color: #f39c12;">Source</th>
+            <th style="padding: 12px; text-align: right; color: #f39c12;">Total</th>
+            <th style="padding: 12px; text-align: center; color: #f39c12;">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${Array(10)
+            .fill(0)
+            .map(
+              () => `
+            <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.05);">
+              <td style="padding: 12px;">
+                <div style="
+                  height: 16px;
+                  width: 60px;
+                  background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%);
+                  background-size: 200% 100%;
+                  animation: shimmer 1.5s infinite;
+                  border-radius: 4px;
+                "></div>
+              </td>
+              <td style="padding: 12px;">
+                <div style="
+                  height: 16px;
+                  width: 140px;
+                  background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%);
+                  background-size: 200% 100%;
+                  animation: shimmer 1.5s infinite;
+                  border-radius: 4px;
+                "></div>
+              </td>
+              <td style="padding: 12px;">
+                <div style="
+                  height: 16px;
+                  width: 120px;
+                  background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%);
+                  background-size: 200% 100%;
+                  animation: shimmer 1.5s infinite;
+                  border-radius: 4px;
+                "></div>
+              </td>
+              <td style="padding: 12px;">
+                <div style="
+                  height: 16px;
+                  width: 50px;
+                  background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%);
+                  background-size: 200% 100%;
+                  animation: shimmer 1.5s infinite;
+                  border-radius: 4px;
+                "></div>
+              </td>
+              <td style="padding: 12px; text-align: right;">
+                <div style="
+                  height: 16px;
+                  width: 60px;
+                  margin-left: auto;
+                  background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%);
+                  background-size: 200% 100%;
+                  animation: shimmer 1.5s infinite;
+                  border-radius: 4px;
+                "></div>
+              </td>
+              <td style="padding: 12px; text-align: center;">
+                <div style="
+                  height: 20px;
+                  width: 80px;
+                  margin: 0 auto;
+                  background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%);
+                  background-size: 200% 100%;
+                  animation: shimmer 1.5s infinite;
+                  border-radius: 12px;
+                "></div>
+              </td>
+            </tr>
+          `
+            )
+            .join('')}
+        </tbody>
+      </table>
+
+      <style>
+        @keyframes shimmer {
+          0% { background-position: -200% 0; }
+          100% { background-position: 200% 0; }
+        }
+      </style>
+    `;
   },
 };

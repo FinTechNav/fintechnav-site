@@ -95,8 +95,7 @@ const POSScreen = {
     const grid = document.getElementById('productsGrid');
 
     if (this.loadingState.products) {
-      grid.innerHTML =
-        '<p style="text-align: center; color: #95a5a6; padding: 40px;">Loading products...</p>';
+      grid.innerHTML = this.renderProductsLoadingState();
       return;
     }
 
@@ -1520,5 +1519,59 @@ const POSScreen = {
     document.getElementById('closeDeclineModal').addEventListener('click', () => {
       modal.remove();
     });
+  },
+
+  renderProductsLoadingState() {
+    return Array(12)
+      .fill(0)
+      .map(
+        () => `
+      <div class="product-card" style="cursor: default;">
+        <div style="
+          width: 40px;
+          height: 40px;
+          border-radius: 50%;
+          background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%);
+          background-size: 200% 100%;
+          animation: shimmer 1.5s infinite;
+          margin: 0 auto 10px;
+        "></div>
+        <div style="
+          height: 16px;
+          width: 80%;
+          margin: 0 auto 8px;
+          background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%);
+          background-size: 200% 100%;
+          animation: shimmer 1.5s infinite;
+          border-radius: 4px;
+        "></div>
+        <div style="
+          height: 14px;
+          width: 60%;
+          margin: 0 auto 8px;
+          background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%);
+          background-size: 200% 100%;
+          animation: shimmer 1.5s infinite;
+          border-radius: 4px;
+        "></div>
+        <div style="
+          height: 18px;
+          width: 50%;
+          margin: 10px auto 0;
+          background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%);
+          background-size: 200% 100%;
+          animation: shimmer 1.5s infinite;
+          border-radius: 4px;
+        "></div>
+      </div>
+      <style>
+        @keyframes shimmer {
+          0% { background-position: -200% 0; }
+          100% { background-position: 200% 0; }
+        }
+      </style>
+    `
+      )
+      .join('');
   },
 };
