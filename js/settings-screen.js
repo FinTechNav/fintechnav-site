@@ -133,7 +133,7 @@ const SettingsScreen = {
     if (!App.currentWinery) return '<p style="color: #95a5a6;">No winery selected</p>';
 
     if (this.loadingState.terminals) {
-      return '<p style="text-align: center; color: #95a5a6; padding: 40px;">Loading settings...</p>';
+      return this.renderLoadingState();
     }
 
     return `
@@ -846,5 +846,72 @@ const SettingsScreen = {
       console.log('✅ Reset all terminal timeout settings to defaults');
       this.render();
     }
+  },
+
+  renderLoadingState() {
+    return `
+      <div style="padding: 20px;">
+        <div style="
+          height: 28px;
+          width: 200px;
+          margin-bottom: 10px;
+          background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%);
+          background-size: 200% 100%;
+          animation: shimmer 1.5s infinite;
+          border-radius: 4px;
+        "></div>
+        
+        <div style="
+          height: 16px;
+          width: 300px;
+          margin-bottom: 30px;
+          background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%);
+          background-size: 200% 100%;
+          animation: shimmer 1.5s infinite;
+          border-radius: 4px;
+        "></div>
+
+        <div style="display: flex; flex-direction: column; gap: 15px;">
+          ${Array(3)
+            .fill(0)
+            .map(
+              () => `
+            <div style="
+              background: rgba(255, 255, 255, 0.03);
+              padding: 20px;
+              border-radius: 8px;
+              border: 1px solid rgba(255, 255, 255, 0.1);
+            ">
+              <div style="
+                height: 20px;
+                width: 150px;
+                margin-bottom: 10px;
+                background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%);
+                background-size: 200% 100%;
+                animation: shimmer 1.5s infinite;
+                border-radius: 4px;
+              "></div>
+              <div style="
+                height: 14px;
+                width: 200px;
+                background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%);
+                background-size: 200% 100%;
+                animation: shimmer 1.5s infinite;
+                border-radius: 4px;
+              "></div>
+            </div>
+          `
+            )
+            .join('')}
+        </div>
+
+        <style>
+          @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+          }
+        </style>
+      </div>
+    `;
   },
 };
