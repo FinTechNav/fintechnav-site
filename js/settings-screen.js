@@ -489,9 +489,12 @@ const SettingsScreen = {
   },
 
   toggleTheme() {
+    console.log('⚙️ SettingsScreen.toggleTheme() - Starting theme toggle from settings');
     App.toggleTheme();
+    console.log('🔄 SettingsScreen.toggleTheme() - Calling render to update UI');
     // Re-render to update the toggle UI
     this.render();
+    console.log('✅ SettingsScreen.toggleTheme() - Theme toggle complete, UI updated');
   },
 
   async loadTerminals() {
