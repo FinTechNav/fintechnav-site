@@ -28,7 +28,22 @@ exports.handler = async (event) => {
   try {
     await client.connect();
 
-    // Get winery with geocode information (prefer wineries with lat/lng)
+    // Get winery_id from query parameter
+    const params = event.queryStringParameters || {};
+    const { winery_id } = params;
+
+    if (!winery_id) {
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({
+          success: false,
+          error: 'winery_id parameter is required',
+        }),
+      };
+    }
+
+    // Get specific winery with geocode information
     const query = `
       SELECT 
         id,
@@ -49,13 +64,13 @@ exports.handler = async (event) => {
         currency_code,
         timezone
       FROM wineries
-      WHERE latitude IS NOT NULL 
+      WHERE id = $1
+        AND latitude IS NOT NULL 
         AND longitude IS NOT NULL
-      ORDER BY name
       LIMIT 1
     `;
 
-    const result = await client.query(query);
+    const result = await client.query(query, [winery_id]);
 
     if (result.rows.length === 0) {
       return {
