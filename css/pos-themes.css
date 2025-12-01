@@ -51,11 +51,8 @@
   --logo-box-bg: #bfbfbf;
   --logo-box-glow: rgba(191, 191, 191, 0.45);
   
-  /* Shadows */
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.2);
-  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.3);
-  --shadow-lg: 0 10px 20px rgba(0, 0, 0, 0.4);
-  --shadow-product: 0 10px rgba(0, 0, 0, 0.4), 0 -13px rgba(255, 255, 255, 0.05) inset;
+  /* Shadows - removed, using neumorphic approach in pos-styles.css */
+
 }
 
 :root[data-theme="light"] {
@@ -108,11 +105,8 @@
   --logo-box-bg: #a8abad;
   --logo-box-glow: rgba(168, 171, 173, 0.45);
   
-  /* Shadows */
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
-  --shadow-md: 0 2px 4px rgba(0, 0, 0, 0.1);
-  --shadow-lg: 0 4px 8px rgba(0, 0, 0, 0.15);
-  --shadow-product: 0 10px rgba(0, 0, 0, 0.15), 0 -13px rgba(0, 0, 0, 0.2) inset;
+  /* Shadows - removed, using neumorphic approach in pos-styles.css */
+
 }
 
 /* Base Body Styling */
