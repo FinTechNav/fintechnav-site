@@ -28,7 +28,7 @@ exports.handler = async (event) => {
   try {
     await client.connect();
 
-    // Get current winery based on domain or use first active winery
+    // Get winery with geocode information (prefer wineries with lat/lng)
     const query = `
       SELECT 
         id,
@@ -49,7 +49,9 @@ exports.handler = async (event) => {
         currency_code,
         timezone
       FROM wineries
-      WHERE id IS NOT NULL
+      WHERE latitude IS NOT NULL 
+        AND longitude IS NOT NULL
+      ORDER BY name
       LIMIT 1
     `;
 
