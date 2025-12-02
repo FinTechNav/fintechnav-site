@@ -176,7 +176,7 @@ class CustomerDetailsScreen {
 
     return `
       <div style="
-        background: #2c3e50;
+        background: #444443;
         min-height: 100vh;
         padding: 20px;
       ">
@@ -198,7 +198,7 @@ class CustomerDetailsScreen {
   renderHeader(fullName) {
     return `
       <div style="
-        background: #34495e;
+        background: #444443;
         padding: 20px 30px;
         border-radius: 8px;
         display: flex;
@@ -225,7 +225,7 @@ class CustomerDetailsScreen {
       return `
         <div style="
           width: 280px;
-          background: #34495e;
+          background: #444443;
           padding: 20px;
           overflow-y: auto;
           border-radius: 8px;
@@ -303,7 +303,7 @@ class CustomerDetailsScreen {
     return `
       <div style="
         width: 280px;
-        background: #34495e;
+        background: #444443;
         padding: 20px;
         overflow-y: auto;
         border-radius: 8px;
@@ -399,7 +399,7 @@ class CustomerDetailsScreen {
         flex: 1;
         display: flex;
         flex-direction: column;
-        background: #34495e;
+        background: #444443;
         border-radius: 8px;
         overflow: hidden;
       ">
@@ -484,7 +484,7 @@ class CustomerDetailsScreen {
           background: #D2B48C;
           border: none;
           border-radius: 6px;
-          color: #2c3e50;
+          color: #444443;
           font-size: 14px;
           cursor: pointer;
           font-weight: 600;
@@ -549,7 +549,7 @@ class CustomerDetailsScreen {
 
     return `
       <select onchange="customerDetailsScreen.filterActivity(this.value)" style="
-        background: #34495e;
+        background: #444443;
         border: 1px solid rgba(255, 255, 255, 0.2);
         border-radius: 6px;
         color: #ecf0f1;
@@ -782,7 +782,7 @@ class CustomerDetailsScreen {
     if (this.loadingState.orders) {
       return `
         <div style="
-          background: #34495e;
+          background: #444443;
           border-radius: 8px;
           overflow: hidden;
         ">
@@ -869,7 +869,7 @@ class CustomerDetailsScreen {
 
     return `
       <div style="
-        background: #34495e;
+        background: #444443;
         border-radius: 8px;
         overflow: hidden;
       ">
@@ -937,7 +937,7 @@ class CustomerDetailsScreen {
     return `
       <div style="
         width: 320px;
-        background: #34495e;
+        background: #444443;
         padding: 20px;
         border-radius: 8px;
         display: flex;
@@ -993,7 +993,7 @@ class CustomerDetailsScreen {
 
     return `
       <div style="
-        background: linear-gradient(135deg, #2c3e50, #34495e);
+        background: linear-gradient(135deg, #444443, #444443);
         border-radius: 8px;
         padding: 20px;
         margin-bottom: 20px;
@@ -1069,7 +1069,7 @@ class CustomerDetailsScreen {
             background: #D2B48C;
             border: none;
             border-radius: 4px;
-            color: #2c3e50;
+            color: #444443;
             font-size: 12px;
             cursor: pointer;
             font-weight: 600;

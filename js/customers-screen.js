@@ -1759,9 +1759,9 @@ class CustomersScreen {
 
   renderLoadingState() {
     return `
-      <div style="padding: 20px; background: #2c3e50; min-height: 100vh;">
+      <div style="padding: 20px; background: #444443; min-height: 100vh;">
         <!-- Toolbar skeleton -->
-        <div style="background: #34495e; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+        <div style="background: #444443; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
           <div style="display: flex; gap: 10px; margin-bottom: 10px;">
             ${Array(5)
               .fill(0)
@@ -1794,7 +1794,7 @@ class CustomersScreen {
             .fill(0)
             .map(
               () => `
-            <div style="background: #34495e; padding: 20px; border-radius: 8px;">
+            <div style="background: #444443; padding: 20px; border-radius: 8px;">
               <div style="
                 width: 60px;
                 height: 60px;
