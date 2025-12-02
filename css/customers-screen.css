@@ -403,7 +403,9 @@
   transition: all 0.2s;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
+  vertical-align: middle;
 }
 
 .btn-bulk:hover {
@@ -424,6 +426,7 @@
   width: 18px;
   height: 18px;
   flex-shrink: 0;
+  display: block;
 }
 
 /* Theme-based icon switching for bulk actions */
