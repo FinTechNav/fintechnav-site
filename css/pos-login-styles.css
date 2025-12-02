@@ -35,17 +35,18 @@
 
 .login-header {
     text-align: center;
-    margin-bottom: 30px;
+    margin-bottom: 20px;
+    flex-shrink: 0;
 }
 
 .login-header h1 {
     font-size: 36px;
     color: var(--accent-primary);
-    margin-bottom: 10px;
+    margin-bottom: 5px;
 }
 
 .login-header h2 {
-    font-size: 20px;
+    font-size: 18px;
     color: var(--text-secondary);
     font-weight: 400;
 }
@@ -54,7 +55,8 @@
 .login-method-tabs {
     display: flex;
     gap: 10px;
-    margin-bottom: 30px;
+    margin-bottom: 20px;
+    flex-shrink: 0;
 }
 
 .login-tab {
@@ -129,8 +131,8 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 30px;
-    padding: 20px 0;
+    gap: 20px;
+    padding: 10px 0;
 }
 
 .pin-dots {
@@ -139,8 +141,8 @@
 }
 
 .pin-dot {
-    width: 20px;
-    height: 20px;
+    width: 18px;
+    height: 18px;
     border-radius: 50%;
     border: 2px solid var(--border-color);
     background: transparent;
@@ -156,17 +158,18 @@
 .pin-keypad {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 15px;
-    max-width: 300px;
+    gap: 10px;
+    max-width: 260px;
+    margin-bottom: 10px;
 }
 
 .pin-key {
-    width: 80px;
-    height: 80px;
+    width: 70px;
+    height: 70px;
     background: var(--bg-secondary);
     border: 2px solid var(--border-color);
     border-radius: 50%;
-    font-size: 28px;
+    font-size: 24px;
     font-weight: 600;
     color: var(--text-primary);
     cursor: pointer;
@@ -229,8 +232,8 @@
 
 /* Back Button */
 .back-button {
-    margin-top: 20px;
-    padding: 12px 24px;
+    margin-top: 10px;
+    padding: 10px 20px;
     background: transparent;
     border: 2px solid var(--border-color);
     border-radius: 10px;
@@ -240,6 +243,7 @@
     cursor: pointer;
     transition: all 0.3s ease;
     align-self: center;
+    flex-shrink: 0;
 }
 
 .back-button:hover {
@@ -247,33 +251,72 @@
     border-color: var(--accent-primary);
 }
 
-/* Tablet Landscape Optimization */
-@media (min-width: 768px) and (orientation: landscape) {
+/* iPad Small (1024px) Landscape Optimization */
+@media (max-width: 1024px) and (orientation: landscape) {
     .login-container {
         max-height: 85vh;
-        padding: 30px 40px;
+        padding: 20px 30px;
+    }
+    
+    .login-header {
+        margin-bottom: 15px;
+    }
+    
+    .login-header h1 {
+        font-size: 28px;
+        margin-bottom: 3px;
+    }
+    
+    .login-header h2 {
+        font-size: 16px;
+    }
+    
+    .login-method-tabs {
+        margin-bottom: 15px;
+    }
+    
+    .login-tab {
+        padding: 10px 16px;
+        font-size: 13px;
     }
     
     .pin-entry-container {
-        gap: 25px;
-        padding: 10px 0;
+        gap: 15px;
+        padding: 5px 0;
     }
     
-    .pin-keypad {
+    .pin-dots {
         gap: 12px;
     }
     
+    .pin-dot {
+        width: 16px;
+        height: 16px;
+    }
+    
+    .pin-keypad {
+        gap: 8px;
+        max-width: 230px;
+        margin-bottom: 5px;
+    }
+    
     .pin-key {
-        width: 70px;
-        height: 70px;
-        font-size: 26px;
+        width: 60px;
+        height: 60px;
+        font-size: 22px;
+    }
+    
+    .back-button {
+        margin-top: 8px;
+        padding: 8px 16px;
+        font-size: 13px;
     }
 }
 
-/* iPad and Android Tablet Specific */
-@media (max-width: 1366px) and (orientation: landscape) {
+/* Larger Tablets (1366px) Landscape */
+@media (min-width: 1025px) and (max-width: 1366px) and (orientation: landscape) {
     .login-container {
-        max-height: 80vh;
+        max-height: 85vh;
         padding: 25px 35px;
     }
     
@@ -306,17 +349,17 @@
     
     .pin-keypad {
         gap: 10px;
-        max-width: 280px;
+        max-width: 260px;
     }
     
     .pin-key {
-        width: 65px;
-        height: 65px;
+        width: 70px;
+        height: 70px;
         font-size: 24px;
     }
     
     .back-button {
-        margin-top: 15px;
+        margin-top: 10px;
         padding: 10px 20px;
     }
 }
