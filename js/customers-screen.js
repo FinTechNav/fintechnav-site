@@ -450,7 +450,18 @@ class CustomersScreen {
         ${this.selectedCustomers.size > 0 ? this.renderBulkActions() : ''}
 
         <div class="customers-stats">
-          <span>Showing ${this.filteredCustomers.length} of ${this.customers.length} customers</span>
+          <div class="stats-left">
+            <span>Showing ${this.filteredCustomers.length} of ${this.customers.length} customers</span>
+            ${
+              this.currentView === 'grid'
+                ? `
+              <button class="btn-select-all" onclick="customersScreen.toggleSelectAll(!${this.filteredCustomers.every((c) => this.selectedCustomers.has(c.id))})">
+                ${this.filteredCustomers.every((c) => this.selectedCustomers.has(c.id)) ? '☐ Deselect All' : '☑ Select All'}
+              </button>
+            `
+                : ''
+            }
+          </div>
           ${this.selectedCustomers.size > 0 ? `<span class="selected-count">${this.selectedCustomers.size} selected</span>` : ''}
         </div>
 
@@ -1370,16 +1381,6 @@ class CustomersScreen {
     const allSelected = this.filteredCustomers.every((c) => this.selectedCustomers.has(c.id));
 
     return `
-      <div class="grid-select-all">
-        <label>
-          <input 
-            type="checkbox" 
-            ${allSelected ? 'checked' : ''}
-            onchange="customersScreen.toggleSelectAll(this.checked)"
-          />
-          Select All
-        </label>
-      </div>
       ${this.filteredCustomers
         .map(
           (customer) => `
@@ -1403,15 +1404,21 @@ class CustomersScreen {
         </div>
         <div class="customer-badges">
           ${customer.customer_status === 'vip' ? '<span class="badge badge-vip">VIP</span>' : ''}
-          ${customer.club_member_status === 'active' ? '<span class="badge badge-club">Club Member</span>' : ''}
-          ${customer.allocation_list_status === 'active' ? '<span class="badge badge-allocation">Allocation</span>' : ''}
+          ${customer.club_member_status === 'active' ? '<span class="badge badge-club">Club</span>' : ''}
+          ${customer.on_allocation_list ? '<span class="badge badge-allocation">Allocation</span>' : ''}
         </div>
         <div class="customer-actions">
           <button class="btn-icon" onclick="event.stopPropagation(); customersScreen.createOrder('${customer.id}')" title="Create Order">
-            🛒
+            <img src="https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-22.svg" class="action-icon menu-icon-pos" alt="POS">
           </button>
-          <button class="btn-icon" onclick="event.stopPropagation(); customersScreen.editCustomer('${customer.id}')" title="Edit">
-            ✏️
+          <button class="btn-icon" onclick="event.stopPropagation(); customersScreen.emailCustomer('${customer.id}')" title="Email">
+            📧
+          </button>
+          <button class="btn-icon" onclick="event.stopPropagation(); customersScreen.textCustomer('${customer.id}')" title="Text">
+            💬
+          </button>
+          <button class="btn-icon" onclick="event.stopPropagation(); customersScreen.addNote('${customer.id}')" title="Note">
+            📝
           </button>
         </div>
       </div>
@@ -1534,8 +1541,17 @@ class CustomersScreen {
     if (searchInput) {
       searchInput.addEventListener('input', (e) => {
         this.searchTerm = e.target.value;
+        const cursorPosition = e.target.selectionStart;
         this.applyFilters();
         this.render();
+        // Restore focus and cursor position after render
+        setTimeout(() => {
+          const newSearchInput = document.getElementById('customer-search');
+          if (newSearchInput) {
+            newSearchInput.focus();
+            newSearchInput.setSelectionRange(cursorPosition, cursorPosition);
+          }
+        }, 0);
       });
     }
 
