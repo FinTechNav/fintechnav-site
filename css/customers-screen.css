@@ -1165,3 +1165,184 @@
     margin-top: 8px;
   }
 }
+
+/* Light Mode Theme */
+[data-theme="light"] .customers-screen {
+  background: #fafafa;
+  color: #2c3e50;
+}
+
+[data-theme="light"] .customers-header h1 {
+  color: #2c3e50;
+}
+
+[data-theme="light"] .customers-header p {
+  color: #7f8c8d;
+}
+
+[data-theme="light"] .search-box input {
+  background: #ffffff;
+  border: 1px solid #cccccc;
+  color: #2c3e50;
+}
+
+[data-theme="light"] .search-box input::placeholder {
+  color: #95a5a6;
+}
+
+[data-theme="light"] .grouping-selector select {
+  background: #ffffff;
+  border: 1px solid #cccccc;
+  color: #2c3e50;
+}
+
+[data-theme="light"] .btn-filter,
+[data-theme="light"] .btn-map {
+  background: #ffffff;
+  color: #2c3e50;
+  border: 1px solid #cccccc;
+}
+
+[data-theme="light"] .btn-filter:hover,
+[data-theme="light"] .btn-map:hover {
+  background: #f0f0f0;
+}
+
+[data-theme="light"] .btn-filter.active,
+[data-theme="light"] .btn-map.active {
+  background: rgba(243, 156, 18, 0.1);
+  border-color: #f39c12;
+}
+
+[data-theme="light"] .view-btn {
+  background: #ffffff;
+  border: 1px solid #cccccc;
+  color: #7f8c8d;
+}
+
+[data-theme="light"] .view-btn:hover {
+  background: #f0f0f0;
+  color: #2c3e50;
+}
+
+[data-theme="light"] .view-btn.active {
+  background: rgba(243, 156, 18, 0.1);
+  color: #f39c12;
+  border-color: #f39c12;
+}
+
+[data-theme="light"] .btn-primary,
+[data-theme="light"] .btn-secondary {
+  background: #ffffff;
+  color: #2c3e50;
+  border: 1px solid #cccccc;
+}
+
+[data-theme="light"] .btn-primary:hover,
+[data-theme="light"] .btn-secondary:hover {
+  background: #f0f0f0;
+}
+
+[data-theme="light"] .customers-stats {
+  color: #7f8c8d;
+}
+
+[data-theme="light"] .customer-card {
+  background: #ffffff;
+  border: 1px solid #e0e0e0;
+}
+
+[data-theme="light"] .customer-card:hover {
+  background: rgba(243, 156, 18, 0.05);
+  border-color: #f39c12;
+}
+
+[data-theme="light"] .customer-name {
+  color: #2c3e50;
+}
+
+[data-theme="light"] .customer-email,
+[data-theme="light"] .customer-phone {
+  color: #7f8c8d;
+}
+
+[data-theme="light"] .stat-item {
+  color: #7f8c8d;
+}
+
+[data-theme="light"] .stat-item strong {
+  color: #2c3e50;
+}
+
+[data-theme="light"] .btn-icon,
+[data-theme="light"] .btn-action {
+  background: #ffffff;
+  border: 2px solid #e0e0e0;
+}
+
+[data-theme="light"] .btn-icon:hover,
+[data-theme="light"] .btn-action:hover {
+  background: rgba(243, 156, 18, 0.1);
+  border-color: #f39c12;
+}
+
+[data-theme="light"] .customers-table {
+  background: #ffffff;
+  border: 1px solid #e0e0e0;
+}
+
+[data-theme="light"] .customers-table thead {
+  background: #f8f8f8;
+}
+
+[data-theme="light"] .customers-table th {
+  color: #f39c12;
+}
+
+[data-theme="light"] .customers-table tbody tr {
+  border-bottom: 1px solid #f0f0f0;
+}
+
+[data-theme="light"] .customers-table tbody tr:hover {
+  background: rgba(243, 156, 18, 0.05);
+}
+
+[data-theme="light"] .customers-table td {
+  color: #2c3e50;
+}
+
+[data-theme="light"] .bulk-actions-bar {
+  background: rgba(243, 156, 18, 0.1);
+  border: 1px solid rgba(243, 156, 18, 0.3);
+}
+
+[data-theme="light"] .btn-bulk {
+  background: #ffffff;
+  border: 1px solid #e0e0e0;
+  color: #2c3e50;
+}
+
+[data-theme="light"] .btn-bulk:hover {
+  background: #f0f0f0;
+}
+
+[data-theme="light"] .modal-content {
+  background: #ffffff;
+  border: 2px solid #e0e0e0;
+}
+
+[data-theme="light"] .modal-header {
+  border-bottom: 1px solid #e0e0e0;
+}
+
+[data-theme="light"] .modal-close {
+  color: #7f8c8d;
+}
+
+[data-theme="light"] .filter-section h3 {
+  color: #f39c12;
+}
+
+[data-theme="light"] .filter-section label {
+  color: #2c3e50;
+}
