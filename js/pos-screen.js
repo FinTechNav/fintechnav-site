@@ -1036,12 +1036,14 @@ const POSScreen = {
     const itemsHtml = items
       .map(
         (item) => `
-      <div style="display: flex; justify-content: space-between; padding: 8px 0;">
-        <div style="flex: 1; text-align: left;">
-          <div style="color: #e8e8e8; font-size: 14px; font-weight: 600;">${item.quantity} ${item.name}</div>
-          <div style="color: #95a5a6; font-size: 12px;">${item.vintage || ''} ${item.varietal || ''}</div>
+      <div style="margin-bottom: 15px;">
+        <div style="display: flex; justify-content: space-between; align-items: baseline;">
+          <div style="flex: 1;">
+            <div style="color: #ffffff; font-size: 11pt; font-weight: 600; font-family: Montserrat, sans-serif;">${item.quantity} ${item.name}</div>
+            <div style="color: #dcdcdc; font-size: 9pt; font-family: Montserrat, sans-serif; margin-top: 2px;">${item.vintage || 'null'} - ${item.varietal || 'null'}</div>
+          </div>
+          <div style="color: #ffffff; font-weight: 600; font-size: 11pt; font-family: Montserrat, sans-serif; margin-left: 20px;">$${(parseFloat(item.price) * item.quantity).toFixed(2)}</div>
         </div>
-        <div style="color: #e8e8e8; font-weight: 600; font-size: 14px;">$${(parseFloat(item.price) * item.quantity).toFixed(2)}</div>
       </div>
     `
       )
@@ -1049,28 +1051,28 @@ const POSScreen = {
 
     console.log('✅ [MODAL] Payment received modal HTML built');
     modal.innerHTML = `
-      <div style="background: #5a5a5a; padding: 40px; border-radius: 20px; max-width: 800px; width: 90%; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);">
+      <div style="background: #9b9b9b; padding: 40px; border-radius: 20px; max-width: 800px; width: 90%; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);">
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px;">
           <!-- Left Side: Sale Summary -->
-          <div style="border-right: 1px solid rgba(255, 255, 255, 0.1); padding-right: 30px;">
-            <h3 style="color: #e8e8e8; margin-bottom: 20px; font-size: 18px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">SALE SUMMARY</h3>
+          <div style="border-right: 1px solid rgba(255, 255, 255, 0.2); padding-right: 30px;">
+            <h3 style="color: #ffffff; margin-bottom: 20px; font-size: 19px; font-weight: 600; font-family: Montserrat, sans-serif;">SALE SUMMARY</h3>
             
             <div style="margin-bottom: 20px;">
               ${itemsHtml}
             </div>
             
-            <div style="padding-top: 15px; border-top: 1px solid rgba(255, 255, 255, 0.1);">
+            <div style="padding-top: 15px; border-top: 1px solid rgba(255, 255, 255, 0.3);">
               <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                <span style="color: #95a5a6; font-size: 14px;">Subtotal</span>
-                <span style="color: #e8e8e8; font-size: 14px; font-weight: 600;">$${subtotal.toFixed(2)}</span>
+                <span style="color: #dcdcdc; font-size: 11pt; font-family: Montserrat, sans-serif; font-weight: 600;">Subtotal</span>
+                <span style="color: #ffffff; font-size: 11pt; font-family: Montserrat, sans-serif; font-weight: 600;">$${subtotal.toFixed(2)}</span>
               </div>
               <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
-                <span style="color: #95a5a6; font-size: 14px;">Tax</span>
-                <span style="color: #e8e8e8; font-size: 14px; font-weight: 600;">$${tax.toFixed(2)}</span>
+                <span style="color: #dcdcdc; font-size: 11pt; font-family: Montserrat, sans-serif; font-weight: 600;">Tax</span>
+                <span style="color: #ffffff; font-size: 11pt; font-family: Montserrat, sans-serif; font-weight: 600;">$${tax.toFixed(2)}</span>
               </div>
-              <div style="display: flex; justify-content: space-between; padding-top: 12px; border-top: 1px solid rgba(255, 255, 255, 0.1);">
-                <span style="color: #f39c12; font-size: 16px; font-weight: 700;">Total</span>
-                <span style="color: #e8e8e8; font-size: 16px; font-weight: 700;">$${total.toFixed(2)}</span>
+              <div style="display: flex; justify-content: space-between; padding-top: 12px; border-top: 1px solid rgba(255, 255, 255, 0.3);">
+                <span style="color: #ffffff; font-size: 15pt; font-family: Montserrat, sans-serif; font-weight: 600;">Total</span>
+                <span style="color: #ffffff; font-size: 15pt; font-family: Montserrat, sans-serif; font-weight: 600;">$${total.toFixed(2)}</span>
               </div>
             </div>
           </div>
@@ -1078,44 +1080,45 @@ const POSScreen = {
           <!-- Right Side: Payment Info -->
           <div style="display: flex; flex-direction: column; justify-content: center; text-align: center;">
             <div style="margin-bottom: 15px;">
-              <img src="https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/AllModes/AllModes-icons-70.svg" alt="Payment Approved" style="width: 80px; height: 80px;" />
+              <img src="https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/AllModes/AllModes-icons-70.svg" alt="Payment Approved" style="width: 100px; height: 100px;" />
             </div>
-            <h2 style="color: #27ae60; margin-bottom: 10px; font-size: 28px; font-weight: 700;">PAYMENT RECEIVED</h2>
-            <div style="font-size: 15px; color: #95a5a6; margin-bottom: 25px; font-weight: 500;">Transaction Approved</div>
+            <h2 style="color: #95ff8d; margin-bottom: 10px; font-size: 25pt; font-weight: 600; font-family: Montserrat, sans-serif;">PAYMENT RECEIVED</h2>
+            <div style="font-size: 13pt; color: #dcdcdc; margin-bottom: 25px; font-weight: 500; font-family: Montserrat, sans-serif;">Transaction Approved</div>
             
-            <div style="background: rgba(255, 255, 255, 0.1); padding: 20px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.1); margin-bottom: 20px; text-align: left;">
+            <div style="background: rgba(0, 0, 0, 0.15); padding: 20px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.2); margin-bottom: 20px; text-align: left;">
               <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-                <span style="color: #95a5a6; font-size: 13px;">Payment Method:</span>
-                <span style="color: #e8e8e8; font-weight: 600; font-size: 13px;">${paymentMethod}</span>
+                <span style="color: #dcdcdc; font-size: 13px; font-family: Montserrat, sans-serif;">Payment Method:</span>
+                <span style="color: #ffffff; font-weight: 600; font-size: 13px; font-family: Montserrat, sans-serif;">${paymentMethod}</span>
               </div>
               <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-                <span style="color: #95a5a6; font-size: 13px;">Card:</span>
-                <span style="color: #e8e8e8; font-weight: 600; font-size: 13px;">${cardType} ****${cardLast4}</span>
+                <span style="color: #dcdcdc; font-size: 13px; font-family: Montserrat, sans-serif;">Card:</span>
+                <span style="color: #ffffff; font-weight: 600; font-size: 13px; font-family: Montserrat, sans-serif;">${cardType} ****${cardLast4}</span>
               </div>
               <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
-                <span style="color: #95a5a6; font-size: 13px;">Amount:</span>
-                <span style="color: #e8e8e8; font-weight: 600; font-size: 13px;">$${total.toFixed(2)}</span>
+                <span style="color: #dcdcdc; font-size: 13px; font-family: Montserrat, sans-serif;">Amount:</span>
+                <span style="color: #ffffff; font-weight: 600; font-size: 13px; font-family: Montserrat, sans-serif;">$${total.toFixed(2)}</span>
               </div>
-              <div style="display: flex; justify-content: space-between; padding-top: 10px; border-top: 1px solid rgba(255, 255, 255, 0.1);">
-                <span style="color: #95a5a6; font-size: 13px;">Auth Code:</span>
-                <span style="color: #27ae60; font-weight: 700; font-size: 13px;">${authCode}</span>
+              <div style="display: flex; justify-content: space-between; padding-top: 10px; border-top: 1px solid rgba(255, 255, 255, 0.2);">
+                <span style="color: #dcdcdc; font-size: 13px; font-family: Montserrat, sans-serif;">Auth Code:</span>
+                <span style="color: #95ff8d; font-weight: 600; font-size: 13px; font-family: Montserrat, sans-serif;">${authCode}</span>
               </div>
             </div>
             
-            <div style="color: #95a5a6; font-size: 13px; margin-bottom: 20px;">Order #${orderNumber}</div>
+            <div style="color: #dcdcdc; font-size: 13px; margin-bottom: 20px; font-family: Montserrat, sans-serif;">Order #${orderNumber}</div>
             
             <button onclick="POSScreen.closePaymentReceivedScreen()" style="
               width: 100%;
               padding: 14px;
-              background: #27ae60;
-              border: none;
+              background: transparent;
+              border: 2px solid #ffffff;
               border-radius: 50px;
-              color: white;
-              font-size: 16px;
+              color: #ffffff;
+              font-size: 14pt;
               font-weight: 700;
+              font-family: Montserrat, sans-serif;
               cursor: pointer;
               transition: all 0.2s;
-            " onmouseover="this.style.background='#229954'" onmouseout="this.style.background='#27ae60'">Done (ESC)</button>
+            " onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='transparent'">Done (ESC)</button>
           </div>
         </div>
       </div>
