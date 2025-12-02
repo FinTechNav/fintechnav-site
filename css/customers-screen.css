@@ -627,6 +627,12 @@
   margin-left: 10px;
 }
 
+.status-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
 .badge {
   padding: 4px 12px;
   border-radius: 20px;
@@ -636,6 +642,7 @@
   letter-spacing: 0.5px;
   background: transparent;
   border: 2px solid;
+  white-space: nowrap;
 }
 
 .badge-vip {
