@@ -450,7 +450,19 @@ class CustomersScreen {
         ${this.selectedCustomers.size > 0 ? this.renderBulkActions() : ''}
 
         <div class="customers-stats">
-          <span>Showing ${this.filteredCustomers.length} of ${this.customers.length} customers</span>
+          <div class="stats-left">
+            <span>Showing ${this.filteredCustomers.length} of ${this.customers.length} customers</span>
+            ${
+              this.currentView === 'grid' &&
+              !this.filteredCustomers.every((c) => this.selectedCustomers.has(c.id))
+                ? `
+              <button class="btn-select-all" onclick="customersScreen.toggleSelectAll(true)">
+                ☑ Select All
+              </button>
+            `
+                : ''
+            }
+          </div>
           ${this.selectedCustomers.size > 0 ? `<span class="selected-count">${this.selectedCustomers.size} selected</span>` : ''}
         </div>
 
