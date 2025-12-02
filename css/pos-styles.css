@@ -47,6 +47,7 @@ body {
     flex-direction: column;
     transition: width 0.3s ease, transform 0.3s ease;
     overflow: hidden;
+    overflow-y: hidden;
     position: relative;
     z-index: 1000;
 }

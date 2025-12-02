@@ -438,7 +438,7 @@ const ProductsScreen = {
     `;
 
     modal.innerHTML = `
-      <div style="background: #2c3e50; padding: 30px; border-radius: 12px; max-width: 800px; max-height: 80vh; overflow-y: auto; color: #e8e8e8;">
+      <div style="background: #444443; padding: 30px; border-radius: 12px; max-width: 800px; max-height: 80vh; overflow-y: auto; color: #e8e8e8;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
           <h2 style="color: #f39c12; margin: 0;">${isWine ? 'Wine' : 'Product'} Details</h2>
           <button onclick="this.closest('div[style*=fixed]').remove()" 
