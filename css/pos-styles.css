@@ -1807,8 +1807,7 @@ body {
 /* Modal Text Colors */
 #cashPaymentModal h2,
 #cashPaymentModal h3,
-#processingModal h2,
-#paymentReceivedModal h2 {
+#processingModal h2 {
     color: var(--accent-primary) !important;
 }
 

@@ -622,7 +622,7 @@ const POSScreen = {
         <div class="processing-content">
           <img id="swirlingWineOverlay" src="https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/ProcessingWait/SwishyCupProcessing-74.svg" alt="Processing" style="width: 80px; height: 80px; margin: 0 auto 20px;" />
           <h3 id="processingMessage">${message}</h3>
-          <p style="color: #666; margin-top: 10px; font-size: 0.9rem;">
+          <p style="color: #e8e8e8; margin-top: 10px; font-size: 16px; font-weight: 500;">
             Please wait...
           </p>
         </div>
