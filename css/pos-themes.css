@@ -45,8 +45,7 @@
   /* Borders */
   --border-color: rgba(255, 255, 255, 0.1);
   --border-hover: rgba(255, 255, 255, 0.3);
-  --border-modal: #dcdcdc;
-  --border-modal-internal: rgba(255, 255, 255, 0.2);
+  --border-modal: rgba(255, 255, 255, 0.2);
   --border-modal-strong: rgba(255, 255, 255, 0.3);
   --border-modal-box: rgba(255, 255, 255, 0.3);
   --border-modal-button: rgba(255, 255, 255, 0.3);
@@ -108,8 +107,7 @@
   /* Borders */
   --border-color: #e0e0e0;
   --border-hover: #cccccc;
-  --border-modal: #444443;
-  --border-modal-internal: rgba(0, 0, 0, 0.2);
+  --border-modal: rgba(0, 0, 0, 0.2);
   --border-modal-strong: rgba(0, 0, 0, 0.3);
   --border-modal-box: rgba(0, 0, 0, 0.3);
   --border-modal-button: rgba(0, 0, 0, 0.3);

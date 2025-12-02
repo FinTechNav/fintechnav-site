@@ -1054,7 +1054,7 @@ const POSScreen = {
       <div style="background: var(--bg-modal); padding: 40px; border-radius: 20px; max-width: 800px; width: 90%; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);">
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px;">
           <!-- Left Side: Sale Summary -->
-          <div style="border-right: 1px solid var(--border-modal-internal); padding-right: 30px;">
+          <div style="border-right: 1px solid var(--border-modal); padding-right: 30px;">
             <h3 style="color: var(--text-modal); margin-bottom: 20px; font-size: 19px; font-weight: 600; font-family: Montserrat, sans-serif;">SALE SUMMARY</h3>
             
             <div style="margin-bottom: 20px;">
@@ -1094,7 +1094,7 @@ const POSScreen = {
                 <span style="color: var(--text-modal-secondary); font-size: 13px; font-family: Montserrat, sans-serif;">Card:</span>
                 <span style="color: var(--text-modal-box); font-weight: 600; font-size: 13px; font-family: Montserrat, sans-serif;">${cardType} ****${cardLast4}</span>
               </div>
-              <div style="display: flex; justify-content: space-between; margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid var(--border-modal-internal);">
+              <div style="display: flex; justify-content: space-between; margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid var(--border-modal);">
                 <span style="color: var(--text-modal-secondary); font-size: 13px; font-family: Montserrat, sans-serif;">Amount:</span>
                 <span style="color: var(--text-modal-box); font-weight: 600; font-size: 13px; font-family: Montserrat, sans-serif;">$${total.toFixed(2)}</span>
               </div>
