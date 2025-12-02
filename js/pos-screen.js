@@ -1052,7 +1052,9 @@ const POSScreen = {
           
           <!-- Right Side: Payment Info -->
           <div style="display: flex; flex-direction: column; justify-content: center; text-align: center;">
-            <div style="font-size: 64px; margin-bottom: 15px;">🍷✨</div>
+            <div style="margin-bottom: 15px;">
+              <img src="https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/AllModes/AllModes-icons-70.svg" alt="Payment Approved" style="width: 80px; height: 80px;" />
+            </div>
             <h2 style="color: #27ae60; margin-bottom: 10px; font-size: 28px; font-weight: 700;">PAYMENT RECEIVED</h2>
             <div style="font-size: 15px; color: #7f8c8d; margin-bottom: 25px; font-weight: 500;">Transaction Approved</div>
             
@@ -1160,7 +1162,9 @@ const POSScreen = {
     `;
 
     content.innerHTML = `
-      <div style="font-size: 64px; margin-bottom: 20px;">🍷</div>
+      <div style="margin-bottom: 20px;">
+        <img src="https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/AllModes/AllModes-icons-69.svg" alt="Processing" style="width: 80px; height: 80px;" />
+      </div>
       <h2 style="color: #2c3e50; margin-bottom: 10px; font-size: 24px; font-weight: 600;">Processing payment on terminal...</h2>
       <p style="color: #2c3e50; font-size: 16px; font-weight: 500;">Please wait...</p>
     `;
@@ -1466,7 +1470,9 @@ const POSScreen = {
     `;
 
     content.innerHTML = `
-      <div style="font-size: 64px; margin-bottom: 20px;">🍷💔</div>
+      <div style="margin-bottom: 20px;">
+        <img src="https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/AllModes/AllModes-icons-71.svg" alt="Payment Declined" style="width: 80px; height: 80px;" />
+      </div>
       <h2 style="color: #c0392b; margin: 0 0 25px 0; font-size: 26px; font-weight: 700;">
         PAYMENT DECLINED
       </h2>
