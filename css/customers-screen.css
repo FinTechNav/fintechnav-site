@@ -610,13 +610,21 @@
   border-color: rgba(243, 156, 18, 0.5);
 }
 
-/* List view action buttons - smaller and horizontal */
+/* List view action buttons - stacked 2x2 layout */
 .actions-cell {
   white-space: nowrap;
+  min-width: 80px;
+}
+
+.actions-cell-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  justify-items: center;
 }
 
 .btn-action {
-  padding: 6px 8px;
+  padding: 6px;
   background: transparent;
   border: none;
   cursor: pointer;
@@ -624,7 +632,9 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 18px;
+  font-size: 20px;
+  width: 32px;
+  height: 32px;
 }
 
 .btn-action:hover {
@@ -633,8 +643,8 @@
 }
 
 .action-icon {
-  width: 20px;
-  height: 20px;
+  width: 22px;
+  height: 22px;
 }
 
 /* Sort icon styling */

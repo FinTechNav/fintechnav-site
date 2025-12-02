@@ -1486,18 +1486,20 @@ class CustomersScreen {
                 ${customer.on_allocation_list ? '<span class="badge badge-allocation">Allocation</span>' : ''}
               </td>
               <td onclick="event.stopPropagation()" class="actions-cell">
-                <button class="btn-action" onclick="customersScreen.createOrder('${customer.id}')" title="Create Order">
-                  <img src="https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-22.svg" class="action-icon menu-icon-pos" alt="POS">
-                </button>
-                <button class="btn-action" onclick="customersScreen.emailCustomer('${customer.id}')" title="Email">
-                  📧
-                </button>
-                <button class="btn-action" onclick="customersScreen.textCustomer('${customer.id}')" title="Text">
-                  💬
-                </button>
-                <button class="btn-action" onclick="customersScreen.addNote('${customer.id}')" title="Note">
-                  📝
-                </button>
+                <div class="actions-cell-container">
+                  <button class="btn-action" onclick="customersScreen.createOrder('${customer.id}')" title="Create Order">
+                    <img src="https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-22.svg" class="action-icon menu-icon-pos" alt="POS">
+                  </button>
+                  <button class="btn-action" onclick="customersScreen.emailCustomer('${customer.id}')" title="Email">
+                    📧
+                  </button>
+                  <button class="btn-action" onclick="customersScreen.textCustomer('${customer.id}')" title="Text">
+                    💬
+                  </button>
+                  <button class="btn-action" onclick="customersScreen.addNote('${customer.id}')" title="Note">
+                    📝
+                  </button>
+                </div>
               </td>
             </tr>
           `
