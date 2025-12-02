@@ -13,6 +13,7 @@ class CustomersScreen {
     this.sortField = 'last_name';
     this.sortDirection = 'asc';
     this.showMap = localStorage.getItem('showMap') === 'true';
+    this.viewBeforeMap = null; // Track view before opening map
     this.map = null;
     this.markers = [];
     this.drawingManager = null;
@@ -549,6 +550,25 @@ class CustomersScreen {
     }
 
     this.showMap = !this.showMap;
+
+    if (this.showMap) {
+      // Opening map - save current view and switch to grid
+      if (this.currentView === 'list') {
+        this.viewBeforeMap = 'list';
+        this.currentView = 'grid';
+        localStorage.setItem('customerView', 'grid');
+      } else {
+        this.viewBeforeMap = null; // Was already in grid mode
+      }
+    } else {
+      // Closing map - restore previous view if it was list
+      if (this.viewBeforeMap === 'list') {
+        this.currentView = 'list';
+        localStorage.setItem('customerView', 'list');
+      }
+      this.viewBeforeMap = null;
+    }
+
     localStorage.setItem('showMap', this.showMap);
     this.render();
   }
@@ -570,6 +590,14 @@ class CustomersScreen {
   clearFilterAndCloseMap() {
     this.removePolygon();
     this.showMap = false;
+
+    // Restore previous view if it was list
+    if (this.viewBeforeMap === 'list') {
+      this.currentView = 'list';
+      localStorage.setItem('customerView', 'list');
+    }
+    this.viewBeforeMap = null;
+
     localStorage.setItem('showMap', this.showMap);
     this.closeClearFilterModal();
     this.render();
@@ -577,6 +605,14 @@ class CustomersScreen {
 
   keepFilterAndCloseMap() {
     this.showMap = false;
+
+    // Restore previous view if it was list
+    if (this.viewBeforeMap === 'list') {
+      this.currentView = 'list';
+      localStorage.setItem('customerView', 'list');
+    }
+    this.viewBeforeMap = null;
+
     localStorage.setItem('showMap', this.showMap);
     this.closeClearFilterModal();
     this.render();
