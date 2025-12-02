@@ -11,8 +11,6 @@
   --bg-modal: #9b9b9b;
   --bg-modal-dark: #727272;
   --bg-modal-overlay: rgba(0, 0, 0, 0.5);
-  --bg-modal-box: #5a5a5a;
-  --bg-modal-button: #5a5a5a;
   
   /* Text Colors */
   --text-primary: #dcdcdc;
@@ -22,8 +20,6 @@
   --text-modal: #ffffff;
   --text-modal-secondary: #dcdcdc;
   --text-modal-subtitle: #dcdcdc;
-  --text-modal-box: #ffffff;
-  --text-modal-button: #ffffff;
   
   /* Accent Colors */
   --accent-primary: #c98235;
@@ -47,8 +43,6 @@
   --border-hover: rgba(255, 255, 255, 0.3);
   --border-modal: rgba(255, 255, 255, 0.2);
   --border-modal-strong: rgba(255, 255, 255, 0.3);
-  --border-modal-box: rgba(255, 255, 255, 0.3);
-  --border-modal-button: rgba(255, 255, 255, 0.3);
   
   /* Sidebar */
   --sidebar-bg: #666056;
@@ -73,8 +67,6 @@
   --bg-modal: #c4c4c4;
   --bg-modal-dark: #f2f2f2;
   --bg-modal-overlay: rgba(255, 255, 255, 0.7);
-  --bg-modal-box: #ffffff;
-  --bg-modal-button: #ffffff;
   
   /* Text Colors */
   --text-primary: #444443;
@@ -84,8 +76,6 @@
   --text-modal: #000000;
   --text-modal-secondary: #4f4b46;
   --text-modal-subtitle: #4f4b46;
-  --text-modal-box: #000000;
-  --text-modal-button: #000000;
   
   /* Accent Colors */
   --accent-primary: #b75c11;
@@ -109,8 +99,6 @@
   --border-hover: #cccccc;
   --border-modal: rgba(0, 0, 0, 0.2);
   --border-modal-strong: rgba(0, 0, 0, 0.3);
-  --border-modal-box: rgba(0, 0, 0, 0.3);
-  --border-modal-button: rgba(0, 0, 0, 0.3);
   
   /* Sidebar */
   --sidebar-bg: #eae5dc;
