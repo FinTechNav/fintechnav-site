@@ -440,7 +440,7 @@ body {
     justify-content: space-between;
     align-items: center;
     padding: 15px;
-    background: var(--bg-card);
+    background: transparent;
     border-radius: 12px;
     margin-bottom: 10px;
     border: 1px solid var(--border-color);
@@ -551,36 +551,28 @@ body {
 
 .pay-button-card,
 .pay-button-cash {
-    padding: 14px;
-    border: none;
-    border-radius: 10px;
-    color: white;
-    font-size: 16px;
+    padding: 14px 20px;
+    border: 2px solid var(--border-color);
+    border-radius: 50px;
+    background: transparent;
+    color: var(--accent-primary);
+    font-size: 18px;
     font-weight: 700;
     cursor: pointer;
     transition: all 0.3s ease;
     min-height: 50px;
     touch-action: manipulation;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
 }
 
-.pay-button-card {
-    background: linear-gradient(135deg, #3498db, #2980b9);
-}
-
-.pay-button-card:hover {
-    background: linear-gradient(135deg, #2980b9, #21618c);
-    transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(52, 152, 219, 0.4);
-}
-
-.pay-button-cash {
-    background: linear-gradient(135deg, #27ae60, #229954);
-}
-
+.pay-button-card:hover,
 .pay-button-cash:hover {
-    background: linear-gradient(135deg, #229954, #1e8449);
+    border-color: var(--accent-primary);
     transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(39, 174, 96, 0.4);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .pay-button-card:active,
@@ -590,10 +582,16 @@ body {
 
 .pay-button-card:disabled,
 .pay-button-cash:disabled {
-    background: var(--bg-hover);
+    opacity: 0.5;
     cursor: not-allowed;
     transform: none;
-    opacity: 0.5;
+}
+
+/* Payment button icons */
+.pay-button-icon {
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
 }
 
 .empty-cart {
