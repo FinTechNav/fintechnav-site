@@ -385,10 +385,11 @@ class CustomersScreen {
 
         <div class="customers-toolbar">
           <div class="search-box">
+            <img src="https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-15.svg" class="search-icon menu-icon-search" alt="Search">
             <input 
               type="text" 
               id="customer-search" 
-              placeholder="Search by name, email, phone, or customer code..." 
+              placeholder="Search customers..." 
               value="${this.searchTerm}"
             />
           </div>
@@ -408,12 +409,14 @@ class CustomersScreen {
           </div>
 
           <button class="btn-filter ${activeFilterCount > 0 ? 'active' : ''}" id="filter-btn" onclick="customersScreen.openFilterModal()">
-            <span class="filter-icon">⚙</span> Filter
+            <img src="https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-33.svg" class="toolbar-icon menu-icon-filter" alt="Filter">
+            Filter
             ${activeFilterCount > 0 ? `<span class="filter-badge">${activeFilterCount}</span>` : ''}
           </button>
 
           <button class="btn-map ${this.showMap ? 'active' : ''}" onclick="customersScreen.toggleMap()" title="Map View">
-            <span class="map-icon">🗺</span> Map
+            <img src="https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-30.svg" class="toolbar-icon menu-icon-map" alt="Map">
+            Map
             ${this.polygonFilter ? '<span class="filter-badge">1</span>' : ''}
           </button>
 
@@ -423,19 +426,25 @@ class CustomersScreen {
               onclick="customersScreen.setView('grid')"
               title="Grid View"
             >
-              ⊞
+              <img src="https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-32.svg" class="toolbar-icon menu-icon-tile" alt="Tile View">
             </button>
             <button 
               class="view-btn ${this.currentView === 'list' ? 'active' : ''}" 
               onclick="customersScreen.setView('list')"
               title="List View"
             >
-              ☰
+              <img src="https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-35.svg" class="toolbar-icon menu-icon-list" alt="List View">
             </button>
           </div>
 
-          <button class="btn-primary" onclick="customersScreen.createCustomer()">+ Add Customer</button>
-          <button class="btn-secondary" onclick="customersScreen.exportCustomers()">Export</button>
+          <button class="btn-primary" onclick="customersScreen.createCustomer()">
+            <img src="https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-27.svg" class="toolbar-icon menu-icon-add-customer" alt="Add Customer">
+            Add Customer
+          </button>
+          <button class="btn-secondary" onclick="customersScreen.exportCustomers()">
+            <img src="https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-31.svg" class="toolbar-icon menu-icon-export" alt="Export">
+            Export
+          </button>
         </div>
 
         ${this.selectedCustomers.size > 0 ? this.renderBulkActions() : ''}

@@ -84,11 +84,22 @@
 
 .search-box {
   flex: 1;
+  position: relative;
+}
+
+.search-icon {
+  position: absolute;
+  left: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 20px;
+  height: 20px;
+  pointer-events: none;
 }
 
 .search-box input {
   width: 100%;
-  padding: 12px 15px;
+  padding: 12px 15px 12px 45px;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 8px;
@@ -105,6 +116,77 @@
   outline: none;
   border-color: #f39c12;
   background: rgba(255, 255, 255, 0.08);
+}
+
+/* Toolbar icon styling */
+.toolbar-icon {
+  width: 20px;
+  height: 20px;
+  margin-right: 8px;
+  vertical-align: middle;
+}
+
+.view-btn .toolbar-icon {
+  margin-right: 0;
+  width: 18px;
+  height: 18px;
+}
+
+/* Theme-based icon switching for customer screen */
+[data-theme="light"] .menu-icon-search {
+  content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-15.svg');
+}
+
+[data-theme="dark"] .menu-icon-search {
+  content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/DarkMode/DarkMode-icons-43.svg');
+}
+
+[data-theme="light"] .menu-icon-filter {
+  content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-33.svg');
+}
+
+[data-theme="dark"] .menu-icon-filter {
+  content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/DarkMode/DarkMode-icons-61.svg');
+}
+
+[data-theme="light"] .menu-icon-map {
+  content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-30.svg');
+}
+
+[data-theme="dark"] .menu-icon-map {
+  content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/DarkMode/DarkMode-icons-58.svg');
+}
+
+[data-theme="light"] .menu-icon-tile {
+  content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-32.svg');
+}
+
+[data-theme="dark"] .menu-icon-tile {
+  content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/DarkMode/DarkMode-icons-60.svg');
+}
+
+[data-theme="light"] .menu-icon-list {
+  content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-35.svg');
+}
+
+[data-theme="dark"] .menu-icon-list {
+  content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/DarkMode/DarkMode-icons-63.svg');
+}
+
+[data-theme="light"] .menu-icon-add-customer {
+  content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-27.svg');
+}
+
+[data-theme="dark"] .menu-icon-add-customer {
+  content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/DarkMode/DarkMode-icons-55.svg');
+}
+
+[data-theme="light"] .menu-icon-export {
+  content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-31.svg');
+}
+
+[data-theme="dark"] .menu-icon-export {
+  content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/DarkMode/DarkMode-icons-59.svg');
 }
 
 .grouping-selector {
