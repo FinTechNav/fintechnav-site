@@ -1340,11 +1340,24 @@ class CustomersScreen {
     console.log('renderBulkActions called, selectedCustomers.size:', this.selectedCustomers.size);
     return `
       <div class="bulk-actions-bar">
-        <button class="btn-bulk" onclick="customersScreen.bulkEmail()">📧 Email Selected</button>
-        <button class="btn-bulk" onclick="customersScreen.bulkExport()">💾 Export Selected</button>
-        <button class="btn-bulk" onclick="customersScreen.bulkAddToClub()">🍷 Add to Club</button>
-        <button class="btn-bulk" onclick="customersScreen.deselectAll()">✕ Deselect All</button>
-        <button class="btn-bulk btn-danger" onclick="customersScreen.bulkDelete()">🗑️ Delete Selected</button>
+        <button class="btn-bulk" onclick="customersScreen.bulkEmail()">
+          📧 Email Selected
+        </button>
+        <button class="btn-bulk" onclick="customersScreen.bulkExport()">
+          <img src="https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-31.svg" class="bulk-icon menu-icon-export" alt="Export">
+          Export Selected
+        </button>
+        <button class="btn-bulk" onclick="customersScreen.bulkAddToClub()">
+          <img src="https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-29.svg" class="bulk-icon menu-icon-club" alt="Club">
+          Add to Club
+        </button>
+        <button class="btn-bulk" onclick="customersScreen.deselectAll()">
+          ✕ Deselect All
+        </button>
+        <button class="btn-bulk btn-danger" onclick="customersScreen.bulkDelete()">
+          <img src="https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-14.svg" class="bulk-icon menu-icon-delete" alt="Delete">
+          Delete Selected
+        </button>
       </div>
     `;
   }
