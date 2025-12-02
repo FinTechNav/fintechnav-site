@@ -2,13 +2,13 @@
 /* Supports dark mode and light mode with toggle capability */
 
 :root[data-theme="dark"] {
-  /* Backgrounds - all same base color, shadows create depth */
-  --bg-primary: #444443;
-  --bg-secondary: #444443;
-  --bg-tertiary: #444443;
-  --bg-card: #444443;
-  --bg-hover: rgba(255, 255, 255, 0.05);
-  --bg-modal: #8e8e8e;
+  /* Backgrounds */
+  --bg-primary: #4a4a4a;
+  --bg-secondary: #5a5a5a;
+  --bg-tertiary: #3a3a3a;
+  --bg-card: rgba(255, 255, 255, 0.08);
+  --bg-hover: rgba(255, 255, 255, 0.12);
+  --bg-modal: #9b9b9b;
   --bg-modal-dark: #727272;
   --bg-modal-overlay: rgba(0, 0, 0, 0.5);
   
@@ -18,6 +18,7 @@
   --text-tertiary: #95a5a6;
   --text-muted: #7f8c8d;
   --text-modal: #ffffff;
+  --text-modal-secondary: #dcdcdc;
   --text-modal-subtitle: #dcdcdc;
   
   /* Accent Colors */
@@ -38,14 +39,15 @@
   --btn-done-text: #ffffff;
   
   /* Borders */
-  --border-color: rgba(255, 255, 255, 0.3);
-  --border-hover: rgba(255, 255, 255, 0.5);
-  --border-modal: #dcdcdc;
+  --border-color: rgba(255, 255, 255, 0.1);
+  --border-hover: rgba(255, 255, 255, 0.3);
+  --border-modal: rgba(255, 255, 255, 0.2);
+  --border-modal-strong: rgba(255, 255, 255, 0.3);
   
   /* Sidebar */
-  --sidebar-bg: #444443;
-  --sidebar-highlight: #666056;
-  --sidebar-border: rgba(255, 255, 255, 0.1);
+  --sidebar-bg: #666056;
+  --sidebar-highlight: #575859;
+  --sidebar-border: #575859;
   
   /* Logo box */
   --logo-box-bg: #bfbfbf;
@@ -57,12 +59,12 @@
 
 :root[data-theme="light"] {
   /* Backgrounds */
-  --bg-primary: #fafafa;
+  --bg-primary: #f5f5f5;
   --bg-secondary: #ffffff;
-  --bg-tertiary: #f5f5f5;
+  --bg-tertiary: #e8e6e6;
   --bg-card: #ffffff;
-  --bg-hover: #f5f5f5;
-  --bg-modal: #d1d1d1;
+  --bg-hover: #f9f9f9;
+  --bg-modal: #c4c4c4;
   --bg-modal-dark: #f2f2f2;
   --bg-modal-overlay: rgba(255, 255, 255, 0.7);
   
@@ -72,6 +74,7 @@
   --text-tertiary: #666666;
   --text-muted: #999999;
   --text-modal: #000000;
+  --text-modal-secondary: #4f4b46;
   --text-modal-subtitle: #4f4b46;
   
   /* Accent Colors */
@@ -92,13 +95,14 @@
   --btn-done-text: #4f4b46;
   
   /* Borders */
-  --border-color: #cccccc;
-  --border-hover: #999999;
-  --border-modal: #444443;
+  --border-color: #e0e0e0;
+  --border-hover: #cccccc;
+  --border-modal: rgba(0, 0, 0, 0.2);
+  --border-modal-strong: rgba(0, 0, 0, 0.3);
   
   /* Sidebar */
-  --sidebar-bg: #ffffff;
-  --sidebar-highlight: #eae5dc;
+  --sidebar-bg: #eae5dc;
+  --sidebar-highlight: #e8e6e6;
   --sidebar-border: #a8abad;
   
   /* Logo box */

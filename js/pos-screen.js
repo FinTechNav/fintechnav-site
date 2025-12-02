@@ -622,7 +622,7 @@ const POSScreen = {
         <div class="processing-content">
           <img id="swirlingWineOverlay" src="https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/ProcessingWait/SwishyCupProcessing-74.svg" alt="Processing" style="width: 80px; height: 80px; margin: 0 auto 20px;" />
           <h3 id="processingMessage">${message}</h3>
-          <p style="color: #e8e8e8; margin-top: 10px; font-size: 16px; font-weight: 500;">
+          <p style="color: var(--text-modal); margin-top: 10px; font-size: 16px; font-weight: 500;">
             Please wait...
           </p>
         </div>
@@ -1039,10 +1039,10 @@ const POSScreen = {
       <div style="margin-bottom: 15px;">
         <div style="display: flex; justify-content: space-between; align-items: baseline;">
           <div style="flex: 1;">
-            <div style="color: #000000; font-size: 11pt; font-weight: 600; font-family: Montserrat, sans-serif;">${item.quantity} ${item.name}</div>
-            <div style="color: #4f4b46; font-size: 9pt; font-family: Montserrat, sans-serif; margin-top: 2px;">${item.vintage || 'null'} - ${item.varietal || 'null'}</div>
+            <div style="color: var(--text-modal); font-size: 11pt; font-weight: 600; font-family: Montserrat, sans-serif;">${item.quantity} ${item.name}</div>
+            <div style="color: var(--text-modal-secondary); font-size: 9pt; font-family: Montserrat, sans-serif; margin-top: 2px;">${item.vintage || 'null'} - ${item.varietal || 'null'}</div>
           </div>
-          <div style="color: #000000; font-weight: 600; font-size: 11pt; font-family: Montserrat, sans-serif; margin-left: 20px;">$${(parseFloat(item.price) * item.quantity).toFixed(2)}</div>
+          <div style="color: var(--text-modal); font-weight: 600; font-size: 11pt; font-family: Montserrat, sans-serif; margin-left: 20px;">$${(parseFloat(item.price) * item.quantity).toFixed(2)}</div>
         </div>
       </div>
     `
@@ -1051,28 +1051,28 @@ const POSScreen = {
 
     console.log('✅ [MODAL] Payment received modal HTML built');
     modal.innerHTML = `
-      <div style="background: #c4c4c4; padding: 40px; border-radius: 20px; max-width: 800px; width: 90%; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);">
+      <div style="background: var(--bg-modal); padding: 40px; border-radius: 20px; max-width: 800px; width: 90%; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);">
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px;">
           <!-- Left Side: Sale Summary -->
-          <div style="border-right: 1px solid rgba(0, 0, 0, 0.2); padding-right: 30px;">
-            <h3 style="color: #000000; margin-bottom: 20px; font-size: 19px; font-weight: 600; font-family: Montserrat, sans-serif;">SALE SUMMARY</h3>
+          <div style="border-right: 1px solid var(--border-modal); padding-right: 30px;">
+            <h3 style="color: var(--text-modal); margin-bottom: 20px; font-size: 19px; font-weight: 600; font-family: Montserrat, sans-serif;">SALE SUMMARY</h3>
             
             <div style="margin-bottom: 20px;">
               ${itemsHtml}
             </div>
             
-            <div style="padding-top: 15px; border-top: 1px solid rgba(0, 0, 0, 0.3);">
+            <div style="padding-top: 15px; border-top: 1px solid var(--border-modal-strong);">
               <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                <span style="color: #4f4b46; font-size: 11pt; font-family: Montserrat, sans-serif; font-weight: 600;">Subtotal</span>
-                <span style="color: #000000; font-size: 11pt; font-family: Montserrat, sans-serif; font-weight: 600;">$${subtotal.toFixed(2)}</span>
+                <span style="color: var(--text-modal-secondary); font-size: 11pt; font-family: Montserrat, sans-serif; font-weight: 600;">Subtotal</span>
+                <span style="color: var(--text-modal); font-size: 11pt; font-family: Montserrat, sans-serif; font-weight: 600;">$${subtotal.toFixed(2)}</span>
               </div>
-              <div style="display: flex; justify-content: space-between; margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid rgba(0, 0, 0, 0.3);">
-                <span style="color: #4f4b46; font-size: 11pt; font-family: Montserrat, sans-serif; font-weight: 600;">Tax</span>
-                <span style="color: #000000; font-size: 11pt; font-family: Montserrat, sans-serif; font-weight: 600;">$${tax.toFixed(2)}</span>
+              <div style="display: flex; justify-content: space-between; margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid var(--border-modal-strong);">
+                <span style="color: var(--text-modal-secondary); font-size: 11pt; font-family: Montserrat, sans-serif; font-weight: 600;">Tax</span>
+                <span style="color: var(--text-modal); font-size: 11pt; font-family: Montserrat, sans-serif; font-weight: 600;">$${tax.toFixed(2)}</span>
               </div>
               <div style="display: flex; justify-content: space-between;">
-                <span style="color: #000000; font-size: 15pt; font-family: Montserrat, sans-serif; font-weight: 600;">Total</span>
-                <span style="color: #000000; font-size: 15pt; font-family: Montserrat, sans-serif; font-weight: 600;">$${total.toFixed(2)}</span>
+                <span style="color: var(--text-modal); font-size: 15pt; font-family: Montserrat, sans-serif; font-weight: 600;">Total</span>
+                <span style="color: var(--text-modal); font-size: 15pt; font-family: Montserrat, sans-serif; font-weight: 600;">$${total.toFixed(2)}</span>
               </div>
             </div>
           </div>
@@ -1082,43 +1082,43 @@ const POSScreen = {
             <div style="margin-bottom: 15px;">
               <img src="https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/AllModes/AllModes-icons-70.svg" alt="Payment Approved" style="width: 100px; height: 100px;" />
             </div>
-            <h2 style="color: #2c8417; margin-bottom: 10px; font-size: 25pt; font-weight: 600; font-family: Montserrat, sans-serif;">PAYMENT RECEIVED</h2>
-            <div style="font-size: 13pt; color: #4f4b46; margin-bottom: 25px; font-weight: 500; font-family: Montserrat, sans-serif;">Transaction Approved</div>
+            <h2 style="color: var(--accent-success); margin-bottom: 10px; font-size: 25pt; font-weight: 600; font-family: Montserrat, sans-serif;">PAYMENT RECEIVED</h2>
+            <div style="font-size: 13pt; color: var(--text-modal-secondary); margin-bottom: 25px; font-weight: 500; font-family: Montserrat, sans-serif;">Transaction Approved</div>
             
-            <div style="background: rgba(0, 0, 0, 0.08); padding: 20px; border-radius: 12px; border: 1px solid rgba(0, 0, 0, 0.15); margin-bottom: 20px; text-align: left;">
+            <div style="background: white; padding: 20px; border-radius: 12px; border: 1px solid var(--border-modal-strong); margin-bottom: 20px; text-align: left;">
               <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-                <span style="color: #4f4b46; font-size: 13px; font-family: Montserrat, sans-serif;">Payment Method:</span>
-                <span style="color: #000000; font-weight: 600; font-size: 13px; font-family: Montserrat, sans-serif;">${paymentMethod}</span>
+                <span style="color: var(--text-modal-secondary); font-size: 13px; font-family: Montserrat, sans-serif;">Payment Method:</span>
+                <span style="color: var(--text-modal); font-weight: 600; font-size: 13px; font-family: Montserrat, sans-serif;">${paymentMethod}</span>
               </div>
               <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-                <span style="color: #4f4b46; font-size: 13px; font-family: Montserrat, sans-serif;">Card:</span>
-                <span style="color: #000000; font-weight: 600; font-size: 13px; font-family: Montserrat, sans-serif;">${cardType} ****${cardLast4}</span>
+                <span style="color: var(--text-modal-secondary); font-size: 13px; font-family: Montserrat, sans-serif;">Card:</span>
+                <span style="color: var(--text-modal); font-weight: 600; font-size: 13px; font-family: Montserrat, sans-serif;">${cardType} ****${cardLast4}</span>
               </div>
-              <div style="display: flex; justify-content: space-between; margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid rgba(0, 0, 0, 0.2);">
-                <span style="color: #4f4b46; font-size: 13px; font-family: Montserrat, sans-serif;">Amount:</span>
-                <span style="color: #000000; font-weight: 600; font-size: 13px; font-family: Montserrat, sans-serif;">$${total.toFixed(2)}</span>
+              <div style="display: flex; justify-content: space-between; margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid var(--border-modal);">
+                <span style="color: var(--text-modal-secondary); font-size: 13px; font-family: Montserrat, sans-serif;">Amount:</span>
+                <span style="color: var(--text-modal); font-weight: 600; font-size: 13px; font-family: Montserrat, sans-serif;">$${total.toFixed(2)}</span>
               </div>
               <div style="display: flex; justify-content: space-between;">
-                <span style="color: #4f4b46; font-size: 13px; font-family: Montserrat, sans-serif;">Auth Code:</span>
-                <span style="color: #2c8417; font-weight: 600; font-size: 13px; font-family: Montserrat, sans-serif;">${authCode}</span>
+                <span style="color: var(--text-modal-secondary); font-size: 13px; font-family: Montserrat, sans-serif;">Auth Code:</span>
+                <span style="color: var(--accent-success); font-weight: 600; font-size: 13px; font-family: Montserrat, sans-serif;">${authCode}</span>
               </div>
             </div>
             
-            <div style="color: #4f4b46; font-size: 13px; margin-bottom: 20px; font-family: Montserrat, sans-serif;">Order #${orderNumber}</div>
+            <div style="color: var(--text-modal-secondary); font-size: 13px; margin-bottom: 20px; font-family: Montserrat, sans-serif;">Order #${orderNumber}</div>
             
             <button onclick="POSScreen.closePaymentReceivedScreen()" style="
               width: 100%;
               padding: 14px;
-              background: transparent;
-              border: 2px solid #4f4b46;
+              background: white;
+              border: 1px solid var(--border-modal-strong);
               border-radius: 50px;
-              color: #4f4b46;
+              color: var(--text-modal);
               font-size: 14pt;
               font-weight: 700;
               font-family: Montserrat, sans-serif;
               cursor: pointer;
               transition: all 0.2s;
-            " onmouseover="this.style.background='rgba(0,0,0,0.05)'" onmouseout="this.style.background='transparent'">Done (ESC)</button>
+            " onmouseover="this.style.background='rgba(0,0,0,0.05)'" onmouseout="this.style.background='white'">Done (ESC)</button>
           </div>
         </div>
       </div>
@@ -1181,7 +1181,7 @@ const POSScreen = {
     const content = document.createElement('div');
     content.className = 'payment-modal-content';
     content.style.cssText = `
-      background: #5a5a5a;
+      background: var(--bg-modal);
       padding: 50px 60px;
       border-radius: 20px;
       text-align: center;
@@ -1193,8 +1193,8 @@ const POSScreen = {
       <div style="margin-bottom: 20px;">
         <img id="swirlingWineAnimation" src="https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/ProcessingWait/SwishyCupProcessing-74.svg" alt="Processing" style="width: 80px; height: 80px;" />
       </div>
-      <h2 style="color: #e8e8e8; margin-bottom: 10px; font-size: 24px; font-weight: 600;">Processing payment on terminal...</h2>
-      <p style="color: #e8e8e8; font-size: 16px; font-weight: 500;">Please wait...</p>
+      <h2 style="color: var(--text-modal); margin-bottom: 10px; font-size: 24px; font-weight: 600;">Processing payment on terminal...</h2>
+      <p style="color: var(--text-modal); font-size: 16px; font-weight: 500;">Please wait...</p>
     `;
 
     modal.appendChild(content);

@@ -911,7 +911,7 @@ body {
 }
 
 .processing-content {
-    background: #5a5a5a;
+    background: var(--bg-modal);
     padding: 50px 60px;
     border-radius: 20px;
     text-align: center;
@@ -921,14 +921,14 @@ body {
 }
 
 .processing-content h3 {
-    color: #e8e8e8;
+    color: var(--text-modal);
     margin-bottom: 10px;
     font-size: 24px;
     font-weight: 600;
 }
 
 .processing-content p {
-    color: #e8e8e8;
+    color: var(--text-modal);
     font-size: 16px;
     font-weight: 500;
 }
