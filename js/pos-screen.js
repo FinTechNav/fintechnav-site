@@ -662,7 +662,7 @@ const POSScreen = {
       left: 0;
       right: 0;
       bottom: 0;
-      background: rgba(0,0,0,0.85);
+      background: rgba(0,0,0,0.5);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -676,19 +676,20 @@ const POSScreen = {
       Math.ceil(total / 20) * 20,
     ];
 
+    console.log('🎬 [MODAL] Creating cash payment input modal...');
     modal.innerHTML = `
-      <div style="background: #2c3e50; padding: 40px; border-radius: 12px; max-width: 600px; width: 90%; color: #e8e8e8;">
-        <h2 style="color: #f39c12; margin-bottom: 10px; text-align: center;">Amount to Pay</h2>
+      <div style="background: #d1d1d1; padding: 40px; border-radius: 20px; max-width: 600px; width: 90%; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);">
+        <h2 style="color: #f39c12; margin-bottom: 10px; text-align: center; font-weight: 700;">Amount to Pay</h2>
         <div style="text-align: center; font-size: 48px; color: #f39c12; font-weight: 700; margin-bottom: 30px;">$${total.toFixed(2)}</div>
         
-        <h3 style="color: #e8e8e8; margin-bottom: 15px; text-align: center;">Amount given by customer</h3>
+        <h3 style="color: #2c3e50; margin-bottom: 15px; text-align: center; font-weight: 600;">Amount given by customer</h3>
         
         <input type="text" id="cashAmountInput" value="0.00" style="
           width: 100%;
           padding: 20px;
           font-size: 32px;
           text-align: center;
-          background: rgba(0,0,0,0.3);
+          background: white;
           border: 2px solid rgba(243, 156, 18, 0.5);
           border-radius: 8px;
           color: #f39c12;
@@ -705,7 +706,7 @@ const POSScreen = {
               background: rgba(52, 152, 219, 0.2);
               border: 1px solid rgba(52, 152, 219, 0.5);
               border-radius: 8px;
-              color: #3498db;
+              color: #2c7fb8;
               font-size: 16px;
               font-weight: 600;
               cursor: pointer;
@@ -721,7 +722,7 @@ const POSScreen = {
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
           <button onclick="POSScreen.completeCashPayment()" style="
             padding: 15px;
-            background: linear-gradient(135deg, #27ae60, #229954);
+            background: #27ae60;
             border: none;
             border-radius: 8px;
             color: white;
@@ -732,10 +733,10 @@ const POSScreen = {
           
           <button onclick="POSScreen.closeCashPaymentModal()" style="
             padding: 15px;
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(0, 0, 0, 0.2);
             border-radius: 8px;
-            color: #e8e8e8;
+            color: #2c3e50;
             font-size: 18px;
             cursor: pointer;
           ">Cancel</button>
@@ -744,6 +745,7 @@ const POSScreen = {
     `;
 
     document.body.appendChild(modal);
+    console.log('✅ [MODAL] Cash payment input modal added to DOM');
 
     // Focus the input
     setTimeout(() => {
@@ -850,6 +852,7 @@ const POSScreen = {
   },
 
   showCashChangeScreen({ orderNumber, total, cashGiven, change, items }) {
+    console.log('🎬 [MODAL] Creating cash change screen...');
     const modal = document.createElement('div');
     modal.id = 'cashChangeModal';
     modal.style.cssText = `
@@ -858,7 +861,7 @@ const POSScreen = {
       left: 0;
       right: 0;
       bottom: 0;
-      background: rgba(0,0,0,0.85);
+      background: rgba(0,0,0,0.5);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -954,6 +957,7 @@ const POSScreen = {
     `;
 
     document.body.appendChild(modal);
+    console.log('✅ [MODAL] Cash change screen added to DOM');
 
     // Auto-close if enabled
     this.scheduleAutoClose(modal);
