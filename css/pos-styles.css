@@ -215,33 +215,6 @@ body {
     border-top: 1px solid var(--border-color);
 }
 
-/* Mini Theme Toggle */
-.theme-toggle-mini {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 15px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    margin: 10px;
-    border-radius: 8px;
-    background: rgba(255, 255, 255, 0.05);
-}
-
-.theme-toggle-mini:hover {
-    background: rgba(255, 255, 255, 0.1);
-    transform: scale(1.05);
-}
-
-.theme-icon {
-    font-size: 24px;
-    transition: transform 0.3s ease;
-}
-
-.theme-toggle-mini:hover .theme-icon {
-    transform: rotate(180deg);
-}
-
 /* Styled Logout Button */
 .menu-item.logout-button {
     background: rgba(231, 76, 60, 0.1);

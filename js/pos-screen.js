@@ -890,7 +890,7 @@ const POSScreen = {
     const tax = total - subtotal;
 
     modal.innerHTML = `
-      <div style="background: #d1d1d1; padding: 40px; border-radius: 20px; max-width: 800px; width: 90%; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);">
+      <div style="background: var(--bg-modal); padding: 40px; border-radius: 20px; max-width: 800px; width: 90%; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);">
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px;">
           <!-- Left Side: Sale Summary -->
           <div style="border-right: 1px solid rgba(0, 0, 0, 0.1); padding-right: 30px;">
@@ -985,7 +985,6 @@ const POSScreen = {
     cardLast4,
     items,
   }) {
-    console.log('🎬 [MODAL] Creating payment received modal...');
     const modal = document.createElement('div');
     modal.id = 'paymentReceivedModal';
     modal.style.cssText = `
@@ -1016,9 +1015,8 @@ const POSScreen = {
       )
       .join('');
 
-    console.log('✅ [MODAL] Payment received modal HTML built');
     modal.innerHTML = `
-      <div style="background: #d1d1d1; padding: 40px; border-radius: 20px; max-width: 800px; width: 90%; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);">
+      <div style="background: var(--bg-modal); padding: 40px; border-radius: 20px; max-width: 800px; width: 90%; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);">
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px;">
           <!-- Left Side: Sale Summary -->
           <div style="border-right: 1px solid rgba(0, 0, 0, 0.1); padding-right: 30px;">
@@ -1089,7 +1087,6 @@ const POSScreen = {
     `;
 
     document.body.appendChild(modal);
-    console.log('✅ [MODAL] Payment received modal added to DOM');
 
     // Auto-close if enabled
     this.scheduleAutoClose(modal);
@@ -1126,7 +1123,6 @@ const POSScreen = {
   },
 
   showProcessingModal(referenceId, amount, pollInterval, maxWait) {
-    console.log('🎬 [MODAL] Creating processing modal...');
     const modal = document.createElement('div');
     modal.id = 'processingModal';
     modal.style.cssText = `
@@ -1145,7 +1141,7 @@ const POSScreen = {
     const content = document.createElement('div');
     content.className = 'payment-modal-content';
     content.style.cssText = `
-      background: #d1d1d1;
+      background: var(--bg-modal);
       padding: 50px 60px;
       border-radius: 20px;
       text-align: center;
@@ -1155,13 +1151,12 @@ const POSScreen = {
 
     content.innerHTML = `
       <div style="font-size: 64px; margin-bottom: 20px;">🍷</div>
-      <h2 style="color: #2c3e50; margin-bottom: 10px; font-size: 24px; font-weight: 600;">Processing payment on terminal...</h2>
-      <p style="color: #2c3e50; font-size: 16px; font-weight: 500;">Please wait...</p>
+      <h2 style="color: var(--text-modal); margin-bottom: 10px; font-size: 24px; font-weight: 600;">Processing payment on terminal...</h2>
+      <p style="color: var(--text-modal); font-size: 16px; font-weight: 500;">Please wait...</p>
     `;
 
     modal.appendChild(content);
     document.body.appendChild(modal);
-    console.log('✅ [MODAL] Processing modal added to DOM');
 
     this.pollingStartTime = Date.now();
   },
@@ -1450,7 +1445,7 @@ const POSScreen = {
     const content = document.createElement('div');
     content.className = 'payment-modal-content';
     content.style.cssText = `
-      background: #d1d1d1;
+      background: var(--bg-modal);
       border-radius: 20px;
       padding: 50px 60px;
       max-width: 500px;
