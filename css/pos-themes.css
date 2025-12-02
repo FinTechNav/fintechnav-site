@@ -38,8 +38,8 @@
   --btn-done-text: #ffffff;
   
   /* Borders */
-  --border-color: rgba(255, 255, 255, 0.1);
-  --border-hover: rgba(255, 255, 255, 0.3);
+  --border-color: rgba(255, 255, 255, 0.3);
+  --border-hover: rgba(255, 255, 255, 0.5);
   --border-modal: #dcdcdc;
   
   /* Sidebar */
@@ -92,8 +92,8 @@
   --btn-done-text: #4f4b46;
   
   /* Borders */
-  --border-color: #e0e0e0;
-  --border-hover: #cccccc;
+  --border-color: #cccccc;
+  --border-hover: #999999;
   --border-modal: #444443;
   
   /* Sidebar */
