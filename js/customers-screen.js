@@ -1504,9 +1504,11 @@ class CustomersScreen {
               <td>${customer.order_count || 0}</td>
               <td>${this.formatCurrency(customer.lifetime_value_cents, customer.currency_code)}</td>
               <td>
-                ${customer.customer_status === 'vip' ? '<span class="badge badge-vip">VIP</span>' : ''}
-                ${customer.club_member_status === 'active' ? '<span class="badge badge-club">Club</span>' : ''}
-                ${customer.allocation_list_status === 'active' ? '<span class="badge badge-allocation">Allocation</span>' : ''}
+                <div class="status-badges">
+                  ${customer.customer_status === 'vip' ? '<span class="badge badge-vip">VIP</span>' : ''}
+                  ${customer.club_member_status === 'active' ? '<span class="badge badge-club">Club</span>' : ''}
+                  ${customer.allocation_list_status === 'active' ? '<span class="badge badge-allocation">Allocation</span>' : ''}
+                </div>
               </td>
               <td onclick="event.stopPropagation()" class="actions-cell">
                 <div class="actions-cell-container">
