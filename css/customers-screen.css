@@ -455,28 +455,6 @@
   color: #95a5a6;
 }
 
-.stats-left {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-}
-
-.btn-select-all {
-  padding: 6px 12px;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: #e8e8e8;
-  font-size: 13px;
-  font-weight: 600;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.btn-select-all:hover {
-  background: rgba(255, 255, 255, 0.12);
-}
-
 .selected-count {
   font-weight: 600;
   color: #f39c12;
@@ -588,11 +566,18 @@
   color: #95a5a6;
 }
 
-.customer-stats {
+.customer-stats-badges-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
   margin: 15px 0;
   padding: 12px 0;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.customer-stats {
+  flex: 1;
 }
 
 .stat-item {
@@ -611,10 +596,10 @@
 
 .customer-badges {
   display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin: 12px 0;
-  min-height: 24px;
+  flex-direction: column;
+  gap: 4px;
+  align-items: flex-end;
+  margin-left: 10px;
 }
 
 .badge {
@@ -655,18 +640,18 @@
 }
 
 .btn-icon {
-  padding: 8px;
+  padding: 16px;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 6px;
-  font-size: 18px;
+  font-size: 32px;
   cursor: pointer;
   transition: all 0.2s;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
+  width: 72px;
+  height: 72px;
 }
 
 .btn-icon:hover {
@@ -675,8 +660,8 @@
 }
 
 .btn-icon .action-icon {
-  width: 20px;
-  height: 20px;
+  width: 40px;
+  height: 40px;
 }
 
 /* List view action buttons - stacked 2x2 layout */

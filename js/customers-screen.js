@@ -450,18 +450,7 @@ class CustomersScreen {
         ${this.selectedCustomers.size > 0 ? this.renderBulkActions() : ''}
 
         <div class="customers-stats">
-          <div class="stats-left">
-            <span>Showing ${this.filteredCustomers.length} of ${this.customers.length} customers</span>
-            ${
-              this.currentView === 'grid'
-                ? `
-              <button class="btn-select-all" onclick="customersScreen.toggleSelectAll(!${this.filteredCustomers.every((c) => this.selectedCustomers.has(c.id))})">
-                ${this.filteredCustomers.every((c) => this.selectedCustomers.has(c.id)) ? '☐ Deselect All' : '☑ Select All'}
-              </button>
-            `
-                : ''
-            }
-          </div>
+          <span>Showing ${this.filteredCustomers.length} of ${this.customers.length} customers</span>
           ${this.selectedCustomers.size > 0 ? `<span class="selected-count">${this.selectedCustomers.size} selected</span>` : ''}
         </div>
 
@@ -1397,15 +1386,17 @@ class CustomersScreen {
           <div class="customer-email">${customer.email}</div>
           ${customer.phone ? `<div class="customer-phone">${customer.phone}</div>` : ''}
         </div>
-        <div class="customer-stats">
-          ${customer.order_count > 0 ? `<div class="stat-item"><strong>${customer.order_count}</strong> Orders</div>` : '<div class="stat-item">0 Orders</div>'}
-          <div class="stat-item">LTV: ${this.formatCurrency(customer.lifetime_value_cents, customer.currency_code)}</div>
-          ${customer.last_order_date ? `<div class="stat-item">Last Order: ${this.formatDate(customer.last_order_date)}</div>` : ''}
-        </div>
-        <div class="customer-badges">
-          ${customer.customer_status === 'vip' ? '<span class="badge badge-vip">VIP</span>' : ''}
-          ${customer.club_member_status === 'active' ? '<span class="badge badge-club">Club</span>' : ''}
-          ${customer.on_allocation_list ? '<span class="badge badge-allocation">Allocation</span>' : ''}
+        <div class="customer-stats-badges-container">
+          <div class="customer-stats">
+            ${customer.order_count > 0 ? `<div class="stat-item"><strong>${customer.order_count}</strong> Orders</div>` : '<div class="stat-item">0 Orders</div>'}
+            <div class="stat-item">LTV: ${this.formatCurrency(customer.lifetime_value_cents, customer.currency_code)}</div>
+            ${customer.last_order_date ? `<div class="stat-item">Last Order: ${this.formatDate(customer.last_order_date)}</div>` : ''}
+          </div>
+          <div class="customer-badges">
+            ${customer.customer_status === 'vip' ? '<span class="badge badge-vip">VIP</span>' : ''}
+            ${customer.club_member_status === 'active' ? '<span class="badge badge-club">Club</span>' : ''}
+            ${customer.on_allocation_list ? '<span class="badge badge-allocation">Allocation</span>' : ''}
+          </div>
         </div>
         <div class="customer-actions">
           <button class="btn-icon" onclick="event.stopPropagation(); customersScreen.createOrder('${customer.id}')" title="Create Order">
