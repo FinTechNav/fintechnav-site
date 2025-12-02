@@ -921,7 +921,9 @@ const POSScreen = {
           
           <!-- Right Side: Payment Info -->
           <div style="display: flex; flex-direction: column; justify-content: center; text-align: center;">
-            <div style="font-size: 64px; margin-bottom: 15px;">💵</div>
+            <div style="margin-bottom: 15px;">
+              <img src="https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/AllModes/AllModes-icons-73.svg" alt="Cash" style="width: 80px; height: 80px;" />
+            </div>
             <h2 style="color: #27ae60; margin-bottom: 10px; font-size: 28px; font-weight: 700;">PAYMENT RECEIVED</h2>
             
             ${changeMessage}
