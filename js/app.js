@@ -762,6 +762,13 @@ function logout() {
   App.logout();
 }
 
+function toggleThemeMini() {
+  const currentTheme = App.getCurrentTheme();
+  const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+  console.log('🌓 [THEME] Toggling from', currentTheme, 'to', newTheme);
+  App.setTheme(newTheme);
+}
+
 // Initialize app when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
   App.init();
