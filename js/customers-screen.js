@@ -1414,10 +1414,12 @@ class CustomersScreen {
     }
 
     const getSortIcon = (field) => {
-      if (this.sortField !== field) return '<span class="sort-arrows">⇅</span>';
+      if (this.sortField !== field) {
+        return '<img src="https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-39.svg" class="sort-icon menu-icon-sort-none" alt="Not sorted">';
+      }
       return this.sortDirection === 'asc'
-        ? '<span class="sort-arrow-active">↑</span>'
-        : '<span class="sort-arrow-active">↓</span>';
+        ? '<img src="https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-38.svg" class="sort-icon menu-icon-sort-asc" alt="Ascending">'
+        : '<img src="https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-37.svg" class="sort-icon menu-icon-sort-desc" alt="Descending">';
     };
 
     return `
@@ -1481,10 +1483,21 @@ class CustomersScreen {
               <td>
                 ${customer.customer_status === 'vip' ? '<span class="badge badge-vip">VIP</span>' : ''}
                 ${customer.club_member_status === 'active' ? '<span class="badge badge-club">Club</span>' : ''}
+                ${customer.on_allocation_list ? '<span class="badge badge-allocation">Allocation</span>' : ''}
               </td>
-              <td onclick="event.stopPropagation()">
-                <button class="btn-icon" onclick="customersScreen.createOrder('${customer.id}')" title="Create Order">🛒</button>
-                <button class="btn-icon" onclick="customersScreen.editCustomer('${customer.id}')" title="Edit">✏️</button>
+              <td onclick="event.stopPropagation()" class="actions-cell">
+                <button class="btn-action" onclick="customersScreen.createOrder('${customer.id}')" title="Create Order">
+                  <img src="https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-22.svg" class="action-icon menu-icon-pos" alt="POS">
+                </button>
+                <button class="btn-action" onclick="customersScreen.emailCustomer('${customer.id}')" title="Email">
+                  📧
+                </button>
+                <button class="btn-action" onclick="customersScreen.textCustomer('${customer.id}')" title="Text">
+                  💬
+                </button>
+                <button class="btn-action" onclick="customersScreen.addNote('${customer.id}')" title="Note">
+                  📝
+                </button>
               </td>
             </tr>
           `
@@ -1661,6 +1674,21 @@ class CustomersScreen {
   createOrder(id) {
     console.log('Create order for customer:', id);
     alert('Create order not yet implemented');
+  }
+
+  emailCustomer(id) {
+    console.log('Email customer:', id);
+    alert('Email customer not yet implemented');
+  }
+
+  textCustomer(id) {
+    console.log('Text customer:', id);
+    alert('Text customer not yet implemented');
+  }
+
+  addNote(id) {
+    console.log('Add note for customer:', id);
+    alert('Add note not yet implemented');
   }
 
   exportCustomers() {
