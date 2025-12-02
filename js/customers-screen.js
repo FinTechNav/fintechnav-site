@@ -1395,7 +1395,7 @@ class CustomersScreen {
           <div class="customer-badges">
             ${customer.customer_status === 'vip' ? '<span class="badge badge-vip">VIP</span>' : ''}
             ${customer.club_member_status === 'active' ? '<span class="badge badge-club">Club</span>' : ''}
-            ${customer.on_allocation_list ? '<span class="badge badge-allocation">Allocation</span>' : ''}
+            ${customer.allocation_list_status === 'active' ? '<span class="badge badge-allocation">Allocation</span>' : ''}
           </div>
         </div>
         <div class="customer-actions">
@@ -1494,7 +1494,7 @@ class CustomersScreen {
               <td>
                 ${customer.customer_status === 'vip' ? '<span class="badge badge-vip">VIP</span>' : ''}
                 ${customer.club_member_status === 'active' ? '<span class="badge badge-club">Club</span>' : ''}
-                ${customer.on_allocation_list ? '<span class="badge badge-allocation">Allocation</span>' : ''}
+                ${customer.allocation_list_status === 'active' ? '<span class="badge badge-allocation">Allocation</span>' : ''}
               </td>
               <td onclick="event.stopPropagation()" class="actions-cell">
                 <div class="actions-cell-container">
