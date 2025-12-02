@@ -1163,7 +1163,7 @@ const POSScreen = {
 
     content.innerHTML = `
       <div style="margin-bottom: 20px;">
-        <img src="https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/AllModes/AllModes-icons-69.svg" alt="Processing" style="width: 80px; height: 80px;" />
+        <img id="swirlingWineAnimation" src="https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/ProcessingWait/SwishyCupProcessing-74.svg" alt="Processing" style="width: 80px; height: 80px;" />
       </div>
       <h2 style="color: #2c3e50; margin-bottom: 10px; font-size: 24px; font-weight: 600;">Processing payment on terminal...</h2>
       <p style="color: #2c3e50; font-size: 16px; font-weight: 500;">Please wait...</p>
@@ -1172,6 +1172,29 @@ const POSScreen = {
     modal.appendChild(content);
     document.body.appendChild(modal);
     console.log('✅ [MODAL] Processing modal added to DOM');
+
+    // Start wine swirling animation
+    const frames = [
+      'https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/ProcessingWait/SwishyCupProcessing-74.svg',
+      'https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/ProcessingWait/SwishyCupProcessing-75.svg',
+      'https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/ProcessingWait/SwishyCupProcessing-76.svg',
+      'https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/ProcessingWait/SwishyCupProcessing-77.svg',
+      'https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/ProcessingWait/SwishyCupProcessing-78.svg',
+      'https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/ProcessingWait/SwishyCupProcessing-79.svg',
+      'https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/ProcessingWait/SwishyCupProcessing-80.svg',
+      'https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/ProcessingWait/SwishyCupProcessing-81.svg',
+    ];
+
+    let currentFrame = 0;
+    this.wineAnimationInterval = setInterval(() => {
+      const img = document.getElementById('swirlingWineAnimation');
+      if (img) {
+        currentFrame = (currentFrame + 1) % frames.length;
+        img.src = frames[currentFrame];
+      } else {
+        clearInterval(this.wineAnimationInterval);
+      }
+    }, 150); // Change frame every 150ms for smooth animation
 
     this.pollingStartTime = Date.now();
   },
@@ -1189,6 +1212,10 @@ const POSScreen = {
     const modal = document.getElementById('processingModal');
     if (modal) {
       modal.remove();
+    }
+    if (this.wineAnimationInterval) {
+      clearInterval(this.wineAnimationInterval);
+      this.wineAnimationInterval = null;
     }
     this.pollingStartTime = null;
   },
