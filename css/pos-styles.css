@@ -1648,6 +1648,7 @@ body {
     .placeholder-content p {
         font-size: 14px;
     }
+}
 
 /* Very Small Phones (iPhone SE, etc.) */
 @media (max-width: 375px) {

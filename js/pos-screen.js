@@ -92,26 +92,19 @@ const POSScreen = {
   },
 
   renderProducts() {
-    console.log('🎨 renderProducts() called');
     const grid = document.getElementById('productsGrid');
-    console.log('📦 Products grid element:', grid);
-    console.log('📊 Products array length:', this.products.length);
-    console.log('⏳ Loading state:', this.loadingState.products);
 
     if (this.loadingState.products) {
-      console.log('⏳ Showing loading state');
       grid.innerHTML = this.renderProductsLoadingState();
       return;
     }
 
     if (this.products.length === 0) {
-      console.log('❌ No products to display');
       grid.innerHTML =
         '<p style="text-align: center; color: #95a5a6; padding: 40px;">No products available for sale</p>';
       return;
     }
 
-    console.log('✅ Rendering', this.products.length, 'products');
     grid.innerHTML = this.products
       .map((product) => {
         // Determine icon and details based on product type
@@ -146,7 +139,6 @@ const POSScreen = {
           `;
       })
       .join('');
-    console.log('✅ Products rendered to DOM');
   },
 
   addToCart(productId) {
@@ -875,20 +867,20 @@ const POSScreen = {
 
     const changeMessage =
       change > 0
-        ? `<div style="font-size: 64px; color: #27ae60; font-weight: 700; margin: 20px 0;">$${change.toFixed(2)}</div>
-           <div style="font-size: 24px; color: #95a5a6; margin-bottom: 30px;">Change Due</div>`
-        : '<div style="font-size: 48px; color: #27ae60; font-weight: 700; margin: 30px 0;">Exact Payment</div>';
+        ? `<div style="font-size: 48px; color: #27ae60; font-weight: 700; margin: 20px 0;">$${change.toFixed(2)}</div>
+           <div style="font-size: 16px; color: #7f8c8d; margin-bottom: 25px; font-weight: 500;">Change Due</div>`
+        : '<div style="font-size: 40px; color: #27ae60; font-weight: 700; margin: 25px 0;">Exact Payment</div>';
 
     // Build items list
     const itemsHtml = items
       .map(
         (item) => `
-      <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.05);">
+      <div style="display: flex; justify-content: space-between; padding: 8px 0;">
         <div style="flex: 1; text-align: left;">
-          <div style="color: #e8e8e8; font-size: 14px;">${item.quantity} ${item.name}</div>
-          <div style="color: #95a5a6; font-size: 12px;">${item.vintage} ${item.varietal}</div>
+          <div style="color: #2c3e50; font-size: 14px; font-weight: 600;">${item.quantity} ${item.name}</div>
+          <div style="color: #7f8c8d; font-size: 12px;">${item.vintage || ''} ${item.varietal || ''}</div>
         </div>
-        <div style="color: #e8e8e8; font-weight: 600; font-size: 14px;">$${(parseFloat(item.price) * item.quantity).toFixed(2)}</div>
+        <div style="color: #2c3e50; font-weight: 600; font-size: 14px;">$${(parseFloat(item.price) * item.quantity).toFixed(2)}</div>
       </div>
     `
       )
@@ -898,63 +890,64 @@ const POSScreen = {
     const tax = total - subtotal;
 
     modal.innerHTML = `
-      <div style="background: #2c3e50; padding: 40px; border-radius: 12px; max-width: 700px; width: 90%; color: #e8e8e8;">
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
+      <div style="background: var(--bg-modal); padding: 40px; border-radius: 20px; max-width: 800px; width: 90%; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px;">
           <!-- Left Side: Sale Summary -->
-          <div style="border-right: 1px solid rgba(255, 255, 255, 0.1); padding-right: 30px;">
-            <h3 style="color: #f39c12; margin-bottom: 20px; font-size: 20px; text-transform: uppercase; letter-spacing: 1px;">Sale Summary</h3>
+          <div style="border-right: 1px solid rgba(0, 0, 0, 0.1); padding-right: 30px;">
+            <h3 style="color: #2c3e50; margin-bottom: 20px; font-size: 18px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">SALE SUMMARY</h3>
             
             <div style="margin-bottom: 20px;">
               ${itemsHtml}
             </div>
             
-            <div style="padding-top: 15px; border-top: 2px solid rgba(255, 255, 255, 0.1);">
+            <div style="padding-top: 15px; border-top: 1px solid rgba(0, 0, 0, 0.1);">
               <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                <span style="color: #95a5a6; font-size: 14px;">Subtotal</span>
-                <span style="color: #e8e8e8; font-size: 14px;">$${subtotal.toFixed(2)}</span>
+                <span style="color: #7f8c8d; font-size: 14px;">Subtotal</span>
+                <span style="color: #2c3e50; font-size: 14px; font-weight: 600;">$${subtotal.toFixed(2)}</span>
               </div>
-              <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                <span style="color: #95a5a6; font-size: 14px;">Tax</span>
-                <span style="color: #e8e8e8; font-size: 14px;">$${tax.toFixed(2)}</span>
+              <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                <span style="color: #7f8c8d; font-size: 14px;">Tax</span>
+                <span style="color: #2c3e50; font-size: 14px; font-weight: 600;">$${tax.toFixed(2)}</span>
               </div>
-              <div style="display: flex; justify-content: space-between; padding-top: 10px; border-top: 1px solid rgba(255, 255, 255, 0.1);">
-                <span style="color: #f39c12; font-size: 18px; font-weight: 700;">Total</span>
-                <span style="color: #f39c12; font-size: 18px; font-weight: 700;">$${total.toFixed(2)}</span>
+              <div style="display: flex; justify-content: space-between; padding-top: 12px; border-top: 1px solid rgba(0, 0, 0, 0.1);">
+                <span style="color: #f39c12; font-size: 16px; font-weight: 700;">Total</span>
+                <span style="color: #2c3e50; font-size: 16px; font-weight: 700;">$${total.toFixed(2)}</span>
               </div>
             </div>
           </div>
           
           <!-- Right Side: Payment Info -->
           <div style="display: flex; flex-direction: column; justify-content: center; text-align: center;">
-            <div style="font-size: 64px; margin-bottom: 20px;">💵</div>
-            <h2 style="color: #27ae60; margin-bottom: 20px; font-size: 32px;">Payment Received</h2>
+            <div style="font-size: 64px; margin-bottom: 15px;">💵</div>
+            <h2 style="color: #27ae60; margin-bottom: 10px; font-size: 28px; font-weight: 700;">PAYMENT RECEIVED</h2>
             
             ${changeMessage}
             
-            <div style="background: rgba(255, 255, 255, 0.05); padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-              <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-                <span style="color: #95a5a6; font-size: 14px;">Cash Given:</span>
-                <span style="color: #e8e8e8; font-weight: 600; font-size: 14px;">$${cashGiven.toFixed(2)}</span>
+            <div style="background: white; padding: 20px; border-radius: 12px; border: 1px solid rgba(0, 0, 0, 0.1); margin-bottom: 20px; text-align: left;">
+              <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                <span style="color: #7f8c8d; font-size: 13px;">Cash Given:</span>
+                <span style="color: #2c3e50; font-weight: 600; font-size: 13px;">$${cashGiven.toFixed(2)}</span>
               </div>
-              <div style="display: flex; justify-content: space-between; padding-top: 10px; border-top: 1px solid rgba(255, 255, 255, 0.1);">
-                <span style="color: #95a5a6; font-size: 14px;">Change:</span>
-                <span style="color: #27ae60; font-weight: 700; font-size: 18px;">$${change.toFixed(2)}</span>
+              <div style="display: flex; justify-content: space-between; padding-top: 10px; border-top: 1px solid rgba(0, 0, 0, 0.1);">
+                <span style="color: #7f8c8d; font-size: 13px;">Change:</span>
+                <span style="color: #27ae60; font-weight: 700; font-size: 15px;">$${change.toFixed(2)}</span>
               </div>
             </div>
             
-            <div style="color: #95a5a6; font-size: 12px; margin-bottom: 20px;">Order #${orderNumber}</div>
+            <div style="color: #7f8c8d; font-size: 13px; margin-bottom: 20px;">Order #${orderNumber}</div>
             
             <button onclick="POSScreen.closeCashChangeScreen()" style="
               width: 100%;
-              padding: 15px;
-              background: linear-gradient(135deg, #27ae60, #229954);
+              padding: 14px;
+              background: #27ae60;
               border: none;
-              border-radius: 8px;
+              border-radius: 50px;
               color: white;
-              font-size: 18px;
+              font-size: 16px;
               font-weight: 700;
               cursor: pointer;
-            ">Done (ESC)</button>
+              transition: all 0.2s;
+            " onmouseover="this.style.background='#229954'" onmouseout="this.style.background='#27ae60'">Done (ESC)</button>
           </div>
         </div>
       </div>
@@ -1000,7 +993,7 @@ const POSScreen = {
       left: 0;
       right: 0;
       bottom: 0;
-      background: rgba(0,0,0,0.85);
+      background: rgba(0,0,0,0.5);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -1011,82 +1004,83 @@ const POSScreen = {
     const itemsHtml = items
       .map(
         (item) => `
-      <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.05);">
+      <div style="display: flex; justify-content: space-between; padding: 8px 0;">
         <div style="flex: 1; text-align: left;">
-          <div style="color: #e8e8e8; font-size: 14px;">${item.quantity} ${item.name}</div>
-          <div style="color: #95a5a6; font-size: 12px;">${item.vintage} ${item.varietal}</div>
+          <div style="color: #2c3e50; font-size: 14px; font-weight: 600;">${item.quantity} ${item.name}</div>
+          <div style="color: #7f8c8d; font-size: 12px;">${item.vintage || ''} ${item.varietal || ''}</div>
         </div>
-        <div style="color: #e8e8e8; font-weight: 600; font-size: 14px;">$${(parseFloat(item.price) * item.quantity).toFixed(2)}</div>
+        <div style="color: #2c3e50; font-weight: 600; font-size: 14px;">$${(parseFloat(item.price) * item.quantity).toFixed(2)}</div>
       </div>
     `
       )
       .join('');
 
     modal.innerHTML = `
-      <div style="background: #2c3e50; padding: 40px; border-radius: 12px; max-width: 700px; width: 90%; color: #e8e8e8;">
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
+      <div style="background: var(--bg-modal); padding: 40px; border-radius: 20px; max-width: 800px; width: 90%; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px;">
           <!-- Left Side: Sale Summary -->
-          <div style="border-right: 1px solid rgba(255, 255, 255, 0.1); padding-right: 30px;">
-            <h3 style="color: #f39c12; margin-bottom: 20px; font-size: 20px; text-transform: uppercase; letter-spacing: 1px;">Sale Summary</h3>
+          <div style="border-right: 1px solid rgba(0, 0, 0, 0.1); padding-right: 30px;">
+            <h3 style="color: #2c3e50; margin-bottom: 20px; font-size: 18px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">SALE SUMMARY</h3>
             
             <div style="margin-bottom: 20px;">
               ${itemsHtml}
             </div>
             
-            <div style="padding-top: 15px; border-top: 2px solid rgba(255, 255, 255, 0.1);">
+            <div style="padding-top: 15px; border-top: 1px solid rgba(0, 0, 0, 0.1);">
               <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                <span style="color: #95a5a6; font-size: 14px;">Subtotal</span>
-                <span style="color: #e8e8e8; font-size: 14px;">$${subtotal.toFixed(2)}</span>
+                <span style="color: #7f8c8d; font-size: 14px;">Subtotal</span>
+                <span style="color: #2c3e50; font-size: 14px; font-weight: 600;">$${subtotal.toFixed(2)}</span>
               </div>
-              <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                <span style="color: #95a5a6; font-size: 14px;">Tax</span>
-                <span style="color: #e8e8e8; font-size: 14px;">$${tax.toFixed(2)}</span>
+              <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                <span style="color: #7f8c8d; font-size: 14px;">Tax</span>
+                <span style="color: #2c3e50; font-size: 14px; font-weight: 600;">$${tax.toFixed(2)}</span>
               </div>
-              <div style="display: flex; justify-content: space-between; padding-top: 10px; border-top: 1px solid rgba(255, 255, 255, 0.1);">
-                <span style="color: #f39c12; font-size: 18px; font-weight: 700;">Total</span>
-                <span style="color: #f39c12; font-size: 18px; font-weight: 700;">$${total.toFixed(2)}</span>
+              <div style="display: flex; justify-content: space-between; padding-top: 12px; border-top: 1px solid rgba(0, 0, 0, 0.1);">
+                <span style="color: #f39c12; font-size: 16px; font-weight: 700;">Total</span>
+                <span style="color: #2c3e50; font-size: 16px; font-weight: 700;">$${total.toFixed(2)}</span>
               </div>
             </div>
           </div>
           
           <!-- Right Side: Payment Info -->
           <div style="display: flex; flex-direction: column; justify-content: center; text-align: center;">
-            <div style="font-size: 64px; margin-bottom: 20px;">✓</div>
-            <h2 style="color: #27ae60; margin-bottom: 10px; font-size: 32px;">Payment Received</h2>
-            <div style="font-size: 16px; color: #95a5a6; margin-bottom: 30px;">Transaction Approved</div>
+            <div style="font-size: 64px; margin-bottom: 15px;">🍷✨</div>
+            <h2 style="color: #27ae60; margin-bottom: 10px; font-size: 28px; font-weight: 700;">PAYMENT RECEIVED</h2>
+            <div style="font-size: 15px; color: #7f8c8d; margin-bottom: 25px; font-weight: 500;">Transaction Approved</div>
             
-            <div style="background: rgba(255, 255, 255, 0.05); padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+            <div style="background: white; padding: 20px; border-radius: 12px; border: 1px solid rgba(0, 0, 0, 0.1); margin-bottom: 20px; text-align: left;">
               <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-                <span style="color: #95a5a6; font-size: 14px;">Payment Method:</span>
-                <span style="color: #e8e8e8; font-weight: 600; font-size: 14px;">${paymentMethod}</span>
+                <span style="color: #7f8c8d; font-size: 13px;">Payment Method:</span>
+                <span style="color: #2c3e50; font-weight: 600; font-size: 13px;">${paymentMethod}</span>
               </div>
               <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-                <span style="color: #95a5a6; font-size: 14px;">Card:</span>
-                <span style="color: #e8e8e8; font-weight: 600; font-size: 14px;">${cardType} ****${cardLast4}</span>
+                <span style="color: #7f8c8d; font-size: 13px;">Card:</span>
+                <span style="color: #2c3e50; font-weight: 600; font-size: 13px;">${cardType} ****${cardLast4}</span>
               </div>
-              <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-                <span style="color: #95a5a6; font-size: 14px;">Amount:</span>
-                <span style="color: #e8e8e8; font-weight: 600; font-size: 14px;">$${total.toFixed(2)}</span>
+              <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                <span style="color: #7f8c8d; font-size: 13px;">Amount:</span>
+                <span style="color: #2c3e50; font-weight: 600; font-size: 13px;">$${total.toFixed(2)}</span>
               </div>
-              <div style="display: flex; justify-content: space-between; padding-top: 10px; border-top: 1px solid rgba(255, 255, 255, 0.1);">
-                <span style="color: #95a5a6; font-size: 14px;">Auth Code:</span>
-                <span style="color: #27ae60; font-weight: 700; font-size: 14px;">${authCode}</span>
+              <div style="display: flex; justify-content: space-between; padding-top: 10px; border-top: 1px solid rgba(0, 0, 0, 0.1);">
+                <span style="color: #7f8c8d; font-size: 13px;">Auth Code:</span>
+                <span style="color: #27ae60; font-weight: 700; font-size: 13px;">${authCode}</span>
               </div>
             </div>
             
-            <div style="color: #95a5a6; font-size: 12px; margin-bottom: 20px;">Order #${orderNumber}</div>
+            <div style="color: #7f8c8d; font-size: 13px; margin-bottom: 20px;">Order #${orderNumber}</div>
             
             <button onclick="POSScreen.closePaymentReceivedScreen()" style="
               width: 100%;
-              padding: 15px;
-              background: linear-gradient(135deg, #27ae60, #229954);
+              padding: 14px;
+              background: #27ae60;
               border: none;
-              border-radius: 8px;
+              border-radius: 50px;
               color: white;
-              font-size: 18px;
+              font-size: 16px;
               font-weight: 700;
               cursor: pointer;
-            ">Done (ESC)</button>
+              transition: all 0.2s;
+            " onmouseover="this.style.background='#229954'" onmouseout="this.style.background='#27ae60'">Done (ESC)</button>
           </div>
         </div>
       </div>
@@ -1137,7 +1131,7 @@ const POSScreen = {
       left: 0;
       right: 0;
       bottom: 0;
-      background: rgba(0, 0, 0, 0.8);
+      background: rgba(0, 0, 0, 0.5);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -1145,50 +1139,26 @@ const POSScreen = {
     `;
 
     const content = document.createElement('div');
+    content.className = 'payment-modal-content';
     content.style.cssText = `
-      background: white;
-      padding: 40px;
-      border-radius: 10px;
+      background: var(--bg-modal);
+      padding: 50px 60px;
+      border-radius: 20px;
       text-align: center;
       max-width: 500px;
-      font-family: Georgia, serif;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
     `;
 
     content.innerHTML = `
-      <div style="font-size: 48px; margin-bottom: 20px;">⏳</div>
-      <h2 style="color: #8b7355; margin-bottom: 10px;">Processing Payment on Terminal</h2>
-      <p style="color: #666; font-size: 24px; font-weight: bold; margin: 20px 0;">$${amount.toFixed(2)}</p>
-      <p style="color: #666; margin-bottom: 20px;">
-        <span id="elapsedTime">0</span> seconds
-      </p>
-      <p style="color: #999; font-size: 14px;">Reference: ${referenceId}</p>
-      <div id="modalButtons" style="margin-top: 30px; display: none;">
-        <button onclick="POSScreen.manualStatusCheck('${referenceId}')" 
-                style="background: #8b7355; color: white; border: none; padding: 12px 24px; 
-                       border-radius: 5px; cursor: pointer; margin-right: 10px; font-family: Georgia, serif;">
-          Check Status Now
-        </button>
-        <button onclick="POSScreen.cancelPolling()" 
-                style="background: #95a5a6; color: white; border: none; padding: 12px 24px; 
-                       border-radius: 5px; cursor: pointer; font-family: Georgia, serif;">
-          Cancel
-        </button>
-      </div>
+      <div style="font-size: 64px; margin-bottom: 20px;">🍷</div>
+      <h2 style="color: var(--text-modal); margin-bottom: 10px; font-size: 24px; font-weight: 600;">Processing payment on terminal...</h2>
+      <p style="color: var(--text-modal); font-size: 16px; font-weight: 500;">Please wait...</p>
     `;
 
     modal.appendChild(content);
     document.body.appendChild(modal);
 
     this.pollingStartTime = Date.now();
-    this.updateElapsedTime();
-
-    // Show buttons after 60 seconds
-    setTimeout(() => {
-      const buttons = document.getElementById('modalButtons');
-      if (buttons) {
-        buttons.style.display = 'block';
-      }
-    }, 60000);
   },
 
   updateElapsedTime() {
@@ -1465,19 +1435,19 @@ const POSScreen = {
       left: 0;
       right: 0;
       bottom: 0;
-      background: rgba(0, 0, 0, 0.7);
+      background: rgba(0, 0, 0, 0.5);
       display: flex;
       align-items: center;
       justify-content: center;
       z-index: 10000;
-      font-family: Georgia, serif;
     `;
 
     const content = document.createElement('div');
+    content.className = 'payment-modal-content';
     content.style.cssText = `
-      background: white;
-      border-radius: 12px;
-      padding: 40px;
+      background: var(--bg-modal);
+      border-radius: 20px;
+      padding: 50px 60px;
       max-width: 500px;
       width: 90%;
       box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
@@ -1485,37 +1455,35 @@ const POSScreen = {
     `;
 
     content.innerHTML = `
-      <div style="color: #e74c3c; font-size: 64px; margin-bottom: 20px;">
-        ✕
-      </div>
-      <h2 style="color: #333; margin: 0 0 30px 0; font-size: 28px;">
+      <div style="font-size: 64px; margin-bottom: 20px;">🍷💔</div>
+      <h2 style="color: #c0392b; margin: 0 0 25px 0; font-size: 26px; font-weight: 700;">
         PAYMENT DECLINED
       </h2>
-      <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 30px; text-align: left;">
+      <div style="background: white; padding: 20px; border-radius: 12px; border: 1px solid rgba(0, 0, 0, 0.1); margin-bottom: 30px; text-align: left;">
         <div style="margin-bottom: 15px;">
-          <div style="color: #666; font-size: 14px; margin-bottom: 5px;">Decline Code</div>
-          <div style="color: #333; font-weight: bold; font-size: 18px;">${declineInfo.code || 'N/A'}</div>
+          <div style="color: #7f8c8d; font-size: 13px; margin-bottom: 5px; font-weight: 600;">Decline Code</div>
+          <div style="color: #2c3e50; font-weight: 700; font-size: 16px;">${declineInfo.code || 'N/A'}</div>
         </div>
         <div style="margin-bottom: 15px;">
-          <div style="color: #666; font-size: 14px; margin-bottom: 5px;">Authorization Response Message</div>
-          <div style="color: #333; font-weight: bold; font-size: 18px;">${declineInfo.message || 'Unknown error'}</div>
+          <div style="color: #7f8c8d; font-size: 13px; margin-bottom: 5px; font-weight: 600;">Authorization Response Message</div>
+          <div style="color: #2c3e50; font-weight: 700; font-size: 16px;">${declineInfo.message || 'Unknown error'}</div>
         </div>
         <div>
-          <div style="color: #666; font-size: 14px; margin-bottom: 5px;">Response Definition</div>
-          <div style="color: #333; font-size: 16px; line-height: 1.5;">${declineInfo.definition || 'No details available'}</div>
+          <div style="color: #7f8c8d; font-size: 13px; margin-bottom: 5px; font-weight: 600;">Response Definition</div>
+          <div style="color: #2c3e50; font-size: 14px; line-height: 1.5;">${declineInfo.definition || 'No details available'}</div>
         </div>
       </div>
       <button id="closeDeclineModal" style="
-        background: #5dade2;
+        background: #7f8c8d;
         color: white;
         border: none;
-        padding: 15px 40px;
-        font-size: 18px;
-        border-radius: 8px;
+        padding: 14px 50px;
+        font-size: 16px;
+        border-radius: 50px;
         cursor: pointer;
-        font-family: Georgia, serif;
-        font-weight: bold;
-      ">
+        font-weight: 700;
+        transition: all 0.2s;
+      " onmouseover="this.style.background='#6c7a89'" onmouseout="this.style.background='#7f8c8d'">
         Close
       </button>
     `;
