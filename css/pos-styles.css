@@ -1083,43 +1083,59 @@ body {
         font-size: 18px;
     }
     
-    /* Cart items - compact layout */
+    /* Cart items - wrapped layout for full visibility */
     .cart-item {
-        padding: 10px;
+        padding: 12px;
         gap: 8px;
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .cart-item-info {
+        width: 100%;
     }
     
     .cart-item-name {
-        font-size: 12px;
+        font-size: 13px;
         font-weight: 600;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
+        white-space: normal;
+        line-height: 1.3;
+        margin-bottom: 4px;
     }
     
     .cart-item-details {
-        font-size: 10px;
+        font-size: 11px;
+        margin-bottom: 8px;
     }
     
     .cart-item-qty {
-        gap: 6px;
+        gap: 8px;
         margin: 0;
+        width: 100%;
+        justify-content: space-between;
     }
     
     .qty-btn {
-        width: 26px;
-        height: 26px;
-        font-size: 13px;
+        width: 28px;
+        height: 28px;
+        font-size: 14px;
     }
     
     .qty-display {
-        width: 22px;
-        font-size: 13px;
+        width: 24px;
+        font-size: 14px;
     }
     
     .cart-item-price {
-        font-size: 14px;
-        min-width: 65px;
+        font-size: 15px;
+        min-width: auto;
+        font-weight: 700;
+    }
+    
+    /* Payment buttons - add bottom margin */
+    .payment-buttons {
+        margin-top: 15px;
+        margin-bottom: 20px;
     }
     
     /* Payment buttons - keep side by side but smaller */
