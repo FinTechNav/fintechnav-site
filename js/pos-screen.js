@@ -1085,18 +1085,18 @@ const POSScreen = {
             <h2 style="color: var(--accent-success); margin-bottom: 10px; font-size: 25pt; font-weight: 600; font-family: Montserrat, sans-serif;">PAYMENT RECEIVED</h2>
             <div style="font-size: 13pt; color: var(--text-modal-secondary); margin-bottom: 25px; font-weight: 500; font-family: Montserrat, sans-serif;">Transaction Approved</div>
             
-            <div style="background: var(--bg-modal-box); padding: 20px; border-radius: 12px; border: 1px solid var(--border-modal-box); margin-bottom: 20px; text-align: left;">
+            <div style="background: white; padding: 20px; border-radius: 12px; border: 1px solid var(--border-modal-strong); margin-bottom: 20px; text-align: left;">
               <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
                 <span style="color: var(--text-modal-secondary); font-size: 13px; font-family: Montserrat, sans-serif;">Payment Method:</span>
-                <span style="color: var(--text-modal-box); font-weight: 600; font-size: 13px; font-family: Montserrat, sans-serif;">${paymentMethod}</span>
+                <span style="color: var(--text-modal); font-weight: 600; font-size: 13px; font-family: Montserrat, sans-serif;">${paymentMethod}</span>
               </div>
               <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
                 <span style="color: var(--text-modal-secondary); font-size: 13px; font-family: Montserrat, sans-serif;">Card:</span>
-                <span style="color: var(--text-modal-box); font-weight: 600; font-size: 13px; font-family: Montserrat, sans-serif;">${cardType} ****${cardLast4}</span>
+                <span style="color: var(--text-modal); font-weight: 600; font-size: 13px; font-family: Montserrat, sans-serif;">${cardType} ****${cardLast4}</span>
               </div>
               <div style="display: flex; justify-content: space-between; margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid var(--border-modal);">
                 <span style="color: var(--text-modal-secondary); font-size: 13px; font-family: Montserrat, sans-serif;">Amount:</span>
-                <span style="color: var(--text-modal-box); font-weight: 600; font-size: 13px; font-family: Montserrat, sans-serif;">$${total.toFixed(2)}</span>
+                <span style="color: var(--text-modal); font-weight: 600; font-size: 13px; font-family: Montserrat, sans-serif;">$${total.toFixed(2)}</span>
               </div>
               <div style="display: flex; justify-content: space-between;">
                 <span style="color: var(--text-modal-secondary); font-size: 13px; font-family: Montserrat, sans-serif;">Auth Code:</span>
@@ -1109,16 +1109,16 @@ const POSScreen = {
             <button onclick="POSScreen.closePaymentReceivedScreen()" style="
               width: 100%;
               padding: 14px;
-              background: var(--bg-modal-button);
-              border: 1px solid var(--border-modal-button);
+              background: white;
+              border: 1px solid var(--border-modal-strong);
               border-radius: 50px;
-              color: var(--text-modal-button);
+              color: var(--text-modal);
               font-size: 14pt;
               font-weight: 700;
               font-family: Montserrat, sans-serif;
               cursor: pointer;
               transition: all 0.2s;
-            " onmouseover="this.style.background='rgba(0,0,0,0.05)'" onmouseout="this.style.background='var(--bg-modal-button)'">Done (ESC)</button>
+            " onmouseover="this.style.background='rgba(0,0,0,0.05)'" onmouseout="this.style.background='white'">Done (ESC)</button>
           </div>
         </div>
       </div>
