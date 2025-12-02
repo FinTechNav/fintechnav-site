@@ -380,6 +380,17 @@
   border-color: rgba(243, 156, 18, 0.5);
 }
 
+.view-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.view-btn:disabled:hover {
+  background: rgba(255, 255, 255, 0.02);
+  color: #95a5a6;
+}
+
 .bulk-actions {
   display: flex;
   gap: 10px;
@@ -1096,4 +1107,61 @@
 .customers-container::-webkit-scrollbar-thumb:hover,
 .modal-body::-webkit-scrollbar-thumb:hover {
   background: rgba(243, 156, 18, 0.7);
+}
+
+/* Tablet and smaller screens - responsive action buttons */
+@media (max-width: 1366px) {
+  .btn-icon {
+    width: 60px;
+    height: 60px;
+    padding: 12px;
+    font-size: 26px;
+  }
+  
+  .btn-icon .action-icon {
+    width: 32px;
+    height: 32px;
+  }
+  
+  .customer-actions {
+    gap: 6px;
+  }
+}
+
+@media (max-width: 1024px) {
+  .btn-icon {
+    width: 50px;
+    height: 50px;
+    padding: 10px;
+    font-size: 22px;
+  }
+  
+  .btn-icon .action-icon {
+    width: 28px;
+    height: 28px;
+  }
+  
+  .customer-actions {
+    gap: 5px;
+    margin-top: 10px;
+  }
+}
+
+@media (max-width: 768px) {
+  .btn-icon {
+    width: 44px;
+    height: 44px;
+    padding: 8px;
+    font-size: 20px;
+  }
+  
+  .btn-icon .action-icon {
+    width: 24px;
+    height: 24px;
+  }
+  
+  .customer-actions {
+    gap: 4px;
+    margin-top: 8px;
+  }
 }

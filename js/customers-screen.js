@@ -433,6 +433,7 @@ class CustomersScreen {
               class="view-btn ${this.currentView === 'list' ? 'active' : ''}" 
               onclick="customersScreen.setView('list')"
               title="List View"
+              ${this.showMap ? 'disabled' : ''}
             >
               <img src="https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-35.svg" class="toolbar-icon menu-icon-list" alt="List View">
             </button>
