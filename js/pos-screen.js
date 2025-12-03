@@ -104,18 +104,25 @@ const POSScreen = {
   searchCustomers(query) {
     const resultsContainer = document.getElementById('customerSearchResults');
     const searchLower = query.toLowerCase();
+    const searchNormalized = query.replace(/[\s\-\.()]/g, '').toLowerCase();
 
     const matches = this.customers
       .filter((c) => {
-        const name = `${c.first_name || ''} ${c.last_name || ''}`.trim().toLowerCase();
+        const firstName = (c.first_name || '').toLowerCase();
+        const lastName = (c.last_name || '').toLowerCase();
+        const fullName = `${firstName} ${lastName}`.trim();
+        const reversedName = `${lastName} ${firstName}`.trim();
         const email = (c.email || '').toLowerCase();
         const phone = (c.phone || '').toLowerCase();
+        const phoneNormalized = phone.replace(/[\s\-\.()]/g, '');
         const customerCode = (c.customer_code || '').toLowerCase();
 
         return (
-          name.includes(searchLower) ||
+          fullName.includes(searchLower) ||
+          reversedName.includes(searchLower) ||
           email.includes(searchLower) ||
           phone.includes(searchLower) ||
+          phoneNormalized.includes(searchNormalized) ||
           customerCode.includes(searchLower)
         );
       })
