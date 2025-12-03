@@ -1679,22 +1679,34 @@ const POSScreen = {
     // Auto-close if enabled
     this.scheduleAutoClose(modal);
 
-    // ESC key handler
+    // ESC key handler - store reference for cleanup
     const escHandler = (e) => {
       if (e.key === 'Escape') {
-        this.closePaymentReceivedScreen();
+        console.log('⌨️ [ESC] ESC key pressed on payment modal');
         document.removeEventListener('keydown', escHandler);
+        this.closePaymentReceivedScreen();
       }
     };
     document.addEventListener('keydown', escHandler);
+
+    // Store handler for cleanup
+    modal._escHandler = escHandler;
   },
 
   closePaymentReceivedScreen() {
+    console.log('🔄 [CLOSE PAYMENT] Closing payment received modal');
     const modal = document.getElementById('paymentReceivedModal');
+
+    // Remove ESC handler if it exists
+    if (modal && modal._escHandler) {
+      document.removeEventListener('keydown', modal._escHandler);
+    }
+
     if (modal) modal.remove();
 
     // Check if we should navigate back to customers
     const shouldReturn = sessionStorage.getItem('returnToCustomers');
+    console.log('🔄 [CLOSE PAYMENT] shouldReturn flag:', shouldReturn);
 
     if (shouldReturn === 'true') {
       console.log('🔄 [CLOSE PAYMENT] Showing loading shimmer before navigation');
