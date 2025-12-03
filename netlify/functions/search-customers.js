@@ -48,6 +48,7 @@ exports.handler = async (event) => {
         c.id,
         c.first_name,
         c.last_name,
+        c.first_name || ' ' || c.last_name as name,
         c.email,
         c.phone,
         c.customer_code,
