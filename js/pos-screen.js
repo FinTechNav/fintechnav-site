@@ -312,11 +312,38 @@ const POSScreen = {
         ? `${customer.first_name || ''} ${customer.last_name || ''}`.trim()
         : customer.email;
 
+    // Apply theme-aware styling
+    const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+    const bgColor =
+      currentTheme === 'dark' ? 'rgba(46, 204, 113, 0.1)' : 'rgba(139, 115, 85, 0.15)';
+    const borderColor =
+      currentTheme === 'dark' ? 'rgba(46, 204, 113, 0.3)' : 'rgba(139, 115, 85, 0.4)';
+    const textColor = currentTheme === 'dark' ? '#e8e8e8' : '#444443';
+    const subTextColor = currentTheme === 'dark' ? '#95a5a6' : '#6d5a42';
+    const btnBg = currentTheme === 'dark' ? 'rgba(231, 76, 60, 0.2)' : 'rgba(231, 76, 60, 0.25)';
+    const btnColor = currentTheme === 'dark' ? '#e74c3c' : '#c0392b';
+
     resultsContainer.style.display = 'none';
     searchContainer.style.display = 'none';
     selectedDisplay.style.display = 'block';
+    selectedDisplay.style.padding = '10px';
+    selectedDisplay.style.background = bgColor;
+    selectedDisplay.style.border = `1px solid ${borderColor}`;
+    selectedDisplay.style.borderRadius = '6px';
+    selectedDisplay.style.fontSize = '14px';
+    selectedDisplay.style.color = textColor;
+
     selectedName.textContent = name;
+    selectedName.style.color = textColor;
+
     selectedEmail.textContent = customer.email || customer.phone || '';
+    selectedEmail.style.color = subTextColor;
+
+    const closeBtn = selectedDisplay.querySelector('button');
+    if (closeBtn) {
+      closeBtn.style.background = btnBg;
+      closeBtn.style.color = btnColor;
+    }
   },
 
   selectGuest() {
@@ -328,11 +355,36 @@ const POSScreen = {
     const selectedName = document.getElementById('selectedCustomerName');
     const selectedEmail = document.getElementById('selectedCustomerEmail');
 
+    // Apply theme-aware styling
+    const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+    const bgColor =
+      currentTheme === 'dark' ? 'rgba(46, 204, 113, 0.1)' : 'rgba(139, 115, 85, 0.15)';
+    const borderColor =
+      currentTheme === 'dark' ? 'rgba(46, 204, 113, 0.3)' : 'rgba(139, 115, 85, 0.4)';
+    const textColor = currentTheme === 'dark' ? '#e8e8e8' : '#444443';
+    const btnBg = currentTheme === 'dark' ? 'rgba(231, 76, 60, 0.2)' : 'rgba(231, 76, 60, 0.25)';
+    const btnColor = currentTheme === 'dark' ? '#e74c3c' : '#c0392b';
+
     resultsContainer.style.display = 'none';
     searchContainer.style.display = 'none';
     selectedDisplay.style.display = 'block';
+    selectedDisplay.style.padding = '10px';
+    selectedDisplay.style.background = bgColor;
+    selectedDisplay.style.border = `1px solid ${borderColor}`;
+    selectedDisplay.style.borderRadius = '6px';
+    selectedDisplay.style.fontSize = '14px';
+    selectedDisplay.style.color = textColor;
+
     selectedName.textContent = 'Guest Checkout';
+    selectedName.style.color = textColor;
+
     selectedEmail.textContent = '';
+
+    const closeBtn = selectedDisplay.querySelector('button');
+    if (closeBtn) {
+      closeBtn.style.background = btnBg;
+      closeBtn.style.color = btnColor;
+    }
   },
 
   clearCustomerSelection() {
@@ -367,11 +419,11 @@ const POSScreen = {
       const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
       const bgColor = currentTheme === 'dark' ? '#5a5a5a' : '#D2B48C';
       const textColor = currentTheme === 'dark' ? '#e8e8e8' : '#444443';
-      const accentColor = currentTheme === 'dark' ? '#f39c12' : '#b75c11';
+      const accentColor = currentTheme === 'dark' ? '#f39c12' : '#8b7355';
       const btnBg = currentTheme === 'dark' ? '#2ecc71' : '#8b7355';
       const btnBgHover = currentTheme === 'dark' ? '#27ae60' : '#6d5a42';
-      const cancelBg = currentTheme === 'dark' ? '#7f8c8d' : '#95a5a6';
-      const cancelBgHover = currentTheme === 'dark' ? '#6c7a89' : '#7f8c8d';
+      const cancelBg = currentTheme === 'dark' ? '#7f8c8d' : '#b8a896';
+      const cancelBgHover = currentTheme === 'dark' ? '#6c7a89' : '#a0927f';
 
       modal.innerHTML = `
         <div style="background: ${bgColor}; padding: 40px; border-radius: 20px; max-width: 450px; width: 90%; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3); text-align: center; font-family: Georgia, serif;">
