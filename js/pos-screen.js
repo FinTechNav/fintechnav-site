@@ -70,13 +70,19 @@ const POSScreen = {
 
     if (!searchInput || !resultsContainer) return;
 
+    searchInput.addEventListener('focus', (e) => {
+      if (e.target.value.trim().length === 0) {
+        this.showGuestCheckoutOption();
+      }
+    });
+
     searchInput.addEventListener('input', (e) => {
       const query = e.target.value.trim();
 
       clearTimeout(this.searchDebounceTimer);
 
       if (query.length === 0) {
-        resultsContainer.style.display = 'none';
+        this.showGuestCheckoutOption();
         return;
       }
 
@@ -101,13 +107,38 @@ const POSScreen = {
     });
   },
 
+  showGuestCheckoutOption() {
+    const resultsContainer = document.getElementById('customerSearchResults');
+
+    resultsContainer.innerHTML = `
+      <div class="customer-search-item" data-customer-id="guest" style="padding: 12px; cursor: pointer; border-bottom: 1px solid rgba(255, 255, 255, 0.05); transition: background 0.2s;">
+        <div style="font-weight: 600; color: #e8e8e8; font-size: 14px;">Guest Checkout</div>
+        <div style="font-size: 12px; color: #95a5a6; margin-top: 2px;">Continue without customer info</div>
+      </div>
+    `;
+
+    resultsContainer.style.display = 'block';
+
+    const item = resultsContainer.querySelector('.customer-search-item');
+    item.addEventListener('mouseenter', function () {
+      this.style.background = 'rgba(255, 255, 255, 0.08)';
+    });
+    item.addEventListener('mouseleave', function () {
+      this.style.background = 'transparent';
+    });
+    item.addEventListener('click', function () {
+      POSScreen.clearCustomerSelection();
+      document.getElementById('customerSearchResults').style.display = 'none';
+    });
+  },
+
   searchCustomers(query) {
     const resultsContainer = document.getElementById('customerSearchResults');
     const searchLower = query.toLowerCase();
     const searchNormalized = query.replace(/[\s\-\.()]/g, '').toLowerCase();
 
     const matches = this.customers
-      .filter((c) => {
+      .map((c) => {
         const firstName = (c.first_name || '').toLowerCase();
         const lastName = (c.last_name || '').toLowerCase();
         const fullName = `${firstName} ${lastName}`.trim();
@@ -117,15 +148,53 @@ const POSScreen = {
         const phoneNormalized = phone.replace(/[\s\-\.()]/g, '');
         const customerCode = (c.customer_code || '').toLowerCase();
 
-        return (
-          fullName.includes(searchLower) ||
-          reversedName.includes(searchLower) ||
-          email.includes(searchLower) ||
-          phone.includes(searchLower) ||
-          phoneNormalized.includes(searchNormalized) ||
-          customerCode.includes(searchLower)
-        );
+        let score = 0;
+        let matched = false;
+
+        // Exact matches get highest priority
+        if (email === searchLower) {
+          score = 1000;
+          matched = true;
+        } else if (fullName === searchLower || reversedName === searchLower) {
+          score = 900;
+          matched = true;
+        } else if (phoneNormalized === searchNormalized) {
+          score = 850;
+          matched = true;
+        } else if (customerCode === searchLower) {
+          score = 800;
+          matched = true;
+        }
+        // Partial matches
+        else if (fullName.includes(searchLower) || reversedName.includes(searchLower)) {
+          score = 700;
+          matched = true;
+        } else if (email.includes(searchLower)) {
+          score = 600;
+          matched = true;
+        } else if (phone.includes(searchLower) || phoneNormalized.includes(searchNormalized)) {
+          score = 500;
+          matched = true;
+        } else if (customerCode.includes(searchLower)) {
+          score = 400;
+          matched = true;
+        }
+
+        // Boost score for recent activity
+        if (matched && c.last_activity_date) {
+          const activityDate = new Date(c.last_activity_date);
+          const daysSinceActivity = (Date.now() - activityDate.getTime()) / (1000 * 60 * 60 * 24);
+          if (daysSinceActivity < 30) {
+            score += 100;
+          } else if (daysSinceActivity < 90) {
+            score += 50;
+          }
+        }
+
+        return { customer: c, score, matched };
       })
+      .filter((result) => result.matched)
+      .sort((a, b) => b.score - a.score)
       .slice(0, 10);
 
     if (matches.length === 0) {
@@ -139,17 +208,22 @@ const POSScreen = {
     }
 
     resultsContainer.innerHTML = matches
-      .map((customer) => {
+      .map((result) => {
+        const customer = result.customer;
         const name =
           customer.first_name || customer.last_name
             ? `${customer.first_name || ''} ${customer.last_name || ''}`.trim()
             : customer.email;
 
+        const highlightedName = this.highlightText(name, query);
+        const highlightedEmail = customer.email ? this.highlightText(customer.email, query) : '';
+        const highlightedPhone = customer.phone ? this.highlightText(customer.phone, query) : '';
+
         return `
           <div class="customer-search-item" data-customer-id="${customer.id}" style="padding: 12px; cursor: pointer; border-bottom: 1px solid rgba(255, 255, 255, 0.05); transition: background 0.2s;">
-            <div style="font-weight: 600; color: #e8e8e8; font-size: 14px;">${name}</div>
-            ${customer.email ? `<div style="font-size: 12px; color: #95a5a6; margin-top: 2px;">${customer.email}</div>` : ''}
-            ${customer.phone ? `<div style="font-size: 12px; color: #95a5a6; margin-top: 2px;">${customer.phone}</div>` : ''}
+            <div style="font-weight: 600; color: #e8e8e8; font-size: 14px;">${highlightedName}</div>
+            ${customer.email ? `<div style="font-size: 12px; color: #95a5a6; margin-top: 2px;">${highlightedEmail}</div>` : ''}
+            ${customer.phone ? `<div style="font-size: 12px; color: #95a5a6; margin-top: 2px;">${highlightedPhone}</div>` : ''}
           </div>
         `;
       })
@@ -169,6 +243,58 @@ const POSScreen = {
         POSScreen.selectCustomer(this.dataset.customerId);
       });
     });
+  },
+
+  highlightText(text, query) {
+    if (!text || !query) return text;
+
+    const searchLower = query.toLowerCase();
+    const textLower = text.toLowerCase();
+    const normalized = query.replace(/[\s\-\.()]/g, '');
+    const textNormalized = text.replace(/[\s\-\.()]/g, '');
+
+    // Try to find exact match first
+    const index = textLower.indexOf(searchLower);
+    if (index !== -1) {
+      const before = text.substring(0, index);
+      const match = text.substring(index, index + query.length);
+      const after = text.substring(index + query.length);
+      return `${before}<span style="background: rgba(243, 156, 18, 0.3); color: #f39c12; font-weight: 700;">${match}</span>${after}`;
+    }
+
+    // Try normalized match for phone numbers
+    if (normalized.length > 0) {
+      const normalizedIndex = textNormalized.toLowerCase().indexOf(normalized.toLowerCase());
+      if (normalizedIndex !== -1) {
+        // Find the original characters that match
+        let charCount = 0;
+        let startIndex = -1;
+        let endIndex = -1;
+
+        for (let i = 0; i < text.length; i++) {
+          const char = text[i];
+          if (!/[\s\-\.()]/.test(char)) {
+            if (charCount === normalizedIndex && startIndex === -1) {
+              startIndex = i;
+            }
+            charCount++;
+            if (charCount === normalizedIndex + normalized.length) {
+              endIndex = i + 1;
+              break;
+            }
+          }
+        }
+
+        if (startIndex !== -1 && endIndex !== -1) {
+          const before = text.substring(0, startIndex);
+          const match = text.substring(startIndex, endIndex);
+          const after = text.substring(endIndex);
+          return `${before}<span style="background: rgba(243, 156, 18, 0.3); color: #f39c12; font-weight: 700;">${match}</span>${after}`;
+        }
+      }
+    }
+
+    return text;
   },
 
   selectCustomer(customerId) {
