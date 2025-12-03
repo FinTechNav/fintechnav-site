@@ -1151,6 +1151,65 @@ const POSScreen = {
     }
   },
 
+  showNavigationShimmer() {
+    console.log('✨ [SHIMMER] Showing navigation loading shimmer');
+
+    // Create shimmer overlay
+    const shimmer = document.createElement('div');
+    shimmer.id = 'navigationShimmer';
+    shimmer.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: var(--bg-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10001;
+    `;
+
+    shimmer.innerHTML = `
+      <div style="text-align: center;">
+        <div style="
+          width: 60px;
+          height: 60px;
+          margin: 0 auto 20px;
+          border-radius: 50%;
+          background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0.05) 75%);
+          background-size: 200% 100%;
+          animation: shimmer 1.5s infinite;
+        "></div>
+        <div style="
+          height: 20px;
+          width: 200px;
+          margin: 0 auto;
+          background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0.05) 75%);
+          background-size: 200% 100%;
+          animation: shimmer 1.5s infinite;
+          border-radius: 4px;
+        "></div>
+      </div>
+      <style>
+        @keyframes shimmer {
+          0% { background-position: -200% 0; }
+          100% { background-position: 200% 0; }
+        }
+      </style>
+    `;
+
+    document.body.appendChild(shimmer);
+
+    // Remove shimmer after navigation completes (cleanup)
+    setTimeout(() => {
+      const existingShimmer = document.getElementById('navigationShimmer');
+      if (existingShimmer) {
+        existingShimmer.remove();
+      }
+    }, 2000);
+  },
+
   async processCashPayment() {
     // Check if customer is selected
     if (!this.selectedCustomer) {
@@ -1633,6 +1692,15 @@ const POSScreen = {
   closePaymentReceivedScreen() {
     const modal = document.getElementById('paymentReceivedModal');
     if (modal) modal.remove();
+
+    // Check if we should navigate back to customers
+    const shouldReturn = sessionStorage.getItem('returnToCustomers');
+
+    if (shouldReturn === 'true') {
+      console.log('🔄 [CLOSE PAYMENT] Showing loading shimmer before navigation');
+      this.showNavigationShimmer();
+    }
+
     this.reset();
   },
 
@@ -1645,6 +1713,15 @@ const POSScreen = {
       setTimeout(() => {
         if (modal && modal.parentNode) {
           modal.remove();
+
+          // Check if we should navigate back to customers
+          const shouldReturn = sessionStorage.getItem('returnToCustomers');
+
+          if (shouldReturn === 'true') {
+            console.log('🔄 [AUTO CLOSE] Showing loading shimmer before navigation');
+            this.showNavigationShimmer();
+          }
+
           this.reset();
         }
       }, autoCloseDelay * 1000);
