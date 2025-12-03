@@ -2099,3 +2099,6 @@ const POSScreen = {
       .join('');
   },
 };
+
+// Export POSScreen to window for external access
+window.POSScreen = POSScreen;
