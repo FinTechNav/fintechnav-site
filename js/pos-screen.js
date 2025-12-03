@@ -1080,8 +1080,16 @@ const POSScreen = {
   reset() {
     this.cart = [];
     this.selectedCustomer = null;
-    const selector = document.getElementById('customerSelector');
-    if (selector) selector.value = '';
+
+    // Clear customer search
+    const searchContainer = document.getElementById('customerSearchContainer');
+    const searchInput = document.getElementById('customerSearch');
+    const selectedDisplay = document.getElementById('selectedCustomerDisplay');
+
+    if (searchInput) searchInput.value = '';
+    if (searchContainer) searchContainer.style.display = 'block';
+    if (selectedDisplay) selectedDisplay.style.display = 'none';
+
     this.renderCart();
     this.updateTotals();
   },
