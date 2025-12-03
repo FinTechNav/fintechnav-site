@@ -1748,17 +1748,33 @@ class CustomersScreen {
   }
 
   createOrder(id) {
-    console.log('Create order for customer:', id);
+    console.log('🛒 [CREATE ORDER] Starting - Customer ID:', id);
     const customer = this.customers.find((c) => c.id === id);
+    console.log('🛒 [CREATE ORDER] Customer found:', customer);
+
     if (customer) {
+      console.log('🛒 [CREATE ORDER] Navigating to POS...');
       // Navigate to POS screen
       navigateTo('pos');
+
       // Set customer after a brief delay to ensure POS screen is loaded
       setTimeout(() => {
+        console.log('🛒 [CREATE ORDER] Attempting to set customer on POS screen');
+        console.log('🛒 [CREATE ORDER] POSScreen exists:', typeof window.POSScreen !== 'undefined');
+        console.log(
+          '🛒 [CREATE ORDER] setCustomerFromExternal exists:',
+          window.POSScreen && typeof POSScreen.setCustomerFromExternal === 'function'
+        );
+
         if (window.POSScreen && typeof POSScreen.setCustomerFromExternal === 'function') {
+          console.log('🛒 [CREATE ORDER] Calling setCustomerFromExternal with:', customer);
           POSScreen.setCustomerFromExternal(customer);
+        } else {
+          console.error('❌ [CREATE ORDER] POSScreen or setCustomerFromExternal not available');
         }
       }, 100);
+    } else {
+      console.error('❌ [CREATE ORDER] Customer not found with ID:', id);
     }
   }
 
