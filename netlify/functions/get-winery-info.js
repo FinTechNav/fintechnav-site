@@ -62,9 +62,7 @@ exports.handler = async (event) => {
         latitude,
         longitude,
         currency_code,
-        timezone,
-        logo_url_light,
-        logo_url_dark
+        timezone
       FROM wineries
       WHERE id = $1
         AND latitude IS NOT NULL 
