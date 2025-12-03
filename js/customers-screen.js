@@ -1749,7 +1749,17 @@ class CustomersScreen {
 
   createOrder(id) {
     console.log('Create order for customer:', id);
-    alert('Create order not yet implemented');
+    const customer = this.customers.find((c) => c.id === id);
+    if (customer) {
+      // Navigate to POS screen
+      navigateTo('pos');
+      // Set customer after a brief delay to ensure POS screen is loaded
+      setTimeout(() => {
+        if (window.POSScreen && typeof POSScreen.setCustomerFromExternal === 'function') {
+          POSScreen.setCustomerFromExternal(customer);
+        }
+      }, 100);
+    }
   }
 
   emailCustomer(id) {
