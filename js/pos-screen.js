@@ -399,6 +399,18 @@ const POSScreen = {
     selectedDisplay.style.display = 'none';
   },
 
+  setCustomerFromExternal(customer) {
+    console.log('Setting customer from external navigation:', customer);
+
+    // Ensure customer is in the customers list
+    if (!this.customers.find((c) => c.id === customer.id)) {
+      this.customers.push(customer);
+    }
+
+    // Select the customer using the existing selectCustomer method
+    this.selectCustomer(customer.id);
+  },
+
   showCustomerConfirmationModal() {
     return new Promise((resolve) => {
       const modal = document.createElement('div');
