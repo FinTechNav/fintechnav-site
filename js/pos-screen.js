@@ -170,7 +170,7 @@ const POSScreen = {
 
     this.selectedCustomer = customer;
 
-    const searchInput = document.getElementById('customerSearch');
+    const searchContainer = document.getElementById('customerSearchContainer');
     const resultsContainer = document.getElementById('customerSearchResults');
     const selectedDisplay = document.getElementById('selectedCustomerDisplay');
     const selectedName = document.getElementById('selectedCustomerName');
@@ -181,8 +181,8 @@ const POSScreen = {
         ? `${customer.first_name || ''} ${customer.last_name || ''}`.trim()
         : customer.email;
 
-    searchInput.value = '';
     resultsContainer.style.display = 'none';
+    searchContainer.style.display = 'none';
     selectedDisplay.style.display = 'block';
     selectedName.textContent = name;
     selectedEmail.textContent = customer.email || customer.phone || '';
@@ -191,10 +191,12 @@ const POSScreen = {
   clearCustomerSelection() {
     this.selectedCustomer = null;
 
+    const searchContainer = document.getElementById('customerSearchContainer');
     const searchInput = document.getElementById('customerSearch');
     const selectedDisplay = document.getElementById('selectedCustomerDisplay');
 
     searchInput.value = '';
+    searchContainer.style.display = 'block';
     selectedDisplay.style.display = 'none';
   },
 
