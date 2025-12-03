@@ -37,7 +37,7 @@ exports.handler = async (event) => {
       SELECT 
         r.id,
         r.customer_id,
-        c.name as customer_name,
+        c.first_name || ' ' || c.last_name as customer_name,
         c.email as customer_email,
         r.service_id,
         r.service_name,
