@@ -126,8 +126,7 @@ const POSScreen = {
       this.style.background = 'transparent';
     });
     item.addEventListener('click', function () {
-      POSScreen.clearCustomerSelection();
-      document.getElementById('customerSearchResults').style.display = 'none';
+      POSScreen.selectGuest();
     });
   },
 
@@ -320,6 +319,22 @@ const POSScreen = {
     selectedEmail.textContent = customer.email || customer.phone || '';
   },
 
+  selectGuest() {
+    this.selectedCustomer = 'guest';
+
+    const searchContainer = document.getElementById('customerSearchContainer');
+    const resultsContainer = document.getElementById('customerSearchResults');
+    const selectedDisplay = document.getElementById('selectedCustomerDisplay');
+    const selectedName = document.getElementById('selectedCustomerName');
+    const selectedEmail = document.getElementById('selectedCustomerEmail');
+
+    resultsContainer.style.display = 'none';
+    searchContainer.style.display = 'none';
+    selectedDisplay.style.display = 'block';
+    selectedName.textContent = 'Guest Checkout';
+    selectedEmail.textContent = '';
+  },
+
   clearCustomerSelection() {
     this.selectedCustomer = null;
 
@@ -330,6 +345,102 @@ const POSScreen = {
     searchInput.value = '';
     searchContainer.style.display = 'block';
     selectedDisplay.style.display = 'none';
+  },
+
+  showCustomerConfirmationModal() {
+    return new Promise((resolve) => {
+      const modal = document.createElement('div');
+      modal.id = 'customerConfirmModal';
+      modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+      `;
+
+      const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+      const bgColor = currentTheme === 'dark' ? '#5a5a5a' : '#D2B48C';
+      const textColor = currentTheme === 'dark' ? '#e8e8e8' : '#444443';
+      const accentColor = currentTheme === 'dark' ? '#f39c12' : '#b75c11';
+      const btnBg = currentTheme === 'dark' ? '#2ecc71' : '#8b7355';
+      const btnBgHover = currentTheme === 'dark' ? '#27ae60' : '#6d5a42';
+      const cancelBg = currentTheme === 'dark' ? '#7f8c8d' : '#95a5a6';
+      const cancelBgHover = currentTheme === 'dark' ? '#6c7a89' : '#7f8c8d';
+
+      modal.innerHTML = `
+        <div style="background: ${bgColor}; padding: 40px; border-radius: 20px; max-width: 450px; width: 90%; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3); text-align: center; font-family: Georgia, serif;">
+          <h2 style="color: ${accentColor}; margin: 0 0 20px 0; font-size: 24px; font-weight: 700;">
+            Continue without selecting a customer?
+          </h2>
+          <div style="margin: 30px 0;">
+            <button id="confirmYes" style="
+              background: ${btnBg};
+              color: white;
+              border: none;
+              padding: 14px 40px;
+              font-size: 16px;
+              border-radius: 50px;
+              cursor: pointer;
+              font-weight: 700;
+              margin-right: 15px;
+              font-family: Georgia, serif;
+              transition: all 0.2s;
+            ">
+              Yes
+            </button>
+            <button id="confirmCancel" style="
+              background: ${cancelBg};
+              color: white;
+              border: none;
+              padding: 14px 40px;
+              font-size: 16px;
+              border-radius: 50px;
+              cursor: pointer;
+              font-weight: 700;
+              font-family: Georgia, serif;
+              transition: all 0.2s;
+            ">
+              Cancel
+            </button>
+          </div>
+        </div>
+      `;
+
+      document.body.appendChild(modal);
+
+      const yesBtn = document.getElementById('confirmYes');
+      const cancelBtn = document.getElementById('confirmCancel');
+
+      yesBtn.addEventListener('mouseenter', function () {
+        this.style.background = btnBgHover;
+      });
+      yesBtn.addEventListener('mouseleave', function () {
+        this.style.background = btnBg;
+      });
+
+      cancelBtn.addEventListener('mouseenter', function () {
+        this.style.background = cancelBgHover;
+      });
+      cancelBtn.addEventListener('mouseleave', function () {
+        this.style.background = cancelBg;
+      });
+
+      yesBtn.addEventListener('click', () => {
+        modal.remove();
+        resolve(true);
+      });
+
+      cancelBtn.addEventListener('click', () => {
+        modal.remove();
+        resolve(false);
+      });
+    });
   },
 
   renderProducts() {
@@ -512,6 +623,18 @@ const POSScreen = {
 
   async processOrder() {
     if (this.cart.length === 0) return;
+
+    // Check if customer is selected
+    if (!this.selectedCustomer) {
+      const proceed = await this.showCustomerConfirmationModal();
+      if (!proceed) {
+        const searchInput = document.getElementById('customerSearch');
+        if (searchInput) searchInput.focus();
+        return;
+      }
+      // User confirmed, select guest
+      this.selectGuest();
+    }
 
     const { subtotal, tax, total } = this.calculateTotals();
 
@@ -917,7 +1040,19 @@ const POSScreen = {
     this.updateTotals();
   },
 
-  processCashPayment() {
+  async processCashPayment() {
+    // Check if customer is selected
+    if (!this.selectedCustomer) {
+      const proceed = await this.showCustomerConfirmationModal();
+      if (!proceed) {
+        const searchInput = document.getElementById('customerSearch');
+        if (searchInput) searchInput.focus();
+        return;
+      }
+      // User confirmed, select guest
+      this.selectGuest();
+    }
+
     const { subtotal, tax, total } = this.calculateTotals();
 
     const modal = document.createElement('div');
