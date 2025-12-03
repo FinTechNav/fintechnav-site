@@ -296,10 +296,22 @@ const POSScreen = {
   },
 
   selectCustomer(customerId) {
+    console.log('👤 [SELECT CUSTOMER] Called with ID:', customerId);
+    console.log(
+      '👤 [SELECT CUSTOMER] Searching in customers list of length:',
+      this.customers.length
+    );
+
     const customer = this.customers.find((c) => c.id === customerId);
-    if (!customer) return;
+    console.log('👤 [SELECT CUSTOMER] Customer found:', customer);
+
+    if (!customer) {
+      console.error('❌ [SELECT CUSTOMER] Customer not found with ID:', customerId);
+      return;
+    }
 
     this.selectedCustomer = customer;
+    console.log('👤 [SELECT CUSTOMER] selectedCustomer set to:', this.selectedCustomer);
 
     const searchContainer = document.getElementById('customerSearchContainer');
     const resultsContainer = document.getElementById('customerSearchResults');
@@ -307,10 +319,20 @@ const POSScreen = {
     const selectedName = document.getElementById('selectedCustomerName');
     const selectedEmail = document.getElementById('selectedCustomerEmail');
 
+    console.log('👤 [SELECT CUSTOMER] DOM elements:', {
+      searchContainer: !!searchContainer,
+      resultsContainer: !!resultsContainer,
+      selectedDisplay: !!selectedDisplay,
+      selectedName: !!selectedName,
+      selectedEmail: !!selectedEmail,
+    });
+
     const name =
       customer.first_name || customer.last_name
         ? `${customer.first_name || ''} ${customer.last_name || ''}`.trim()
         : customer.email;
+
+    console.log('👤 [SELECT CUSTOMER] Display name:', name);
 
     // Apply theme-aware styling
     const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
@@ -344,6 +366,8 @@ const POSScreen = {
       closeBtn.style.background = btnBg;
       closeBtn.style.color = btnColor;
     }
+
+    console.log('✅ [SELECT CUSTOMER] Display updated successfully');
   },
 
   selectGuest() {
@@ -400,15 +424,22 @@ const POSScreen = {
   },
 
   setCustomerFromExternal(customer) {
-    console.log('Setting customer from external navigation:', customer);
+    console.log('🎯 [POS] setCustomerFromExternal called with:', customer);
+    console.log('🎯 [POS] Current customers list length:', this.customers.length);
 
     // Ensure customer is in the customers list
-    if (!this.customers.find((c) => c.id === customer.id)) {
+    const existingCustomer = this.customers.find((c) => c.id === customer.id);
+    console.log('🎯 [POS] Customer exists in list:', !!existingCustomer);
+
+    if (!existingCustomer) {
+      console.log('🎯 [POS] Adding customer to list');
       this.customers.push(customer);
     }
 
     // Select the customer using the existing selectCustomer method
+    console.log('🎯 [POS] Calling selectCustomer with ID:', customer.id);
     this.selectCustomer(customer.id);
+    console.log('🎯 [POS] selectedCustomer after selection:', this.selectedCustomer);
   },
 
   showCustomerConfirmationModal() {
