@@ -1754,6 +1754,9 @@ class CustomersScreen {
 
     if (customer) {
       console.log('🛒 [CREATE ORDER] Navigating to POS...');
+      // Set flag to indicate we came from customers screen
+      sessionStorage.setItem('returnToCustomers', 'true');
+
       // Navigate to POS screen
       navigateTo('pos');
 
