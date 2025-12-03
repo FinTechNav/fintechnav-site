@@ -1121,6 +1121,8 @@ const POSScreen = {
   },
 
   reset() {
+    console.log('🔄 [RESET] Resetting POS screen after successful transaction');
+
     this.cart = [];
     this.selectedCustomer = null;
 
@@ -1135,6 +1137,18 @@ const POSScreen = {
 
     this.renderCart();
     this.updateTotals();
+
+    // Check if we should return to customers screen
+    const shouldReturn = sessionStorage.getItem('returnToCustomers');
+    console.log('🔄 [RESET] returnToCustomers flag:', shouldReturn);
+
+    if (shouldReturn === 'true') {
+      console.log('🔄 [RESET] Navigating back to customers screen');
+      sessionStorage.removeItem('returnToCustomers');
+      setTimeout(() => {
+        navigateTo('customers');
+      }, 1500); // Give user time to see success message
+    }
   },
 
   async processCashPayment() {
