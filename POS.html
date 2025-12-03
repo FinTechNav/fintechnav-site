@@ -381,38 +381,80 @@
     <script>
         // Load winery info and update header
         async function loadWineryHeader() {
+            console.log('🏛️ [WINERY HEADER] Starting to load winery header...');
+            
             const wineryId = localStorage.getItem('selectedWineryId');
             const userName = localStorage.getItem('userName') || 'User';
             
-            if (!wineryId) return;
+            console.log('🏛️ [WINERY HEADER] Winery ID from localStorage:', wineryId);
+            console.log('🏛️ [WINERY HEADER] User name from localStorage:', userName);
+            
+            if (!wineryId) {
+                console.warn('⚠️ [WINERY HEADER] No winery ID found in localStorage');
+                return;
+            }
             
             try {
-                const response = await fetch(`/.netlify/functions/get-winery-info?winery_id=${wineryId}`);
+                const url = `/.netlify/functions/get-winery-info?winery_id=${wineryId}`;
+                console.log('🏛️ [WINERY HEADER] Fetching from:', url);
+                
+                const response = await fetch(url);
+                console.log('🏛️ [WINERY HEADER] Response status:', response.status);
+                
                 const data = await response.json();
+                console.log('🏛️ [WINERY HEADER] Response data:', data);
                 
                 if (data.success && data.winery) {
                     const winery = data.winery;
+                    console.log('🏛️ [WINERY HEADER] Winery object:', winery);
+                    console.log('🏛️ [WINERY HEADER] Logo URL Dark:', winery.logo_url_dark);
+                    console.log('🏛️ [WINERY HEADER] Logo URL Light:', winery.logo_url_light);
+                    
                     const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+                    console.log('🏛️ [WINERY HEADER] Current theme:', currentTheme);
                     
                     // Determine which logo to use based on theme
                     const logoUrl = currentTheme === 'dark' ? winery.logo_url_dark : winery.logo_url_light;
+                    console.log('🏛️ [WINERY HEADER] Selected logo URL:', logoUrl);
                     
                     // Update winery name in both containers
-                    document.getElementById('currentWineryName').textContent = winery.name;
-                    document.getElementById('currentWineryNameNoLogo').textContent = winery.name;
+                    const wineryNameElem = document.getElementById('currentWineryName');
+                    const wineryNameNoLogoElem = document.getElementById('currentWineryNameNoLogo');
+                    
+                    console.log('🏛️ [WINERY HEADER] currentWineryName element:', wineryNameElem);
+                    console.log('🏛️ [WINERY HEADER] currentWineryNameNoLogo element:', wineryNameNoLogoElem);
+                    
+                    if (wineryNameElem) wineryNameElem.textContent = winery.name;
+                    if (wineryNameNoLogoElem) wineryNameNoLogoElem.textContent = winery.name;
                     
                     // Update user names
-                    document.getElementById('currentUserName').textContent = userName;
-                    document.getElementById('currentUserNameNoLogo').textContent = userName;
+                    const userNameElem = document.getElementById('currentUserName');
+                    const userNameNoLogoElem = document.getElementById('currentUserNameNoLogo');
+                    
+                    console.log('🏛️ [WINERY HEADER] currentUserName element:', userNameElem);
+                    console.log('🏛️ [WINERY HEADER] currentUserNameNoLogo element:', userNameNoLogoElem);
+                    
+                    if (userNameElem) userNameElem.textContent = userName;
+                    if (userNameNoLogoElem) userNameNoLogoElem.textContent = userName;
                     
                     // Show appropriate container based on logo availability
+                    const logoContainer = document.getElementById('wineryLogoContainer');
+                    const textOnlyContainer = document.getElementById('wineryTextOnly');
+                    const logoImg = document.getElementById('wineryLogo');
+                    
+                    console.log('🏛️ [WINERY HEADER] Logo container element:', logoContainer);
+                    console.log('🏛️ [WINERY HEADER] Text only container element:', textOnlyContainer);
+                    console.log('🏛️ [WINERY HEADER] Logo img element:', logoImg);
+                    
                     if (logoUrl && logoUrl.trim() !== '') {
-                        document.getElementById('wineryLogo').src = logoUrl;
-                        document.getElementById('wineryLogoContainer').style.display = 'flex';
-                        document.getElementById('wineryTextOnly').style.display = 'none';
+                        console.log('✅ [WINERY HEADER] Logo URL exists, showing logo container');
+                        if (logoImg) logoImg.src = logoUrl;
+                        if (logoContainer) logoContainer.style.display = 'flex';
+                        if (textOnlyContainer) textOnlyContainer.style.display = 'none';
                     } else {
-                        document.getElementById('wineryLogoContainer').style.display = 'none';
-                        document.getElementById('wineryTextOnly').style.display = 'block';
+                        console.log('📝 [WINERY HEADER] No logo URL, showing text-only container');
+                        if (logoContainer) logoContainer.style.display = 'none';
+                        if (textOnlyContainer) textOnlyContainer.style.display = 'block';
                     }
                     
                     // Listen for theme changes to update logo
@@ -421,8 +463,10 @@
                             if (mutation.attributeName === 'data-theme') {
                                 const newTheme = document.documentElement.getAttribute('data-theme') || 'dark';
                                 const newLogoUrl = newTheme === 'dark' ? winery.logo_url_dark : winery.logo_url_light;
-                                if (newLogoUrl && newLogoUrl.trim() !== '') {
-                                    document.getElementById('wineryLogo').src = newLogoUrl;
+                                console.log('🎨 [WINERY HEADER] Theme changed to:', newTheme);
+                                console.log('🎨 [WINERY HEADER] New logo URL:', newLogoUrl);
+                                if (newLogoUrl && newLogoUrl.trim() !== '' && logoImg) {
+                                    logoImg.src = newLogoUrl;
                                 }
                             }
                         });
@@ -432,21 +476,34 @@
                         attributes: true,
                         attributeFilter: ['data-theme']
                     });
+                    
+                    console.log('✅ [WINERY HEADER] Header loaded successfully');
+                } else {
+                    console.error('❌ [WINERY HEADER] API returned success=false or no winery data');
                 }
             } catch (error) {
-                console.error('Error loading winery info:', error);
+                console.error('❌ [WINERY HEADER] Error loading winery info:', error);
+                console.error('❌ [WINERY HEADER] Error stack:', error.stack);
                 // Fallback to text-only display
-                document.getElementById('currentWineryNameNoLogo').textContent = 'Jensen Family Winery';
-                document.getElementById('currentUserNameNoLogo').textContent = userName;
-                document.getElementById('wineryLogoContainer').style.display = 'none';
-                document.getElementById('wineryTextOnly').style.display = 'block';
+                const wineryNameNoLogoElem = document.getElementById('currentWineryNameNoLogo');
+                const userNameNoLogoElem = document.getElementById('currentUserNameNoLogo');
+                const logoContainer = document.getElementById('wineryLogoContainer');
+                const textOnlyContainer = document.getElementById('wineryTextOnly');
+                
+                if (wineryNameNoLogoElem) wineryNameNoLogoElem.textContent = 'Jensen Family Winery';
+                if (userNameNoLogoElem) userNameNoLogoElem.textContent = userName;
+                if (logoContainer) logoContainer.style.display = 'none';
+                if (textOnlyContainer) textOnlyContainer.style.display = 'block';
             }
         }
         
         // Load header when DOM is ready
+        console.log('🏛️ [WINERY HEADER] Document readyState:', document.readyState);
         if (document.readyState === 'loading') {
+            console.log('🏛️ [WINERY HEADER] Waiting for DOMContentLoaded...');
             document.addEventListener('DOMContentLoaded', loadWineryHeader);
         } else {
+            console.log('🏛️ [WINERY HEADER] DOM already loaded, executing immediately');
             loadWineryHeader();
         }
     </script>
