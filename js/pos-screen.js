@@ -409,32 +409,23 @@ const POSScreen = {
         left: 0;
         right: 0;
         bottom: 0;
-        background: rgba(0, 0, 0, 0.5);
+        background: var(--bg-modal-overlay);
         display: flex;
         align-items: center;
         justify-content: center;
         z-index: 10000;
       `;
 
-      const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
-      const bgColor = currentTheme === 'dark' ? '#5a5a5a' : '#D2B48C';
-      const textColor = currentTheme === 'dark' ? '#e8e8e8' : '#444443';
-      const accentColor = currentTheme === 'dark' ? '#f39c12' : '#8b7355';
-      const btnBg = currentTheme === 'dark' ? '#2ecc71' : '#8b7355';
-      const btnBgHover = currentTheme === 'dark' ? '#27ae60' : '#6d5a42';
-      const cancelBg = currentTheme === 'dark' ? '#7f8c8d' : '#b8a896';
-      const cancelBgHover = currentTheme === 'dark' ? '#6c7a89' : '#a0927f';
-
       modal.innerHTML = `
-        <div style="background: ${bgColor}; padding: 40px; border-radius: 20px; max-width: 450px; width: 90%; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3); text-align: center; font-family: Georgia, serif;">
-          <h2 style="color: ${accentColor}; margin: 0 0 20px 0; font-size: 24px; font-weight: 700;">
+        <div style="background: var(--bg-modal-box); padding: 40px; border-radius: 20px; max-width: 450px; width: 90%; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3); text-align: center; font-family: Georgia, serif; border: 1px solid var(--border-modal-box);">
+          <h2 style="color: var(--accent-primary); margin: 0 0 20px 0; font-size: 24px; font-weight: 700;">
             Continue without selecting a customer?
           </h2>
           <div style="margin: 30px 0;">
             <button id="confirmYes" style="
-              background: ${btnBg};
-              color: white;
-              border: none;
+              background: var(--btn-done-bg);
+              color: var(--btn-done-text);
+              border: 1px solid var(--border-modal-button);
               padding: 14px 40px;
               font-size: 16px;
               border-radius: 50px;
@@ -447,9 +438,9 @@ const POSScreen = {
               Yes
             </button>
             <button id="confirmCancel" style="
-              background: ${cancelBg};
-              color: white;
-              border: none;
+              background: var(--btn-cancel-bg);
+              color: var(--btn-cancel-text);
+              border: 1px solid var(--border-modal-button);
               padding: 14px 40px;
               font-size: 16px;
               border-radius: 50px;
@@ -470,17 +461,17 @@ const POSScreen = {
       const cancelBtn = document.getElementById('confirmCancel');
 
       yesBtn.addEventListener('mouseenter', function () {
-        this.style.background = btnBgHover;
+        this.style.opacity = '0.85';
       });
       yesBtn.addEventListener('mouseleave', function () {
-        this.style.background = btnBg;
+        this.style.opacity = '1';
       });
 
       cancelBtn.addEventListener('mouseenter', function () {
-        this.style.background = cancelBgHover;
+        this.style.opacity = '0.85';
       });
       cancelBtn.addEventListener('mouseleave', function () {
-        this.style.background = cancelBg;
+        this.style.opacity = '1';
       });
 
       yesBtn.addEventListener('click', () => {
