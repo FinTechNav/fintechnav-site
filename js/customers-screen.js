@@ -459,7 +459,8 @@ class CustomersScreen {
               !this.filteredCustomers.every((c) => this.selectedCustomers.has(c.id))
                 ? `
               <button class="btn-select-all" onclick="customersScreen.toggleSelectAll(true)">
-                ☑ Select All
+                <img src="https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-102.svg" class="select-icon menu-icon-select-all" alt="Select All" style="width: 16px; height: 16px; margin-right: 6px;">
+                Select All
               </button>
             `
                 : ''
@@ -1390,7 +1391,8 @@ class CustomersScreen {
     return `
       <div class="bulk-actions-bar">
         <button class="btn-bulk" onclick="customersScreen.bulkEmail()">
-          📧 Email Selected
+          <img src="https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-109.svg" class="bulk-icon menu-icon-email" alt="Email">
+          Email Selected
         </button>
         <button class="btn-bulk" onclick="customersScreen.bulkExport()">
           <img src="https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-31.svg" class="bulk-icon menu-icon-export" alt="Export">
@@ -1401,7 +1403,8 @@ class CustomersScreen {
           Add to Club
         </button>
         <button class="btn-bulk" onclick="customersScreen.deselectAll()">
-          ✕ Deselect All
+          <img src="https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-103.svg" class="bulk-icon menu-icon-deselect" alt="Deselect">
+          Deselect All
         </button>
         <button class="btn-bulk btn-danger" onclick="customersScreen.bulkDelete()">
           <img src="https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-14.svg" class="bulk-icon menu-icon-delete" alt="Delete">
@@ -1452,13 +1455,13 @@ class CustomersScreen {
             <img src="https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-22.svg" class="action-icon menu-icon-pos" alt="POS">
           </button>
           <button class="btn-icon" onclick="event.stopPropagation(); customersScreen.emailCustomer('${customer.id}')" title="Email">
-            📧
+            <img src="https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-109.svg" class="action-icon menu-icon-email" alt="Email">
           </button>
           <button class="btn-icon" onclick="event.stopPropagation(); customersScreen.textCustomer('${customer.id}')" title="Text">
-            💬
+            <img src="https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-110.svg" class="action-icon menu-icon-sms" alt="SMS">
           </button>
           <button class="btn-icon" onclick="event.stopPropagation(); customersScreen.addNote('${customer.id}')" title="Note">
-            📝
+            <img src="https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-111.svg" class="action-icon menu-icon-note" alt="Note">
           </button>
         </div>
       </div>
@@ -1553,13 +1556,13 @@ class CustomersScreen {
                     <img src="https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-22.svg" class="action-icon menu-icon-pos" alt="POS">
                   </button>
                   <button class="btn-action" onclick="customersScreen.emailCustomer('${customer.id}')" title="Email">
-                    📧
+                    <img src="https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-109.svg" class="action-icon menu-icon-email" alt="Email">
                   </button>
                   <button class="btn-action" onclick="customersScreen.textCustomer('${customer.id}')" title="Text">
-                    💬
+                    <img src="https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-110.svg" class="action-icon menu-icon-sms" alt="SMS">
                   </button>
                   <button class="btn-action" onclick="customersScreen.addNote('${customer.id}')" title="Note">
-                    📝
+                    <img src="https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-111.svg" class="action-icon menu-icon-note" alt="Note">
                   </button>
                 </div>
               </td>

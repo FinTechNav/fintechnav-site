@@ -457,6 +457,46 @@
   content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/DarkMode/DarkMode-icons-42.svg');
 }
 
+[data-theme="light"] .menu-icon-email {
+  content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-109.svg');
+}
+
+[data-theme="dark"] .menu-icon-email {
+  content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/DarkMode/DarkMode-icons-99.svg');
+}
+
+[data-theme="light"] .menu-icon-sms {
+  content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-110.svg');
+}
+
+[data-theme="dark"] .menu-icon-sms {
+  content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/DarkMode/DarkMode-icons-100.svg');
+}
+
+[data-theme="light"] .menu-icon-note {
+  content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-111.svg');
+}
+
+[data-theme="dark"] .menu-icon-note {
+  content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/DarkMode/DarkMode-icons-101.svg');
+}
+
+[data-theme="light"] .menu-icon-select-all {
+  content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-102.svg');
+}
+
+[data-theme="dark"] .menu-icon-select-all {
+  content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/DarkMode/DarkMode-icons-92.svg');
+}
+
+[data-theme="light"] .menu-icon-deselect {
+  content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-103.svg');
+}
+
+[data-theme="dark"] .menu-icon-deselect {
+  content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/DarkMode/DarkMode-icons-93.svg');
+}
+
 .customers-stats {
   display: flex;
   justify-content: space-between;

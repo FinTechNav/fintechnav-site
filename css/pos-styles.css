@@ -198,6 +198,22 @@ body {
     content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/DarkMode/DarkMode-icons-56.svg');
 }
 
+[data-theme="light"] .menu-icon-hamburger {
+    content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-107.svg');
+}
+
+[data-theme="dark"] .menu-icon-hamburger {
+    content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/DarkMode/DarkMode-icons-97.svg');
+}
+
+[data-theme="light"] .menu-icon-theme-toggle {
+    content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-113.svg');
+}
+
+[data-theme="dark"] .menu-icon-theme-toggle {
+    content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/DarkMode/DarkMode-icons-112.svg');
+}
+
 .menu-label {
     margin-left: 8px;
     opacity: 0;
