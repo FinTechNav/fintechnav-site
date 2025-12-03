@@ -416,8 +416,11 @@ const POSScreen = {
         z-index: 10000;
       `;
 
+      const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+      const modalBg = currentTheme === 'dark' ? '#5a5a5a' : '#ffffff';
+
       modal.innerHTML = `
-        <div style="background: var(--bg-modal-box); padding: 40px; border-radius: 20px; max-width: 450px; width: 90%; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3); text-align: center; font-family: Georgia, serif; border: 1px solid var(--border-modal-box);">
+        <div style="background: ${modalBg}; padding: 40px; border-radius: 20px; max-width: 450px; width: 90%; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3); text-align: center; font-family: Georgia, serif; border: 1px solid var(--border-modal-box);">
           <h2 style="color: var(--accent-primary); margin: 0 0 20px 0; font-size: 24px; font-weight: 700;">
             Continue without selecting a customer?
           </h2>
