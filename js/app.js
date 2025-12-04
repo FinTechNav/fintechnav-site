@@ -533,9 +533,14 @@ const App = {
       console.log('✅ [LOGIN] Saved selectedWineryId to localStorage:', this.currentWinery.id);
     }
 
-    if (this.currentUser && this.currentUser.name) {
-      localStorage.setItem('userName', this.currentUser.name);
-      console.log('✅ [LOGIN] Saved userName to localStorage:', this.currentUser.name);
+    if (this.currentUser) {
+      const userName =
+        this.currentUser.name ||
+        `${this.currentUser.first_name} ${this.currentUser.last_name}`.trim();
+      if (userName) {
+        localStorage.setItem('userName', userName);
+        console.log('✅ [LOGIN] Saved userName to localStorage:', userName);
+      }
     }
 
     document.getElementById('loginMethodScreen').style.display = 'none';
