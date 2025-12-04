@@ -1,4 +1,6 @@
 // Main App Controller
+console.log('🔧 [APP.JS] Version with localStorage fix loaded - 2024-12-04');
+
 const App = {
   currentScreen: 'pos',
   currentWinery: null,
@@ -520,6 +522,7 @@ const App = {
   },
 
   loginSuccess() {
+    console.log('🎯 [LOGIN] ========== loginSuccess() CALLED ==========');
     console.log('✅ [LOGIN] Login successful');
     console.log('✅ [LOGIN] Current winery:', this.currentWinery);
     console.log('✅ [LOGIN] Current user:', this.currentUser);
