@@ -381,27 +381,33 @@
     <script>
         // Load winery info and update header
         async function loadWineryHeader() {
-            console.log('🏛️ [WINERY HEADER] Starting to load winery header...');
-            
-            // Check if POS screen is visible
-            const posScreen = document.getElementById('posScreen');
-            console.log('🏛️ [WINERY HEADER] POS screen element:', posScreen);
-            console.log('🏛️ [WINERY HEADER] POS screen display style:', posScreen ? posScreen.style.display : 'N/A');
-            
-            const wineryId = localStorage.getItem('selectedWineryId');
-            const userName = localStorage.getItem('userName') || 'User';
-            
-            console.log('🏛️ [WINERY HEADER] Winery ID from localStorage:', wineryId);
-            console.log('🏛️ [WINERY HEADER] User name from localStorage:', userName);
-            console.log('🏛️ [WINERY HEADER] All localStorage keys:', Object.keys(localStorage));
-            
-            if (!wineryId) {
-                console.error('❌ [WINERY HEADER] No winery ID found in localStorage');
-                console.error('❌ [WINERY HEADER] The login process needs to set selectedWineryId in localStorage');
+            try {
+                console.log('🏛️ [WINERY HEADER] Starting to load winery header...');
+                
+                // Check if POS screen is visible
+                const posScreen = document.getElementById('posScreen');
+                console.log('🏛️ [WINERY HEADER] POS screen element:', posScreen);
+                console.log('🏛️ [WINERY HEADER] POS screen display style:', posScreen ? posScreen.style.display : 'N/A');
+                
+                const wineryId = localStorage.getItem('selectedWineryId');
+                const userName = localStorage.getItem('userName') || 'User';
+                
+                console.log('🏛️ [WINERY HEADER] Winery ID from localStorage:', wineryId);
+                console.log('🏛️ [WINERY HEADER] User name from localStorage:', userName);
+                console.log('🏛️ [WINERY HEADER] All localStorage keys:', Object.keys(localStorage));
+                
+                if (!wineryId) {
+                    console.error('❌ [WINERY HEADER] No winery ID found in localStorage');
+                    console.error('❌ [WINERY HEADER] The login process needs to set selectedWineryId in localStorage');
+                    return;
+                }
+                
+                console.log('🏛️ [WINERY HEADER] Winery ID exists, continuing...');
+            } catch (topError) {
+                console.error('❌ [WINERY HEADER] ERROR AT TOP OF FUNCTION:', topError);
+                console.error('❌ [WINERY HEADER] Stack:', topError.stack);
                 return;
             }
-            
-            console.log('🏛️ [WINERY HEADER] Winery ID exists, continuing...');
             
             try {
                 const url = `/.netlify/functions/get-winery-info?winery_id=${wineryId}`;
