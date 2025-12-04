@@ -520,11 +520,32 @@ const App = {
   },
 
   loginSuccess() {
+    console.log('✅ [LOGIN] Login successful');
+    console.log('✅ [LOGIN] Current winery:', this.currentWinery);
+    console.log('✅ [LOGIN] Current user:', this.currentUser);
+
+    // Store winery and user info in localStorage for later use
+    if (this.currentWinery && this.currentWinery.id) {
+      localStorage.setItem('selectedWineryId', this.currentWinery.id);
+      console.log('✅ [LOGIN] Saved selectedWineryId to localStorage:', this.currentWinery.id);
+    }
+
+    if (this.currentUser && this.currentUser.name) {
+      localStorage.setItem('userName', this.currentUser.name);
+      console.log('✅ [LOGIN] Saved userName to localStorage:', this.currentUser.name);
+    }
+
     document.getElementById('loginMethodScreen').style.display = 'none';
     document.getElementById('appContainer').style.display = 'flex';
 
     this.updateWineryDisplay();
     this.applyLayoutPreference();
+
+    // Trigger winery header load after login completes
+    if (typeof window.loadWineryHeader === 'function') {
+      console.log('✅ [LOGIN] Triggering winery header load');
+      setTimeout(() => window.loadWineryHeader(), 500);
+    }
 
     const isMobile = window.innerWidth <= 768;
 

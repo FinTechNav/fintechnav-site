@@ -393,11 +393,15 @@
             
             console.log('🏛️ [WINERY HEADER] Winery ID from localStorage:', wineryId);
             console.log('🏛️ [WINERY HEADER] User name from localStorage:', userName);
+            console.log('🏛️ [WINERY HEADER] All localStorage keys:', Object.keys(localStorage));
             
             if (!wineryId) {
-                console.warn('⚠️ [WINERY HEADER] No winery ID found in localStorage');
+                console.error('❌ [WINERY HEADER] No winery ID found in localStorage');
+                console.error('❌ [WINERY HEADER] The login process needs to set selectedWineryId in localStorage');
                 return;
             }
+            
+            console.log('🏛️ [WINERY HEADER] Winery ID exists, continuing...');
             
             try {
                 const url = `/.netlify/functions/get-winery-info?winery_id=${wineryId}`;
