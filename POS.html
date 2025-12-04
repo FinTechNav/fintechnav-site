@@ -381,6 +381,9 @@
     <script>
         // Load winery info and update header
         async function loadWineryHeader() {
+            // Declare variables at function scope
+            let wineryId, userName;
+            
             try {
                 console.log('🏛️ [WINERY HEADER] Starting to load winery header...');
                 
@@ -389,8 +392,8 @@
                 console.log('🏛️ [WINERY HEADER] POS screen element:', posScreen);
                 console.log('🏛️ [WINERY HEADER] POS screen display style:', posScreen ? posScreen.style.display : 'N/A');
                 
-                const wineryId = localStorage.getItem('selectedWineryId');
-                const userName = localStorage.getItem('userName') || 'User';
+                wineryId = localStorage.getItem('selectedWineryId');
+                userName = localStorage.getItem('userName') || 'User';
                 
                 console.log('🏛️ [WINERY HEADER] Winery ID from localStorage:', wineryId);
                 console.log('🏛️ [WINERY HEADER] User name from localStorage:', userName);
