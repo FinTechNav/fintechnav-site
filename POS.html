@@ -377,7 +377,7 @@
     <script src="js/reports-screen.js"></script>
     <script src="js/settings-screen.js"></script>
     <script src="js/customer-details-screen.js"></script>
-    <script src="js/mobile-pos.js"></script>
+    <script src="js/app.js"></script>
     <script>
         // Load winery info and update header
         async function loadWineryHeader() {
@@ -505,21 +505,26 @@
         // Make it available globally for manual triggering
         window.loadWineryHeader = loadWineryHeader;
         
-        // Load header when DOM is ready
+        console.log('🏛️ [WINERY HEADER] Script loaded, function defined');
         console.log('🏛️ [WINERY HEADER] Document readyState:', document.readyState);
+        
+        // Try multiple triggers to ensure it runs
         if (document.readyState === 'loading') {
             console.log('🏛️ [WINERY HEADER] Waiting for DOMContentLoaded...');
             document.addEventListener('DOMContentLoaded', () => {
                 console.log('🏛️ [WINERY HEADER] DOMContentLoaded fired');
-                // Wait a bit to ensure POS screen is shown
                 setTimeout(loadWineryHeader, 100);
             });
         } else {
             console.log('🏛️ [WINERY HEADER] DOM already loaded, executing with delay');
-            // Wait a bit to ensure POS screen is shown
             setTimeout(loadWineryHeader, 100);
         }
+        
+        // Also trigger on window.load as backup
+        window.addEventListener('load', () => {
+            console.log('🏛️ [WINERY HEADER] window.load fired - triggering as backup');
+            setTimeout(loadWineryHeader, 200);
+        });
     </script>
-    <script src="js/app.js"></script>
 </body>
 </html>
