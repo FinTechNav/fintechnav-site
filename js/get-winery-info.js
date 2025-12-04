@@ -45,26 +45,7 @@ exports.handler = async (event) => {
 
     // Get specific winery with geocode information
     const query = `
-      SELECT 
-        id,
-        name,
-        domain,
-        owner_name,
-        phone,
-        email,
-        website,
-        address_line1,
-        address_line2,
-        city,
-        state_province,
-        postal_code,
-        country_code,
-        latitude,
-        longitude,
-        currency_code,
-        timezone,
-        logo_url_light,
-        logo_url_dark
+      SELECT *
       FROM wineries
       WHERE id = $1
         AND latitude IS NOT NULL 
@@ -73,6 +54,14 @@ exports.handler = async (event) => {
     `;
 
     const result = await client.query(query, [winery_id]);
+
+    console.log('✅ [GET-WINERY-INFO] Query executed successfully');
+    console.log('✅ [GET-WINERY-INFO] Row count:', result.rowCount);
+    console.log('✅ [GET-WINERY-INFO] Result rows:', JSON.stringify(result.rows, null, 2));
+    console.log(
+      '✅ [GET-WINERY-INFO] First row keys:',
+      result.rows[0] ? Object.keys(result.rows[0]) : 'No rows'
+    );
 
     if (result.rows.length === 0) {
       return {
