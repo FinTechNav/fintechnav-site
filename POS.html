@@ -210,9 +210,18 @@
             <div id="posScreen" class="container">
                 <div class="left-panel">
                     <div class="header">
-                        <h1>Heavy Pour Wine</h1>
-                        <p><span id="currentWineryName">Jensen Family Winery</span> - Point of Sale</p>
-                        <p style="font-size: 12px; color: #95a5a6; margin-top: 5px;">User: <span id="currentUserName"></span></p>
+                        <div id="wineryLogoContainer" style="display: none; align-items: center; gap: 20px;">
+                            <img id="wineryLogo" src="" alt="Winery Logo" class="winery-logo menu-icon-winery-logo" style="height: 60px; width: auto;">
+                            <div class="header-separator"></div>
+                            <div class="header-text">
+                                <p style="font-size: 18px; margin: 0;"><span id="currentWineryName">Jensen Family Winery</span> - Point of Sale</p>
+                                <p style="font-size: 12px; color: #95a5a6; margin: 5px 0 0 0;">User: <span id="currentUserName"></span></p>
+                            </div>
+                        </div>
+                        <div id="wineryTextOnly" style="display: none;">
+                            <p style="font-size: 18px; margin: 0;"><span id="currentWineryNameNoLogo">Jensen Family Winery</span> - Point of Sale</p>
+                            <p style="font-size: 12px; color: #95a5a6; margin: 5px 0 0 0;">User: <span id="currentUserNameNoLogo"></span></p>
+                        </div>
                     </div>
                     <div class="products-grid" id="productsGrid"></div>
                 </div>
@@ -369,6 +378,148 @@
     <script src="js/settings-screen.js"></script>
     <script src="js/customer-details-screen.js"></script>
     <script src="js/mobile-pos.js"></script>
+    <script>
+        // Load winery info and update header
+        async function loadWineryHeader() {
+            console.log('🏛️ [WINERY HEADER] Starting to load winery header...');
+            
+            // Check if POS screen is visible
+            const posScreen = document.getElementById('posScreen');
+            console.log('🏛️ [WINERY HEADER] POS screen element:', posScreen);
+            console.log('🏛️ [WINERY HEADER] POS screen display style:', posScreen ? posScreen.style.display : 'N/A');
+            
+            const wineryId = localStorage.getItem('selectedWineryId');
+            const userName = localStorage.getItem('userName') || 'User';
+            
+            console.log('🏛️ [WINERY HEADER] Winery ID from localStorage:', wineryId);
+            console.log('🏛️ [WINERY HEADER] User name from localStorage:', userName);
+            
+            if (!wineryId) {
+                console.warn('⚠️ [WINERY HEADER] No winery ID found in localStorage');
+                return;
+            }
+            
+            try {
+                const url = `/.netlify/functions/get-winery-info?winery_id=${wineryId}`;
+                console.log('🏛️ [WINERY HEADER] Fetching from:', url);
+                
+                const response = await fetch(url);
+                console.log('🏛️ [WINERY HEADER] Response status:', response.status);
+                
+                const data = await response.json();
+                console.log('🏛️ [WINERY HEADER] Response data:', data);
+                
+                if (data.success && data.winery) {
+                    const winery = data.winery;
+                    console.log('🏛️ [WINERY HEADER] Winery object:', winery);
+                    console.log('🏛️ [WINERY HEADER] Logo URL Dark:', winery.logo_url_dark);
+                    console.log('🏛️ [WINERY HEADER] Logo URL Light:', winery.logo_url_light);
+                    
+                    const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+                    console.log('🏛️ [WINERY HEADER] Current theme:', currentTheme);
+                    
+                    // Determine which logo to use based on theme
+                    const logoUrl = currentTheme === 'dark' ? winery.logo_url_dark : winery.logo_url_light;
+                    console.log('🏛️ [WINERY HEADER] Selected logo URL:', logoUrl);
+                    
+                    // Update winery name in both containers
+                    const wineryNameElem = document.getElementById('currentWineryName');
+                    const wineryNameNoLogoElem = document.getElementById('currentWineryNameNoLogo');
+                    
+                    console.log('🏛️ [WINERY HEADER] currentWineryName element:', wineryNameElem);
+                    console.log('🏛️ [WINERY HEADER] currentWineryNameNoLogo element:', wineryNameNoLogoElem);
+                    
+                    if (wineryNameElem) wineryNameElem.textContent = winery.name;
+                    if (wineryNameNoLogoElem) wineryNameNoLogoElem.textContent = winery.name;
+                    
+                    // Update user names
+                    const userNameElem = document.getElementById('currentUserName');
+                    const userNameNoLogoElem = document.getElementById('currentUserNameNoLogo');
+                    
+                    console.log('🏛️ [WINERY HEADER] currentUserName element:', userNameElem);
+                    console.log('🏛️ [WINERY HEADER] currentUserNameNoLogo element:', userNameNoLogoElem);
+                    
+                    if (userNameElem) userNameElem.textContent = userName;
+                    if (userNameNoLogoElem) userNameNoLogoElem.textContent = userName;
+                    
+                    // Show appropriate container based on logo availability
+                    const logoContainer = document.getElementById('wineryLogoContainer');
+                    const textOnlyContainer = document.getElementById('wineryTextOnly');
+                    const logoImg = document.getElementById('wineryLogo');
+                    
+                    console.log('🏛️ [WINERY HEADER] Logo container element:', logoContainer);
+                    console.log('🏛️ [WINERY HEADER] Text only container element:', textOnlyContainer);
+                    console.log('🏛️ [WINERY HEADER] Logo img element:', logoImg);
+                    
+                    if (logoUrl && logoUrl.trim() !== '') {
+                        console.log('✅ [WINERY HEADER] Logo URL exists, showing logo container');
+                        if (logoImg) logoImg.src = logoUrl;
+                        if (logoContainer) logoContainer.style.display = 'flex';
+                        if (textOnlyContainer) textOnlyContainer.style.display = 'none';
+                    } else {
+                        console.log('📝 [WINERY HEADER] No logo URL, showing text-only container');
+                        if (logoContainer) logoContainer.style.display = 'none';
+                        if (textOnlyContainer) textOnlyContainer.style.display = 'block';
+                    }
+                    
+                    // Listen for theme changes to update logo
+                    const observer = new MutationObserver((mutations) => {
+                        mutations.forEach((mutation) => {
+                            if (mutation.attributeName === 'data-theme') {
+                                const newTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+                                const newLogoUrl = newTheme === 'dark' ? winery.logo_url_dark : winery.logo_url_light;
+                                console.log('🎨 [WINERY HEADER] Theme changed to:', newTheme);
+                                console.log('🎨 [WINERY HEADER] New logo URL:', newLogoUrl);
+                                if (newLogoUrl && newLogoUrl.trim() !== '' && logoImg) {
+                                    logoImg.src = newLogoUrl;
+                                }
+                            }
+                        });
+                    });
+                    
+                    observer.observe(document.documentElement, {
+                        attributes: true,
+                        attributeFilter: ['data-theme']
+                    });
+                    
+                    console.log('✅ [WINERY HEADER] Header loaded successfully');
+                } else {
+                    console.error('❌ [WINERY HEADER] API returned success=false or no winery data');
+                }
+            } catch (error) {
+                console.error('❌ [WINERY HEADER] Error loading winery info:', error);
+                console.error('❌ [WINERY HEADER] Error stack:', error.stack);
+                // Fallback to text-only display
+                const wineryNameNoLogoElem = document.getElementById('currentWineryNameNoLogo');
+                const userNameNoLogoElem = document.getElementById('currentUserNameNoLogo');
+                const logoContainer = document.getElementById('wineryLogoContainer');
+                const textOnlyContainer = document.getElementById('wineryTextOnly');
+                
+                if (wineryNameNoLogoElem) wineryNameNoLogoElem.textContent = 'Jensen Family Winery';
+                if (userNameNoLogoElem) userNameNoLogoElem.textContent = userName;
+                if (logoContainer) logoContainer.style.display = 'none';
+                if (textOnlyContainer) textOnlyContainer.style.display = 'block';
+            }
+        }
+        
+        // Make it available globally for manual triggering
+        window.loadWineryHeader = loadWineryHeader;
+        
+        // Load header when DOM is ready
+        console.log('🏛️ [WINERY HEADER] Document readyState:', document.readyState);
+        if (document.readyState === 'loading') {
+            console.log('🏛️ [WINERY HEADER] Waiting for DOMContentLoaded...');
+            document.addEventListener('DOMContentLoaded', () => {
+                console.log('🏛️ [WINERY HEADER] DOMContentLoaded fired');
+                // Wait a bit to ensure POS screen is shown
+                setTimeout(loadWineryHeader, 100);
+            });
+        } else {
+            console.log('🏛️ [WINERY HEADER] DOM already loaded, executing with delay');
+            // Wait a bit to ensure POS screen is shown
+            setTimeout(loadWineryHeader, 100);
+        }
+    </script>
     <script src="js/app.js"></script>
 </body>
 </html>

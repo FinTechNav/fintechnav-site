@@ -330,6 +330,20 @@ body {
     font-size: 14px;
 }
 
+.header-separator {
+    width: 1px;
+    height: 60px;
+    background: var(--border-color);
+}
+
+.winery-logo {
+    object-fit: contain;
+}
+
+.header-text {
+    flex: 1;
+}
+
 /* ===================================
    PRODUCTS GRID - Responsive
    =================================== */
