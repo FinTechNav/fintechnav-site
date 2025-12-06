@@ -403,6 +403,13 @@
             console.log('💀 [SKELETON] Text only container element:', textOnlyContainer);
             
             if (loadingSkeleton) {
+                console.log('💀 [SKELETON] Skeleton innerHTML:', loadingSkeleton.innerHTML);
+                console.log('💀 [SKELETON] Skeleton children count:', loadingSkeleton.children.length);
+                console.log('💀 [SKELETON] Skeleton children:', Array.from(loadingSkeleton.children));
+                console.log('💀 [SKELETON] Skeleton has .skeleton class children:', loadingSkeleton.querySelectorAll('.skeleton').length);
+            }
+            
+            if (loadingSkeleton) {
                 loadingSkeleton.style.display = 'flex';
                 console.log('💀 [SKELETON] Set loadingSkeleton display to flex');
                 console.log('💀 [SKELETON] Actual display value:', loadingSkeleton.style.display);
