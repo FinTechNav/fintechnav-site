@@ -425,14 +425,14 @@
                 if (data.success && data.winery) {
                     const winery = data.winery;
                     console.log('🏛️ [WINERY HEADER] Winery object:', winery);
-                    console.log('🏛️ [WINERY HEADER] Logo URL Dark:', winery.logo_url_dark);
-                    console.log('🏛️ [WINERY HEADER] Logo URL Light:', winery.logo_url_light);
+                    console.log('🏛️ [WINERY HEADER] Logo Dark URL:', winery.logo_dark_url);
+                    console.log('🏛️ [WINERY HEADER] Logo Light URL:', winery.logo_light_url);
                     
                     const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
                     console.log('🏛️ [WINERY HEADER] Current theme:', currentTheme);
                     
                     // Determine which logo to use based on theme
-                    const logoUrl = currentTheme === 'dark' ? winery.logo_url_dark : winery.logo_url_light;
+                    const logoUrl = currentTheme === 'dark' ? winery.logo_dark_url : winery.logo_light_url;
                     console.log('🏛️ [WINERY HEADER] Selected logo URL:', logoUrl);
                     
                     // Update winery name in both containers
@@ -480,7 +480,7 @@
                         mutations.forEach((mutation) => {
                             if (mutation.attributeName === 'data-theme') {
                                 const newTheme = document.documentElement.getAttribute('data-theme') || 'dark';
-                                const newLogoUrl = newTheme === 'dark' ? winery.logo_url_dark : winery.logo_url_light;
+                                const newLogoUrl = newTheme === 'dark' ? winery.logo_dark_url : winery.logo_light_url;
                                 console.log('🎨 [WINERY HEADER] Theme changed to:', newTheme);
                                 console.log('🎨 [WINERY HEADER] New logo URL:', newLogoUrl);
                                 if (newLogoUrl && newLogoUrl.trim() !== '' && logoImg) {
