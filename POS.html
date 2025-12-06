@@ -519,25 +519,10 @@
         window.loadWineryHeader = loadWineryHeader;
         
         console.log('🏛️ [WINERY HEADER] Script loaded, function defined');
-        console.log('🏛️ [WINERY HEADER] Document readyState:', document.readyState);
+        console.log('🏛️ [WINERY HEADER] Only loads after login - no automatic trigger');
         
-        // Try multiple triggers to ensure it runs
-        if (document.readyState === 'loading') {
-            console.log('🏛️ [WINERY HEADER] Waiting for DOMContentLoaded...');
-            document.addEventListener('DOMContentLoaded', () => {
-                console.log('🏛️ [WINERY HEADER] DOMContentLoaded fired');
-                setTimeout(loadWineryHeader, 100);
-            });
-        } else {
-            console.log('🏛️ [WINERY HEADER] DOM already loaded, executing with delay');
-            setTimeout(loadWineryHeader, 100);
-        }
-        
-        // Also trigger on window.load as backup
-        window.addEventListener('load', () => {
-            console.log('🏛️ [WINERY HEADER] window.load fired - triggering as backup');
-            setTimeout(loadWineryHeader, 200);
-        });
+        // DO NOT auto-load on page load - only load after login via app.js loginSuccess()
+        // This prevents showing old winery info when switching wineries
     </script>
 </body>
 </html>
