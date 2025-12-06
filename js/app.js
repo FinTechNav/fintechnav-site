@@ -373,6 +373,8 @@ const App = {
     localStorage.removeItem('userName');
     console.log('🔄 [LOGOUT] Cleared selectedWineryId and userName from localStorage');
 
+    // Hide app container to prevent old content from showing
+    document.getElementById('appContainer').style.display = 'none';
     document.getElementById('wineryLoginScreen').style.display = 'flex';
     document.getElementById('loginMethodScreen').style.display = 'none';
     this.updatePinDots();
