@@ -398,10 +398,28 @@
             const logoContainer = document.getElementById('wineryLogoContainer');
             const textOnlyContainer = document.getElementById('wineryTextOnly');
             
-            if (loadingSkeleton) loadingSkeleton.style.display = 'flex';
-            if (logoContainer) logoContainer.style.display = 'none';
-            if (textOnlyContainer) textOnlyContainer.style.display = 'none';
-            console.log('🏛️ [WINERY HEADER] Showing loading skeleton');
+            console.log('💀 [SKELETON] Loading skeleton element:', loadingSkeleton);
+            console.log('💀 [SKELETON] Logo container element:', logoContainer);
+            console.log('💀 [SKELETON] Text only container element:', textOnlyContainer);
+            
+            if (loadingSkeleton) {
+                loadingSkeleton.style.display = 'flex';
+                console.log('💀 [SKELETON] Set loadingSkeleton display to flex');
+                console.log('💀 [SKELETON] Actual display value:', loadingSkeleton.style.display);
+                console.log('💀 [SKELETON] Computed display:', window.getComputedStyle(loadingSkeleton).display);
+            } else {
+                console.error('❌ [SKELETON] Loading skeleton element not found!');
+            }
+            
+            if (logoContainer) {
+                logoContainer.style.display = 'none';
+                console.log('💀 [SKELETON] Hid logo container');
+            }
+            if (textOnlyContainer) {
+                textOnlyContainer.style.display = 'none';
+                console.log('💀 [SKELETON] Hid text only container');
+            }
+            console.log('💀 [SKELETON] Showing loading skeleton');
             
             try {
                 console.log('🏛️ [WINERY HEADER] Starting to load winery header...');
@@ -499,12 +517,18 @@
                                 console.log('✅ [WINERY HEADER] Logo loaded - displayed size:', logoImg.offsetWidth, 'x', logoImg.offsetHeight);
                             };
                         }
-                        if (loadingSkeleton) loadingSkeleton.style.display = 'none';
+                        if (loadingSkeleton) {
+                            loadingSkeleton.style.display = 'none';
+                            console.log('💀 [SKELETON] Hiding skeleton - logo version');
+                        }
                         if (logoContainer) logoContainer.style.display = 'flex';
                         if (textOnlyContainer) textOnlyContainer.style.display = 'none';
                     } else {
                         console.log('📝 [WINERY HEADER] No logo URL, showing text-only container');
-                        if (loadingSkeleton) loadingSkeleton.style.display = 'none';
+                        if (loadingSkeleton) {
+                            loadingSkeleton.style.display = 'none';
+                            console.log('💀 [SKELETON] Hiding skeleton - text only version');
+                        }
                         if (logoContainer) logoContainer.style.display = 'none';
                         if (textOnlyContainer) textOnlyContainer.style.display = 'block';
                     }
