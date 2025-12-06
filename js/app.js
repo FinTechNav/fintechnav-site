@@ -367,6 +367,12 @@ const App = {
     this.currentWinery = null;
     this.users = [];
     this.pinEntry = '';
+
+    // Clear localStorage to prevent showing old winery info
+    localStorage.removeItem('selectedWineryId');
+    localStorage.removeItem('userName');
+    console.log('🔄 [LOGOUT] Cleared selectedWineryId and userName from localStorage');
+
     document.getElementById('wineryLoginScreen').style.display = 'flex';
     document.getElementById('loginMethodScreen').style.display = 'none';
     this.updatePinDots();
@@ -674,6 +680,10 @@ const App = {
     // Clear user but keep winery
     this.currentUser = null;
     this.pinEntry = '';
+
+    // Clear userName from localStorage (keep selectedWineryId since staying on same winery)
+    localStorage.removeItem('userName');
+    console.log('🔄 [LOGOUT] Cleared userName from localStorage');
 
     // Hide app, show login method screen (stay on current winery)
     document.getElementById('appContainer').style.display = 'none';
