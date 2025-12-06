@@ -381,6 +381,34 @@ const App = {
     );
     console.log('🔄 [WINERY CHANGE] userName after clear:', localStorage.getItem('userName'));
 
+    // Clear all header elements to prevent old winery from showing
+    const logoImg = document.getElementById('wineryLogo');
+    const wineryNameElem = document.getElementById('currentWineryName');
+    const wineryNameNoLogoElem = document.getElementById('currentWineryNameNoLogo');
+    const userNameElem = document.getElementById('currentUserName');
+    const userNameNoLogoElem = document.getElementById('currentUserNameNoLogo');
+
+    if (logoImg) {
+      logoImg.src = '';
+      console.log('🔄 [WINERY CHANGE] Cleared logo src');
+    }
+    if (wineryNameElem) {
+      wineryNameElem.textContent = '';
+      console.log('🔄 [WINERY CHANGE] Cleared winery name (with logo)');
+    }
+    if (wineryNameNoLogoElem) {
+      wineryNameNoLogoElem.textContent = '';
+      console.log('🔄 [WINERY CHANGE] Cleared winery name (no logo)');
+    }
+    if (userNameElem) {
+      userNameElem.textContent = '';
+      console.log('🔄 [WINERY CHANGE] Cleared user name (with logo)');
+    }
+    if (userNameNoLogoElem) {
+      userNameNoLogoElem.textContent = '';
+      console.log('🔄 [WINERY CHANGE] Cleared user name (no logo)');
+    }
+
     // Hide app container to prevent old content from showing
     const appContainer = document.getElementById('appContainer');
     console.log('🔄 [WINERY CHANGE] appContainer element:', appContainer);
