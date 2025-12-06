@@ -28,7 +28,6 @@ exports.handler = async (event) => {
   try {
     await client.connect();
 
-    // Get winery_id from query parameter
     const params = event.queryStringParameters || {};
     const { winery_id } = params;
 
@@ -43,26 +42,8 @@ exports.handler = async (event) => {
       };
     }
 
-    // Get specific winery with geocode information
     const query = `
-      SELECT 
-        id,
-        name,
-        domain,
-        owner_name,
-        phone,
-        email,
-        website,
-        address_line1,
-        address_line2,
-        city,
-        state_province,
-        postal_code,
-        country_code,
-        latitude,
-        longitude,
-        currency_code,
-        timezone
+      SELECT *
       FROM wineries
       WHERE id = $1
         AND latitude IS NOT NULL 
