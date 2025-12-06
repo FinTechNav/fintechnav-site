@@ -364,6 +364,9 @@ const App = {
   },
 
   backToWinerySelection() {
+    console.log('🔄 [WINERY CHANGE] backToWinerySelection called');
+    console.log('🔄 [WINERY CHANGE] Current winery before clear:', this.currentWinery);
+
     this.currentWinery = null;
     this.users = [];
     this.pinEntry = '';
@@ -371,13 +374,26 @@ const App = {
     // Clear localStorage to prevent showing old winery info
     localStorage.removeItem('selectedWineryId');
     localStorage.removeItem('userName');
-    console.log('🔄 [LOGOUT] Cleared selectedWineryId and userName from localStorage');
+    console.log('🔄 [WINERY CHANGE] Cleared localStorage');
+    console.log(
+      '🔄 [WINERY CHANGE] selectedWineryId after clear:',
+      localStorage.getItem('selectedWineryId')
+    );
+    console.log('🔄 [WINERY CHANGE] userName after clear:', localStorage.getItem('userName'));
 
     // Hide app container to prevent old content from showing
-    document.getElementById('appContainer').style.display = 'none';
+    const appContainer = document.getElementById('appContainer');
+    console.log('🔄 [WINERY CHANGE] appContainer element:', appContainer);
+    console.log('🔄 [WINERY CHANGE] appContainer display before:', appContainer?.style.display);
+
+    appContainer.style.display = 'none';
+    console.log('🔄 [WINERY CHANGE] appContainer display after:', appContainer?.style.display);
+
     document.getElementById('wineryLoginScreen').style.display = 'flex';
     document.getElementById('loginMethodScreen').style.display = 'none';
     this.updatePinDots();
+
+    console.log('🔄 [WINERY CHANGE] backToWinerySelection complete');
   },
 
   showLoginMethod(method) {

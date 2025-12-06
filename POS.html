@@ -463,10 +463,22 @@
                     console.log('🏛️ [WINERY HEADER] Logo container element:', logoContainer);
                     console.log('🏛️ [WINERY HEADER] Text only container element:', textOnlyContainer);
                     console.log('🏛️ [WINERY HEADER] Logo img element:', logoImg);
+                    console.log('🏛️ [WINERY HEADER] Logo img current style:', logoImg?.getAttribute('style'));
+                    console.log('🏛️ [WINERY HEADER] Logo img computed width:', logoImg ? window.getComputedStyle(logoImg).width : 'N/A');
+                    console.log('🏛️ [WINERY HEADER] Logo img computed max-width:', logoImg ? window.getComputedStyle(logoImg).maxWidth : 'N/A');
                     
                     if (logoUrl && logoUrl.trim() !== '') {
                         console.log('✅ [WINERY HEADER] Logo URL exists, showing logo container');
-                        if (logoImg) logoImg.src = logoUrl;
+                        console.log('✅ [WINERY HEADER] Setting logo src to:', logoUrl);
+                        if (logoImg) {
+                            logoImg.src = logoUrl;
+                            console.log('✅ [WINERY HEADER] Logo src set, new value:', logoImg.src);
+                            // Log dimensions after image loads
+                            logoImg.onload = () => {
+                                console.log('✅ [WINERY HEADER] Logo loaded - natural size:', logoImg.naturalWidth, 'x', logoImg.naturalHeight);
+                                console.log('✅ [WINERY HEADER] Logo loaded - displayed size:', logoImg.offsetWidth, 'x', logoImg.offsetHeight);
+                            };
+                        }
                         if (logoContainer) logoContainer.style.display = 'flex';
                         if (textOnlyContainer) textOnlyContainer.style.display = 'none';
                     } else {
