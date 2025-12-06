@@ -375,47 +375,36 @@ const App = {
     localStorage.removeItem('selectedWineryId');
     localStorage.removeItem('userName');
     console.log('🔄 [WINERY CHANGE] Cleared localStorage');
-    console.log(
-      '🔄 [WINERY CHANGE] selectedWineryId after clear:',
-      localStorage.getItem('selectedWineryId')
-    );
-    console.log('🔄 [WINERY CHANGE] userName after clear:', localStorage.getItem('userName'));
 
-    // Clear all header elements to prevent old winery from showing
+    // Show loading skeleton and hide actual header content
+    const loadingSkeleton = document.getElementById('wineryHeaderLoading');
+    const logoContainer = document.getElementById('wineryLogoContainer');
+    const textOnlyContainer = document.getElementById('wineryTextOnly');
+
+    if (loadingSkeleton) {
+      loadingSkeleton.style.display = 'flex';
+      console.log('🔄 [WINERY CHANGE] Showing loading skeleton');
+    }
+    if (logoContainer) logoContainer.style.display = 'none';
+    if (textOnlyContainer) textOnlyContainer.style.display = 'none';
+
+    // Clear all header elements
     const logoImg = document.getElementById('wineryLogo');
     const wineryNameElem = document.getElementById('currentWineryName');
     const wineryNameNoLogoElem = document.getElementById('currentWineryNameNoLogo');
     const userNameElem = document.getElementById('currentUserName');
     const userNameNoLogoElem = document.getElementById('currentUserNameNoLogo');
 
-    if (logoImg) {
-      logoImg.src = '';
-      console.log('🔄 [WINERY CHANGE] Cleared logo src');
-    }
-    if (wineryNameElem) {
-      wineryNameElem.textContent = '';
-      console.log('🔄 [WINERY CHANGE] Cleared winery name (with logo)');
-    }
-    if (wineryNameNoLogoElem) {
-      wineryNameNoLogoElem.textContent = '';
-      console.log('🔄 [WINERY CHANGE] Cleared winery name (no logo)');
-    }
-    if (userNameElem) {
-      userNameElem.textContent = '';
-      console.log('🔄 [WINERY CHANGE] Cleared user name (with logo)');
-    }
-    if (userNameNoLogoElem) {
-      userNameNoLogoElem.textContent = '';
-      console.log('🔄 [WINERY CHANGE] Cleared user name (no logo)');
-    }
+    if (logoImg) logoImg.src = '';
+    if (wineryNameElem) wineryNameElem.textContent = '';
+    if (wineryNameNoLogoElem) wineryNameNoLogoElem.textContent = '';
+    if (userNameElem) userNameElem.textContent = '';
+    if (userNameNoLogoElem) userNameNoLogoElem.textContent = '';
+    console.log('🔄 [WINERY CHANGE] Cleared all header content');
 
-    // Hide app container to prevent old content from showing
+    // Hide app container
     const appContainer = document.getElementById('appContainer');
-    console.log('🔄 [WINERY CHANGE] appContainer element:', appContainer);
-    console.log('🔄 [WINERY CHANGE] appContainer display before:', appContainer?.style.display);
-
     appContainer.style.display = 'none';
-    console.log('🔄 [WINERY CHANGE] appContainer display after:', appContainer?.style.display);
 
     document.getElementById('wineryLoginScreen').style.display = 'flex';
     document.getElementById('loginMethodScreen').style.display = 'none';
