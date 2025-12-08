@@ -61,7 +61,11 @@
     console.log('🔍 Dev Indicator: Checking hostname...');
     console.log('🔍 Current hostname:', window.location.hostname);
     
-    if (window.location.hostname === 'dev.fintechnav.com') {
+    // Check if hostname contains 'development--' (Netlify branch deploy) or is dev.fintechnav.com
+    const isDev = window.location.hostname.includes('development--') || 
+                  window.location.hostname === 'dev.fintechnav.com';
+    
+    if (isDev) {
         console.log('✅ Dev environment detected - creating banner');
         const devBanner = document.createElement('div');
         devBanner.id = 'dev-indicator';
@@ -69,7 +73,7 @@
         document.body.appendChild(devBanner);
         console.log('✅ Dev banner added to DOM');
     } else {
-        console.log('ℹ️ Not dev environment - hostname is:', window.location.hostname);
+        console.log('ℹ️ Production environment - hostname is:', window.location.hostname);
     }
     </script>
     
