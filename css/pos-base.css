@@ -1,0 +1,29 @@
+/* ===================================
+   BASE STYLES
+   Heavy Pour Wine POS System
+   =================================== */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    height: 100vh;
+    overflow: hidden;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.app-container {
+    display: flex;
+    height: 100vh;
+}
+
+/* Hide sidebar when on login screen */
+.login-screen:not([style*="display: none"]) ~ .app-container .sidebar {
+    display: none;
+}

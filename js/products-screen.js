@@ -37,9 +37,7 @@ const ProductsScreen = {
           data.products.filter((p) => p.is_active_for_pos).map((p) => p.id)
         );
       }
-    } catch (error) {
-      console.error('Failed to load products:', error);
-    }
+    } catch (error) {}
   },
 
   getFilteredAndSortedProducts() {
@@ -119,36 +117,32 @@ const ProductsScreen = {
     const filtered = this.getFilteredAndSortedProducts();
 
     if (this.products.length === 0) {
-      container.innerHTML =
-        '<p style="text-align: center; color: #95a5a6; padding: 40px;">No products available</p>';
+      container.innerHTML = '<p class="empty-state">No products available</p>';
       return;
     }
 
     const tableHtml = `
-            <div style="margin-bottom: 20px;">
-                <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 15px;">
+            <div class="filter-controls">
+                <div class="filter-row">
                     <input type="text" 
+                        class="form-control"
                         placeholder="Search products..." 
                         value="${this.searchTerm}"
-                        oninput="ProductsScreen.handleSearch(this.value)"
-                        style="flex: 1; min-width: 250px; padding: 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.05); color: #e8e8e8;">
+                        oninput="ProductsScreen.handleSearch(this.value)">
                     
-                    <select onchange="ProductsScreen.handleFilterType(this.value)" 
-                        style="padding: 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.05); color: #e8e8e8;">
+                    <select onchange="ProductsScreen.handleFilterType(this.value)" class="form-select">
                         <option value="all" ${this.filterType === 'all' ? 'selected' : ''}>All Types</option>
                         <option value="wine" ${this.filterType === 'wine' ? 'selected' : ''}>Wine Only</option>
                         <option value="merchandise" ${this.filterType === 'merchandise' ? 'selected' : ''}>Merchandise Only</option>
                     </select>
                     
-                    <select onchange="ProductsScreen.handleFilterStatus(this.value)" 
-                        style="padding: 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.05); color: #e8e8e8;">
+                    <select onchange="ProductsScreen.handleFilterStatus(this.value)" class="form-select">
                         <option value="all" ${this.filterStatus === 'all' ? 'selected' : ''}>All Products</option>
                         <option value="active" ${this.filterStatus === 'active' ? 'selected' : ''}>Active for POS</option>
                         <option value="inactive" ${this.filterStatus === 'inactive' ? 'selected' : ''}>Inactive</option>
                     </select>
                     
-                    <select onchange="ProductsScreen.handleSort(this.value)" 
-                        style="padding: 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.05); color: #e8e8e8;">
+                    <select onchange="ProductsScreen.handleSort(this.value)" class="form-select">
                         <option value="name" ${this.sortBy === 'name' ? 'selected' : ''}>Sort by Name</option>
                         <option value="price" ${this.sortBy === 'price' ? 'selected' : ''}>Sort by Price</option>
                         <option value="stock" ${this.sortBy === 'stock' ? 'selected' : ''}>Sort by Stock</option>
@@ -156,79 +150,76 @@ const ProductsScreen = {
                         <option value="vintage" ${this.sortBy === 'vintage' ? 'selected' : ''}>Sort by Vintage</option>
                     </select>
                     
-                    <button onclick="ProductsScreen.toggleSortOrder()" 
-                        style="padding: 10px 15px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.05); color: #e8e8e8; cursor: pointer;">
+                    <button onclick="ProductsScreen.toggleSortOrder()" class="form-select">
                         ${this.sortOrder === 'asc' ? '↑ Asc' : '↓ Desc'}
                     </button>
                 </div>
                 
-                <div style="display: flex; gap: 10px; align-items: center;">
+                <div class="filter-row">
                     <button class="btn" onclick="ProductsScreen.saveSelection()">Save POS Selection</button>
-                    <button class="btn" onclick="ProductsScreen.showAddProduct()" style="background: #27ae60;">Add New Product</button>
-                    <span style="margin-left: 15px; color: #95a5a6;">
+                    <button class="btn btn-success" onclick="ProductsScreen.showAddProduct()">Add New Product</button>
+                    <span class="filter-count">
                         Showing ${filtered.length} of ${this.products.length} products | ${this.selectedProductIds.size} active for POS
                     </span>
                 </div>
             </div>
-            <table class="data-table" style="width: 100%; border-collapse: collapse;">
+            <table class="data-table">
                 <thead>
-                    <tr style="background: rgba(255, 255, 255, 0.05); border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
-                        <th style="padding: 12px; text-align: center; color: #f39c12; width: 60px;">POS</th>
-                        <th style="padding: 12px; text-align: left; color: #f39c12;">Product Name</th>
-                        <th style="padding: 12px; text-align: left; color: #f39c12;">Vintage</th>
-                        <th style="padding: 12px; text-align: left; color: #f39c12;">Varietal</th>
-                        <th style="padding: 12px; text-align: left; color: #f39c12;">Type</th>
-                        <th style="padding: 12px; text-align: right; color: #f39c12;">Price</th>
-                        <th style="padding: 12px; text-align: center; color: #f39c12;">Stock</th>
-                        <th style="padding: 12px; text-align: center; color: #f39c12;">Status</th>
-                        <th style="padding: 12px; text-align: center; color: #f39c12; width: 120px;">Actions</th>
+                    <tr>
+                        <th class="text-center" style="width: 60px;">POS</th>
+                        <th>Product Name</th>
+                        <th>Vintage</th>
+                        <th>Varietal</th>
+                        <th>Type</th>
+                        <th class="text-right">Price</th>
+                        <th class="text-center">Stock</th>
+                        <th class="text-center">Status</th>
+                        <th class="text-center" style="width: 120px;">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     ${
                       filtered.length === 0
-                        ? '<tr><td colspan="9" style="padding: 40px; text-align: center; color: #95a5a6;">No products match your filters</td></tr>'
+                        ? '<tr><td colspan="9" class="empty-state">No products match your filters</td></tr>'
                         : filtered
                             .map(
                               (p) => `
-                        <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.05);">
-                            <td style="padding: 12px; text-align: center;">
+                        <tr>
+                            <td class="text-center">
                                 <input type="checkbox" 
                                     ${this.selectedProductIds.has(p.id) ? 'checked' : ''}
                                     onchange="ProductsScreen.toggleProduct(${p.id})"
                                     style="cursor: pointer; width: 18px; height: 18px;">
                             </td>
-                            <td style="padding: 12px; color: #e8e8e8;">
+                            <td class="text-primary">
                                 ${p.name}
                                 ${p.image_url ? '🖼️' : ''}
                             </td>
-                            <td style="padding: 12px; color: #95a5a6;">${p.vintage || '-'}</td>
-                            <td style="padding: 12px; color: #95a5a6;">${p.varietal || '-'}</td>
-                            <td style="padding: 12px; color: #95a5a6;">
-                                <span style="background: ${this.getTypeColor(p.wine_color || p.product_category || p.type)}; padding: 2px 8px; border-radius: 4px; font-size: 0.85em;">
+                            <td class="text-muted">${p.vintage || '-'}</td>
+                            <td class="text-muted">${p.varietal || '-'}</td>
+                            <td class="text-muted">
+                                <span class="wine-type-badge" style="background: ${this.getTypeColor(p.wine_color || p.product_category || p.type)}; padding: 2px 8px; border-radius: 4px; font-size: 0.85em;">
                                     ${p.wine_color || p.product_category || p.type || 'Product'}
                                 </span>
                             </td>
-                            <td style="padding: 12px; text-align: right; color: #f39c12; font-weight: 600;">
+                            <td class="text-accent text-right font-semibold">
                                 $${parseFloat(p.price || 0).toFixed(2)}
                             </td>
-                            <td style="padding: 12px; text-align: center; color: ${p.available_quantity > p.reorder_point ? '#27ae60' : '#e74c3c'};">
+                            <td class="text-center" style="color: ${p.available_quantity > p.reorder_point ? '#27ae60' : '#e74c3c'};">
                                 ${p.track_inventory ? p.available_quantity || 0 : '∞'}
                             </td>
-                            <td style="padding: 12px; text-align: center;">
-                                <span style="color: ${p.online_status === 'available' ? '#27ae60' : '#e74c3c'};">
-                                    ${p.online_status || 'available'}
-                                </span>
+                            <td class="text-center" style="color: ${p.online_status === 'available' ? '#27ae60' : '#e74c3c'};">
+                                ${p.online_status || 'available'}
                             </td>
-                            <td style="padding: 12px; text-align: center;">
+                            <td class="text-center">
                                 <button onclick="ProductsScreen.viewDetails(${p.id})" 
-                                    style="background: #3498db; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; margin-right: 4px;"
+                                    class="btn btn-info btn-sm"
                                     title="View Details">👁️</button>
                                 <button onclick="ProductsScreen.editProduct(${p.id})" 
-                                    style="background: #f39c12; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; margin-right: 4px;"
+                                    class="btn btn-warning btn-sm"
                                     title="Edit">✏️</button>
                                 <button onclick="ProductsScreen.deleteProduct(${p.id})" 
-                                    style="background: #e74c3c; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer;"
+                                    class="btn btn-danger btn-sm"
                                     title="Delete">🗑️</button>
                             </td>
                         </tr>
@@ -258,18 +249,18 @@ const ProductsScreen = {
     if (!table) {
       // First render - create full table structure
       const tableHtml = `
-            <table class="data-table" style="width: 100%; border-collapse: collapse;">
+            <table class="data-table">
                 <thead>
-                    <tr style="background: rgba(255, 255, 255, 0.05); border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
-                        <th style="padding: 12px; text-align: center; color: #f39c12; width: 60px;">POS</th>
-                        <th style="padding: 12px; text-align: left; color: #f39c12;">Product Name</th>
-                        <th style="padding: 12px; text-align: left; color: #f39c12;">Vintage</th>
-                        <th style="padding: 12px; text-align: left; color: #f39c12;">Varietal</th>
-                        <th style="padding: 12px; text-align: left; color: #f39c12;">Type</th>
-                        <th style="padding: 12px; text-align: right; color: #f39c12;">Price</th>
-                        <th style="padding: 12px; text-align: center; color: #f39c12;">Stock</th>
-                        <th style="padding: 12px; text-align: center; color: #f39c12;">Status</th>
-                        <th style="padding: 12px; text-align: center; color: #f39c12; width: 120px;">Actions</th>
+                    <tr>
+                        <th class="text-center" style="width: 60px;">POS</th>
+                        <th>Product Name</th>
+                        <th>Vintage</th>
+                        <th>Varietal</th>
+                        <th>Type</th>
+                        <th class="text-right">Price</th>
+                        <th class="text-center">Stock</th>
+                        <th class="text-center">Status</th>
+                        <th class="text-center" style="width: 120px;">Actions</th>
                     </tr>
                 </thead>
                 <tbody></tbody>
@@ -282,48 +273,46 @@ const ProductsScreen = {
     const tbody = table.querySelector('tbody');
     tbody.innerHTML =
       filtered.length === 0
-        ? '<tr><td colspan="9" style="padding: 40px; text-align: center; color: #95a5a6;">No products match your filters</td></tr>'
+        ? '<tr><td colspan="9" class="empty-state">No products match your filters</td></tr>'
         : filtered
             .map(
               (p) => `
-          <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.05);">
-              <td style="padding: 12px; text-align: center;">
+          <tr>
+              <td class="text-center">
                   <input type="checkbox" 
                       ${this.selectedProductIds.has(p.id) ? 'checked' : ''}
                       onchange="ProductsScreen.toggleProduct(${p.id})"
                       style="cursor: pointer; width: 18px; height: 18px;">
               </td>
-              <td style="padding: 12px; color: #e8e8e8;">
+              <td class="text-primary">
                   ${p.name}
                   ${p.image_url ? '🖼️' : ''}
               </td>
-              <td style="padding: 12px; color: #95a5a6;">${p.vintage || '-'}</td>
-              <td style="padding: 12px; color: #95a5a6;">${p.varietal || '-'}</td>
-              <td style="padding: 12px; color: #95a5a6;">
-                  <span style="background: ${this.getTypeColor(p.wine_color || p.product_category || p.type)}; padding: 2px 8px; border-radius: 4px; font-size: 0.85em;">
+              <td class="text-muted">${p.vintage || '-'}</td>
+              <td class="text-muted">${p.varietal || '-'}</td>
+              <td class="text-muted">
+                  <span class="wine-type-badge" style="background: ${this.getTypeColor(p.wine_color || p.product_category || p.type)}; padding: 2px 8px; border-radius: 4px; font-size: 0.85em;">
                       ${p.wine_color || p.product_category || p.type || 'Product'}
                   </span>
               </td>
-              <td style="padding: 12px; text-align: right; color: #f39c12; font-weight: 600;">
+              <td class="text-accent text-right font-semibold">
                   $${parseFloat(p.price || 0).toFixed(2)}
               </td>
-              <td style="padding: 12px; text-align: center; color: ${p.available_quantity > p.reorder_point ? '#27ae60' : '#e74c3c'};">
+              <td class="text-center" style="color: ${p.available_quantity > p.reorder_point ? '#27ae60' : '#e74c3c'};">
                   ${p.track_inventory ? p.available_quantity || 0 : '∞'}
               </td>
-              <td style="padding: 12px; text-align: center;">
-                  <span style="color: ${p.online_status === 'available' ? '#27ae60' : '#e74c3c'};">
-                      ${p.online_status || 'available'}
-                  </span>
+              <td class="text-center" style="color: ${p.online_status === 'available' ? '#27ae60' : '#e74c3c'};">
+                  ${p.online_status || 'available'}
               </td>
-              <td style="padding: 12px; text-align: center;">
+              <td class="text-center">
                   <button onclick="ProductsScreen.viewDetails(${p.id})" 
-                      style="background: #3498db; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; margin-right: 4px;"
+                      class="btn btn-info btn-sm"
                       title="View Details">👁️</button>
                   <button onclick="ProductsScreen.editProduct(${p.id})" 
-                      style="background: #f39c12; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; margin-right: 4px;"
+                      class="btn btn-warning btn-sm"
                       title="Edit">✏️</button>
                   <button onclick="ProductsScreen.deleteProduct(${p.id})" 
-                      style="background: #e74c3c; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer;"
+                      class="btn btn-danger btn-sm"
                       title="Delete">🗑️</button>
               </td>
           </tr>
@@ -332,7 +321,7 @@ const ProductsScreen = {
             .join('');
 
     // Update the count display
-    const countDisplay = container.querySelector('span[style*="margin-left: 15px"]');
+    const countDisplay = container.querySelector('.filter-count');
     if (countDisplay) {
       countDisplay.textContent = `Showing ${filtered.length} of ${this.products.length} products | ${this.selectedProductIds.size} active for POS`;
     }
@@ -411,7 +400,6 @@ const ProductsScreen = {
         alert('Failed to update POS selection: ' + data.error);
       }
     } catch (error) {
-      console.error('Failed to save selection:', error);
       alert('Failed to save POS selection');
     }
   },
@@ -424,32 +412,20 @@ const ProductsScreen = {
     const isMerchandise = product.type === 'merchandise';
 
     const modal = document.createElement('div');
-    modal.style.cssText = `
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0,0,0,0.8);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 10000;
-    `;
+    modal.className = 'modal';
 
     modal.innerHTML = `
-      <div style="background: #444443; padding: 30px; border-radius: 12px; max-width: 800px; max-height: 80vh; overflow-y: auto; color: #e8e8e8;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-          <h2 style="color: #f39c12; margin: 0;">${isWine ? 'Wine' : 'Product'} Details</h2>
-          <button onclick="this.closest('div[style*=fixed]').remove()" 
-            style="background: #e74c3c; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">
+      <div class="modal__content section-container" style="max-width: 800px; max-height: 80vh; overflow-y: auto;">
+        <div class="modal__header">
+          <h2 class="settings-page-title">${isWine ? 'Wine' : 'Product'} Details</h2>
+          <button onclick="this.closest('.modal').remove()" class="btn btn-danger">
             Close
           </button>
         </div>
         
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+        <div class="section-grid" style="grid-template-columns: 1fr 1fr;">
           <div>
-            <h3 style="color: #f39c12; margin-top: 0;">Basic Information</h3>
+            <h3 class="section-header">Basic Information</h3>
             <p><strong>Name:</strong> ${product.name}</p>
             <p><strong>SKU:</strong> ${product.sku || 'N/A'}</p>
             <p><strong>Barcode:</strong> ${product.barcode || 'N/A'}</p>
@@ -476,7 +452,7 @@ const ProductsScreen = {
           </div>
           
           <div>
-            <h3 style="color: #f39c12; margin-top: 0;">Pricing & Inventory</h3>
+            <h3 class="section-header">Pricing & Inventory</h3>
             <p><strong>Retail Price:</strong> $${parseFloat(product.price || 0).toFixed(2)}</p>
             <p><strong>Original Price:</strong> ${product.original_price ? '$' + parseFloat(product.original_price).toFixed(2) : 'N/A'}</p>
             <p><strong>Supply Price:</strong> ${product.supply_price ? '$' + parseFloat(product.supply_price).toFixed(2) : 'N/A'}</p>
@@ -489,7 +465,7 @@ const ProductsScreen = {
             isWine
               ? `
           <div>
-            <h3 style="color: #f39c12;">Wine Characteristics</h3>
+            <h3 class="section-header">Wine Characteristics</h3>
             <p><strong>Region:</strong> ${product.wine_region || 'N/A'}</p>
             <p><strong>Appellation:</strong> ${product.appellation || 'N/A'}</p>
             <p><strong>Country:</strong> ${product.origin_country || 'N/A'}</p>
@@ -505,7 +481,7 @@ const ProductsScreen = {
           }
           
           <div>
-            <h3 style="color: #f39c12;">Status & Settings</h3>
+            <h3 class="section-header">Status & Settings</h3>
             <p><strong>Online Status:</strong> ${product.online_status || 'available'}</p>
             <p><strong>Inventory Status:</strong> ${product.inventory_status || 'available'}</p>
             <p><strong>Visibility:</strong> ${product.visibility || 'public'}</p>
@@ -516,10 +492,10 @@ const ProductsScreen = {
           </div>
         </div>
         
-        ${product.short_description ? `<div style="margin-top: 20px;"><h3 style="color: #f39c12;">Description</h3><p>${product.short_description}</p></div>` : ''}
-        ${product.tags && product.tags.length > 0 ? `<div style="margin-top: 20px;"><h3 style="color: #f39c12;">Tags</h3><p>${product.tags.join(', ')}</p></div>` : ''}
+        ${product.short_description ? `<div style="margin-top: 20px;"><h3 class="section-header">Description</h3><p>${product.short_description}</p></div>` : ''}
+        ${product.tags && product.tags.length > 0 ? `<div style="margin-top: 20px;"><h3 class="section-header">Tags</h3><p>${product.tags.join(', ')}</p></div>` : ''}
         
-        <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1); font-size: 0.9em; color: #95a5a6;">
+        <div class="text-muted text-small" style="margin-top: 20px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1);">
           <p><strong>Version:</strong> ${product.version || 1}</p>
           <p><strong>Created:</strong> ${product.created_at ? new Date(product.created_at).toLocaleString() : 'N/A'}</p>
           <p><strong>Updated:</strong> ${product.updated_at ? new Date(product.updated_at).toLocaleString() : 'N/A'}</p>
@@ -567,44 +543,30 @@ const ProductsScreen = {
         alert('Failed to delete product: ' + data.error);
       }
     } catch (error) {
-      console.error('Failed to delete product:', error);
       alert('Failed to delete product');
     }
   },
 
   renderLoadingState() {
     return `
-      <div style="margin-bottom: 20px;">
-        <!-- Filter controls skeleton -->
-        <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+      <div class="filter-controls">
+        <div class="filter-row">
           ${Array(6)
             .fill(0)
-            .map(
-              () => `
-            <div style="
-              height: 40px;
-              width: 120px;
-              background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%);
-              background-size: 200% 100%;
-              animation: shimmer 1.5s infinite;
-              border-radius: 6px;
-            "></div>
-          `
-            )
+            .map(() => '<div class="skeleton-box" style="height: 40px; width: 120px;"></div>')
             .join('')}
         </div>
       </div>
 
-      <!-- Products table skeleton -->
-      <table style="width: 100%; border-collapse: collapse;">
+      <table class="data-table">
         <thead>
-          <tr style="background: rgba(255, 255, 255, 0.05);">
-            <th style="padding: 12px; text-align: left; color: #f39c12; width: 50px;"></th>
-            <th style="padding: 12px; text-align: left; color: #f39c12;">Product</th>
-            <th style="padding: 12px; text-align: left; color: #f39c12;">Type</th>
-            <th style="padding: 12px; text-align: right; color: #f39c12;">Price</th>
-            <th style="padding: 12px; text-align: center; color: #f39c12;">Stock</th>
-            <th style="padding: 12px; text-align: center; color: #f39c12;">Actions</th>
+          <tr>
+            <th class="text-center" style="width: 50px;"></th>
+            <th>Product</th>
+            <th>Type</th>
+            <th class="text-right">Price</th>
+            <th class="text-center">Stock</th>
+            <th class="text-center">Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -612,69 +574,24 @@ const ProductsScreen = {
             .fill(0)
             .map(
               () => `
-            <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.05);">
-              <td style="padding: 12px;">
-                <div style="
-                  height: 18px;
-                  width: 18px;
-                  background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%);
-                  background-size: 200% 100%;
-                  animation: shimmer 1.5s infinite;
-                  border-radius: 3px;
-                "></div>
+            <tr>
+              <td class="text-center">
+                <div class="skeleton-box" style="height: 18px; width: 18px; margin: 0 auto;"></div>
               </td>
-              <td style="padding: 12px;">
-                <div style="
-                  height: 16px;
-                  width: 200px;
-                  background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%);
-                  background-size: 200% 100%;
-                  animation: shimmer 1.5s infinite;
-                  border-radius: 4px;
-                "></div>
+              <td>
+                <div class="skeleton-box skeleton-box--lg" style="width: 200px;"></div>
               </td>
-              <td style="padding: 12px;">
-                <div style="
-                  height: 16px;
-                  width: 80px;
-                  background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%);
-                  background-size: 200% 100%;
-                  animation: shimmer 1.5s infinite;
-                  border-radius: 4px;
-                "></div>
+              <td>
+                <div class="skeleton-box" style="height: 16px; width: 80px;"></div>
               </td>
-              <td style="padding: 12px; text-align: right;">
-                <div style="
-                  height: 16px;
-                  width: 60px;
-                  margin-left: auto;
-                  background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%);
-                  background-size: 200% 100%;
-                  animation: shimmer 1.5s infinite;
-                  border-radius: 4px;
-                "></div>
+              <td class="text-right">
+                <div class="skeleton-box skeleton-box--sm skeleton-box--right"></div>
               </td>
-              <td style="padding: 12px; text-align: center;">
-                <div style="
-                  height: 16px;
-                  width: 40px;
-                  margin: 0 auto;
-                  background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%);
-                  background-size: 200% 100%;
-                  animation: shimmer 1.5s infinite;
-                  border-radius: 4px;
-                "></div>
+              <td class="text-center">
+                <div class="skeleton-box" style="height: 16px; width: 40px; margin: 0 auto;"></div>
               </td>
-              <td style="padding: 12px; text-align: center;">
-                <div style="
-                  height: 16px;
-                  width: 50px;
-                  margin: 0 auto;
-                  background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%);
-                  background-size: 200% 100%;
-                  animation: shimmer 1.5s infinite;
-                  border-radius: 4px;
-                "></div>
+              <td class="text-center">
+                <div class="skeleton-box" style="height: 16px; width: 50px; margin: 0 auto;"></div>
               </td>
             </tr>
           `
@@ -682,13 +599,6 @@ const ProductsScreen = {
             .join('')}
         </tbody>
       </table>
-
-      <style>
-        @keyframes shimmer {
-          0% { background-position: -200% 0; }
-          100% { background-position: 200% 0; }
-        }
-      </style>
     `;
   },
 };

@@ -1,26 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <script>
-    // Log all CSS file attempts
-    window.addEventListener('DOMContentLoaded', () => {
-        const links = document.querySelectorAll('link[rel="stylesheet"]');
-        links.forEach(link => {
-        console.log('Attempting to load CSS:', link.href);
-        link.addEventListener('load', () => {
-            console.log('✅ CSS loaded successfully:', link.href);
-        });
-        link.addEventListener('error', () => {
-            console.error('❌ CSS failed to load:', link.href);
-        });
-        });
-    });
-    </script>
-    
+
     <script>
     // Global callback for Google Maps initialization
     window.initGoogleMaps = function() {
-        console.log('Google Maps API loaded successfully');
         window.googleMapsLoaded = true;
         window.dispatchEvent(new Event('googleMapsReady'));
     };
@@ -37,11 +21,9 @@
                 script.async = true;
                 script.defer = true;
                 document.head.appendChild(script);
-            } else {
-                console.error('Failed to load Google Maps API key');
             }
         } catch (error) {
-            console.error('Error loading Google Maps configuration:', error);
+            // Silent fail - Maps will not be available
         }
     })();
     </script>
@@ -55,19 +37,35 @@
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="icon-192.png">
     <link rel="stylesheet" href="css/pos-themes.css">
-    <link rel="stylesheet" href="css/pos-styles.css">
+    <link rel="stylesheet" href="css/pos-base.css">
+    <link rel="stylesheet" href="css/pos-sidebar.css">
+    <link rel="stylesheet" href="css/pos-main.css">
+    <link rel="stylesheet" href="css/pos-products.css">
+    <link rel="stylesheet" href="css/pos-cart.css">
+    <link rel="stylesheet" href="css/pos-payment-buttons.css">
+    <link rel="stylesheet" href="css/pos-screens.css">
+    <link rel="stylesheet" href="css/pos-login.css">
+    <link rel="stylesheet" href="css/pos-processing.css">
+    <link rel="stylesheet" href="css/pos-components.css">
     <link rel="stylesheet" href="css/pos-layout-styles.css">
     <link rel="stylesheet" href="css/pos-login-styles.css">
     <link rel="stylesheet" href="css/pos-mobile-clean.css">
     <link rel="stylesheet" href="css/pos-reservations-styles.css">
     <link rel="stylesheet" href="css/customers-screen.css">
+    <link rel="stylesheet" href="css/pos-responsive.css">
+    <link rel="stylesheet" href="css/pos-theme-overrides.css">
 </head>
 <body>
-    <div id="branch-indicator" style="display: none; position: fixed; top: 0; right: 0; background: #ff6b6b; color: white; padding: 8px 16px; font-weight: bold; z-index: 10000; border-bottom-left-radius: 4px;">
-        DEVELOPMENT
-    </div>
+    <!-- Development Environment Indicator -->
+    <script>
+    if (window.location.hostname === 'dev.fintechnav.com') {
+        const devBanner = document.createElement('div');
+        devBanner.id = 'dev-indicator';
+        devBanner.innerHTML = '🔧 DEVELOPMENT';
+        document.body.appendChild(devBanner);
+    }
+    </script>
     
-    <div id="login-screen" class="login-container">
     <!-- Login Screen - Winery Selection -->
     <div id="wineryLoginScreen" class="login-screen">
         <div class="login-container">
@@ -403,94 +401,59 @@
             const logoContainer = document.getElementById('wineryLogoContainer');
             const textOnlyContainer = document.getElementById('wineryTextOnly');
             
-            console.log('💀 [SKELETON] Loading skeleton element:', loadingSkeleton);
-            console.log('💀 [SKELETON] Logo container element:', logoContainer);
-            console.log('💀 [SKELETON] Text only container element:', textOnlyContainer);
             
             if (loadingSkeleton) {
-                console.log('💀 [SKELETON] Skeleton innerHTML:', loadingSkeleton.innerHTML);
-                console.log('💀 [SKELETON] Skeleton children count:', loadingSkeleton.children.length);
-                console.log('💀 [SKELETON] Skeleton children:', Array.from(loadingSkeleton.children));
-                console.log('💀 [SKELETON] Skeleton has .skeleton class children:', loadingSkeleton.querySelectorAll('.skeleton').length);
             }
             
             if (loadingSkeleton) {
                 loadingSkeleton.style.display = 'flex';
-                console.log('💀 [SKELETON] Set loadingSkeleton display to flex');
-                console.log('💀 [SKELETON] Actual display value:', loadingSkeleton.style.display);
-                console.log('💀 [SKELETON] Computed display:', window.getComputedStyle(loadingSkeleton).display);
             } else {
-                console.error('❌ [SKELETON] Loading skeleton element not found!');
             }
             
             if (logoContainer) {
                 logoContainer.style.display = 'none';
-                console.log('💀 [SKELETON] Hid logo container');
             }
             if (textOnlyContainer) {
                 textOnlyContainer.style.display = 'none';
-                console.log('💀 [SKELETON] Hid text only container');
             }
-            console.log('💀 [SKELETON] Showing loading skeleton');
             
             try {
-                console.log('🏛️ [WINERY HEADER] Starting to load winery header...');
                 
                 // Check if POS screen is visible
                 const posScreen = document.getElementById('posScreen');
-                console.log('🏛️ [WINERY HEADER] POS screen element:', posScreen);
-                console.log('🏛️ [WINERY HEADER] POS screen display style:', posScreen ? posScreen.style.display : 'N/A');
                 
                 wineryId = localStorage.getItem('selectedWineryId');
                 userName = localStorage.getItem('userName') || 'User';
                 
-                console.log('🏛️ [WINERY HEADER] Winery ID from localStorage:', wineryId);
-                console.log('🏛️ [WINERY HEADER] User name from localStorage:', userName);
-                console.log('🏛️ [WINERY HEADER] All localStorage keys:', Object.keys(localStorage));
                 
                 if (!wineryId) {
-                    console.error('❌ [WINERY HEADER] No winery ID found in localStorage');
-                    console.error('❌ [WINERY HEADER] The login process needs to set selectedWineryId in localStorage');
                     if (loadingSkeleton) loadingSkeleton.style.display = 'none';
                     return;
                 }
                 
-                console.log('🏛️ [WINERY HEADER] Winery ID exists, continuing...');
             } catch (topError) {
-                console.error('❌ [WINERY HEADER] ERROR AT TOP OF FUNCTION:', topError);
-                console.error('❌ [WINERY HEADER] Stack:', topError.stack);
                 return;
             }
             
             try {
                 const url = `/.netlify/functions/get-winery-info?winery_id=${wineryId}`;
-                console.log('🏛️ [WINERY HEADER] Fetching from:', url);
                 
                 const response = await fetch(url);
-                console.log('🏛️ [WINERY HEADER] Response status:', response.status);
                 
                 const data = await response.json();
-                console.log('🏛️ [WINERY HEADER] Response data:', data);
                 
                 if (data.success && data.winery) {
                     const winery = data.winery;
-                    console.log('🏛️ [WINERY HEADER] Winery object:', winery);
-                    console.log('🏛️ [WINERY HEADER] Logo Dark URL:', winery.logo_dark_url);
-                    console.log('🏛️ [WINERY HEADER] Logo Light URL:', winery.logo_light_url);
                     
                     const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
-                    console.log('🏛️ [WINERY HEADER] Current theme:', currentTheme);
                     
                     // Determine which logo to use based on theme
                     const logoUrl = currentTheme === 'dark' ? winery.logo_dark_url : winery.logo_light_url;
-                    console.log('🏛️ [WINERY HEADER] Selected logo URL:', logoUrl);
                     
                     // Update winery name in both containers
                     const wineryNameElem = document.getElementById('currentWineryName');
                     const wineryNameNoLogoElem = document.getElementById('currentWineryNameNoLogo');
                     
-                    console.log('🏛️ [WINERY HEADER] currentWineryName element:', wineryNameElem);
-                    console.log('🏛️ [WINERY HEADER] currentWineryNameNoLogo element:', wineryNameNoLogoElem);
                     
                     if (wineryNameElem) wineryNameElem.textContent = winery.name;
                     if (wineryNameNoLogoElem) wineryNameNoLogoElem.textContent = winery.name;
@@ -499,8 +462,6 @@
                     const userNameElem = document.getElementById('currentUserName');
                     const userNameNoLogoElem = document.getElementById('currentUserNameNoLogo');
                     
-                    console.log('🏛️ [WINERY HEADER] currentUserName element:', userNameElem);
-                    console.log('🏛️ [WINERY HEADER] currentUserNameNoLogo element:', userNameNoLogoElem);
                     
                     if (userNameElem) userNameElem.textContent = userName;
                     if (userNameNoLogoElem) userNameNoLogoElem.textContent = userName;
@@ -510,36 +471,22 @@
                     const textOnlyContainer = document.getElementById('wineryTextOnly');
                     const logoImg = document.getElementById('wineryLogo');
                     
-                    console.log('🏛️ [WINERY HEADER] Logo container element:', logoContainer);
-                    console.log('🏛️ [WINERY HEADER] Text only container element:', textOnlyContainer);
-                    console.log('🏛️ [WINERY HEADER] Logo img element:', logoImg);
-                    console.log('🏛️ [WINERY HEADER] Logo img current style:', logoImg?.getAttribute('style'));
-                    console.log('🏛️ [WINERY HEADER] Logo img computed width:', logoImg ? window.getComputedStyle(logoImg).width : 'N/A');
-                    console.log('🏛️ [WINERY HEADER] Logo img computed max-width:', logoImg ? window.getComputedStyle(logoImg).maxWidth : 'N/A');
                     
                     if (logoUrl && logoUrl.trim() !== '') {
-                        console.log('✅ [WINERY HEADER] Logo URL exists, showing logo container');
-                        console.log('✅ [WINERY HEADER] Setting logo src to:', logoUrl);
                         if (logoImg) {
                             logoImg.src = logoUrl;
-                            console.log('✅ [WINERY HEADER] Logo src set, new value:', logoImg.src);
                             // Log dimensions after image loads
                             logoImg.onload = () => {
-                                console.log('✅ [WINERY HEADER] Logo loaded - natural size:', logoImg.naturalWidth, 'x', logoImg.naturalHeight);
-                                console.log('✅ [WINERY HEADER] Logo loaded - displayed size:', logoImg.offsetWidth, 'x', logoImg.offsetHeight);
                             };
                         }
                         if (loadingSkeleton) {
                             loadingSkeleton.style.display = 'none';
-                            console.log('💀 [SKELETON] Hiding skeleton - logo version');
                         }
                         if (logoContainer) logoContainer.style.display = 'flex';
                         if (textOnlyContainer) textOnlyContainer.style.display = 'none';
                     } else {
-                        console.log('📝 [WINERY HEADER] No logo URL, showing text-only container');
                         if (loadingSkeleton) {
                             loadingSkeleton.style.display = 'none';
-                            console.log('💀 [SKELETON] Hiding skeleton - text only version');
                         }
                         if (logoContainer) logoContainer.style.display = 'none';
                         if (textOnlyContainer) textOnlyContainer.style.display = 'block';
@@ -551,8 +498,6 @@
                             if (mutation.attributeName === 'data-theme') {
                                 const newTheme = document.documentElement.getAttribute('data-theme') || 'dark';
                                 const newLogoUrl = newTheme === 'dark' ? winery.logo_dark_url : winery.logo_light_url;
-                                console.log('🎨 [WINERY HEADER] Theme changed to:', newTheme);
-                                console.log('🎨 [WINERY HEADER] New logo URL:', newLogoUrl);
                                 if (newLogoUrl && newLogoUrl.trim() !== '' && logoImg) {
                                     logoImg.src = newLogoUrl;
                                 }
@@ -565,13 +510,9 @@
                         attributeFilter: ['data-theme']
                     });
                     
-                    console.log('✅ [WINERY HEADER] Header loaded successfully');
                 } else {
-                    console.error('❌ [WINERY HEADER] API returned success=false or no winery data');
                 }
             } catch (error) {
-                console.error('❌ [WINERY HEADER] Error loading winery info:', error);
-                console.error('❌ [WINERY HEADER] Error stack:', error.stack);
                 // Fallback to text-only display
                 const wineryNameNoLogoElem = document.getElementById('currentWineryNameNoLogo');
                 const userNameNoLogoElem = document.getElementById('currentUserNameNoLogo');
@@ -588,8 +529,6 @@
         // Make it available globally for manual triggering
         window.loadWineryHeader = loadWineryHeader;
         
-        console.log('🏛️ [WINERY HEADER] Script loaded, function defined');
-        console.log('🏛️ [WINERY HEADER] Only loads after login - no automatic trigger');
         
         // DO NOT auto-load on page load - only load after login via app.js loginSuccess()
         // This prevents showing old winery info when switching wineries

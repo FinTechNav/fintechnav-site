@@ -67,14 +67,12 @@ const SettingsScreen = {
     if (!container) return;
 
     container.innerHTML = `
-      <div style="display: flex; gap: 0; height: 100%;">
-        <!-- Left Sidebar -->
-        <div style="width: 220px; background: rgba(0, 0, 0, 0.3); border-right: 1px solid rgba(255, 255, 255, 0.1); padding: 20px 0;">
+      <div class="settings-layout">
+        <div class="settings-sidebar">
           ${this.renderSidebarMenu()}
         </div>
         
-        <!-- Right Content -->
-        <div style="flex: 1; padding: 30px; overflow-y: auto;">
+        <div class="settings-content">
           ${this.renderTabContent()}
         </div>
       </div>
@@ -93,19 +91,9 @@ const SettingsScreen = {
     return menuItems
       .map(
         (item) => `
-      <div onclick="SettingsScreen.switchTab('${item.id}')" style="
-        padding: 15px 20px;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        color: ${this.currentTab === item.id ? '#f39c12' : '#95a5a6'};
-        background: ${this.currentTab === item.id ? 'rgba(243, 156, 18, 0.15)' : 'transparent'};
-        border-left: 3px solid ${this.currentTab === item.id ? '#f39c12' : 'transparent'};
-        transition: all 0.2s ease;
-      " onmouseover="if('${this.currentTab}' !== '${item.id}') this.style.background='rgba(255, 255, 255, 0.05)'" onmouseout="if('${this.currentTab}' !== '${item.id}') this.style.background='transparent'">
-        <span style="font-size: 20px;">${item.icon}</span>
-        <span style="font-size: 15px; font-weight: 500;">${item.label}</span>
+      <div onclick="SettingsScreen.switchTab('${item.id}')" class="settings-nav-item ${this.currentTab === item.id ? 'active' : ''}">
+        <span class="settings-nav-icon">${item.icon}</span>
+        <span class="settings-nav-label">${item.label}</span>
       </div>
     `
       )
@@ -130,38 +118,40 @@ const SettingsScreen = {
   },
 
   renderGeneralTab() {
-    if (!App.currentWinery) return '<p style="color: #95a5a6;">No winery selected</p>';
+    if (!App.currentWinery) return '<p class="text-muted">No winery selected</p>';
 
     if (this.loadingState.terminals) {
       return this.renderLoadingState();
     }
 
     return `
-      <h2 style="color: #f39c12; margin-bottom: 10px; font-size: 28px;">General Settings</h2>
-      <p style="color: #95a5a6; margin-bottom: 30px;">Winery information and configuration</p>
+      <div class="settings-page-header">
+        <h2 class="settings-page-title">General Settings</h2>
+        <p class="settings-page-subtitle">Winery information and configuration</p>
+      </div>
       
-      <div style="background: rgba(255, 255, 255, 0.03); padding: 25px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.1);">
-        <h3 style="color: #e8e8e8; margin-bottom: 20px; font-size: 18px;">Winery Information</h3>
+      <div class="section-container">
+        <h3 class="section-header">Winery Information</h3>
         
-        <div style="display: grid; gap: 20px;">
+        <div class="section-grid">
           <div>
-            <label style="display: block; color: #95a5a6; font-size: 12px; margin-bottom: 8px;">Winery Name</label>
-            <div style="color: #e8e8e8; font-size: 16px;">${App.currentWinery.name || 'N/A'}</div>
+            <label class="form-label">Winery Name</label>
+            <div class="form-value">${App.currentWinery.name || 'N/A'}</div>
           </div>
           
           <div>
-            <label style="display: block; color: #95a5a6; font-size: 12px; margin-bottom: 8px;">Location</label>
-            <div style="color: #e8e8e8; font-size: 16px;">${App.currentWinery.location || 'N/A'}</div>
+            <label class="form-label">Location</label>
+            <div class="form-value">${App.currentWinery.location || 'N/A'}</div>
           </div>
           
           <div>
-            <label style="display: block; color: #95a5a6; font-size: 12px; margin-bottom: 8px;">Current User</label>
-            <div style="color: #e8e8e8; font-size: 16px;">${App.currentUser?.name || App.currentUser?.email || 'N/A'}</div>
+            <label class="form-label">Current User</label>
+            <div class="form-value">${App.currentUser?.name || App.currentUser?.email || 'N/A'}</div>
           </div>
           
           <div>
-            <label style="display: block; color: #95a5a6; font-size: 12px; margin-bottom: 8px;">User Role</label>
-            <div style="color: #e8e8e8; font-size: 16px; text-transform: capitalize;">${App.currentUser?.role || 'N/A'}</div>
+            <label class="form-label">User Role</label>
+            <div class="form-value text-capitalize">${App.currentUser?.role || 'N/A'}</div>
           </div>
         </div>
       </div>
@@ -169,18 +159,19 @@ const SettingsScreen = {
   },
 
   renderUsersTab() {
-    // This would be populated from a database query
     return `
-      <h2 style="color: #f39c12; margin-bottom: 10px; font-size: 28px;">Users</h2>
-      <p style="color: #95a5a6; margin-bottom: 30px;">Manage user accounts for this winery</p>
+      <div class="settings-page-header">
+        <h2 class="settings-page-title">Users</h2>
+        <p class="settings-page-subtitle">Manage user accounts for this winery</p>
+      </div>
       
-      <div style="background: rgba(255, 255, 255, 0.03); padding: 25px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.1);">
+      <div class="section-container">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-          <h3 style="color: #e8e8e8; font-size: 18px;">User Accounts</h3>
-          <button class="btn" style="padding: 10px 20px; font-size: 14px;">+ Add User</button>
+          <h3 class="section-header" style="margin: 0;">User Accounts</h3>
+          <button class="btn">+ Add User</button>
         </div>
         
-        <div style="color: #95a5a6; text-align: center; padding: 40px;">
+        <div class="empty-state">
           User management coming soon...
         </div>
       </div>
@@ -193,37 +184,38 @@ const SettingsScreen = {
     const hasCreditCard = cardPresent || cardNotPresent;
 
     return `
-      <h2 style="color: #f39c12; margin-bottom: 10px; font-size: 28px;">Payment Types</h2>
-      <p style="color: #95a5a6; margin-bottom: 30px;">Configure accepted payment methods</p>
+      <div class="settings-page-header">
+        <h2 class="settings-page-title">Payment Types</h2>
+        <p class="settings-page-subtitle">Configure accepted payment methods</p>
+      </div>
       
-      <!-- Payment Method Selection -->
-      <div style="background: rgba(255, 255, 255, 0.03); padding: 25px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.1); margin-bottom: 20px;">
-        <h3 style="color: #e8e8e8; margin-bottom: 20px; font-size: 18px;">Accepted Payment Methods</h3>
+      <div class="section-container">
+        <h3 class="section-header">Accepted Payment Methods</h3>
         
-        <div style="display: grid; gap: 15px;">
-          <label style="display: flex; align-items: center; gap: 12px; padding: 15px; background: rgba(255, 255, 255, 0.05); border-radius: 6px; cursor: pointer;">
+        <div class="section-grid">
+          <label class="payment-method-option ${hasCreditCard ? 'disabled' : ''}">
             <input type="checkbox" ${hasCreditCard ? 'checked disabled' : 'disabled'} style="width: 20px; height: 20px; cursor: ${hasCreditCard ? 'not-allowed' : 'not-allowed'};" />
             <div style="flex: 1;">
-              <div style="color: #e8e8e8; font-size: 16px; font-weight: 600;">💳 Credit/Debit Card</div>
-              <div style="color: #95a5a6; font-size: 12px; margin-top: 4px;">
+              <div class="text-primary font-semibold">💳 Credit/Debit Card</div>
+              <div class="text-muted text-small" style="margin-top: 4px;">
                 ${hasCreditCard ? 'Configured and enabled' : 'Configure terminals below to enable'}
               </div>
             </div>
           </label>
           
-          <label style="display: flex; align-items: center; gap: 12px; padding: 15px; background: rgba(255, 255, 255, 0.05); border-radius: 6px; cursor: pointer;">
+          <label class="payment-method-option">
             <input type="checkbox" ${this.paymentTypes.cash ? 'checked' : ''} onchange="SettingsScreen.togglePaymentType('cash')" style="width: 20px; height: 20px; cursor: pointer;" />
             <div style="flex: 1;">
-              <div style="color: #e8e8e8; font-size: 16px; font-weight: 600;">💵 Cash</div>
-              <div style="color: #95a5a6; font-size: 12px; margin-top: 4px;">Accept cash payments at POS</div>
+              <div class="text-primary font-semibold">💵 Cash</div>
+              <div class="text-muted text-small" style="margin-top: 4px;">Accept cash payments at POS</div>
             </div>
           </label>
           
-          <label style="display: flex; align-items: center; gap: 12px; padding: 15px; background: rgba(255, 255, 255, 0.05); border-radius: 6px; cursor: pointer;">
+          <label class="payment-method-option">
             <input type="checkbox" ${this.paymentTypes.check ? 'checked' : ''} onchange="SettingsScreen.togglePaymentType('check')" style="width: 20px; height: 20px; cursor: pointer;" />
             <div style="flex: 1;">
-              <div style="color: #e8e8e8; font-size: 16px; font-weight: 600;">🏦 Check</div>
-              <div style="color: #95a5a6; font-size: 12px; margin-top: 4px;">Accept check payments at POS</div>
+              <div class="text-primary font-semibold">🏦 Check</div>
+              <div class="text-muted text-small" style="margin-top: 4px;">Accept check payments at POS</div>
             </div>
           </label>
         </div>
@@ -241,34 +233,34 @@ const SettingsScreen = {
 
   renderCreditCardConfig(cardPresent, cardNotPresent) {
     let html = `
-      <div style="background: rgba(255, 255, 255, 0.03); padding: 25px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.1); margin-bottom: 20px;">
-        <h3 style="color: #e8e8e8; margin-bottom: 20px; font-size: 18px;">Credit Card Configuration</h3>
+      <div class="section-container">
+        <h3 class="section-header">Credit Card Configuration</h3>
     `;
 
     // Card Not Present Section
     if (cardNotPresent) {
       const cnpConfig = cardNotPresent.processor_terminal_config || {};
       html += `
-        <div style="margin-bottom: 30px; padding: 20px; background: rgba(255, 255, 255, 0.03); border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.1);">
-          <h4 style="color: #f39c12; margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
+        <div class="terminal-config-card">
+          <h4 class="terminal-config-title">
             <span>🌐</span> Card Not Present (Online/E-Commerce)
           </h4>
-          <div style="display: grid; gap: 15px;">
+          <div class="terminal-config-details">
             <div>
-              <span style="color: #95a5a6; font-size: 12px;">Merchant ID:</span>
-              <div style="color: #e8e8e8; font-family: monospace; margin-top: 4px; font-size: 14px;">${cnpConfig.merchant_id || 'Not configured'}</div>
+              <span class="form-label">Merchant ID:</span>
+              <div class="terminal-config-value">${cnpConfig.merchant_id || 'Not configured'}</div>
             </div>
             <div>
-              <span style="color: #95a5a6; font-size: 12px;">Auth Token:</span>
-              <div style="color: #e8e8e8; font-family: monospace; margin-top: 4px; font-size: 11px; word-break: break-all;">${cnpConfig.ftd_security_key ? '••••••••' + cnpConfig.ftd_security_key.slice(-8) : 'Not configured'}</div>
+              <span class="form-label">Auth Token:</span>
+              <div class="terminal-config-value text-small" style="word-break: break-all;">${cnpConfig.ftd_security_key ? '••••••••' + cnpConfig.ftd_security_key.slice(-8) : 'Not configured'}</div>
             </div>
             <div>
-              <span style="color: #95a5a6; font-size: 12px;">Environment:</span>
-              <div style="color: #e8e8e8; margin-top: 4px; text-transform: uppercase; font-size: 14px;">${cardNotPresent.api_environment || 'sandbox'}</div>
+              <span class="form-label">Environment:</span>
+              <div class="terminal-config-value text-uppercase">${cardNotPresent.api_environment || 'sandbox'}</div>
             </div>
             <div>
-              <span style="color: #95a5a6; font-size: 12px;">Location:</span>
-              <div style="color: #e8e8e8; margin-top: 4px; font-size: 14px;">${cardNotPresent.location || 'N/A'}</div>
+              <span class="form-label">Location:</span>
+              <div class="terminal-config-value">${cardNotPresent.location || 'N/A'}</div>
             </div>
           </div>
         </div>
@@ -281,68 +273,61 @@ const SettingsScreen = {
       const status = this.terminalStatuses[cardPresent.id];
       const lastChecked = this.lastChecked[cardPresent.id];
 
-      let statusIndicator = '';
+      let statusClass = 'status-warning';
       let statusText = 'Checking...';
-      let statusColor = '#f39c12';
 
       if (status) {
         if (status.TerminalStatus === 'Online') {
-          statusIndicator =
-            '<span style="display: inline-block; width: 12px; height: 12px; border-radius: 50%; background: #2ecc71; margin-right: 8px;"></span>';
+          statusClass = 'status-online';
           statusText = 'Online';
-          statusColor = '#2ecc71';
         } else if (status.TerminalStatus === 'Offline') {
-          statusIndicator =
-            '<span style="display: inline-block; width: 12px; height: 12px; border-radius: 50%; background: #e74c3c; margin-right: 8px;"></span>';
+          statusClass = 'status-offline';
           statusText = 'Offline';
-          statusColor = '#e74c3c';
         } else {
-          statusIndicator =
-            '<span style="display: inline-block; width: 12px; height: 12px; border-radius: 50%; background: #f39c12; margin-right: 8px;"></span>';
           statusText = status.TerminalStatus || 'Unknown';
         }
       }
 
       html += `
-        <div style="padding: 20px; background: rgba(255, 255, 255, 0.03); border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.1);">
-          <h4 style="color: #f39c12; margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
+        <div class="terminal-config-card">
+          <h4 class="terminal-config-title">
             <span>🪙</span> Card Present (Physical Terminal)
           </h4>
           
-          <div style="margin-bottom: 15px; padding: 12px; background: rgba(255, 255, 255, 0.05); border-radius: 6px; display: flex; align-items: center; justify-content: space-between;">
-            <div style="display: flex; align-items: center;">
-              ${statusIndicator}
-              <span style="color: ${statusColor}; font-weight: 600; font-size: 14px;">${statusText}</span>
+          <div class="terminal-status-display ${statusClass}">
+            <div class="terminal-status-indicator">
+              <span class="status-dot"></span>
+              <span class="status-text">${statusText}</span>
             </div>
-            <div style="color: #95a5a6; font-size: 11px;">
+            <div class="terminal-status-time text-muted text-small">
               ${lastChecked ? 'Last checked: ' + new Date(lastChecked).toLocaleString() : 'Not checked yet'}
             </div>
           </div>
 
-          <div style="display: grid; gap: 15px; margin-bottom: 15px;">
+          <div class="terminal-config-details">
             <div>
-              <span style="color: #95a5a6; font-size: 12px;">TPN (Terminal Processing Number):</span>
-              <div style="color: #e8e8e8; font-family: monospace; margin-top: 4px; font-size: 14px;">${cpConfig.tpn || 'Not configured'}</div>
+              <span class="form-label">TPN (Terminal Processing Number):</span>
+              <div class="terminal-config-value">${cpConfig.tpn || 'Not configured'}</div>
             </div>
             <div>
-              <span style="color: #95a5a6; font-size: 12px;">Register ID:</span>
-              <div style="color: #e8e8e8; font-family: monospace; margin-top: 4px; font-size: 14px;">${cpConfig.register_id || 'Not configured'}</div>
+              <span class="form-label">Register ID:</span>
+              <div class="terminal-config-value">${cpConfig.register_id || 'Not configured'}</div>
             </div>
             <div>
-              <span style="color: #95a5a6; font-size: 12px;">Auth Key:</span>
-              <div style="color: #e8e8e8; font-family: monospace; margin-top: 4px; font-size: 14px;">${cpConfig.auth_key ? '••••••••' + cpConfig.auth_key.slice(-8) : 'Not configured'}</div>
+              <span class="form-label">Auth Key:</span>
+              <div class="terminal-config-value">${cpConfig.auth_key ? '••••••••' + cpConfig.auth_key.slice(-8) : 'Not configured'}</div>
             </div>
             <div>
-              <span style="color: #95a5a6; font-size: 12px;">Terminal Name:</span>
-              <div style="color: #e8e8e8; margin-top: 4px; font-size: 14px;">${cardPresent.name || 'N/A'}</div>
+              <span class="form-label">Terminal Name:</span>
+              <div class="terminal-config-value">${cardPresent.name || 'N/A'}</div>
             </div>
             <div>
-              <span style="color: #95a5a6; font-size: 12px;">Location:</span>
-              <div style="color: #e8e8e8; margin-top: 4px; font-size: 14px;">${cardPresent.location || 'N/A'}</div>
+              <span class="form-label">Location:</span>
+              <div class="terminal-config-value">${cardPresent.location || 'N/A'}</div>
             </div>
           </div>
           
-          <button class="btn" onclick="SettingsScreen.checkTerminalStatus('${cardPresent.id}')" style="font-size: 14px;">
+          <button class="btn" onclick="SettingsScreen.checkTerminalStatus('${cardPresent.id}')">
             Refresh Terminal Status
           </button>
           
@@ -361,17 +346,18 @@ const SettingsScreen = {
     const currentTheme = App.getCurrentTheme();
 
     return `
-      <h2 style="color: #f39c12; margin-bottom: 10px; font-size: 28px;">POS Preferences</h2>
-      <p style="color: #95a5a6; margin-bottom: 30px;">Configure point of sale behavior and settings</p>
+      <div class="settings-page-header">
+        <h2 class="settings-page-title">POS Preferences</h2>
+        <p class="settings-page-subtitle">Configure point of sale behavior and settings</p>
+      </div>
       
-      <!-- Theme Toggle -->
-      <div style="background: rgba(255, 255, 255, 0.03); padding: 25px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.1); margin-bottom: 20px;">
-        <h3 style="color: #e8e8e8; margin-bottom: 20px; font-size: 18px;">Appearance</h3>
+      <div class="section-container">
+        <h3 class="section-header">Appearance</h3>
         
         <div class="theme-toggle-container">
           <div class="theme-toggle-label">
             <div style="font-size: 16px; margin-bottom: 4px;">Theme</div>
-            <div style="font-size: 12px; color: #95a5a6;">Choose your preferred color scheme</div>
+            <div class="text-muted text-small">Choose your preferred color scheme</div>
           </div>
           
           <div class="theme-icons">
@@ -384,8 +370,8 @@ const SettingsScreen = {
         </div>
       </div>
       
-      <div style="background: rgba(255, 255, 255, 0.03); padding: 25px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.1); margin-bottom: 20px;">
-        <h3 style="color: #e8e8e8; margin-bottom: 20px; font-size: 18px;">Layout Preference</h3>
+      <div class="section-container">
+        <h3 class="section-header">Layout Preference</h3>
         
         <div class="layout-preview-container">
           <div class="layout-preview-option ${currentLayout === 'commerce' ? 'selected' : ''}" onclick="SettingsScreen.selectLayout('commerce')">
@@ -401,7 +387,7 @@ const SettingsScreen = {
               </div>
               <div class="preview-cart"></div>
             </div>
-            <div style="text-align: center; margin-top: 8px; font-size: 12px; color: #95a5a6;">Products left, cart right</div>
+            <div class="text-center text-small text-muted" style="margin-top: 8px;">Products left, cart right</div>
           </div>
           
           <div class="layout-preview-option ${currentLayout === 'carord' ? 'selected' : ''}" onclick="SettingsScreen.selectLayout('carord')">
@@ -417,38 +403,28 @@ const SettingsScreen = {
                 <div class="preview-product-box"></div>
               </div>
             </div>
-            <div style="text-align: center; margin-top: 8px; font-size: 12px; color: #95a5a6;">Cart left, products right</div>
+            <div class="text-center text-small text-muted" style="margin-top: 8px;">Cart left, products right</div>
           </div>
         </div>
       </div>
       
-      <div style="background: rgba(255, 255, 255, 0.03); padding: 25px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.1);">
-        <h3 style="color: #e8e8e8; margin-bottom: 20px; font-size: 18px;">Payment Received Screen</h3>
+      <div class="section-container">
+        <h3 class="section-header">Payment Received Screen</h3>
         
         <div style="margin-bottom: 25px;">
-          <label style="display: flex; align-items: center; gap: 12px; cursor: pointer; padding: 15px; background: rgba(255, 255, 255, 0.05); border-radius: 6px;">
+          <label class="payment-method-option">
             <input type="checkbox" id="autoCloseCheckbox" ${prefs.autoClose ? 'checked' : ''} onchange="SettingsScreen.updateAutoClose()" style="width: 20px; height: 20px; cursor: pointer;" />
-            <span style="color: #e8e8e8; font-size: 16px;">Automatically close payment received screen</span>
+            <span class="text-primary">Automatically close payment received screen</span>
           </label>
         </div>
         
         <div id="autoCloseDelaySection" style="margin-bottom: 25px; ${prefs.autoClose ? '' : 'opacity: 0.4; pointer-events: none;'}">
-          <label style="color: #95a5a6; font-size: 14px; margin-bottom: 10px; display: block;">Close after (seconds):</label>
-          <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;">
+          <label class="form-label">Close after (seconds):</label>
+          <div class="auto-close-delay-grid">
             ${[3, 5, 10, 15, 20, 30, 60, 90]
               .map(
                 (seconds) => `
-              <button onclick="SettingsScreen.setAutoCloseDelay(${seconds})" style="
-                padding: 12px;
-                background: ${prefs.autoCloseDelay === seconds ? 'rgba(243, 156, 18, 0.3)' : 'rgba(255, 255, 255, 0.05)'};
-                border: 2px solid ${prefs.autoCloseDelay === seconds ? '#f39c12' : 'rgba(255, 255, 255, 0.1)'};
-                border-radius: 6px;
-                color: ${prefs.autoCloseDelay === seconds ? '#f39c12' : '#e8e8e8'};
-                font-size: 16px;
-                font-weight: 600;
-                cursor: pointer;
-                transition: all 0.3s ease;
-              " onmouseover="if(${prefs.autoCloseDelay !== seconds}) this.style.background='rgba(255, 255, 255, 0.1)'" onmouseout="if(${prefs.autoCloseDelay !== seconds}) this.style.background='rgba(255, 255, 255, 0.05)'">
+              <button onclick="SettingsScreen.setAutoCloseDelay(${seconds})" class="auto-close-delay-btn ${prefs.autoCloseDelay === seconds ? 'active' : ''}">
                 ${seconds}s
               </button>
             `
@@ -457,8 +433,8 @@ const SettingsScreen = {
           </div>
         </div>
         
-        <div style="padding: 15px; background: rgba(52, 152, 219, 0.1); border: 1px solid rgba(52, 152, 219, 0.3); border-radius: 6px;">
-          <div style="color: #3498db; font-size: 14px;">
+        <div class="info-notice">
+          <div class="info-notice-content">
             <strong>ℹ️ Note:</strong> These settings control how the payment received screen behaves after completing a transaction. When auto-close is enabled, the screen will automatically close and reset the POS for the next transaction.
           </div>
         </div>
@@ -489,12 +465,8 @@ const SettingsScreen = {
   },
 
   toggleTheme() {
-    console.log('⚙️ SettingsScreen.toggleTheme() - Starting theme toggle from settings');
     App.toggleTheme();
-    console.log('🔄 SettingsScreen.toggleTheme() - Calling render to update UI');
-    // Re-render to update the toggle UI
     this.render();
-    console.log('✅ SettingsScreen.toggleTheme() - Theme toggle complete, UI updated');
   },
 
   async loadTerminals() {
@@ -510,7 +482,6 @@ const SettingsScreen = {
         this.terminals = data.terminals;
       }
     } catch (error) {
-      console.error('Failed to load terminals:', error);
       this.terminals = [];
     }
   },
@@ -519,18 +490,12 @@ const SettingsScreen = {
     const terminal = this.terminals.find((t) => t.id === terminalId);
     const resultDiv = document.getElementById(`terminalStatusResult-${terminalId}`);
 
-    console.log('🔍 checkTerminalStatus called');
-    console.log('  - terminalId:', terminalId);
-    console.log('  - silent:', silent);
-    console.log('  - terminal found:', !!terminal);
-
     if (!terminal) {
-      console.error('❌ Terminal not found');
       if (resultDiv) {
         resultDiv.innerHTML = `
-          <div style="padding: 15px; background: rgba(231, 76, 60, 0.1); border: 1px solid rgba(231, 76, 60, 0.3); border-radius: 6px;">
-            <h4 style="color: #e74c3c; margin-bottom: 8px;">Error</h4>
-            <pre style="color: #e8e8e8; white-space: pre-wrap; font-size: 12px;">Terminal not found</pre>
+          <div class="alert-error">
+            <h4>Error</h4>
+            <pre class="alert-pre">Terminal not found</pre>
           </div>
         `;
       }
@@ -539,15 +504,10 @@ const SettingsScreen = {
 
     const config = terminal.processor_terminal_config || {};
 
-    console.log('📋 Terminal details:');
-    console.log('  - TPN:', config.tpn);
-    console.log('  - Register ID:', config.register_id);
-    console.log('  - Auth Key:', config.auth_key ? 'present' : 'missing');
-
     if (!silent && resultDiv) {
       resultDiv.innerHTML = `
-        <div style="padding: 15px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 6px;">
-          <h4 style="color: #f39c12; margin-bottom: 8px;">Checking terminal status...</h4>
+        <div class="alert-info">
+          <h4>Checking terminal status...</h4>
         </div>
       `;
     }
@@ -558,8 +518,6 @@ const SettingsScreen = {
       tpn: config.tpn,
     };
 
-    console.log('📤 Sending request to check-spin-terminal-status');
-
     try {
       const response = await fetch('/.netlify/functions/check-spin-terminal-status', {
         method: 'POST',
@@ -569,15 +527,12 @@ const SettingsScreen = {
         body: JSON.stringify(requestBody),
       });
 
-      console.log('📨 Response status:', response.status);
       const result = await response.json();
-      console.log('📨 Response body:', JSON.stringify(result, null, 2));
 
       // Store status and timestamp
       if (result.success && result.data) {
         this.terminalStatuses[terminalId] = result.data;
         this.lastChecked[terminalId] = new Date().toISOString();
-        console.log('✅ Status stored:', result.data.TerminalStatus);
       }
 
       // Re-render to update status indicator
@@ -586,47 +541,35 @@ const SettingsScreen = {
       if (!silent && resultDiv) {
         if (result.success) {
           const status = result.data.TerminalStatus;
-          let statusColor = '#f39c12';
-          let statusBg = 'rgba(243, 156, 18, 0.1)';
-          let statusBorder = 'rgba(243, 156, 18, 0.3)';
+          let alertClass = 'alert-warning';
 
           if (status === 'Online') {
-            statusColor = '#2ecc71';
-            statusBg = 'rgba(46, 204, 113, 0.1)';
-            statusBorder = 'rgba(46, 204, 113, 0.3)';
+            alertClass = 'alert-success';
           } else if (status === 'Offline') {
-            statusColor = '#e74c3c';
-            statusBg = 'rgba(231, 76, 60, 0.1)';
-            statusBorder = 'rgba(231, 76, 60, 0.3)';
+            alertClass = 'alert-error';
           }
 
           resultDiv.innerHTML = `
-            <div style="padding: 15px; background: ${statusBg}; border: 1px solid ${statusBorder}; border-radius: 6px;">
-              <h4 style="color: ${statusColor}; margin-bottom: 8px;">Terminal Status: ${status}</h4>
-              <pre style="color: #e8e8e8; white-space: pre-wrap; font-size: 12px; max-height: 300px; overflow-y: auto;">${JSON.stringify(result.data, null, 2)}</pre>
+            <div class="${alertClass}">
+              <h4>Terminal Status: ${status}</h4>
+              <pre class="alert-pre">${JSON.stringify(result.data, null, 2)}</pre>
             </div>
           `;
         } else {
-          console.error('❌ Request failed:', result);
           resultDiv.innerHTML = `
-            <div style="padding: 15px; background: rgba(243, 156, 18, 0.1); border: 1px solid rgba(243, 156, 18, 0.3); border-radius: 6px;">
-              <h4 style="color: #f39c12; margin-bottom: 8px;">Warning</h4>
-              <pre style="color: #e8e8e8; white-space: pre-wrap; font-size: 12px;">${result.error}\n\nDetails: ${result.details || 'None'}</pre>
+            <div class="alert-warning">
+              <h4>Warning</h4>
+              <pre class="alert-pre">${result.error}\n\nDetails: ${result.details || 'None'}</pre>
             </div>
           `;
         }
       }
     } catch (error) {
-      console.error('💥 Error checking terminal status:', error);
-      console.error('Error name:', error.name);
-      console.error('Error message:', error.message);
-      console.error('Error stack:', error.stack);
-
       if (!silent && resultDiv) {
         resultDiv.innerHTML = `
-          <div style="padding: 15px; background: rgba(231, 76, 60, 0.1); border: 1px solid rgba(231, 76, 60, 0.3); border-radius: 6px;">
-            <h4 style="color: #e74c3c; margin-bottom: 8px;">Error</h4>
-            <pre style="color: #e8e8e8; white-space: pre-wrap; font-size: 12px;">${error.message}</pre>
+          <div class="alert-error">
+            <h4>Error</h4>
+            <pre class="alert-pre">${error.message}</pre>
           </div>
         `;
       }
@@ -637,7 +580,7 @@ const SettingsScreen = {
     // Silently check all terminal statuses on screen load
     const cardPresentTerminals = this.terminals.filter((t) => t.terminal_type === 'card_present');
     for (const terminal of cardPresentTerminals) {
-      await this.checkTerminalStatus(terminal.id, true); // silent=true
+      await this.checkTerminalStatus(terminal.id, true);
     }
   },
 
@@ -652,45 +595,37 @@ const SettingsScreen = {
     const enablePolling = localStorage.getItem('terminalEnablePolling') !== 'false';
 
     return `
-      <h2 style="color: #8b7355; margin-bottom: 20px; font-size: 28px;">Terminal Transaction Settings</h2>
+      <div class="settings-page-header">
+        <h2 class="settings-page-title">Terminal Transaction Settings</h2>
+      </div>
       
-      <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-        <p style="color: #666; line-height: 1.6; margin: 0;">
+      <div class="info-notice" style="margin-bottom: 20px;">
+        <p style="margin: 0;">
           These settings control how the POS handles long-running terminal transactions to avoid timeout errors.
           Adjust these based on your terminal response times and network conditions.
         </p>
       </div>
 
-      <div style="margin-bottom: 30px;">
-        <label style="display: block; color: #8b7355; font-weight: bold; margin-bottom: 10px;">
-          Enable Transaction Polling
-        </label>
-        <p style="color: #666; font-size: 14px; margin-bottom: 10px;">
+      <div class="section-container">
+        <label class="form-label font-bold">Enable Transaction Polling</label>
+        <p class="text-muted text-small" style="margin-bottom: 10px;">
           Enable polling to track terminal transactions longer than 20 seconds (default: Yes)
         </p>
-        <div style="display: flex; gap: 10px; max-width: 300px;">
+        <div class="toggle-button-group">
           <button onclick="SettingsScreen.setTerminalEnablePolling(true)"
-                  style="padding: 12px 24px; border: 2px solid ${enablePolling ? '#8b7355' : '#ddd'};
-                         background: ${enablePolling ? '#8b7355' : 'white'};
-                         color: ${enablePolling ? 'white' : '#666'};
-                         border-radius: 5px; cursor: pointer; font-family: Georgia, serif;
-                         font-weight: ${enablePolling ? 'bold' : 'normal'}; flex: 1;">
+                  class="toggle-button ${enablePolling ? 'active' : ''}">
             Enabled
           </button>
           <button onclick="SettingsScreen.setTerminalEnablePolling(false)"
-                  style="padding: 12px 24px; border: 2px solid ${!enablePolling ? '#8b7355' : '#ddd'};
-                         background: ${!enablePolling ? '#8b7355' : 'white'};
-                         color: ${!enablePolling ? 'white' : '#666'};
-                         border-radius: 5px; cursor: pointer; font-family: Georgia, serif;
-                         font-weight: ${!enablePolling ? 'bold' : 'normal'}; flex: 1;">
+                  class="toggle-button ${!enablePolling ? 'active' : ''}">
             Disabled
           </button>
         </div>
         ${
           !enablePolling
             ? `
-        <div style="background: #ffe0e0; padding: 12px; border-radius: 6px; border-left: 4px solid #e74c3c; margin-top: 15px;">
-          <p style="color: #c0392b; font-size: 13px; margin: 0; line-height: 1.5;">
+        <div class="alert-warning" style="margin-top: 15px;">
+          <p style="margin: 0; line-height: 1.5;">
             <strong>⚠️ Warning:</strong> With polling disabled, transactions longer than 20 seconds will return an error immediately. 
             The transaction may still complete on the terminal, but the POS won't track it automatically.
           </p>
@@ -700,23 +635,17 @@ const SettingsScreen = {
         }
       </div>
 
-      <div style="margin-bottom: 30px;">
-        <label style="display: block; color: #8b7355; font-weight: bold; margin-bottom: 10px;">
-          Database Persist Timeout
-        </label>
-        <p style="color: #666; font-size: 14px; margin-bottom: 10px;">
+      <div class="section-container">
+        <label class="form-label font-bold">Database Persist Timeout</label>
+        <p class="text-muted text-small" style="margin-bottom: 10px;">
           Save transaction state after this many seconds to avoid function timeout (default: 20s)
         </p>
-        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; max-width: 400px;">
+        <div class="timeout-button-grid" style="grid-template-columns: repeat(3, 1fr); max-width: 400px;">
           ${[15, 20, 25]
             .map(
               (seconds) => `
             <button onclick="SettingsScreen.setTerminalTimeout('terminalDbPersistTimeout', ${seconds})"
-                    style="padding: 12px; border: 2px solid ${dbPersistTimeout === seconds ? '#8b7355' : '#ddd'};
-                           background: ${dbPersistTimeout === seconds ? '#8b7355' : 'white'};
-                           color: ${dbPersistTimeout === seconds ? 'white' : '#666'};
-                           border-radius: 5px; cursor: pointer; font-family: Georgia, serif;
-                           font-weight: ${dbPersistTimeout === seconds ? 'bold' : 'normal'};">
+                    class="timeout-button ${dbPersistTimeout === seconds ? 'active' : ''}">
               ${seconds}s
             </button>
           `
@@ -725,23 +654,17 @@ const SettingsScreen = {
         </div>
       </div>
 
-      <div style="margin-bottom: 30px;">
-        <label style="display: block; color: #8b7355; font-weight: bold; margin-bottom: 10px;">
-          SPIN Status Check Timeout
-        </label>
-        <p style="color: #666; font-size: 14px; margin-bottom: 10px;">
+      <div class="section-container">
+        <label class="form-label font-bold">SPIN Status Check Timeout</label>
+        <p class="text-muted text-small" style="margin-bottom: 10px;">
           Check Dejavoo Status API after this many seconds if no response (default: 120s)
         </p>
-        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; max-width: 500px;">
+        <div class="timeout-button-grid" style="grid-template-columns: repeat(4, 1fr); max-width: 500px;">
           ${[90, 120, 150, 180]
             .map(
               (seconds) => `
             <button onclick="SettingsScreen.setTerminalTimeout('terminalStatusCheckTimeout', ${seconds})"
-                    style="padding: 12px; border: 2px solid ${statusCheckTimeout === seconds ? '#8b7355' : '#ddd'};
-                           background: ${statusCheckTimeout === seconds ? '#8b7355' : 'white'};
-                           color: ${statusCheckTimeout === seconds ? 'white' : '#666'};
-                           border-radius: 5px; cursor: pointer; font-family: Georgia, serif;
-                           font-weight: ${statusCheckTimeout === seconds ? 'bold' : 'normal'};">
+                    class="timeout-button ${statusCheckTimeout === seconds ? 'active' : ''}">
               ${seconds}s
             </button>
           `
@@ -750,23 +673,17 @@ const SettingsScreen = {
         </div>
       </div>
 
-      <div style="margin-bottom: 30px;">
-        <label style="display: block; color: #8b7355; font-weight: bold; margin-bottom: 10px;">
-          Frontend Poll Interval
-        </label>
-        <p style="color: #666; font-size: 14px; margin-bottom: 10px;">
+      <div class="section-container">
+        <label class="form-label font-bold">Frontend Poll Interval</label>
+        <p class="text-muted text-small" style="margin-bottom: 10px;">
           How often to check transaction status (default: 5s)
         </p>
-        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; max-width: 400px;">
+        <div class="timeout-button-grid" style="grid-template-columns: repeat(3, 1fr); max-width: 400px;">
           ${[3, 5, 10]
             .map(
               (seconds) => `
             <button onclick="SettingsScreen.setTerminalTimeout('terminalPollInterval', ${seconds})"
-                    style="padding: 12px; border: 2px solid ${pollInterval === seconds ? '#8b7355' : '#ddd'};
-                           background: ${pollInterval === seconds ? '#8b7355' : 'white'};
-                           color: ${pollInterval === seconds ? 'white' : '#666'};
-                           border-radius: 5px; cursor: pointer; font-family: Georgia, serif;
-                           font-weight: ${pollInterval === seconds ? 'bold' : 'normal'};">
+                    class="timeout-button ${pollInterval === seconds ? 'active' : ''}">
               ${seconds}s
             </button>
           `
@@ -775,23 +692,17 @@ const SettingsScreen = {
         </div>
       </div>
 
-      <div style="margin-bottom: 30px;">
-        <label style="display: block; color: #8b7355; font-weight: bold; margin-bottom: 10px;">
-          Maximum Total Wait
-        </label>
-        <p style="color: #666; font-size: 14px; margin-bottom: 10px;">
+      <div class="section-container">
+        <label class="form-label font-bold">Maximum Total Wait</label>
+        <p class="text-muted text-small" style="margin-bottom: 10px;">
           Give up and show manual check button after this many seconds (default: 180s)
         </p>
-        <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; max-width: 600px;">
+        <div class="timeout-button-grid" style="grid-template-columns: repeat(5, 1fr); max-width: 600px;">
           ${[60, 90, 120, 180, 240]
             .map(
               (seconds) => `
             <button onclick="SettingsScreen.setTerminalTimeout('terminalMaxWait', ${seconds})"
-                    style="padding: 12px; border: 2px solid ${maxWait === seconds ? '#8b7355' : '#ddd'};
-                           background: ${maxWait === seconds ? '#8b7355' : 'white'};
-                           color: ${maxWait === seconds ? 'white' : '#666'};
-                           border-radius: 5px; cursor: pointer; font-family: Georgia, serif;
-                           font-weight: ${maxWait === seconds ? 'bold' : 'normal'};">
+                    class="timeout-button ${maxWait === seconds ? 'active' : ''}">
               ${seconds}s
             </button>
           `
@@ -800,44 +711,32 @@ const SettingsScreen = {
         </div>
       </div>
 
-      <div style="margin-bottom: 30px;">
-        <label style="display: block; color: #8b7355; font-weight: bold; margin-bottom: 10px;">
-          Show Terminal Processing Details
-        </label>
-        <p style="color: #666; font-size: 14px; margin-bottom: 10px;">
+      <div class="section-container">
+        <label class="form-label font-bold">Show Terminal Processing Details</label>
+        <p class="text-muted text-small" style="margin-bottom: 10px;">
           Show elapsed time and status updates to cashier (default: Yes)
         </p>
-        <div style="display: flex; gap: 10px; max-width: 300px;">
+        <div class="toggle-button-group">
           <button onclick="SettingsScreen.setTerminalShowDetails(true)"
-                  style="padding: 12px 24px; border: 2px solid ${showDetails ? '#8b7355' : '#ddd'};
-                         background: ${showDetails ? '#8b7355' : 'white'};
-                         color: ${showDetails ? 'white' : '#666'};
-                         border-radius: 5px; cursor: pointer; font-family: Georgia, serif;
-                         font-weight: ${showDetails ? 'bold' : 'normal'}; flex: 1;">
+                  class="toggle-button ${showDetails ? 'active' : ''}">
             Yes
           </button>
           <button onclick="SettingsScreen.setTerminalShowDetails(false)"
-                  style="padding: 12px 24px; border: 2px solid ${!showDetails ? '#8b7355' : '#ddd'};
-                         background: ${!showDetails ? '#8b7355' : 'white'};
-                         color: ${!showDetails ? 'white' : '#666'};
-                         border-radius: 5px; cursor: pointer; font-family: Georgia, serif;
-                         font-weight: ${!showDetails ? 'bold' : 'normal'}; flex: 1;">
+                  class="toggle-button ${!showDetails ? 'active' : ''}">
             No
           </button>
         </div>
       </div>
 
-      <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #ddd;">
-        <button onclick="SettingsScreen.resetTerminalTimeoutDefaults()"
-                style="padding: 12px 24px; background: #95a5a6; color: white; border: none;
-                       border-radius: 5px; cursor: pointer; font-family: Georgia, serif;">
+      <div class="section-container">
+        <button onclick="SettingsScreen.resetTerminalTimeoutDefaults()" class="btn btn-secondary">
           Reset to Defaults
         </button>
       </div>
 
-      <div style="background: #e8f4f8; padding: 15px; border-radius: 8px; border-left: 4px solid #3498db; margin-top: 30px;">
-        <strong style="color: #2c3e50;">ℹ️ How It Works:</strong>
-        <ul style="color: #666; margin-top: 10px; line-height: 1.8;">
+      <div class="info-notice">
+        <strong>ℹ️ How It Works:</strong>
+        <ul style="margin-top: 10px; line-height: 1.8;">
           <li><strong>Fast transactions (&lt;20s):</strong> Work exactly as before with no changes</li>
           <li><strong>Medium transactions (20-120s):</strong> Saved to database, frontend polls for status</li>
           <li><strong>Slow transactions (&gt;120s):</strong> Automatic SPIN Status API check, then continue polling</li>
@@ -849,19 +748,16 @@ const SettingsScreen = {
 
   setTerminalTimeout(setting, value) {
     localStorage.setItem(setting, value.toString());
-    console.log(`✅ Set ${setting} to ${value}`);
     this.render();
   },
 
   setTerminalShowDetails(value) {
     localStorage.setItem('terminalShowDetails', value.toString());
-    console.log(`✅ Set terminalShowDetails to ${value}`);
     this.render();
   },
 
   setTerminalEnablePolling(value) {
     localStorage.setItem('terminalEnablePolling', value.toString());
-    console.log(`✅ Set terminalEnablePolling to ${value}`);
     this.render();
   },
 
@@ -873,7 +769,6 @@ const SettingsScreen = {
       localStorage.setItem('terminalMaxWait', '180');
       localStorage.setItem('terminalShowDetails', 'true');
       localStorage.setItem('terminalEnablePolling', 'true');
-      console.log('✅ Reset all terminal timeout settings to defaults');
       this.render();
     }
   },
@@ -881,66 +776,22 @@ const SettingsScreen = {
   renderLoadingState() {
     return `
       <div style="padding: 20px;">
-        <div style="
-          height: 28px;
-          width: 200px;
-          margin-bottom: 10px;
-          background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%);
-          background-size: 200% 100%;
-          animation: shimmer 1.5s infinite;
-          border-radius: 4px;
-        "></div>
-        
-        <div style="
-          height: 16px;
-          width: 300px;
-          margin-bottom: 30px;
-          background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%);
-          background-size: 200% 100%;
-          animation: shimmer 1.5s infinite;
-          border-radius: 4px;
-        "></div>
+        <div class="skeleton-box" style="height: 28px; width: 200px; margin-bottom: 10px;"></div>
+        <div class="skeleton-box" style="height: 16px; width: 300px; margin-bottom: 30px;"></div>
 
         <div style="display: flex; flex-direction: column; gap: 15px;">
           ${Array(3)
             .fill(0)
             .map(
               () => `
-            <div style="
-              background: rgba(255, 255, 255, 0.03);
-              padding: 20px;
-              border-radius: 8px;
-              border: 1px solid rgba(255, 255, 255, 0.1);
-            ">
-              <div style="
-                height: 20px;
-                width: 150px;
-                margin-bottom: 10px;
-                background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%);
-                background-size: 200% 100%;
-                animation: shimmer 1.5s infinite;
-                border-radius: 4px;
-              "></div>
-              <div style="
-                height: 14px;
-                width: 200px;
-                background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%);
-                background-size: 200% 100%;
-                animation: shimmer 1.5s infinite;
-                border-radius: 4px;
-              "></div>
+            <div class="section-container">
+              <div class="skeleton-box" style="height: 20px; width: 150px; margin-bottom: 10px;"></div>
+              <div class="skeleton-box" style="height: 14px; width: 200px;"></div>
             </div>
           `
             )
             .join('')}
         </div>
-
-        <style>
-          @keyframes shimmer {
-            0% { background-position: -200% 0; }
-            100% { background-position: 200% 0; }
-          }
-        </style>
       </div>
     `;
   },

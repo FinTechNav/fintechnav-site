@@ -1,0 +1,249 @@
+/* ===================================
+   SIDEBAR - Responsive
+   =================================== */
+
+.sidebar {
+    width: 70px;
+    background: var(--sidebar-bg);
+    backdrop-filter: blur(10px);
+    border-right: 1px solid var(--sidebar-border);
+    display: flex;
+    flex-direction: column;
+    transition: width 0.3s ease, transform 0.3s ease;
+    overflow: hidden;
+    overflow-y: hidden;
+    position: relative;
+    z-index: 1000;
+}
+
+.sidebar.expanded {
+    width: 220px;
+}
+
+.menu-toggle {
+    padding: 20px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 64px;
+}
+
+.menu-toggle:hover {
+    background: var(--bg-hover);
+}
+
+.hamburger {
+    width: 24px;
+    height: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    cursor: pointer;
+}
+
+.hamburger span {
+    width: 100%;
+    height: 3px;
+    background: var(--accent-primary);
+    border-radius: 2px;
+    transition: all 0.3s ease;
+}
+
+.menu-items {
+    flex: 1;
+    padding: 10px 0;
+    overflow-y: hidden;
+    overflow-x: hidden;
+}
+
+.menu-item {
+    display: flex;
+    align-items: center;
+    padding: 15px 20px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    color: var(--text-tertiary);
+    min-height: 54px;
+}
+
+.menu-item:hover {
+    background: var(--sidebar-highlight);
+    color: var(--text-primary);
+}
+
+.menu-item.active {
+    background: var(--sidebar-highlight);
+    color: var(--text-primary);
+}
+
+.menu-icon {
+    width: 30px;
+    height: 30px;
+    font-size: 24px;
+    text-align: center;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Menu icon images */
+.menu-icon-img {
+    width: 30px;
+    height: 30px;
+    object-fit: contain;
+}
+
+/* Theme-based icon switching */
+[data-theme="light"] .menu-icon-cart {
+    content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-22.svg');
+}
+
+[data-theme="dark"] .menu-icon-cart {
+    content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/DarkMode/DarkMode-icons-50.svg');
+}
+
+[data-theme="light"] .menu-icon-customers {
+    content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-25.svg');
+}
+
+[data-theme="dark"] .menu-icon-customers {
+    content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/DarkMode/DarkMode-icons-53.svg');
+}
+
+[data-theme="light"] .menu-icon-orders {
+    content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-23.svg');
+}
+
+[data-theme="dark"] .menu-icon-orders {
+    content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/DarkMode/DarkMode-icons-51.svg');
+}
+
+[data-theme="light"] .menu-icon-products {
+    content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-20.svg');
+}
+
+[data-theme="dark"] .menu-icon-products {
+    content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/DarkMode/DarkMode-icons-48.svg');
+}
+
+[data-theme="light"] .menu-icon-reservations {
+    content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-17.svg');
+}
+
+[data-theme="dark"] .menu-icon-reservations {
+    content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/DarkMode/DarkMode-icons-45.svg');
+}
+
+[data-theme="light"] .menu-icon-club {
+    content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-29.svg');
+}
+
+[data-theme="dark"] .menu-icon-club {
+    content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/DarkMode/DarkMode-icons-57.svg');
+}
+
+[data-theme="light"] .menu-icon-reports {
+    content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-19.svg');
+}
+
+[data-theme="dark"] .menu-icon-reports {
+    content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/DarkMode/DarkMode-icons-47.svg');
+}
+
+[data-theme="light"] .menu-icon-settings {
+    content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-28.svg');
+}
+
+[data-theme="dark"] .menu-icon-settings {
+    content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/DarkMode/DarkMode-icons-56.svg');
+}
+
+[data-theme="light"] .menu-icon-hamburger {
+    content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-107.svg');
+}
+
+[data-theme="dark"] .menu-icon-hamburger {
+    content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/DarkMode/DarkMode-icons-97.svg');
+}
+
+[data-theme="light"] .menu-icon-theme-toggle {
+    content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-113.svg');
+}
+
+[data-theme="dark"] .menu-icon-theme-toggle {
+    content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/DarkMode/DarkMode-icons-112.svg');
+}
+
+.menu-label {
+    margin-left: 8px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    font-size: 15px;
+    font-weight: 500;
+}
+
+.sidebar.expanded .menu-label {
+    opacity: 1;
+}
+
+.menu-bottom {
+    margin-top: auto;
+    border-top: 1px solid var(--border-color);
+}
+
+/* Mini Theme Toggle */
+.theme-toggle-mini {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 15px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin: 10px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.theme-toggle-mini:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: scale(1.05);
+}
+
+.theme-icon {
+    font-size: 24px;
+    transition: transform 0.3s ease;
+}
+
+.theme-toggle-mini:hover .theme-icon {
+    transform: rotate(180deg);
+}
+
+/* Styled Logout Button */
+.menu-item.logout-button {
+    background: rgba(231, 76, 60, 0.1);
+    border: 1px solid rgba(231, 76, 60, 0.3);
+    border-radius: 8px;
+    margin: 10px;
+    padding: 15px;
+}
+
+.menu-item.logout-button:hover {
+    background: rgba(231, 76, 60, 0.2);
+    border-color: rgba(231, 76, 60, 0.5);
+    transform: translateX(5px);
+}
+
+.menu-item.logout-button .menu-icon {
+    color: #e74c3c;
+    font-size: 24px;
+}
+
+.menu-item.logout-button .menu-label {
+    color: #e74c3c;
+    font-weight: 600;
+}
+
