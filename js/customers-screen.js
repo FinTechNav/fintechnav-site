@@ -39,8 +39,6 @@ class CustomersScreen {
   }
 
   async init() {
-    console.log('Initializing Customers Screen...');
-
     this.loadingState.customers = true;
     this.loadingState.countrySettings = true;
     this.render();
@@ -73,67 +71,45 @@ class CustomersScreen {
   }
 
   async loadWineryInfo() {
-    console.log('Loading winery information...');
-    console.log('App object exists:', typeof App !== 'undefined');
-    console.log(
-      'App.currentWinery:',
-      typeof App !== 'undefined' ? App.currentWinery : 'App not defined'
-    );
-
     // Get winery_id from global App.currentWinery if available
     const wineryId = typeof App !== 'undefined' && App.currentWinery ? App.currentWinery.id : null;
 
-    console.log('Extracted winery_id:', wineryId);
-
     if (!wineryId) {
-      console.log('No winery selected yet, skipping winery info load');
       return;
     }
 
     try {
       const url = `/.netlify/functions/get-winery-info?winery_id=${wineryId}`;
-      console.log('Fetching winery info from:', url);
       const response = await fetch(url);
       const data = await response.json();
-      console.log('Winery API response:', data);
       if (data.success) {
         this.winery = data.winery;
-        console.log('Winery info loaded:', this.winery);
       } else {
-        console.log('No winery info found:', data.error);
       }
-    } catch (error) {
-      console.error('Failed to load winery info:', error);
-    }
+    } catch (error) {}
   }
 
   async loadCountrySettings() {
-    console.log('Loading country settings...');
     try {
       const response = await fetch('/.netlify/functions/get-country-settings');
       const data = await response.json();
       if (data.success) {
         this.countrySettings = data.settings;
       }
-    } catch (error) {
-      console.error('Failed to load country settings:', error);
-    }
+    } catch (error) {}
   }
 
   async loadCustomers() {
-    console.log('Loading customers...');
     try {
       const response = await fetch('/.netlify/functions/get-customers?limit=1000');
       const data = await response.json();
       if (data.success) {
         this.customers = data.customers;
-        console.log(`Loaded ${this.customers.length} customers`);
         this.applyFilters();
       } else {
         alert('Failed to load customers: ' + (data.error || 'Unknown error'));
       }
     } catch (error) {
-      console.error('Failed to load customers:', error);
       alert('Failed to load customers. Please try again.');
     }
   }
@@ -261,15 +237,6 @@ class CustomersScreen {
   }
 
   render() {
-    console.log(`[${new Date().toISOString()}] === RENDER ===`);
-    console.log(`[${new Date().toISOString()}] showMap:`, this.showMap);
-    console.log(`[${new Date().toISOString()}] currentPolygon exists:`, !!this.currentPolygon);
-    console.log(`[${new Date().toISOString()}] map instance exists:`, !!this.map);
-    console.log(
-      `[${new Date().toISOString()}] selectedCustomers.size:`,
-      this.selectedCustomers.size
-    );
-
     const container = document.getElementById('customersScreen');
     if (!container) return;
 
@@ -281,14 +248,9 @@ class CustomersScreen {
 
     // Check if map panel actually exists in DOM
     const mapPanelExists = !!document.querySelector('.map-panel');
-    console.log(`[${new Date().toISOString()}] map panel exists in DOM:`, mapPanelExists);
 
     // If map is visible and already initialized AND map panel exists, just update the customer list
     if (this.showMap && this.map && mapPanelExists) {
-      console.log(
-        `[${new Date().toISOString()}] Map visible and initialized - updating customer list only`
-      );
-
       // Update view toggle buttons
       document.querySelectorAll('.view-btn').forEach((btn) => {
         btn.classList.remove('active');
@@ -347,24 +309,14 @@ class CustomersScreen {
 
       // Update bulk actions bar - remove old one first
       const existingBulkActions = document.querySelector('.bulk-actions-bar');
-      console.log(
-        `[${new Date().toISOString()}] Existing bulk actions bar found:`,
-        !!existingBulkActions
-      );
-      console.log(
-        `[${new Date().toISOString()}] Should show bulk actions:`,
-        this.selectedCustomers.size > 0
-      );
 
       if (existingBulkActions) {
-        console.log(`[${new Date().toISOString()}] Removing existing bulk actions bar`);
         existingBulkActions.remove();
       }
 
       if (this.selectedCustomers.size > 0) {
         const statsContainer = document.querySelector('.customers-stats');
         if (statsContainer) {
-          console.log(`[${new Date().toISOString()}] Adding new bulk actions bar after stats`);
           statsContainer.insertAdjacentHTML('afterend', this.renderBulkActions());
         }
       }
@@ -374,7 +326,6 @@ class CustomersScreen {
       return;
     }
 
-    console.log(`[${new Date().toISOString()}] Full render - recreating entire HTML`);
     const activeFilterCount = this.getActiveFilterCount();
 
     const html = `
@@ -496,19 +447,12 @@ class CustomersScreen {
     `;
 
     container.innerHTML = html;
-    console.log(
-      `[${new Date().toISOString()}] HTML rendered (full render), showMap:`,
-      this.showMap
-    );
 
     // Reset flag since we've recreated the HTML - need to reattach listeners
     this.eventListenersAttached = false;
     this.attachEventListeners();
 
     if (this.showMap) {
-      console.log(
-        `[${new Date().toISOString()}] Map should be visible, calling initializeMap in 100ms`
-      );
       setTimeout(() => this.initializeMap(), 100);
     }
   }
@@ -621,31 +565,17 @@ class CustomersScreen {
   }
 
   async initializeMap() {
-    console.log(`[${new Date().toISOString()}] === INITIALIZE MAP ===`);
-    console.log(`[${new Date().toISOString()}] Google Maps available:`, !!window.google);
-    console.log(
-      `[${new Date().toISOString()}] Map element exists:`,
-      !!document.getElementById('customer-map')
-    );
-    console.log(`[${new Date().toISOString()}] Existing map instance:`, !!this.map);
-    console.log(`[${new Date().toISOString()}] Current polygon exists:`, !!this.currentPolygon);
-
     if (!window.google) {
-      console.error('Google Maps API not loaded');
       return;
     }
 
     const mapElement = document.getElementById('customer-map');
     if (!mapElement) {
-      console.error('Map element not found in DOM');
       return;
     }
 
     // If map instance exists but was detached from DOM, recreate it
     if (this.map && !mapElement.hasChildNodes()) {
-      console.log(
-        `[${new Date().toISOString()}] Map instance exists but detached from DOM - resetting map only`
-      );
       // Clear the polygon's map reference but keep the polygon object
       if (this.currentPolygon) {
         this.currentPolygon.setMap(null);
@@ -656,30 +586,18 @@ class CustomersScreen {
 
     // If map already exists, just update markers and ensure polygon visibility
     if (this.map) {
-      console.log(
-        `[${new Date().toISOString()}] Map exists - updating markers only, preserving zoom/position`
-      );
       await this.updateMarkers();
 
       // Re-attach polygon to map if it exists and isn't visible
       if (this.currentPolygon && !this.currentPolygon.getMap()) {
-        console.log(`[${new Date().toISOString()}] Re-attaching polygon to map`);
         this.currentPolygon.setMap(this.map);
       }
 
-      console.log(`[${new Date().toISOString()}] Map update complete - zoom/position preserved`);
       return;
     }
 
-    console.log(`[${new Date().toISOString()}] Creating new map instance`);
-
     // Calculate center based on geocoded customers
     const geocodedCustomers = this.getGeocodedCustomers();
-    console.log(
-      `[${new Date().toISOString()}] Geocoded customers count:`,
-      geocodedCustomers.length
-    );
-    console.log(`[${new Date().toISOString()}] Winery data:`, this.winery);
 
     // Always use winery location as center if available
     let center;
@@ -691,39 +609,26 @@ class CustomersScreen {
         lng: parseFloat(this.winery.longitude),
       };
       zoom = 9; // Regional view showing surrounding wine country
-      console.log(`[${new Date().toISOString()}] Using winery center:`, center, 'zoom:', zoom);
     } else {
       // Fallback to Atlanta if no winery data
       center = { lat: 33.749, lng: -84.388 };
       zoom = 4;
-      console.log(
-        `[${new Date().toISOString()}] No winery data, using default center:`,
-        center,
-        'zoom:',
-        zoom
-      );
     }
 
-    console.log(`[${new Date().toISOString()}] Creating map with center:`, center, 'zoom:', zoom);
     this.map = new google.maps.Map(mapElement, {
       zoom: zoom,
       center: center,
       mapId: 'HEAVY_POUR_CUSTOMER_MAP',
     });
 
-    console.log(`[${new Date().toISOString()}] Map created with initial center and zoom`);
-
     this.initializeDrawingTools();
-    console.log(`[${new Date().toISOString()}] Drawing tools initialized`);
 
     // Re-attach polygon if it exists
     if (this.currentPolygon) {
-      console.log(`[${new Date().toISOString()}] Re-attaching existing polygon to new map`);
       this.currentPolygon.setMap(this.map);
     }
 
     await this.updateMarkers();
-    console.log(`[${new Date().toISOString()}] Markers updated`);
   }
 
   getGeocodedCustomers() {
@@ -741,14 +646,9 @@ class CustomersScreen {
   }
 
   toggleDrawingMode() {
-    console.log('toggleDrawingMode called, current isDrawingMode:', this.isDrawingMode);
-    console.log('map object:', this.map);
-
     this.isDrawingMode = !this.isDrawingMode;
-    console.log('new isDrawingMode:', this.isDrawingMode);
 
     if (this.isDrawingMode) {
-      console.log('Enabling drawing mode with crosshair cursor');
       this.map.setOptions({
         draggableCursor: 'crosshair',
         draggable: false,
@@ -756,7 +656,6 @@ class CustomersScreen {
       });
       this.startDrawing();
     } else {
-      console.log('Disabling drawing mode');
       this.map.setOptions({
         draggableCursor: null,
         draggable: true,
@@ -776,7 +675,6 @@ class CustomersScreen {
   }
 
   startDrawing() {
-    console.log('startDrawing called - freehand mode enabled');
     this.polygonPath = [];
     this.freehandPath = [];
     this.clearTempDrawing();
@@ -790,13 +688,9 @@ class CustomersScreen {
     this.touchStartListener = google.maps.event.addDomListener(mapDiv, 'touchstart', (e) => {
       this.handleTouchStart(e);
     });
-
-    console.log('Freehand drawing listeners added');
   }
 
   stopDrawing() {
-    console.log('stopDrawing called');
-
     if (this.mouseDownListener) {
       google.maps.event.removeListener(this.mouseDownListener);
       this.mouseDownListener = null;
@@ -829,26 +723,19 @@ class CustomersScreen {
 
   handleMouseDown(e) {
     e.preventDefault();
-    console.log('=== MOUSE DOWN ===');
 
     const mapDiv = this.map.getDiv();
     const rect = mapDiv.getBoundingClientRect();
     const offsetX = e.clientX - rect.left;
     const offsetY = e.clientY - rect.top;
 
-    console.log('clientX:', e.clientX, 'clientY:', e.clientY);
-    console.log('rect.left:', rect.left, 'rect.top:', rect.top);
-    console.log('calculated offsetX:', offsetX, 'offsetY:', offsetY);
-
     this.isFreehandDrawing = true;
     this.freehandPath = [];
 
     const latLng = this.getLatLngFromPixelCoords(offsetX, offsetY);
-    console.log('Starting latLng:', latLng ? latLng.toString() : 'null');
 
     if (latLng) {
       this.freehandPath.push(latLng);
-      console.log('Path initialized with', this.freehandPath.length, 'points');
 
       if (this.tempPolyline) {
         this.tempPolyline.setMap(null);
@@ -860,9 +747,7 @@ class CustomersScreen {
         strokeWeight: 2,
         map: this.map,
       });
-      console.log('Temp polyline created');
     } else {
-      console.error('Failed to get latLng from mouse down event');
     }
 
     this.mouseMoveListener = google.maps.event.addDomListener(
@@ -876,8 +761,6 @@ class CustomersScreen {
     this.mouseUpListener = google.maps.event.addDomListener(this.map.getDiv(), 'mouseup', (e) => {
       this.handleMouseUp(e);
     });
-
-    console.log('Mouse move and up listeners attached');
   }
 
   handleMouseMove(e) {
@@ -893,7 +776,6 @@ class CustomersScreen {
 
     // Check if mouse is actually within the map div
     if (offsetX < 0 || offsetY < 0 || offsetX > rect.width || offsetY > rect.height) {
-      console.warn('Mouse outside map bounds, skipping point:', offsetX, offsetY);
       return;
     }
 
@@ -903,19 +785,15 @@ class CustomersScreen {
       this.freehandPath.push(latLng);
 
       if (this.freehandPath.length % 50 === 0) {
-        console.log('Path growing:', this.freehandPath.length, 'points');
       }
 
       this.tempPolyline.setPath(this.freehandPath);
     } else if (!latLng) {
-      console.warn('Failed to get latLng during mouse move at coords:', offsetX, offsetY);
     }
   }
 
   handleMouseUp(e) {
     e.preventDefault();
-    console.log('=== MOUSE UP ===');
-    console.log('Final path length:', this.freehandPath.length, 'points');
 
     this.isFreehandDrawing = false;
 
@@ -929,16 +807,9 @@ class CustomersScreen {
     }
 
     if (this.freehandPath.length >= 3) {
-      console.log('Path before simplification:', this.freehandPath.length, 'points');
       this.polygonPath = this.simplifyPath(this.freehandPath);
-      console.log('Path after simplification:', this.polygonPath.length, 'points');
-      console.log(
-        'Simplified path:',
-        this.polygonPath.map((p) => p.toString())
-      );
       this.completePolygon();
     } else {
-      console.warn('Path too short, discarding:', this.freehandPath.length, 'points');
       this.clearTempDrawing();
     }
   }
@@ -990,7 +861,6 @@ class CustomersScreen {
 
     // Check if touch is within map bounds
     if (offsetX < 0 || offsetY < 0 || offsetX > rect.width || offsetY > rect.height) {
-      console.warn('Touch outside map bounds, skipping point:', offsetX, offsetY);
       return;
     }
 
@@ -1027,10 +897,6 @@ class CustomersScreen {
     const projection = this.map.getProjection();
 
     if (!bounds || !projection) {
-      console.error('Missing bounds or projection:', {
-        bounds: !!bounds,
-        projection: !!projection,
-      });
       return null;
     }
 
@@ -1038,19 +904,9 @@ class CustomersScreen {
     const sw = projection.fromLatLngToPoint(bounds.getSouthWest());
     const scale = Math.pow(2, this.map.getZoom());
 
-    console.log('Coordinate conversion:', {
-      offsetX: offsetX,
-      offsetY: offsetY,
-      zoom: this.map.getZoom(),
-      scale: scale,
-      ne: { x: ne.x, y: ne.y },
-      sw: { x: sw.x, y: sw.y },
-    });
-
     const point = new google.maps.Point(offsetX / scale + sw.x, offsetY / scale + ne.y);
 
     const latLng = projection.fromPointToLatLng(point);
-    console.log('Converted to latLng:', latLng ? latLng.toString() : 'null');
 
     return latLng;
   }
@@ -1078,50 +934,29 @@ class CustomersScreen {
   }
 
   simplifyPath(path) {
-    console.log('=== SIMPLIFY PATH ===');
-    console.log('Input path length:', path.length);
-
     if (path.length <= 10) {
-      console.log('Path too short to simplify, returning original');
       return path;
     }
 
     const simplified = [];
     const step = Math.max(1, Math.floor(path.length / 50));
-    console.log('Simplification step size:', step);
 
     for (let i = 0; i < path.length; i += step) {
       simplified.push(path[i]);
-      console.log(`Added point ${simplified.length}:`, path[i].toString());
     }
 
     if (simplified[simplified.length - 1] !== path[path.length - 1]) {
       simplified.push(path[path.length - 1]);
-      console.log('Added final point:', path[path.length - 1].toString());
     }
-
-    console.log('Simplified path length:', simplified.length);
-    console.log(
-      'First 5 simplified points:',
-      simplified.slice(0, 5).map((p) => p.toString())
-    );
-    console.log(
-      'Last 5 simplified points:',
-      simplified.slice(-5).map((p) => p.toString())
-    );
 
     return simplified;
   }
 
   completePolygon() {
-    console.log('completePolygon called with', this.polygonPath.length, 'points');
-
     if (this.currentPolygon) {
-      console.log('Removing previous polygon');
       this.currentPolygon.setMap(null);
     }
 
-    console.log('Creating new polygon');
     this.currentPolygon = new google.maps.Polygon({
       paths: this.polygonPath,
       fillColor: '#f39c12',
@@ -1133,15 +968,11 @@ class CustomersScreen {
       map: this.map,
     });
 
-    console.log('Polygon created, adding edit listeners');
-
     google.maps.event.addListener(this.currentPolygon.getPath(), 'set_at', () => {
-      console.log('Polygon point moved');
       this.applyPolygonFilter();
       this.updateMarkers();
     });
     google.maps.event.addListener(this.currentPolygon.getPath(), 'insert_at', () => {
-      console.log('Polygon point added');
       this.applyPolygonFilter();
       this.updateMarkers();
     });
@@ -1387,7 +1218,6 @@ class CustomersScreen {
   }
 
   renderBulkActions() {
-    console.log('renderBulkActions called, selectedCustomers.size:', this.selectedCustomers.size);
     return `
       <div class="bulk-actions-bar">
         <button class="btn-bulk" onclick="customersScreen.bulkEmail()">
@@ -1738,22 +1568,17 @@ class CustomersScreen {
   // Placeholder methods
 
   createCustomer() {
-    console.log('Create customer');
     alert('Create customer not yet implemented');
   }
 
   editCustomer(id) {
-    console.log('Edit customer:', id);
     alert('Edit customer not yet implemented');
   }
 
   createOrder(id) {
-    console.log('🛒 [CREATE ORDER] Starting - Customer ID:', id);
     const customer = this.customers.find((c) => c.id === id);
-    console.log('🛒 [CREATE ORDER] Customer found:', customer);
 
     if (customer) {
-      console.log('🛒 [CREATE ORDER] Navigating to POS...');
       // Set flag to indicate we came from customers screen
       sessionStorage.setItem('returnToCustomers', 'true');
 
@@ -1762,57 +1587,40 @@ class CustomersScreen {
 
       // Set customer after a brief delay to ensure POS screen is loaded
       setTimeout(() => {
-        console.log('🛒 [CREATE ORDER] Attempting to set customer on POS screen');
-        console.log('🛒 [CREATE ORDER] POSScreen exists:', typeof window.POSScreen !== 'undefined');
-        console.log(
-          '🛒 [CREATE ORDER] setCustomerFromExternal exists:',
-          window.POSScreen && typeof POSScreen.setCustomerFromExternal === 'function'
-        );
-
         if (window.POSScreen && typeof POSScreen.setCustomerFromExternal === 'function') {
-          console.log('🛒 [CREATE ORDER] Calling setCustomerFromExternal with:', customer);
           POSScreen.setCustomerFromExternal(customer);
         } else {
-          console.error('❌ [CREATE ORDER] POSScreen or setCustomerFromExternal not available');
         }
       }, 100);
     } else {
-      console.error('❌ [CREATE ORDER] Customer not found with ID:', id);
     }
   }
 
   emailCustomer(id) {
-    console.log('Email customer:', id);
     alert('Email customer not yet implemented');
   }
 
   textCustomer(id) {
-    console.log('Text customer:', id);
     alert('Text customer not yet implemented');
   }
 
   addNote(id) {
-    console.log('Add note for customer:', id);
     alert('Add note not yet implemented');
   }
 
   exportCustomers() {
-    console.log('Export customers');
     alert('Export not yet implemented');
   }
 
   bulkEmail() {
-    console.log('Bulk email:', this.selectedCustomers);
     alert(`Email ${this.selectedCustomers.size} customers - not yet implemented`);
   }
 
   bulkExport() {
-    console.log('Bulk export:', this.selectedCustomers);
     alert(`Export ${this.selectedCustomers.size} customers - not yet implemented`);
   }
 
   bulkAddToClub() {
-    console.log('Bulk add to club:', this.selectedCustomers);
     alert(`Add ${this.selectedCustomers.size} customers to club - not yet implemented`);
   }
 
@@ -1823,7 +1631,6 @@ class CustomersScreen {
 
   bulkDelete() {
     if (confirm(`Are you sure you want to delete ${this.selectedCustomers.size} customers?`)) {
-      console.log('Bulk delete:', this.selectedCustomers);
       alert('Delete not yet implemented');
     }
   }

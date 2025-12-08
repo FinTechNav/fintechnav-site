@@ -1,5 +1,4 @@
 // Main App Controller
-console.log('🔧 [APP.JS] Version with localStorage fix loaded - 2024-12-04');
 
 const App = {
   currentScreen: 'pos',
@@ -12,7 +11,6 @@ const App = {
   cssVariablesChecked: false,
 
   async init() {
-    console.log('🚀 App.init() - Starting application initialization');
     this.verifyThemeCSS();
     this.initializeTheme();
     // Check CSS variables AFTER theme is initialized
@@ -29,42 +27,15 @@ const App = {
 
     // Monitor for dynamic changes
     setTimeout(() => {
-      console.log('🔄 AFTER 2 SECONDS:');
       this.logViewportDiagnostics();
     }, 2000);
 
     setTimeout(() => {
-      console.log('🔄 AFTER 5 SECONDS:');
       this.logViewportDiagnostics();
     }, 5000);
-
-    console.log('✅ App.init() - Application initialization complete');
   },
 
   logViewportDiagnostics() {
-    console.log('=== VIEWPORT & CSS DIAGNOSTICS ===');
-    console.log('📱 Window dimensions:', {
-      innerWidth: window.innerWidth,
-      innerHeight: window.innerHeight,
-      outerWidth: window.outerWidth,
-      outerHeight: window.outerHeight,
-      devicePixelRatio: window.devicePixelRatio,
-    });
-
-    console.log('📐 Screen dimensions:', {
-      width: screen.width,
-      height: screen.height,
-      availWidth: screen.availWidth,
-      availHeight: screen.availHeight,
-    });
-
-    console.log('🎯 Document dimensions:', {
-      clientWidth: document.documentElement.clientWidth,
-      clientHeight: document.documentElement.clientHeight,
-      scrollWidth: document.documentElement.scrollWidth,
-      scrollHeight: document.documentElement.scrollHeight,
-    });
-
     // Check media queries
     const mediaQueries = {
       '1366px-1025px': window.matchMedia('(max-width: 1366px) and (min-width: 1025px)').matches,
@@ -75,51 +46,24 @@ const App = {
       landscape: window.matchMedia('(orientation: landscape)').matches,
       portrait: window.matchMedia('(orientation: portrait)').matches,
     };
-    console.log('🔍 Media query matches:', mediaQueries);
 
     // Check product card styles
     const productCard = document.querySelector('.product-card');
     if (productCard) {
       const styles = window.getComputedStyle(productCard);
-      console.log('🎨 Product card computed styles:', {
-        minHeight: styles.minHeight,
-        height: styles.height,
-        padding: styles.padding,
-        gap: styles.gap,
-        background: styles.background,
-        boxShadow: styles.boxShadow,
-      });
-      console.log('📏 Product card actual dimensions:', {
-        offsetWidth: productCard.offsetWidth,
-        offsetHeight: productCard.offsetHeight,
-        clientWidth: productCard.clientWidth,
-        clientHeight: productCard.clientHeight,
-      });
     } else {
-      console.log('❌ No product card found in DOM');
     }
 
     // Check grid styles
     const productsGrid = document.querySelector('.products-grid');
     if (productsGrid) {
       const styles = window.getComputedStyle(productsGrid);
-      console.log('📦 Products grid computed styles:', {
-        gridTemplateColumns: styles.gridTemplateColumns,
-        gap: styles.gap,
-        padding: styles.padding,
-      });
     }
 
     // Check right panel and payment buttons
     const rightPanel = document.querySelector('.right-panel');
     if (rightPanel) {
       const styles = window.getComputedStyle(rightPanel);
-      console.log('📱 Right panel computed styles:', {
-        width: styles.width,
-        maxHeight: styles.maxHeight,
-        minHeight: styles.minHeight,
-        padding: styles.padding,
-      });
     }
 
     const cardButton = document.querySelector('.pay-button-card');
@@ -127,159 +71,79 @@ const App = {
     if (cardButton && cashButton) {
       const cardStyles = window.getComputedStyle(cardButton);
       const cashStyles = window.getComputedStyle(cashButton);
-      console.log('💳 Payment button computed styles:', {
-        card: {
-          width: cardStyles.width,
-          padding: cardStyles.padding,
-          fontSize: cardStyles.fontSize,
-          minHeight: cardStyles.minHeight,
-          display: cardStyles.display,
-        },
-        cash: {
-          width: cashStyles.width,
-          padding: cashStyles.padding,
-          fontSize: cashStyles.fontSize,
-          minHeight: cashStyles.minHeight,
-          display: cashStyles.display,
-        },
-      });
-
-      console.log('💳 Payment button actual dimensions:', {
-        card: {
-          offsetWidth: cardButton.offsetWidth,
-          offsetHeight: cardButton.offsetHeight,
-          clientWidth: cardButton.clientWidth,
-          clientHeight: cardButton.clientHeight,
-        },
-        cash: {
-          offsetWidth: cashButton.offsetWidth,
-          offsetHeight: cashButton.offsetHeight,
-          clientWidth: cashButton.clientWidth,
-          clientHeight: cashButton.clientHeight,
-        },
-      });
 
       // Check parent container
       const buttonParent = cardButton.parentElement;
       if (buttonParent) {
         const parentStyles = window.getComputedStyle(buttonParent);
-        console.log('📦 Payment buttons parent container:', {
-          className: buttonParent.className,
-          display: parentStyles.display,
-          gap: parentStyles.gap,
-          width: parentStyles.width,
-          gridTemplateColumns: parentStyles.gridTemplateColumns,
-        });
       }
     } else {
-      console.log('❌ Payment buttons not found in DOM');
     }
-
-    console.log('=== END DIAGNOSTICS ===\n');
   },
 
   verifyThemeCSS() {
-    console.log('🔍 verifyThemeCSS() - Checking if theme CSS is loaded');
     const themeLink = document.querySelector('link[href*="pos-themes.css"]');
     if (themeLink) {
-      console.log('✅ Theme CSS link found:', themeLink.href);
-
       // Fetch the CSS file to verify content
       fetch(themeLink.href)
         .then((response) => response.text())
         .then((cssContent) => {
-          console.log('📄 CSS file fetched, length:', cssContent.length, 'characters');
           if (cssContent.includes(':root[data-theme="dark"]')) {
-            console.log('✅ CSS contains theme definitions');
           } else {
-            console.error('❌ CSS does NOT contain theme definitions!');
-            console.log('📄 First 500 characters:', cssContent.substring(0, 500));
           }
         })
-        .catch((err) => {
-          console.error('❌ Failed to fetch CSS file:', err);
-        });
+        .catch((err) => {});
     } else {
-      console.error('❌ Theme CSS link not found in document');
     }
   },
 
   checkCSSVariables() {
     if (this.cssVariablesChecked) {
-      console.log('⏭️ CSS variables already checked, skipping');
       return;
     }
 
-    console.log('🔍 checkCSSVariables() - Checking if CSS variables are applied');
     const computedStyle = getComputedStyle(document.documentElement);
     const bgPrimary = computedStyle.getPropertyValue('--bg-primary').trim();
     const textPrimary = computedStyle.getPropertyValue('--text-primary').trim();
     const accentPrimary = computedStyle.getPropertyValue('--accent-primary').trim();
 
-    console.log('📊 CSS Variables:');
-    console.log('  --bg-primary:', bgPrimary || 'NOT SET');
-    console.log('  --text-primary:', textPrimary || 'NOT SET');
-    console.log('  --accent-primary:', accentPrimary || 'NOT SET');
-
     if (!bgPrimary || !textPrimary || !accentPrimary) {
-      console.error('❌ CSS variables are not properly set! Theme CSS may not be loaded.');
     } else {
-      console.log('✅ CSS variables are properly set');
     }
 
     this.cssVariablesChecked = true;
   },
 
   initializeTheme() {
-    console.log('🎨 initializeTheme() - Starting theme initialization');
     // Load theme from localStorage or default to 'dark'
     const savedTheme = localStorage.getItem('appTheme') || 'dark';
-    console.log('📦 Saved theme from localStorage:', savedTheme);
     this.setTheme(savedTheme);
-    console.log('✅ initializeTheme() - Theme initialization complete');
   },
 
   setTheme(theme) {
-    console.log('🎨 setTheme() - Setting theme to:', theme);
     const htmlElement = document.documentElement;
-    console.log('📍 HTML element:', htmlElement);
-    console.log('📍 Current data-theme attribute:', htmlElement.getAttribute('data-theme'));
 
     htmlElement.setAttribute('data-theme', theme);
     localStorage.setItem('appTheme', theme);
-
-    console.log('✅ setTheme() - Theme set successfully');
-    console.log('📍 New data-theme attribute:', htmlElement.getAttribute('data-theme'));
-    console.log('📦 Saved to localStorage:', localStorage.getItem('appTheme'));
   },
 
   getCurrentTheme() {
     const theme = localStorage.getItem('appTheme') || 'dark';
-    console.log('📖 getCurrentTheme() - Returning theme:', theme);
     return theme;
   },
 
   toggleTheme() {
-    console.log('🔄 toggleTheme() - Starting theme toggle');
     const currentTheme = this.getCurrentTheme();
     const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-    console.log('🔄 Toggling from', currentTheme, 'to', newTheme);
     this.setTheme(newTheme);
-    console.log('✅ toggleTheme() - Theme toggle complete');
   },
 
   initMobileHandlers() {
     let resizeTimer;
     window.addEventListener('resize', () => {
-      console.log('🔄 Window resized:', {
-        innerWidth: window.innerWidth,
-        innerHeight: window.innerHeight,
-      });
-
       // Debounce and log after resize completes
       clearTimeout(resizeTimer);
       resizeTimer = setTimeout(() => {
-        console.log('🔄 Resize complete - logging diagnostics:');
         this.logViewportDiagnostics();
       }, 500);
 
@@ -330,7 +194,6 @@ const App = {
         this.renderWinerySelection();
       }
     } catch (error) {
-      console.error('Failed to load wineries:', error);
       document.getElementById('winerySelection').innerHTML =
         '<p style="text-align: center; color: #e74c3c;">Failed to load wineries</p>';
     }
@@ -364,9 +227,6 @@ const App = {
   },
 
   backToWinerySelection() {
-    console.log('🔄 [WINERY CHANGE] backToWinerySelection called');
-    console.log('🔄 [WINERY CHANGE] Current winery before clear:', this.currentWinery);
-
     this.currentWinery = null;
     this.users = [];
     this.pinEntry = '';
@@ -374,7 +234,6 @@ const App = {
     // Clear localStorage to prevent showing old winery info
     localStorage.removeItem('selectedWineryId');
     localStorage.removeItem('userName');
-    console.log('🔄 [WINERY CHANGE] Cleared localStorage');
 
     // Show loading skeleton and hide actual header content
     const loadingSkeleton = document.getElementById('wineryHeaderLoading');
@@ -383,7 +242,6 @@ const App = {
 
     if (loadingSkeleton) {
       loadingSkeleton.style.display = 'flex';
-      console.log('🔄 [WINERY CHANGE] Showing loading skeleton');
     }
     if (logoContainer) logoContainer.style.display = 'none';
     if (textOnlyContainer) textOnlyContainer.style.display = 'none';
@@ -400,7 +258,6 @@ const App = {
     if (wineryNameNoLogoElem) wineryNameNoLogoElem.textContent = '';
     if (userNameElem) userNameElem.textContent = '';
     if (userNameNoLogoElem) userNameNoLogoElem.textContent = '';
-    console.log('🔄 [WINERY CHANGE] Cleared all header content');
 
     // Hide app container
     const appContainer = document.getElementById('appContainer');
@@ -409,8 +266,6 @@ const App = {
     document.getElementById('wineryLoginScreen').style.display = 'flex';
     document.getElementById('loginMethodScreen').style.display = 'none';
     this.updatePinDots();
-
-    console.log('🔄 [WINERY CHANGE] backToWinerySelection complete');
   },
 
   showLoginMethod(method) {
@@ -455,7 +310,6 @@ const App = {
         this.renderUserSelection();
       }
     } catch (error) {
-      console.error('Failed to load users:', error);
       document.getElementById('userSelection').innerHTML =
         '<p style="text-align: center; color: #e74c3c;">Failed to load users</p>';
     }
@@ -544,9 +398,7 @@ const App = {
           this.loginSuccess();
           return;
         }
-      } catch (error) {
-        console.error('Error validating PIN for user:', user.id, error);
-      }
+      } catch (error) {}
     }
 
     // No match found
@@ -563,15 +415,9 @@ const App = {
   },
 
   loginSuccess() {
-    console.log('🎯 [LOGIN] ========== loginSuccess() CALLED ==========');
-    console.log('✅ [LOGIN] Login successful');
-    console.log('✅ [LOGIN] Current winery:', this.currentWinery);
-    console.log('✅ [LOGIN] Current user:', this.currentUser);
-
     // Store winery and user info in localStorage for later use
     if (this.currentWinery && this.currentWinery.id) {
       localStorage.setItem('selectedWineryId', this.currentWinery.id);
-      console.log('✅ [LOGIN] Saved selectedWineryId to localStorage:', this.currentWinery.id);
     }
 
     if (this.currentUser) {
@@ -580,7 +426,6 @@ const App = {
         `${this.currentUser.first_name} ${this.currentUser.last_name}`.trim();
       if (userName) {
         localStorage.setItem('userName', userName);
-        console.log('✅ [LOGIN] Saved userName to localStorage:', userName);
       }
     }
 
@@ -592,7 +437,6 @@ const App = {
 
     // Trigger winery header load after login completes
     if (typeof window.loadWineryHeader === 'function') {
-      console.log('✅ [LOGIN] Triggering winery header load');
       setTimeout(() => window.loadWineryHeader(), 500);
     }
 
@@ -615,20 +459,12 @@ const App = {
       setTimeout(() => {
         const productCards = document.querySelectorAll('.product-card');
         if (productCards.length > 0) {
-          console.log(`🔍 Monitoring ${productCards.length} product cards for style changes`);
-
           productCards.forEach((card, index) => {
             if (index === 0) {
               // Only monitor first card to reduce noise
               const observer = new MutationObserver((mutations) => {
                 mutations.forEach((mutation) => {
                   if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
-                    console.log('⚠️ Product card style changed!', {
-                      oldValue: mutation.oldValue,
-                      newValue: card.getAttribute('style'),
-                      computedHeight: window.getComputedStyle(card).height,
-                      computedMinHeight: window.getComputedStyle(card).minHeight,
-                    });
                   }
                 });
               });
@@ -675,7 +511,6 @@ const App = {
       }
       return false;
     } catch (error) {
-      console.error('Failed to update layout preference:', error);
       return false;
     }
   },
@@ -718,7 +553,6 @@ const App = {
 
     // Clear userName from localStorage (keep selectedWineryId since staying on same winery)
     localStorage.removeItem('userName');
-    console.log('🔄 [LOGOUT] Cleared userName from localStorage');
 
     // Hide app, show login method screen (stay on current winery)
     document.getElementById('appContainer').style.display = 'none';
@@ -839,7 +673,6 @@ function logout() {
 function toggleThemeMini() {
   const currentTheme = App.getCurrentTheme();
   const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-  console.log('🌓 [THEME] Toggling from', currentTheme, 'to', newTheme);
   App.setTheme(newTheme);
 }
 
@@ -847,14 +680,3 @@ function toggleThemeMini() {
 document.addEventListener('DOMContentLoaded', () => {
   App.init();
 });
-
-// Show development indicator if not on production
-if (
-  window.location.hostname !== 'www.fintechnav.com' &&
-  window.location.hostname !== 'fintechnav.com'
-) {
-  const indicator = document.getElementById('branch-indicator');
-  if (indicator) {
-    indicator.style.display = 'block';
-  }
-}

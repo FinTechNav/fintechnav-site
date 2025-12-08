@@ -30,9 +30,7 @@ const ReservationsScreen = {
       if (data.success) {
         this.serviceOfferings = data.offerings || [];
       }
-    } catch (error) {
-      console.error('Failed to load service offerings:', error);
-    }
+    } catch (error) {}
   },
 
   async loadReservations() {
@@ -46,7 +44,6 @@ const ReservationsScreen = {
         this.reservations = data.reservations || [];
       }
     } catch (error) {
-      console.error('Failed to load reservations:', error);
       this.reservations = [];
     }
   },
@@ -355,9 +352,7 @@ const ReservationsScreen = {
       } else {
         resultsDiv.innerHTML = '<div class="no-results">No customers found</div>';
       }
-    } catch (error) {
-      console.error('Failed to search customers:', error);
-    }
+    } catch (error) {}
   },
 
   selectCustomer(id, name, email) {
@@ -428,7 +423,6 @@ const ReservationsScreen = {
         alert('Failed to create reservation: ' + (data.error || 'Unknown error'));
       }
     } catch (error) {
-      console.error('Failed to create reservation:', error);
       alert('Failed to create reservation');
     }
   },
@@ -455,7 +449,6 @@ const ReservationsScreen = {
         alert('Failed to check in: ' + (data.error || 'Unknown error'));
       }
     } catch (error) {
-      console.error('Failed to check in:', error);
       alert('Failed to check in reservation');
     }
   },
