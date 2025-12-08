@@ -67,7 +67,7 @@ exports.handler = async (event) => {
         id,
         customer_id,
         card_brand,
-        last_four,
+        last_4,
         expiry_month,
         expiry_year,
         billing_name,
