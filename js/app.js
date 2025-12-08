@@ -847,3 +847,14 @@ function toggleThemeMini() {
 document.addEventListener('DOMContentLoaded', () => {
   App.init();
 });
+
+// Show development indicator if not on production
+if (
+  window.location.hostname !== 'www.fintechnav.com' &&
+  window.location.hostname !== 'fintechnav.com'
+) {
+  const indicator = document.getElementById('branch-indicator');
+  if (indicator) {
+    indicator.style.display = 'block';
+  }
+}
