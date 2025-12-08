@@ -259,45 +259,10 @@ const App = {
     if (userNameElem) userNameElem.textContent = '';
     if (userNameNoLogoElem) userNameNoLogoElem.textContent = '';
 
-    // Hide app container
-    const appContainer = document.getElementById('appContainer');
-    appContainer.style.display = 'none';
-
-    document.getElementById('wineryLoginScreen').style.display = 'flex';
+    // Reset screens
+    document.getElementById('appContainer').style.display = 'none';
     document.getElementById('loginMethodScreen').style.display = 'none';
-    this.updatePinDots();
-  },
-
-  showLoginMethod(method) {
-    this.currentLoginMethod = method;
-    this.pinEntry = '';
-    this.updatePinDots();
-
-    // Update tabs
-    document.querySelectorAll('.login-tab').forEach((tab) => {
-      tab.classList.remove('active');
-      if (
-        (method === 'pin' && tab.textContent.includes('PIN')) ||
-        (method === 'user' && tab.textContent.includes('USER'))
-      ) {
-        tab.classList.add('active');
-      }
-    });
-
-    // Show/hide content
-    if (method === 'user') {
-      document.getElementById('userLoginMethod').style.display = 'block';
-      document.getElementById('pinLoginMethod').style.display = 'none';
-    } else {
-      document.getElementById('userLoginMethod').style.display = 'none';
-      document.getElementById('pinLoginMethod').style.display = 'block';
-    }
-
-    // Clear any errors
-    const pinError = document.getElementById('pinError');
-    if (pinError) {
-      pinError.textContent = '';
-    }
+    document.getElementById('wineryLoginScreen').style.display = 'flex';
   },
 
   async loadUsers(wineryId) {
@@ -305,122 +270,181 @@ const App = {
       const response = await fetch(`/.netlify/functions/get-winery-users?winery_id=${wineryId}`);
       const data = await response.json();
 
-      if (data.success && data.users.length > 0) {
+      if (data.success) {
         this.users = data.users;
-        this.renderUserSelection();
       }
-    } catch (error) {
-      document.getElementById('userSelection').innerHTML =
-        '<p style="text-align: center; color: #e74c3c;">Failed to load users</p>';
-    }
+    } catch (error) {}
   },
 
-  renderUserSelection() {
-    const container = document.getElementById('userSelection');
+  showLoginMethod(method) {
+    this.currentLoginMethod = method;
+
+    document.getElementById('pinLoginMethod').style.display = 'none';
+    document.getElementById('passwordLoginMethod').style.display = 'none';
+
+    if (method === 'pin') {
+      document.getElementById('pinLoginMethod').style.display = 'flex';
+      this.updatePinDisplay();
+    } else {
+      document.getElementById('passwordLoginMethod').style.display = 'flex';
+      this.renderPasswordUsersList();
+    }
+
+    // Update active state
+    document.querySelectorAll('.toggle-btn').forEach((btn) => {
+      btn.classList.remove('active');
+    });
+    document.getElementById(method + 'Btn').classList.add('active');
+  },
+
+  renderPasswordUsersList() {
+    const container = document.getElementById('passwordUsersList');
     container.innerHTML = this.users
       .map(
-        (u) => `
-            <div class="selection-card" onclick="App.selectUser('${u.id}')">
-                <div class="selection-icon">👤</div>
-                <div class="selection-name">${u.first_name} ${u.last_name}</div>
-                <div class="selection-role">${u.role}</div>
+        (user) => `
+            <div class="user-card" onclick="App.selectPasswordUser('${user.id}')">
+                <div class="user-icon">👤</div>
+                <div class="user-name">${user.first_name} ${user.last_name}</div>
             </div>
         `
       )
       .join('');
   },
 
+  selectPasswordUser(userId) {
+    document.getElementById('passwordUsersList').style.display = 'none';
+    document.getElementById('passwordEntry').style.display = 'flex';
+    document.getElementById('passwordBackBtn').style.display = 'inline-block';
+
+    const user = this.users.find((u) => u.id === userId);
+    document.getElementById('passwordUserName').textContent =
+      `${user.first_name} ${user.last_name}`;
+
+    this.selectedPasswordUser = user;
+    document.getElementById('passwordInput').value = '';
+    document.getElementById('passwordInput').focus();
+  },
+
+  backToPasswordUsers() {
+    document.getElementById('passwordUsersList').style.display = 'grid';
+    document.getElementById('passwordEntry').style.display = 'none';
+    document.getElementById('passwordBackBtn').style.display = 'none';
+    this.selectedPasswordUser = null;
+  },
+
+  async submitPassword() {
+    const password = document.getElementById('passwordInput').value;
+
+    if (!password) {
+      alert('Please enter a password');
+      return;
+    }
+
+    try {
+      const response = await fetch('/.netlify/functions/validate-pin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          employee_id: this.selectedPasswordUser.id,
+          pin_entry: password,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.valid) {
+        this.currentUser = this.selectedPasswordUser;
+        await this.completeLogin();
+      } else {
+        document.getElementById('passwordError').style.display = 'block';
+        document.getElementById('passwordInput').value = '';
+      }
+    } catch (error) {
+      alert('Login failed. Please try again.');
+    }
+  },
+
   enterPin(digit) {
     if (this.pinEntry.length < 4) {
       this.pinEntry += digit;
-      this.updatePinDots();
+      this.updatePinDisplay();
 
-      // Auto-submit when 4 digits entered
       if (this.pinEntry.length === 4) {
-        setTimeout(() => this.submitPin(), 300);
+        this.submitPin();
       }
     }
   },
 
   backspacePin() {
-    this.pinEntry = this.pinEntry.slice(0, -1);
-    this.updatePinDots();
-    const pinError = document.getElementById('pinError');
-    if (pinError) {
-      pinError.textContent = '';
+    if (this.pinEntry.length > 0) {
+      this.pinEntry = this.pinEntry.slice(0, -1);
+      this.updatePinDisplay();
     }
   },
 
-  updatePinDots() {
+  updatePinDisplay() {
     const dots = document.querySelectorAll('.pin-dot');
     dots.forEach((dot, index) => {
-      if (index < this.pinEntry.length) {
-        dot.classList.add('filled');
-      } else {
-        dot.classList.remove('filled');
-      }
+      dot.classList.toggle('filled', index < this.pinEntry.length);
     });
   },
 
   async submitPin() {
-    const errorEl = document.getElementById('pinError');
-    if (errorEl) {
-      errorEl.textContent = '';
-    }
+    const validUsers = this.users.filter((user) => user.pin_hash && user.pin_hash.trim() !== '');
 
-    if (this.pinEntry.length !== 4) {
-      if (errorEl) {
-        errorEl.textContent = 'Please enter a 4-digit PIN';
-      }
+    if (validUsers.length === 0) {
+      alert('No users with PIN configured for this winery');
+      this.pinEntry = '';
+      this.updatePinDisplay();
       return;
     }
 
-    // Try each user in the winery with this PIN
-    for (const user of this.users) {
-      try {
-        const response = await fetch('/.netlify/functions/validate-pin', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            employee_id: user.id,
-            pin: this.pinEntry,
-          }),
-        });
+    const validationPromises = validUsers.map((user) =>
+      fetch('/.netlify/functions/validate-pin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          employee_id: user.id,
+          pin_entry: this.pinEntry,
+        }),
+      })
+        .then((response) => response.json())
+        .then((data) => ({
+          user,
+          valid: data.valid,
+        }))
+        .catch(() => ({
+          user,
+          valid: false,
+        }))
+    );
 
-        const data = await response.json();
+    try {
+      const results = await Promise.all(validationPromises);
+      const validResult = results.find((r) => r.valid);
 
-        if (data.success) {
-          // PIN matched for this user
-          this.currentUser = {
-            ...user,
-            layout_preference: data.employee.layout_preference,
-          };
-          this.loginSuccess();
-          return;
-        }
-      } catch (error) {}
-    }
-
-    // No match found
-    this.pinEntry = '';
-    this.updatePinDots();
-    if (errorEl) {
-      errorEl.textContent = 'Invalid PIN. Please try again.';
+      if (validResult) {
+        this.currentUser = validResult.user;
+        await this.completeLogin();
+      } else {
+        this.pinEntry = '';
+        this.updatePinDisplay();
+        document.getElementById('pinError').style.display = 'block';
+        setTimeout(() => {
+          document.getElementById('pinError').style.display = 'none';
+        }, 2000);
+      }
+    } catch (error) {
+      alert('Login failed. Please try again.');
+      this.pinEntry = '';
+      this.updatePinDisplay();
     }
   },
 
-  selectUser(userId) {
-    this.currentUser = this.users.find((u) => u.id === userId);
-    this.loginSuccess();
-  },
-
-  loginSuccess() {
-    // Store winery and user info in localStorage for later use
+  async completeLogin() {
     if (this.currentWinery && this.currentWinery.id) {
       localStorage.setItem('selectedWineryId', this.currentWinery.id);
-    }
 
-    if (this.currentUser) {
       const userName =
         this.currentUser.name ||
         `${this.currentUser.first_name} ${this.currentUser.last_name}`.trim();
@@ -652,7 +676,12 @@ const App = {
 
   registerServiceWorker() {
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('sw.js');
+      const hostname = window.location.hostname;
+      const isDevelopment = hostname.includes('--') || hostname.includes('localhost');
+
+      if (!isDevelopment) {
+        navigator.serviceWorker.register('sw.js');
+      }
     }
   },
 };
