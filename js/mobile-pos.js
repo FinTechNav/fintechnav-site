@@ -12,7 +12,6 @@ const MobilePOS = {
     const isMobile = window.innerWidth <= 768;
     if (!isMobile) return;
 
-    console.log('Initializing Mobile POS');
     this.setupMobileLayout();
     this.loadProducts();
     this.loadCustomers();
@@ -78,12 +77,9 @@ const MobilePOS = {
 
       if (data.success) {
         this.products = data.products;
-        console.log('Products loaded:', this.products.length);
         this.renderStep();
       }
-    } catch (error) {
-      console.error('Failed to load products:', error);
-    }
+    } catch (error) {}
   },
 
   async loadCustomers() {
@@ -98,9 +94,7 @@ const MobilePOS = {
       if (data.success) {
         this.customers = data.customers;
       }
-    } catch (error) {
-      console.error('Failed to load customers:', error);
-    }
+    } catch (error) {}
   },
 
   renderStep() {
