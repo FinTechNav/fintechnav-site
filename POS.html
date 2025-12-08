@@ -58,11 +58,18 @@
 <body>
     <!-- Development Environment Indicator -->
     <script>
+    console.log('🔍 Dev Indicator: Checking hostname...');
+    console.log('🔍 Current hostname:', window.location.hostname);
+    
     if (window.location.hostname === 'dev.fintechnav.com') {
+        console.log('✅ Dev environment detected - creating banner');
         const devBanner = document.createElement('div');
         devBanner.id = 'dev-indicator';
         devBanner.innerHTML = '🔧 DEVELOPMENT';
         document.body.appendChild(devBanner);
+        console.log('✅ Dev banner added to DOM');
+    } else {
+        console.log('ℹ️ Not dev environment - hostname is:', window.location.hostname);
     }
     </script>
     

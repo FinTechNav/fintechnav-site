@@ -42,7 +42,6 @@ const POSScreen = {
         this.products = data.products;
       }
     } catch (error) {
-      console.error('Failed to load products:', error);
       this.products = [];
     }
   },
@@ -58,7 +57,6 @@ const POSScreen = {
         this.customers = data.customers;
       }
     } catch (error) {
-      console.error('Failed to load customers:', error);
       this.customers = [];
     }
   },
@@ -296,22 +294,13 @@ const POSScreen = {
   },
 
   selectCustomer(customerId) {
-    console.log('👤 [SELECT CUSTOMER] Called with ID:', customerId);
-    console.log(
-      '👤 [SELECT CUSTOMER] Searching in customers list of length:',
-      this.customers.length
-    );
-
     const customer = this.customers.find((c) => c.id === customerId);
-    console.log('👤 [SELECT CUSTOMER] Customer found:', customer);
 
     if (!customer) {
-      console.error('❌ [SELECT CUSTOMER] Customer not found with ID:', customerId);
       return;
     }
 
     this.selectedCustomer = customer;
-    console.log('👤 [SELECT CUSTOMER] selectedCustomer set to:', this.selectedCustomer);
 
     const searchContainer = document.getElementById('customerSearchContainer');
     const resultsContainer = document.getElementById('customerSearchResults');
@@ -319,20 +308,10 @@ const POSScreen = {
     const selectedName = document.getElementById('selectedCustomerName');
     const selectedEmail = document.getElementById('selectedCustomerEmail');
 
-    console.log('👤 [SELECT CUSTOMER] DOM elements:', {
-      searchContainer: !!searchContainer,
-      resultsContainer: !!resultsContainer,
-      selectedDisplay: !!selectedDisplay,
-      selectedName: !!selectedName,
-      selectedEmail: !!selectedEmail,
-    });
-
     const name =
       customer.first_name || customer.last_name
         ? `${customer.first_name || ''} ${customer.last_name || ''}`.trim()
         : customer.email;
-
-    console.log('👤 [SELECT CUSTOMER] Display name:', name);
 
     // Apply theme-aware styling
     const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
@@ -366,8 +345,6 @@ const POSScreen = {
       closeBtn.style.background = btnBg;
       closeBtn.style.color = btnColor;
     }
-
-    console.log('✅ [SELECT CUSTOMER] Display updated successfully');
   },
 
   selectGuest() {
@@ -424,22 +401,15 @@ const POSScreen = {
   },
 
   setCustomerFromExternal(customer) {
-    console.log('🎯 [POS] setCustomerFromExternal called with:', customer);
-    console.log('🎯 [POS] Current customers list length:', this.customers.length);
-
     // Ensure customer is in the customers list
     const existingCustomer = this.customers.find((c) => c.id === customer.id);
-    console.log('🎯 [POS] Customer exists in list:', !!existingCustomer);
 
     if (!existingCustomer) {
-      console.log('🎯 [POS] Adding customer to list');
       this.customers.push(customer);
     }
 
     // Select the customer using the existing selectCustomer method
-    console.log('🎯 [POS] Calling selectCustomer with ID:', customer.id);
     this.selectCustomer(customer.id);
-    console.log('🎯 [POS] selectedCustomer after selection:', this.selectedCustomer);
   },
 
   showCustomerConfirmationModal() {
@@ -731,10 +701,8 @@ const POSScreen = {
     const terminalConfig = await this.getTerminalConfig();
 
     if (terminalConfig && terminalConfig.terminalId) {
-      console.log('✅ Terminal configured, processing via terminal');
       await this.processTerminalSale(terminalConfig, subtotal, tax, total);
     } else {
-      console.log('ℹ️ No terminal configured, saving order without payment');
       await this.saveOrderWithoutPayment(subtotal, tax, total);
     }
   },
@@ -742,46 +710,27 @@ const POSScreen = {
   async getTerminalConfig() {
     try {
       if (!App.currentWinery) {
-        console.error('No winery selected');
         return null;
       }
-
-      console.log('🔍 Fetching terminal config for winery:', App.currentWinery.id);
 
       const response = await fetch(
         `/.netlify/functions/get-winery-terminals?winery_id=${App.currentWinery.id}`
       );
 
       if (!response.ok) {
-        console.error('Failed to fetch winery terminals:', response.status);
         return null;
       }
 
       const data = await response.json();
-      console.log('📋 Winery terminals:', data);
 
       if (!data.success || !data.terminals || data.terminals.length === 0) {
-        console.log('ℹ️ No terminals found for winery');
         return null;
       }
 
       // Find card_present terminal
       const cardPresentTerminal = data.terminals.find((t) => t.terminal_type === 'card_present');
 
-      console.log('🖥️ Card present terminal found:', !!cardPresentTerminal);
-
       if (cardPresentTerminal) {
-        console.log('🔍 Terminal config object:', cardPresentTerminal.processor_terminal_config);
-        console.log(
-          '🔍 Has processor_terminal_config:',
-          !!cardPresentTerminal.processor_terminal_config
-        );
-        console.log('🔍 Has TPN:', !!cardPresentTerminal.processor_terminal_config?.tpn);
-        console.log(
-          '🔍 Has register_id:',
-          !!cardPresentTerminal.processor_terminal_config?.register_id
-        );
-        console.log('🔍 Has auth_key:', !!cardPresentTerminal.processor_terminal_config?.auth_key);
       }
 
       if (
@@ -791,27 +740,19 @@ const POSScreen = {
         cardPresentTerminal.processor_terminal_config.register_id &&
         cardPresentTerminal.processor_terminal_config.auth_key
       ) {
-        console.log('✅ Terminal configuration valid, returning config');
         return {
           terminalId: cardPresentTerminal.id,
           wineryId: App.currentWinery.id,
         };
       }
 
-      console.log('ℹ️ No card_present terminal configuration found for winery');
       return null;
     } catch (error) {
-      console.error('❌ Error fetching terminal config:', error);
       return null;
     }
   },
 
   async processTerminalSale(terminalConfig, subtotal, tax, total) {
-    console.log('🏪 Processing terminal sale with timeout handling...');
-    console.log('  - Subtotal:', subtotal);
-    console.log('  - Tax:', tax);
-    console.log('  - Total:', total);
-
     // Get timeout settings from localStorage or use defaults
     const dbPersistTimeout =
       parseInt(localStorage.getItem('terminalDbPersistTimeout') || '20') * 1000;
@@ -846,14 +787,12 @@ const POSScreen = {
       });
 
       const result = await response.json();
-      console.log('📥 Terminal sale response:', result);
 
       if (result.success && result.status === 'processing') {
         // Transaction is still processing
         if (!enablePolling) {
           // Polling is disabled - show error immediately
           this.hideProcessingOverlay();
-          console.log('⚠️ Polling disabled, transaction timed out');
           alert(
             `Transaction timeout after 20 seconds.\n\nPolling is disabled in Settings > Terminal Timeouts.\n\nThe transaction may still complete on the terminal. Reference: ${referenceId}`
           );
@@ -861,7 +800,6 @@ const POSScreen = {
         }
 
         // Polling is enabled - start tracking
-        console.log('⏳ Transaction processing, starting status polling...');
         // Keep showing the same overlay, add buttons after 60s
         this.addButtonsToOverlay(referenceId);
         this.startPolling(referenceId, subtotal, tax, total, pollInterval, maxWait);
@@ -871,14 +809,12 @@ const POSScreen = {
         await this.handleTerminalResponse(result.data, subtotal, tax, total, referenceId);
       } else {
         this.hideProcessingOverlay();
-        console.error('❌ Terminal sale failed:', result.error);
         alert(
           `Terminal error: ${result.error || 'Unknown error'}\n\nPlease check terminal connection and try again.`
         );
       }
     } catch (error) {
       this.hideProcessingOverlay();
-      console.error('💥 Error processing terminal sale:', error);
       alert(`Error: ${error.message}\n\nPlease try again.`);
     }
   },
@@ -919,7 +855,6 @@ const POSScreen = {
     };
 
     try {
-      console.log('💾 Saving order with payment...');
       const response = await fetch('/.netlify/functions/create-order', {
         method: 'POST',
         headers: {
@@ -931,10 +866,7 @@ const POSScreen = {
       const data = await response.json();
 
       if (data.success) {
-        console.log('✅ Order saved:', data.order_number);
-
         // Now save the complete terminal transaction
-        console.log('💾 Saving terminal transaction...');
         const terminalTxnResponse = await fetch('/.netlify/functions/save-terminal-transaction', {
           method: 'POST',
           headers: {
@@ -950,17 +882,10 @@ const POSScreen = {
           }),
         });
 
-        console.log('📥 Terminal transaction response status:', terminalTxnResponse.status);
-
         const terminalTxnData = await terminalTxnResponse.json();
-        console.log('📥 Terminal transaction response data:', terminalTxnData);
 
         if (terminalTxnData.success) {
-          console.log('✅ Terminal transaction saved:', terminalTxnData.transaction_id);
         } else {
-          console.error('⚠️ Failed to save terminal transaction:', terminalTxnData);
-          console.error('⚠️ Error details:', terminalTxnData.details);
-          console.error('⚠️ Error code:', terminalTxnData.code);
         }
 
         this.showPaymentReceivedScreen({
@@ -978,7 +903,6 @@ const POSScreen = {
         alert('Payment successful but failed to save order: ' + data.error);
       }
     } catch (error) {
-      console.error('Failed to create order:', error);
       alert('Payment successful but failed to save order');
     }
   },
@@ -1027,7 +951,6 @@ const POSScreen = {
         alert('Failed to create order: ' + data.error);
       }
     } catch (error) {
-      console.error('Failed to create order:', error);
       alert('Failed to create order');
     }
   },
@@ -1121,8 +1044,6 @@ const POSScreen = {
   },
 
   reset() {
-    console.log('🔄 [RESET] Resetting POS screen after successful transaction');
-
     this.cart = [];
     this.selectedCustomer = null;
 
@@ -1140,10 +1061,8 @@ const POSScreen = {
 
     // Check if we should return to customers screen
     const shouldReturn = sessionStorage.getItem('returnToCustomers');
-    console.log('🔄 [RESET] returnToCustomers flag:', shouldReturn);
 
     if (shouldReturn === 'true') {
-      console.log('🔄 [RESET] Navigating back to customers screen');
       sessionStorage.removeItem('returnToCustomers');
       setTimeout(() => {
         navigateTo('customers');
@@ -1152,8 +1071,6 @@ const POSScreen = {
   },
 
   showNavigationShimmer() {
-    console.log('✨ [SHIMMER] Showing navigation loading shimmer');
-
     // Create shimmer overlay
     const shimmer = document.createElement('div');
     shimmer.id = 'navigationShimmer';
@@ -1247,7 +1164,6 @@ const POSScreen = {
       Math.ceil(total / 20) * 20,
     ];
 
-    console.log('🎬 [MODAL] Creating cash payment input modal...');
     modal.innerHTML = `
       <div style="background: #5a5a5a; padding: 40px; border-radius: 20px; max-width: 600px; width: 90%; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);">
         <h2 style="color: #f39c12; margin-bottom: 10px; text-align: center; font-weight: 700;">Amount to Pay</h2>
@@ -1316,7 +1232,6 @@ const POSScreen = {
     `;
 
     document.body.appendChild(modal);
-    console.log('✅ [MODAL] Cash payment input modal added to DOM');
 
     // Focus the input
     setTimeout(() => {
@@ -1417,13 +1332,11 @@ const POSScreen = {
         alert('Failed to save order: ' + data.error);
       }
     } catch (error) {
-      console.error('Failed to create order:', error);
       alert('Failed to create order');
     }
   },
 
   showCashChangeScreen({ orderNumber, total, cashGiven, change, items }) {
-    console.log('🎬 [MODAL] Creating cash change screen...');
     const modal = document.createElement('div');
     modal.id = 'cashChangeModal';
     modal.style.cssText = `
@@ -1533,7 +1446,6 @@ const POSScreen = {
     `;
 
     document.body.appendChild(modal);
-    console.log('✅ [MODAL] Cash change screen added to DOM');
 
     // Auto-close if enabled
     this.scheduleAutoClose(modal);
@@ -1565,7 +1477,6 @@ const POSScreen = {
     cardLast4,
     items,
   }) {
-    console.log('🎬 [MODAL] Creating payment received modal...');
     const modal = document.createElement('div');
     modal.id = 'paymentReceivedModal';
     modal.style.cssText = `
@@ -1598,7 +1509,6 @@ const POSScreen = {
       )
       .join('');
 
-    console.log('✅ [MODAL] Payment received modal HTML built');
     modal.innerHTML = `
       <div style="background: var(--bg-modal); padding: 40px; border-radius: 20px; max-width: 800px; width: 90%; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);">
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px;">
@@ -1674,7 +1584,6 @@ const POSScreen = {
     `;
 
     document.body.appendChild(modal);
-    console.log('✅ [MODAL] Payment received modal added to DOM');
 
     // Auto-close if enabled
     this.scheduleAutoClose(modal);
@@ -1682,7 +1591,6 @@ const POSScreen = {
     // ESC key handler - store reference for cleanup
     const escHandler = (e) => {
       if (e.key === 'Escape') {
-        console.log('⌨️ [ESC] ESC key pressed on payment modal');
         document.removeEventListener('keydown', escHandler);
         this.closePaymentReceivedScreen();
       }
@@ -1694,7 +1602,6 @@ const POSScreen = {
   },
 
   closePaymentReceivedScreen() {
-    console.log('🔄 [CLOSE PAYMENT] Closing payment received modal');
     const modal = document.getElementById('paymentReceivedModal');
 
     // Remove ESC handler if it exists
@@ -1706,10 +1613,8 @@ const POSScreen = {
 
     // Check if we should navigate back to customers
     const shouldReturn = sessionStorage.getItem('returnToCustomers');
-    console.log('🔄 [CLOSE PAYMENT] shouldReturn flag:', shouldReturn);
 
     if (shouldReturn === 'true') {
-      console.log('🔄 [CLOSE PAYMENT] Showing loading shimmer before navigation');
       this.showNavigationShimmer();
     }
 
@@ -1730,7 +1635,6 @@ const POSScreen = {
           const shouldReturn = sessionStorage.getItem('returnToCustomers');
 
           if (shouldReturn === 'true') {
-            console.log('🔄 [AUTO CLOSE] Showing loading shimmer before navigation');
             this.showNavigationShimmer();
           }
 
@@ -1741,7 +1645,6 @@ const POSScreen = {
   },
 
   showProcessingModal(referenceId, amount, pollInterval, maxWait) {
-    console.log('🎬 [MODAL] Creating processing modal...');
     const modal = document.createElement('div');
     modal.id = 'processingModal';
     modal.style.cssText = `
@@ -1778,7 +1681,6 @@ const POSScreen = {
 
     modal.appendChild(content);
     document.body.appendChild(modal);
-    console.log('✅ [MODAL] Processing modal added to DOM');
 
     // Start wine swirling animation
     const frames = [
@@ -1837,7 +1739,6 @@ const POSScreen = {
       const elapsed = Date.now() - startTime;
 
       if (elapsed > maxWait) {
-        console.log('⏱️ Max wait time exceeded');
         this.stopPolling();
         this.showTimeoutMessage(referenceId);
         return;
@@ -1846,7 +1747,6 @@ const POSScreen = {
       // Check Status API with intelligent backoff
       const timeSinceLastCheck = Date.now() - lastStatusCheckTime;
       if (elapsed >= minStatusCheckDelay && timeSinceLastCheck >= nextStatusCheckDelay) {
-        console.log('⏱️ Triggering SPIN Status API check');
         lastStatusCheckTime = Date.now();
 
         try {
@@ -1858,12 +1758,9 @@ const POSScreen = {
             const delaySeconds = statusResult.data.GeneralResponse.DelayBeforeNextRequest;
             if (delaySeconds && delaySeconds > 0) {
               nextStatusCheckDelay = delaySeconds * 1000;
-              console.log(`⏱️ Terminal busy, waiting ${delaySeconds}s before next status check`);
             }
           }
-        } catch (err) {
-          console.error('❌ Auto status check failed:', err);
-        }
+        } catch (err) {}
       }
 
       try {
@@ -1872,11 +1769,8 @@ const POSScreen = {
         );
         const statusData = await response.json();
 
-        console.log('📊 Poll result:', statusData);
-
         // Check if transaction was not attempted (terminal timeout with "Not found")
         if (statusData.status === 'error' && statusData.message === 'Not found') {
-          console.log('⚠️ Terminal timeout - transaction not attempted');
           this.stopPolling();
           this.hideProcessingOverlay();
           this.showDeclineModal({
@@ -1936,12 +1830,9 @@ const POSScreen = {
             });
           } else {
             // Generic error - keep polling
-            console.log('⚠️ Error status, continuing to poll...');
           }
         }
-      } catch (error) {
-        console.error('❌ Polling error:', error);
-      }
+      } catch (error) {}
     }, pollInterval);
   },
 
@@ -1964,8 +1855,6 @@ const POSScreen = {
   },
 
   async manualStatusCheck(referenceId, silent = false) {
-    console.log('🔍 Manual status check for:', referenceId);
-
     try {
       const response = await fetch('/.netlify/functions/verify-terminal-transaction', {
         method: 'POST',
@@ -1974,7 +1863,6 @@ const POSScreen = {
       });
 
       const result = await response.json();
-      console.log('✅ Manual status check result:', result);
 
       if (!silent) {
         if (result.success && result.status) {
@@ -1988,7 +1876,6 @@ const POSScreen = {
 
       return result;
     } catch (error) {
-      console.error('❌ Manual status check error:', error);
       if (!silent) {
         alert('Error checking status. Please try again.');
       }
@@ -2007,33 +1894,17 @@ const POSScreen = {
   },
 
   async handleTerminalResponse(transactionData, subtotal, tax, total, referenceId) {
-    console.log('🔍 Handling terminal response:', transactionData);
-
     // Check SPIN status first
     const generalResponse = transactionData.GeneralResponse || {};
     const resultCode = String(generalResponse.ResultCode || '');
     const statusCode = String(generalResponse.StatusCode || '');
     const hostResponseCode = String(generalResponse.HostResponseCode || '');
 
-    console.log('📊 ResultCode:', resultCode, '(type:', typeof resultCode + ')');
-    console.log('📊 StatusCode:', statusCode, '(type:', typeof statusCode + ')');
-    console.log('📊 HostResponseCode:', hostResponseCode, '(type:', typeof hostResponseCode + ')');
-
     // Check if SPIN transaction was successful
     const spinSuccess = resultCode === '0' && statusCode === '0000';
-    console.log(
-      '📊 SPIN Success check:',
-      spinSuccess,
-      '(resultCode===0:',
-      resultCode === '0',
-      'statusCode===0000:',
-      statusCode === '0000',
-      ')'
-    );
 
     if (!spinSuccess) {
       // SPIN error - show error modal
-      console.error('❌ SPIN error');
       this.showDeclineModal({
         code: statusCode || resultCode || 'ERROR',
         message: generalResponse.Message || 'Transaction Error',
@@ -2044,21 +1915,11 @@ const POSScreen = {
     }
 
     // SPIN success - now check host response code for approval
-    console.log('✅ SPIN success, checking host response code');
     const isApproved = hostResponseCode === '00';
-    console.log(
-      '📊 Approval check:',
-      isApproved,
-      '(hostResponseCode===00:',
-      hostResponseCode === '00',
-      ')'
-    );
 
     if (isApproved) {
-      console.log('✅ Transaction approved (HostResponseCode=00)');
       await this.saveOrderWithPayment(subtotal, tax, total, transactionData, referenceId);
     } else {
-      console.error('❌ Transaction declined (HostResponseCode=' + hostResponseCode + ')');
       this.showDeclineModal({
         code: hostResponseCode || 'DECLINED',
         message:
