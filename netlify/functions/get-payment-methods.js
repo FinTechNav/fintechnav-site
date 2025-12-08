@@ -3,6 +3,8 @@ const { Client } = require('pg');
 exports.handler = async (event) => {
   console.log('=== get-payment-methods called ===');
   console.log('Event:', JSON.stringify(event, null, 2));
+  console.log('HTTP Method:', event.httpMethod);
+  console.log('Query String Parameters:', JSON.stringify(event.queryStringParameters, null, 2));
 
   const headers = {
     'Access-Control-Allow-Origin': '*',
@@ -12,6 +14,7 @@ exports.handler = async (event) => {
   };
 
   if (event.httpMethod === 'OPTIONS') {
+    console.log('OPTIONS request - returning 200');
     return { statusCode: 200, headers, body: '' };
   }
 
@@ -28,6 +31,7 @@ exports.handler = async (event) => {
   const { customer_id } = params;
 
   console.log('Customer ID requested:', customer_id);
+  console.log('Customer ID type:', typeof customer_id);
 
   if (!customer_id) {
     console.log('ERROR: No customer_id provided');
@@ -41,17 +45,23 @@ exports.handler = async (event) => {
     };
   }
 
+  console.log('DATABASE_URL exists:', !!process.env.DATABASE_URL);
+  console.log(
+    'DATABASE_URL length:',
+    process.env.DATABASE_URL ? process.env.DATABASE_URL.length : 0
+  );
+
   const client = new Client({
     connectionString: process.env.DATABASE_URL,
     ssl: false,
   });
 
   try {
-    console.log('Connecting to database...');
+    console.log('Attempting to connect to database...');
     await client.connect();
     console.log('Database connected successfully');
 
-    console.log('Fetching payment methods for customer:', customer_id);
+    console.log('Executing query for customer:', customer_id);
     const query = `
       SELECT 
         id,
@@ -75,8 +85,11 @@ exports.handler = async (event) => {
       ORDER BY is_default DESC, created_at DESC
     `;
 
+    console.log('Query parameters:', [customer_id]);
     const result = await client.query(query, [customer_id]);
+    console.log('Query executed successfully');
     console.log('Payment methods found:', result.rows.length);
+    console.log('Result rows:', JSON.stringify(result.rows, null, 2));
 
     const response = {
       success: true,
@@ -84,6 +97,7 @@ exports.handler = async (event) => {
     };
 
     console.log('=== SUCCESS: Returning payment methods ===');
+    console.log('Response:', JSON.stringify(response, null, 2));
     return {
       statusCode: 200,
       headers,
@@ -96,6 +110,13 @@ exports.handler = async (event) => {
     console.error('Error stack:', error.stack);
     console.error('Error code:', error.code);
     console.error('Error detail:', error.detail);
+    console.error('Error constraint:', error.constraint);
+    console.error('Error table:', error.table);
+    console.error('Error column:', error.column);
+    console.error(
+      'Full error object:',
+      JSON.stringify(error, Object.getOwnPropertyNames(error), 2)
+    );
 
     return {
       statusCode: 500,
