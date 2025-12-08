@@ -652,7 +652,12 @@ const App = {
 
   registerServiceWorker() {
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('sw.js');
+      const hostname = window.location.hostname;
+      const isDevelopment = hostname.includes('--') || hostname.includes('localhost');
+
+      if (!isDevelopment) {
+        navigator.serviceWorker.register('sw.js');
+      }
     }
   },
 };
