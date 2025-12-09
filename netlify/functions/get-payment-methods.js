@@ -60,13 +60,8 @@ exports.handler = async (event) => {
         card_last_4,
         card_expiry_month,
         card_expiry_year,
-        billing_name,
-        billing_address,
-        billing_city,
-        billing_state,
-        billing_zip,
-        billing_country,
         card_fingerprint,
+        billing_zip,
         is_default,
         created_at
       FROM payment_methods
