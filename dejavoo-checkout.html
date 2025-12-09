@@ -463,19 +463,39 @@
       // Load customers
       async function loadCustomers() {
         try {
-          const response = await fetch(`/.netlify/functions/get-winery-customers?winery_id=${WINERY_ID}`);
-          if (!response.ok) throw new Error('Failed to load customers');
+          console.log('🔄 Loading customers for winery_id:', WINERY_ID);
+          const url = `/.netlify/functions/get-winery-customers?winery_id=${WINERY_ID}`;
+          console.log('📡 Fetching from URL:', url);
+          
+          const response = await fetch(url);
+          console.log('📥 Response status:', response.status);
+          console.log('📥 Response ok:', response.ok);
+          
+          if (!response.ok) {
+            const errorText = await response.text();
+            console.error('❌ Response error text:', errorText);
+            throw new Error('Failed to load customers');
+          }
           
           const data = await response.json();
-          if (!data.success) throw new Error('Failed to load customers');
+          console.log('📦 Response data:', JSON.stringify(data, null, 2));
+          console.log('📦 data.success:', data.success);
+          console.log('📦 data.customers:', data.customers);
+          
+          if (!data.success) {
+            console.error('❌ API returned success=false');
+            throw new Error('Failed to load customers');
+          }
           
           customers = data.customers;
           console.log('✅ Loaded customers:', customers.length);
+          console.log('👥 Customer list:', customers);
           
           // Setup customer search event listeners
           setupCustomerSearch();
         } catch (error) {
           console.error('❌ Failed to load customers:', error);
+          console.error('❌ Error stack:', error.stack);
           showAlert('customerAlerts', 'error', 'Unable to load customer list');
         }
       }
