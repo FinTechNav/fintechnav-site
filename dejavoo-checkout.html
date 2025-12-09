@@ -463,8 +463,8 @@
       // Load customers
       async function loadCustomers() {
         try {
-          console.log('🔄 Loading customers for winery_id:', WINERY_ID);
-          const url = `/.netlify/functions/get-winery-customers?winery_id=${WINERY_ID}`;
+          console.log('🔄 Loading customers...');
+          const url = '/.netlify/functions/get-customers?limit=1000';
           console.log('📡 Fetching from URL:', url);
           
           const response = await fetch(url);
