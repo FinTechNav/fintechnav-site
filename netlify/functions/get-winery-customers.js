@@ -36,8 +36,41 @@ exports.handler = async (event, context) => {
   });
 
   try {
+    console.log('🔄 Connecting to database...');
     await client.connect();
+    console.log('✅ Database connected');
 
+    console.log('🔍 Querying for winery_id:', wineryId);
+
+    // First check if winery exists
+    const wineryCheck = await client.query('SELECT id, name FROM wineries WHERE id = $1', [
+      wineryId,
+    ]);
+    console.log('🏢 Winery check result:', wineryCheck.rows);
+
+    // Check total customers in database
+    const totalCustomers = await client.query(
+      'SELECT COUNT(*) as count FROM customers WHERE deleted_at IS NULL'
+    );
+    console.log('👥 Total customers in database:', totalCustomers.rows[0].count);
+
+    // Check customer_wineries table
+    const cwCount = await client.query(
+      'SELECT COUNT(*) as count FROM customer_wineries WHERE winery_id = $1 AND deleted_at IS NULL',
+      [wineryId]
+    );
+    console.log('🔗 customer_wineries entries for this winery:', cwCount.rows[0].count);
+
+    // Check if customer_wineries table exists and has the correct schema
+    const tableCheck = await client.query(`
+      SELECT column_name, data_type 
+      FROM information_schema.columns 
+      WHERE table_name = 'customer_wineries'
+      ORDER BY ordinal_position
+    `);
+    console.log('📋 customer_wineries table schema:', JSON.stringify(tableCheck.rows, null, 2));
+
+    // Main query
     const result = await client.query(
       `
       SELECT 
@@ -56,6 +89,11 @@ exports.handler = async (event, context) => {
       [wineryId]
     );
 
+    console.log('📊 Query returned', result.rows.length, 'customers');
+    if (result.rows.length > 0) {
+      console.log('📦 Sample customer data:', JSON.stringify(result.rows[0], null, 2));
+    }
+
     return {
       statusCode: 200,
       headers,
@@ -66,6 +104,7 @@ exports.handler = async (event, context) => {
     };
   } catch (error) {
     console.error('❌ Database error:', error);
+    console.error('❌ Error stack:', error.stack);
     return {
       statusCode: 500,
       headers,
