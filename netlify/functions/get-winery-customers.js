@@ -70,8 +70,8 @@ exports.handler = async (event, context) => {
     `);
     console.log('📋 customer_wineries table schema:', JSON.stringify(tableCheck.rows, null, 2));
 
-    // Main query
-    const result = await client.query(
+    // Try junction table first
+    let result = await client.query(
       `
       SELECT 
         c.id,
@@ -89,7 +89,31 @@ exports.handler = async (event, context) => {
       [wineryId]
     );
 
-    console.log('📊 Query returned', result.rows.length, 'customers');
+    console.log('📊 Junction table query returned', result.rows.length, 'customers');
+
+    // If junction table returns 0, try direct winery_id column
+    if (result.rows.length === 0) {
+      console.log('🔄 Junction table empty, trying direct winery_id column...');
+
+      result = await client.query(
+        `
+        SELECT 
+          c.id,
+          c.email,
+          c.name,
+          c.phone,
+          c.created_at
+        FROM customers c
+        WHERE c.winery_id = $1
+          AND c.deleted_at IS NULL
+        ORDER BY c.name ASC
+      `,
+        [wineryId]
+      );
+
+      console.log('📊 Direct winery_id query returned', result.rows.length, 'customers');
+    }
+
     if (result.rows.length > 0) {
       console.log('📦 Sample customer data:', JSON.stringify(result.rows[0], null, 2));
     }
