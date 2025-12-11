@@ -404,6 +404,7 @@ exports.handler = async (event, context) => {
       // Customer & context
       customerId,
       wineryId,
+      orderId,
       referenceId,
       saveCard = false,
 
@@ -575,11 +576,10 @@ exports.handler = async (event, context) => {
     try {
       console.log('🔄 Calling fetch...');
 
-      // Build full URL - Netlify functions need full URL for redirects
-      const fullUrl = `https://${event.headers.host}${apiBaseUrl}`;
-      console.log('🔗 Full proxy URL:', fullUrl);
+      // Use relative URL for Netlify redirects to work
+      console.log('🔗 Proxy URL:', apiBaseUrl);
 
-      response = await fetch(fullUrl, {
+      response = await fetch(apiBaseUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -678,6 +678,149 @@ exports.handler = async (event, context) => {
     // Check if approved
     const isApproved = declineInfo.isApproval;
 
+    // Extract additional transaction details
+    const processorTransactionId =
+      transactionData.transactionId || transactionData.referenceNumber || null;
+    const authCode = transactionData.authCode || transactionData.approvalCode || null;
+    const batchNumber = transactionData.batchNumber || null;
+    const cardType = transactionData.cardType || null;
+    const cardLast4 = transactionData.cardNumberMasked
+      ? transactionData.cardNumberMasked.slice(-4)
+      : null;
+
+    let paymentMethodId = null;
+    let transactionId = null;
+
+    // If approved, save payment method and transaction
+    if (isApproved) {
+      console.log('💾 Transaction approved - saving to database...');
+
+      // Save payment method if this was a new card with saveCard=true
+      if (customerId && saveCard && transactionData.cardToken) {
+        console.log('💳 Saving payment method for customer:', customerId);
+
+        try {
+          // Generate card fingerprint if we have enough data
+          let cardFingerprint = null;
+          if (transactionData.cardBin && cardLast4 && transactionData.expiryDate) {
+            const crypto = require('crypto');
+            const fingerprintData = `${transactionData.cardBin}${cardLast4}${transactionData.expiryDate}`;
+            cardFingerprint = crypto.createHash('sha256').update(fingerprintData).digest('hex');
+            console.log('🔐 Generated card fingerprint');
+          }
+
+          // Parse expiry date (format: MMYY)
+          let cardExpMonth = null;
+          let cardExpYear = null;
+          if (transactionData.expiryDate && transactionData.expiryDate.length === 4) {
+            cardExpMonth = transactionData.expiryDate.substring(0, 2);
+            cardExpYear = '20' + transactionData.expiryDate.substring(2, 4);
+          }
+
+          // Check if this is customer's first card for this winery+processor
+          const existingCards = await client.query(
+            'SELECT COUNT(*) as count FROM payment_methods WHERE customer_id = $1 AND winery_id = $2 AND processor = $3 AND is_active = TRUE',
+            [customerId, wineryId, 'dejavoo']
+          );
+          const isFirstCard = existingCards.rows[0].count === '0';
+
+          // Insert payment method
+          const pmResult = await client.query(
+            `INSERT INTO payment_methods (
+              customer_id, winery_id, processor,
+              processor_payment_method_id, card_last_4, card_type, card_brand,
+              card_expiry_month, card_expiry_year, card_fingerprint,
+              source_channel, billing_zip, is_default
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+            ON CONFLICT (customer_id, winery_id, processor, card_fingerprint) 
+            DO UPDATE SET
+              last_used_at = NOW(),
+              usage_count = payment_methods.usage_count + 1,
+              is_active = TRUE,
+              updated_at = NOW()
+            RETURNING id`,
+            [
+              customerId,
+              wineryId,
+              'dejavoo',
+              transactionData.cardToken,
+              cardLast4,
+              cardType,
+              cardType,
+              cardExpMonth,
+              cardExpYear,
+              cardFingerprint,
+              'card_not_present',
+              billingZip || null,
+              isFirstCard,
+            ]
+          );
+
+          paymentMethodId = pmResult.rows[0].id;
+          console.log('✅ Payment method saved:', paymentMethodId);
+        } catch (pmError) {
+          console.error('⚠️ Failed to save payment method (non-fatal):', pmError.message);
+          // Continue - transaction was approved even if we couldn't save the card
+        }
+      }
+
+      // Save transaction record
+      try {
+        console.log('💾 Saving transaction record...');
+        const txResult = await client.query(
+          `INSERT INTO transactions (
+            order_id, winery_id, customer_id, payment_method_id,
+            processor, reference_id, processor_transaction_id,
+            transaction_channel, transaction_type, payment_method_type,
+            amount, subtotal, tax, tip,
+            status, status_code, status_message,
+            card_type, card_last_4,
+            auth_code, batch_number,
+            processor_request, processor_response,
+            processed_at
+          ) VALUES (
+            $1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
+            $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24
+          )
+          RETURNING id`,
+          [
+            orderId || null,
+            wineryId,
+            customerId || null,
+            paymentMethodId,
+            'dejavoo',
+            transactionReferenceId,
+            processorTransactionId,
+            'card_not_present',
+            'sale',
+            'card',
+            parseFloat(amount),
+            parseFloat(subtotal || amount),
+            parseFloat(tax || 0),
+            parseFloat(tipAmount || 0),
+            'approved',
+            responseCode,
+            responseMessage,
+            cardType,
+            cardLast4,
+            authCode,
+            batchNumber,
+            JSON.stringify(requestBody),
+            JSON.stringify(transactionData),
+            new Date(),
+          ]
+        );
+
+        transactionId = txResult.rows[0].id;
+        console.log('✅ Transaction saved:', transactionId);
+      } catch (txError) {
+        console.error('⚠️ Failed to save transaction (non-fatal):', txError.message);
+        // Continue - transaction was approved even if we couldn't save the record
+      }
+    } else {
+      console.log('❌ Transaction declined - not saving to database');
+    }
+
     // Close database connection
     await client.end();
 
@@ -695,6 +838,8 @@ exports.handler = async (event, context) => {
       },
       referenceId: transactionReferenceId,
       amount: amount,
+      paymentMethodId: paymentMethodId,
+      transactionId: transactionId,
     };
 
     console.log('✅ Transaction processed:', isApproved ? 'APPROVED' : 'DECLINED');
