@@ -6,6 +6,41 @@
     <meta name="referrer" content="strict-origin-when-cross-origin" />
     <title>Dejavoo Checkout</title>
     <link rel="stylesheet" href="checkout-styles.css" />
+    <style>
+      .customer-search-results {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: white;
+        border: 1px solid #d2b48c;
+        border-top: none;
+        max-height: 300px;
+        overflow-y: auto;
+        z-index: 1000;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      }
+      .customer-result-item {
+        padding: 12px;
+        cursor: pointer;
+        border-bottom: 1px solid #f0f0f0;
+      }
+      .customer-result-item:hover {
+        background-color: #f9f9f9;
+      }
+      .customer-result-item.selected {
+        background-color: #e8f4f8;
+      }
+      .customer-result-name {
+        font-weight: bold;
+        color: #654321;
+        margin-bottom: 4px;
+      }
+      .customer-result-details {
+        font-size: 0.9em;
+        color: #666;
+      }
+    </style>
     <!-- Dejavoo Freedom to Design Library - Dynamically loaded -->
     <script id="ftd" defer></script>
     <!-- Google Pay SDK - Script tag must exist in DOM before SDK loads -->
@@ -54,25 +89,12 @@
                 <input 
                   type="text" 
                   id="customerSearch" 
-                  placeholder="Search customers by name, email, or phone..."
+                  placeholder="Search by name, email, or phone..." 
                   autocomplete="off"
-                  style="width: 100%;"
+                  oninput="filterCustomers()"
+                  onfocus="showCustomerResults()"
                 />
-                <div id="customerSearchResults" style="
-                  position: absolute;
-                  top: 100%;
-                  left: 0;
-                  right: 0;
-                  background: white;
-                  border: 1px solid #ddd;
-                  border-top: none;
-                  border-radius: 0 0 8px 8px;
-                  max-height: 300px;
-                  overflow-y: auto;
-                  display: none;
-                  z-index: 1000;
-                  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-                "></div>
+                <div id="customerResults" class="customer-search-results" style="display: none;"></div>
               </div>
             </div>
 
@@ -308,7 +330,8 @@
       let configLoaded = false;
       let googlePayInitialized = false;
       let googlePayData = null;
-      let customers = [];
+      let allCustomers = []; // Store all customers for search
+      let filteredCustomers = []; // Store filtered results
 
       // Load configuration
       async function loadConfig() {
@@ -317,7 +340,7 @@
 
         try {
           console.log('🔄 Loading configuration...');
-          const response = await fetch(`/.netlify/functions/get-dejavoo-config?winery_id=${WINERY_ID}`);
+          const response = await fetch(`/.netlify/functions/get-winery-processor-config?winery_id=${WINERY_ID}`);
           
           if (!response.ok) {
             throw new Error(`HTTP ${response.status}`);
@@ -445,8 +468,6 @@
       function getPaymentInfo(paymentData) {
         console.log("📱 Google Pay Payment Data received");
         console.log("📦 Full paymentData object:", paymentData);
-        console.log("📦 PaymentData type:", typeof paymentData);
-        console.log("📦 PaymentData keys:", Object.keys(paymentData));
         
         googlePayData = paymentData;
         selectedPaymentMethod = 'googlepay';
@@ -464,281 +485,145 @@
       async function loadCustomers() {
         try {
           console.log('🔄 Loading customers...');
-          const url = '/.netlify/functions/get-customers?limit=1000';
-          console.log('📡 Fetching from URL:', url);
+          const response = await fetch(`/.netlify/functions/get-customers?limit=1000`);
           
-          const response = await fetch(url);
           console.log('📥 Response status:', response.status);
-          console.log('📥 Response ok:', response.ok);
           
-          if (!response.ok) {
-            const errorText = await response.text();
-            console.error('❌ Response error text:', errorText);
-            throw new Error('Failed to load customers');
-          }
+          if (!response.ok) throw new Error('Failed to load customers');
           
           const data = await response.json();
-          console.log('📦 Response data:', JSON.stringify(data, null, 2));
-          console.log('📦 data.success:', data.success);
-          console.log('📦 data.customers:', data.customers);
+          console.log('📦 Response data:', data);
           
-          if (!data.success) {
-            console.error('❌ API returned success=false');
-            throw new Error('Failed to load customers');
-          }
+          if (!data.success) throw new Error('Failed to load customers');
           
-          customers = data.customers;
-          console.log('✅ Loaded customers:', customers.length);
-          console.log('👥 Customer list:', customers);
-          
-          // Setup customer search event listeners
-          setupCustomerSearch();
+          allCustomers = data.customers;
+          filteredCustomers = allCustomers; // Initially show all
+          console.log('✅ Loaded customers:', allCustomers.length);
         } catch (error) {
           console.error('❌ Failed to load customers:', error);
-          console.error('❌ Error stack:', error.stack);
           showAlert('customerAlerts', 'error', 'Unable to load customer list');
         }
       }
 
-      // Setup customer search
-      function setupCustomerSearch() {
+      // Filter customers based on search input
+      function filterCustomers() {
         const searchInput = document.getElementById('customerSearch');
-        const resultsContainer = document.getElementById('customerSearchResults');
+        const searchTerm = searchInput.value.toLowerCase().trim();
         
-        // Show guest checkout option by default
-        showGuestCheckoutOption();
+        if (!searchTerm) {
+          filteredCustomers = allCustomers;
+        } else {
+          filteredCustomers = allCustomers.filter(customer => {
+            const name = (customer.first_name + ' ' + customer.last_name).toLowerCase();
+            const email = (customer.email || '').toLowerCase();
+            const phone = (customer.phone || '').toLowerCase();
+            
+            return name.includes(searchTerm) || 
+                   email.includes(searchTerm) || 
+                   phone.includes(searchTerm);
+          });
+        }
         
-        searchInput.addEventListener('input', (e) => {
-          const query = e.target.value.trim();
-          
-          if (!query) {
-            showGuestCheckoutOption();
-            return;
-          }
-          
-          searchCustomers(query);
-        });
-        
-        searchInput.addEventListener('focus', () => {
-          const query = searchInput.value.trim();
-          if (!query) {
-            showGuestCheckoutOption();
-          } else {
-            searchCustomers(query);
-          }
-        });
-        
-        // Close results when clicking outside
-        document.addEventListener('click', (e) => {
-          if (!searchInput.contains(e.target) && !resultsContainer.contains(e.target)) {
-            resultsContainer.style.display = 'none';
-          }
-        });
+        renderCustomerResults();
+        showCustomerResults();
       }
 
-      // Show guest checkout option
-      function showGuestCheckoutOption() {
-        const resultsContainer = document.getElementById('customerSearchResults');
+      // Show customer results dropdown
+      function showCustomerResults() {
+        const resultsDiv = document.getElementById('customerResults');
+        resultsDiv.style.display = 'block';
+        renderCustomerResults();
+      }
+
+      // Hide customer results dropdown
+      function hideCustomerResults() {
+        setTimeout(() => {
+          document.getElementById('customerResults').style.display = 'none';
+        }, 200);
+      }
+
+      // Render customer search results
+      function renderCustomerResults() {
+        const resultsDiv = document.getElementById('customerResults');
         
-        resultsContainer.innerHTML = `
-          <div class="customer-search-item" data-customer-id="guest" style="padding: 12px; cursor: pointer; border-bottom: 1px solid rgba(0, 0, 0, 0.05); transition: background 0.2s;">
-            <div style="font-weight: 600; color: #333; font-size: 14px;">Guest Checkout</div>
-            <div style="font-size: 12px; color: #666; margin-top: 2px;">Continue without customer info</div>
+        if (filteredCustomers.length === 0) {
+          resultsDiv.innerHTML = `
+            <div class="customer-result-item">
+              <div class="customer-result-name">No customers found</div>
+            </div>
+            <div class="customer-result-item" onclick="selectGuest()">
+              <div class="customer-result-name">🎫 Checkout as Guest</div>
+            </div>
+          `;
+          return;
+        }
+        
+        let html = '';
+        
+        // Add guest option at top
+        html += `
+          <div class="customer-result-item" onclick="selectGuest()">
+            <div class="customer-result-name">🎫 Checkout as Guest</div>
           </div>
         `;
         
-        resultsContainer.style.display = 'block';
-        
-        const item = resultsContainer.querySelector('.customer-search-item');
-        item.addEventListener('mouseenter', function() {
-          this.style.background = 'rgba(0, 0, 0, 0.03)';
-        });
-        item.addEventListener('mouseleave', function() {
-          this.style.background = 'transparent';
-        });
-        item.addEventListener('click', function() {
-          selectGuest();
-        });
-      }
-
-      // Search customers
-      function searchCustomers(query) {
-        const resultsContainer = document.getElementById('customerSearchResults');
-        const searchLower = query.toLowerCase();
-        const searchNormalized = query.replace(/[\s\-\.()]/g, '').toLowerCase();
-        
-        const matches = customers
-          .map(c => {
-            const name = (c.name || '').toLowerCase();
-            const email = (c.email || '').toLowerCase();
-            const phone = (c.phone || '').toLowerCase();
-            const phoneNormalized = phone.replace(/[\s\-\.()]/g, '');
-            
-            let score = 0;
-            if (name.includes(searchLower)) score += 10;
-            if (email.includes(searchLower)) score += 8;
-            if (phone.includes(searchLower)) score += 6;
-            if (phoneNormalized.includes(searchNormalized)) score += 6;
-            
-            return score > 0 ? { customer: c, score } : null;
-          })
-          .filter(Boolean)
-          .sort((a, b) => b.score - a.score)
-          .slice(0, 10);
-        
-        if (matches.length === 0) {
-          resultsContainer.innerHTML = `
-            <div style="padding: 12px; color: #666; font-size: 14px;">No customers found</div>
-            <div class="customer-search-item" data-customer-id="guest" style="padding: 12px; cursor: pointer; border-top: 1px solid rgba(0, 0, 0, 0.05); transition: background 0.2s;">
-              <div style="font-weight: 600; color: #333; font-size: 14px;">Guest Checkout</div>
-              <div style="font-size: 12px; color: #666; margin-top: 2px;">Continue without customer info</div>
+        // Add customer results
+        filteredCustomers.slice(0, 50).forEach(customer => {
+          const displayName = customer.first_name || customer.last_name 
+            ? `${customer.first_name || ''} ${customer.last_name || ''}`.trim()
+            : customer.email;
+          const details = [];
+          if (customer.email) details.push(customer.email);
+          if (customer.phone) details.push(customer.phone);
+          
+          html += `
+            <div class="customer-result-item" onclick='selectCustomer(${JSON.stringify(customer).replace(/'/g, "&apos;")})'>
+              <div class="customer-result-name">${displayName}</div>
+              <div class="customer-result-details">${details.join(' • ')}</div>
             </div>
           `;
-          
-          const guestItem = resultsContainer.querySelector('.customer-search-item');
-          guestItem.addEventListener('mouseenter', function() {
-            this.style.background = 'rgba(0, 0, 0, 0.03)';
-          });
-          guestItem.addEventListener('mouseleave', function() {
-            this.style.background = 'transparent';
-          });
-          guestItem.addEventListener('click', function() {
-            selectGuest();
-          });
-        } else {
-          resultsContainer.innerHTML = matches.map(({ customer }) => {
-            const displayName = customer.name || customer.email;
-            const highlightedName = highlightText(displayName, query);
-            const highlightedEmail = customer.email ? highlightText(customer.email, query) : '';
-            const highlightedPhone = customer.phone ? highlightText(customer.phone, query) : '';
-            
-            return `
-              <div class="customer-search-item" data-customer-id="${customer.id}" style="padding: 12px; cursor: pointer; border-bottom: 1px solid rgba(0, 0, 0, 0.05); transition: background 0.2s;">
-                <div style="font-weight: 600; color: #333; font-size: 14px;">${highlightedName}</div>
-                ${customer.email ? `<div style="font-size: 12px; color: #666; margin-top: 2px;">${highlightedEmail}</div>` : ''}
-                ${customer.phone ? `<div style="font-size: 12px; color: #666; margin-top: 2px;">${highlightedPhone}</div>` : ''}
-              </div>
-            `;
-          }).join('');
-        }
-        
-        resultsContainer.style.display = 'block';
-        
-        const items = resultsContainer.querySelectorAll('.customer-search-item');
-        items.forEach(item => {
-          item.addEventListener('mouseenter', function() {
-            this.style.background = 'rgba(0, 0, 0, 0.03)';
-          });
-          item.addEventListener('mouseleave', function() {
-            this.style.background = 'transparent';
-          });
-          item.addEventListener('click', function() {
-            const customerId = this.dataset.customerId;
-            if (customerId === 'guest') {
-              selectGuest();
-            } else {
-              selectCustomer(customerId);
-            }
-          });
         });
+        
+        resultsDiv.innerHTML = html;
       }
 
-      // Highlight text
-      function highlightText(text, query) {
-        if (!text || !query) return text;
-        
-        const searchLower = query.toLowerCase();
-        const textLower = text.toLowerCase();
-        const normalized = query.replace(/[\s\-\.()]/g, '');
-        const textNormalized = text.replace(/[\s\-\.()]/g, '');
-        
-        // Try exact match first
-        const index = textLower.indexOf(searchLower);
-        if (index !== -1) {
-          const before = text.substring(0, index);
-          const match = text.substring(index, index + query.length);
-          const after = text.substring(index + query.length);
-          return `${before}<span style="background: rgba(243, 156, 18, 0.3); color: #f39c12; font-weight: 700;">${match}</span>${after}`;
-        }
-        
-        // Try normalized match for phone numbers
-        if (normalized.length > 0) {
-          const normalizedIndex = textNormalized.toLowerCase().indexOf(normalized.toLowerCase());
-          if (normalizedIndex !== -1) {
-            let charCount = 0;
-            let startIndex = -1;
-            let endIndex = -1;
-            
-            for (let i = 0; i < text.length; i++) {
-              const char = text[i];
-              if (!/[\s\-\.]/.test(char)) {
-                if (charCount === normalizedIndex) startIndex = i;
-                if (charCount === normalizedIndex + normalized.length - 1) {
-                  endIndex = i + 1;
-                  break;
-                }
-                charCount++;
-              }
-            }
-            
-            if (startIndex !== -1 && endIndex !== -1) {
-              const before = text.substring(0, startIndex);
-              const match = text.substring(startIndex, endIndex);
-              const after = text.substring(endIndex);
-              return `${before}<span style="background: rgba(243, 156, 18, 0.3); color: #f39c12; font-weight: 700;">${match}</span>${after}`;
-            }
-          }
-        }
-        
-        return text;
-      }
-
-      // Select customer
-      function selectCustomer(customerId) {
-        const customer = customers.find(c => c.id === customerId);
-        if (!customer) return;
-        
-        const searchInput = document.getElementById('customerSearch');
-        const resultsContainer = document.getElementById('customerSearchResults');
-        const continueBtn = document.getElementById('continueToPayment');
-        const infoBox = document.getElementById('customerInfoBox');
-        const infoDiv = document.getElementById('customerInfo');
-        
-        searchInput.value = customer.name || customer.email;
-        resultsContainer.style.display = 'none';
-        continueBtn.disabled = false;
-        
-        selectedCustomer = {
-          ...customer,
-          customer_id: customer.id,
-          customer_name: customer.name || customer.email,
-        };
-        
-        infoDiv.innerHTML = `
-          <strong>${selectedCustomer.customer_name}</strong><br>
-          ${selectedCustomer.email || ''}<br>
-        `;
-        infoBox.style.display = 'block';
-      }
-
-      // Select guest
+      // Select guest checkout
       function selectGuest() {
-        const searchInput = document.getElementById('customerSearch');
-        const resultsContainer = document.getElementById('customerSearchResults');
-        const continueBtn = document.getElementById('continueToPayment');
-        const infoBox = document.getElementById('customerInfoBox');
-        
-        searchInput.value = 'Guest Checkout';
-        resultsContainer.style.display = 'none';
-        continueBtn.disabled = false;
-        infoBox.style.display = 'none';
-        
         selectedCustomer = { 
           id: null, 
           customer_id: null, 
           name: 'Guest',
           customer_name: 'Guest'
         };
+        
+        document.getElementById('customerSearch').value = '🎫 Guest Checkout';
+        document.getElementById('customerInfoBox').style.display = 'none';
+        document.getElementById('continueToPayment').disabled = false;
+        hideCustomerResults();
+      }
+
+      // Select a customer from search results
+      function selectCustomer(customer) {
+        selectedCustomer = {
+          ...customer,
+          customer_id: customer.id,
+          customer_name: customer.first_name || customer.last_name 
+            ? `${customer.first_name || ''} ${customer.last_name || ''}`.trim()
+            : customer.email,
+        };
+        
+        const displayName = selectedCustomer.customer_name;
+        document.getElementById('customerSearch').value = displayName;
+        
+        const infoDiv = document.getElementById('customerInfo');
+        infoDiv.innerHTML = `
+          <strong>${displayName}</strong><br>
+          ${customer.email || ''}<br>
+        `;
+        document.getElementById('customerInfoBox').style.display = 'block';
+        document.getElementById('continueToPayment').disabled = false;
+        
+        hideCustomerResults();
       }
 
       // Continue to payment
@@ -763,27 +648,35 @@
         }
       }
 
-      // Load saved cards
+      // MIGRATION FIX: Load saved cards using unified API
       async function loadSavedCards(customerId) {
         try {
           console.log('📡 Loading saved cards for customer:', customerId);
-          const response = await fetch(`/.netlify/functions/get-payment-tokens?customer_id=${customerId}&winery_id=${WINERY_ID}`);
+          console.log('🏢 Winery ID:', WINERY_ID);
           
-          console.log('Response status:', response.status);
+          const url = `/.netlify/functions/get-payment-methods?customer_id=${customerId}&winery_id=${WINERY_ID}`;
+          console.log('📍 Fetching from:', url);
+          
+          const response = await fetch(url);
+          console.log('📥 Response status:', response.status);
           
           if (!response.ok) {
             const errorText = await response.text();
-            console.error('Error response:', errorText);
+            console.error('❌ Error response:', errorText);
             throw new Error('No saved cards');
           }
           
-          savedCards = await response.json();
-          console.log('✅ Loaded saved cards:', savedCards);
+          const data = await response.json();
+          console.log('📦 Raw response data:', JSON.stringify(data, null, 2));
           
-          if (savedCards.length > 0) {
+          // Your function returns { success: true, payment_methods: [...] }
+          if (data.success && data.payment_methods && data.payment_methods.length > 0) {
+            savedCards = data.payment_methods;
+            console.log('✅ Loaded saved cards:', savedCards.length);
             displaySavedCards();
           } else {
-            console.log('No cards in array, showing new card form');
+            savedCards = [];
+            console.log('ℹ️ No saved cards found');
             document.getElementById('savedCardsSection').style.display = 'none';
             document.getElementById('newCardForm').style.display = 'block';
           }
@@ -794,422 +687,449 @@
         }
       }
 
-      // Display saved cards
+      // MIGRATION FIX: Display saved cards with correct field names
       function displaySavedCards() {
-        const savedCardsSection = document.getElementById('savedCardsSection');
-        const savedCardsList = document.getElementById('savedCardsList');
-        const newCardForm = document.getElementById('newCardForm');
-        
-        savedCardsList.innerHTML = savedCards.map(card => `
-          <div class="saved-card ${selectedPaymentMethod === card.id ? 'selected' : ''}" 
-               onclick="selectSavedCard('${card.id}')">
-            <div class="card-type">${card.card_type}</div>
-            <div class="card-number">•••• ${card.last_4}</div>
-            <div class="card-expiry">Exp: ${card.expiry_month}/${card.expiry_year}</div>
-          </div>
-        `).join('');
-        
-        // Add "Use a different card" button
-        savedCardsList.innerHTML += `
-          <div class="saved-card" onclick="selectNewCard()" style="justify-content: center; font-weight: 600;">
-            + Use a different card
-          </div>
+        const section = document.getElementById('savedCardsSection');
+        const list = document.getElementById('savedCardsList');
+        list.innerHTML = '';
+
+        console.log('🎨 Displaying', savedCards.length, 'saved cards');
+
+        savedCards.forEach(card => {
+          console.log('💳 Rendering card:', {
+            id: card.id,
+            brand: card.card_brand,
+            last4: card.card_last_4,
+            token: card.token
+          });
+          
+          const div = document.createElement('div');
+          div.className = 'card-option';
+          div.innerHTML = `
+            <input type="radio" name="payment-method" value="${card.id}" id="card-${card.id}">
+            <div>
+              <strong>${card.card_brand || 'Card'} •••• ${card.card_last_4}</strong><br>
+              <small style="color: #999">Exp: ${card.card_expiry_month}/${card.card_expiry_year}</small>
+            </div>
+          `;
+          div.onclick = function() { selectSavedCard(card.id, this); };
+          list.appendChild(div);
+        });
+
+        // Add new card option
+        const newDiv = document.createElement('div');
+        newDiv.className = 'card-option';
+        newDiv.innerHTML = `
+          <input type="radio" name="payment-method" value="new" id="card-new">
+          <div><strong>➕ Use a different card</strong></div>
         `;
-        
-        savedCardsSection.style.display = 'block';
-        document.getElementById('newCardHeading').textContent = 'OR USE NEW CARD';
-        newCardForm.style.display = 'none';
+        newDiv.onclick = function() { selectNewCard(this); };
+        list.appendChild(newDiv);
+
+        section.style.display = 'block';
+        selectSavedCard(savedCards[0].id);
       }
 
       // Select saved card
-      function selectSavedCard(tokenId) {
-        selectedPaymentMethod = tokenId;
+      function selectSavedCard(paymentMethodId, clickedElement) {
+        selectedPaymentMethod = paymentMethodId;
+        console.log('💳 Selected saved card:', paymentMethodId);
         
-        // Update visual selection
-        document.querySelectorAll('.saved-card').forEach(card => {
-          card.classList.remove('selected');
-        });
-        event.target.closest('.saved-card').classList.add('selected');
+        document.querySelectorAll('.card-option').forEach(el => el.classList.remove('selected'));
         
-        // Show CVV input
+        if (clickedElement) {
+          clickedElement.classList.add('selected');
+        } else {
+          const cardElement = document.getElementById(`card-${paymentMethodId}`)?.closest('.card-option');
+          if (cardElement) cardElement.classList.add('selected');
+        }
+        
+        document.getElementById(`card-${paymentMethodId}`).checked = true;
         document.getElementById('savedCardCvv').style.display = 'block';
         document.getElementById('newCardForm').style.display = 'none';
       }
 
       // Select new card
-      function selectNewCard() {
+      function selectNewCard(clickedElement) {
         selectedPaymentMethod = 'new';
+        console.log('➕ Selected new card entry');
+        
+        document.querySelectorAll('.card-option').forEach(el => el.classList.remove('selected'));
+        
+        if (clickedElement) {
+          clickedElement.classList.add('selected');
+        } else {
+          const newCardElement = document.getElementById('card-new')?.closest('.card-option');
+          if (newCardElement) newCardElement.classList.add('selected');
+        }
+        
+        document.getElementById('card-new').checked = true;
         document.getElementById('savedCardCvv').style.display = 'none';
         document.getElementById('newCardForm').style.display = 'block';
-        
-        // Clear selection
-        document.querySelectorAll('.saved-card').forEach(card => {
-          card.classList.remove('selected');
-        });
+        document.getElementById('newCardHeading').textContent = 'NEW CARD DETAILS';
       }
 
       // Continue to review
       function continueToReview() {
-        // Validate payment details
+        // Validate
         if (selectedPaymentMethod === 'new') {
-          const ccnumber = document.getElementById('ccnumber').value;
-          const ccexpiry = document.getElementById('ccexpiry').value;
-          const cccvv = document.getElementById('cccvv').value;
-          const billingName = document.getElementById('billingName').value;
-          const billingAddress = document.getElementById('billingAddress').value;
-          const billingCity = document.getElementById('billingCity').value;
-          const billingState = document.getElementById('billingState').value;
-          const billingZip = document.getElementById('billingZip').value;
+          const ccnumber = document.getElementById('ccnumber').value.trim();
+          const ccexpiry = document.getElementById('ccexpiry').value.trim();
+          const cccvv = document.getElementById('cccvv').value.trim();
+          const billingName = document.getElementById('billingName').value.trim();
+          const billingAddress = document.getElementById('billingAddress').value.trim();
+          const billingCity = document.getElementById('billingCity').value.trim();
+          const billingState = document.getElementById('billingState').value.trim();
+          const billingZip = document.getElementById('billingZip').value.trim();
 
-          if (!ccnumber || !ccexpiry || !cccvv || !billingName || !billingAddress || !billingCity || !billingState || !billingZip) {
-            showAlert('paymentAlerts', 'error', 'Please fill in all required fields');
+          if (!ccnumber || ccnumber.replace(/\s/g, '').length < 13) {
+            alert('Please enter a valid card number');
+            document.getElementById('ccnumber').focus();
+            return;
+          }
+          if (!ccexpiry || ccexpiry.length < 4) {
+            alert('Please enter expiry date (MM/YY)');
+            document.getElementById('ccexpiry').focus();
+            return;
+          }
+          if (!cccvv || cccvv.length < 3) {
+            alert('Please enter CVV (3-4 digits)');
+            document.getElementById('cccvv').focus();
+            return;
+          }
+          if (!billingName) {
+            alert('Please enter cardholder name');
+            document.getElementById('billingName').focus();
+            return;
+          }
+          if (!billingAddress) {
+            alert('Please enter billing address');
+            document.getElementById('billingAddress').focus();
+            return;
+          }
+          if (!billingCity) {
+            alert('Please enter city');
+            document.getElementById('billingCity').focus();
+            return;
+          }
+          if (!billingState || billingState.length !== 2) {
+            alert('Please enter 2-letter state code');
+            document.getElementById('billingState').focus();
+            return;
+          }
+          if (!billingZip) {
+            alert('Please enter ZIP code');
+            document.getElementById('billingZip').focus();
             return;
           }
         } else if (selectedPaymentMethod !== 'googlepay') {
-          const savedCvv = document.getElementById('savedCvv').value;
-          if (!savedCvv) {
-            showAlert('paymentAlerts', 'error', 'Please enter CVV for saved card');
+          const savedCvv = document.getElementById('savedCvv').value.trim();
+          if (!savedCvv || savedCvv.length < 3) {
+            alert('Please enter CVV for saved card');
+            document.getElementById('savedCvv').focus();
             return;
           }
         }
 
-        // Populate review
+        // Update review
         document.getElementById('reviewCustomer').textContent = selectedCustomer.customer_name;
         
-        if (selectedPaymentMethod === 'googlepay') {
-          document.getElementById('reviewPayment').textContent = 'Google Pay';
-          document.getElementById('reviewBilling').innerHTML = 'Google Pay (billing address from wallet)';
-        } else if (selectedPaymentMethod === 'new') {
+        if (selectedPaymentMethod === 'new') {
           const ccnumber = document.getElementById('ccnumber').value.replace(/\s/g, '');
-          const lastFour = ccnumber.slice(-4);
-          const cardType = getCardType(ccnumber);
-          document.getElementById('reviewPayment').textContent = `${cardType} ending in ${lastFour}`;
-          
-          const billingName = document.getElementById('billingName').value;
-          const billingAddress = document.getElementById('billingAddress').value;
-          const billingCity = document.getElementById('billingCity').value;
-          const billingState = document.getElementById('billingState').value;
-          const billingZip = document.getElementById('billingZip').value;
-          
-          document.getElementById('reviewBilling').innerHTML = `
-            ${billingName}<br>
-            ${billingAddress}<br>
-            ${billingCity}, ${billingState} ${billingZip}
-          `;
+          const last4 = ccnumber.slice(-4);
+          document.getElementById('reviewPayment').textContent = `New card ending in ${last4}`;
+        } else if (selectedPaymentMethod === 'googlepay') {
+          document.getElementById('reviewPayment').textContent = 'Google Pay';
         } else {
           const card = savedCards.find(c => c.id === selectedPaymentMethod);
-          document.getElementById('reviewPayment').textContent = `${card.card_type} ending in ${card.last_4}`;
-          document.getElementById('reviewBilling').innerHTML = 'Billing address on file';
+          document.getElementById('reviewPayment').textContent = `${card.card_brand} •••• ${card.card_last_4}`;
+        }
+
+        if (selectedPaymentMethod !== 'googlepay') {
+          const name = document.getElementById('billingName').value;
+          const address = document.getElementById('billingAddress').value;
+          const city = document.getElementById('billingCity').value;
+          const state = document.getElementById('billingState').value;
+          const zip = document.getElementById('billingZip').value;
+          
+          document.getElementById('reviewBilling').innerHTML = `${name}<br>${address}<br>${city}, ${state} ${zip}`;
+        } else {
+          document.getElementById('reviewBilling').innerHTML = 'Google Pay (billing address from wallet)';
         }
 
         setStep(3);
       }
 
-      // Place order
+      // MIGRATION FIX: Place order with unified backend
       async function placeOrder() {
-        const overlay = document.getElementById('processingOverlay');
-        overlay.style.display = 'flex';
+        console.log("🚀 placeOrder() called");
+        console.log("   selectedPaymentMethod:", selectedPaymentMethod);
+        
+        if (!configLoaded) {
+          showAlert('reviewAlerts', 'error', 'Payment system not ready');
+          return;
+        }
+
+        document.getElementById('processingOverlay').classList.add('active');
+        document.getElementById('processingMessage').textContent = 'Processing payment...';
 
         try {
+          let saleResponse;
+
           if (selectedPaymentMethod === 'googlepay') {
-            await processGooglePayPayment();
-          } else if (selectedPaymentMethod === 'new') {
-            await processNewCardPayment();
+            console.log("💳 Processing Google Pay transaction");
+            saleResponse = await processGooglePaySale();
+            console.log("✅ Google Pay sale completed");
           } else {
-            await processSavedCardPayment();
-          }
-        } catch (error) {
-          console.error('Payment error:', error);
-          overlay.style.display = 'none';
-          showAlert('reviewAlerts', 'error', `Payment failed: ${error.message}`);
-        }
-      }
-
-      // Process Google Pay payment
-      async function processGooglePayPayment() {
-        console.log('💳 Processing Google Pay payment...');
-        
-        try {
-          if (!googlePayData) {
-            throw new Error('Google Pay data not available');
-          }
-
-          console.log('📦 Sending Google Pay data to Dejavoo API...');
-
-          const paymentToken = googlePayData.paymentMethodData?.tokenizationData?.token;
-          const parsedToken = typeof paymentToken === 'string' ? JSON.parse(paymentToken) : paymentToken;
-          
-          const billingAddress = googlePayData.paymentMethodData?.info?.billingAddress || {};
-          
-          const payload = {
-            registerKey: DEJAVOO_AUTH_TOKEN,
-            amount: 15500,
-            invoiceNumber: `WEB${Date.now()}`,
-            paymentType: 'GOOGLEPAY',
-            billingEmail: googlePayData.email || selectedCustomer.email || '',
-            billingName: billingAddress.name || selectedCustomer.customer_name || '',
-            billingAddress1: billingAddress.address1 || '',
-            billingAddress2: billingAddress.address2 || '',
-            billingCity: billingAddress.locality || '',
-            billingState: billingAddress.administrativeArea || '',
-            billingZip: billingAddress.postalCode || '',
-            billingCountryCode: billingAddress.countryCode || 'US',
-            cvdIndicator: 'PROVIDED',
-            walletType: 'GOOGLEPAY',
-            protocolVersion: parsedToken.protocolVersion,
-            signature: parsedToken.signature,
-            signedMessage: parsedToken.signedMessage,
-          };
-
-          console.log('📤 Google Pay payload:', JSON.stringify(payload, null, 2));
-
-          const response = await fetch(API_BASE_URL, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': API_AUTH_TOKEN,
-            },
-            body: JSON.stringify(payload),
-          });
-
-          const result = await response.json();
-          console.log('📥 Google Pay API response:', result);
-
-          if (result.iposTransactResponse?.responseCode === 'A01' || 
-              result.iposhpresponse?.responseCode === 'A01') {
-            console.log('✅ Google Pay payment approved');
-            await saveTransaction(result);
-            showSuccessPage(result);
-          } else {
-            const declineInfo = getDeclineInfo(result.iposTransactResponse || result.iposhpresponse);
-            console.error('❌ Google Pay payment declined:', declineInfo);
-            showDeclineModal(declineInfo);
-          }
-        } catch (error) {
-          console.error('❌ Google Pay payment error:', error);
-          throw error;
-        } finally {
-          document.getElementById('processingOverlay').style.display = 'none';
-        }
-      }
-
-      // Process new card payment
-      async function processNewCardPayment() {
-        console.log('💳 Processing new card payment...');
-        
-        const ccnumber = document.getElementById('ccnumber').value.replace(/\s/g, '');
-        const ccexpiry = document.getElementById('ccexpiry').value.replace(/\D/g, '');
-        const cccvv = document.getElementById('cccvv').value;
-        const billingName = document.getElementById('billingName').value;
-        const billingAddress = document.getElementById('billingAddress').value;
-        const billingCity = document.getElementById('billingCity').value;
-        const billingState = document.getElementById('billingState').value;
-        const billingZip = document.getElementById('billingZip').value;
-        
-        const expiryMonth = ccexpiry.substring(0, 2);
-        const expiryYear = ccexpiry.substring(2, 4);
-
-        try {
-          // Step 1: Tokenize the card
-          console.log('🔐 Tokenizing card...');
-          const tokenizeResult = await window.tokenizeCard({
-            registerkey: DEJAVOO_AUTH_TOKEN,
-            cardnumber: ccnumber,
-            expMonth: expiryMonth,
-            expYear: expiryYear,
-            billingZip: billingZip,
-            cvdIndicator: 'PROVIDED',
-            cvdCode: cccvv
-          });
-
-          if (!tokenizeResult?.success || tokenizeResult?.responseCode !== 'A01') {
-            throw new Error('Tokenization failed');
-          }
-
-          paymentTokenId = tokenizeResult.paymentTokenId;
-          reusableToken = tokenizeResult.reusableToken;
-          console.log('✅ Card tokenized:', { paymentTokenId, reusableToken });
-
-          // Step 2: Process the sale
-          console.log('💰 Processing sale...');
-          const saleResult = await window.processSale({
-            registerkey: DEJAVOO_AUTH_TOKEN,
-            amount: 15500,
-            paymentTokenId: paymentTokenId,
-            invoiceNumber: `WEB${Date.now()}`,
-            billingEmail: selectedCustomer.email || '',
-            billingName: billingName,
-            billingAddress1: billingAddress,
-            billingCity: billingCity,
-            billingState: billingState,
-            billingZip: billingZip,
-            billingCountryCode: 'US'
-          });
-
-          console.log('📥 Sale API response:', saleResult);
-
-          if (saleResult?.iposTransactResponse?.responseCode === 'A01' || 
-              saleResult?.iposhpresponse?.responseCode === 'A01') {
-            console.log('✅ Payment approved');
+            console.log("💳 Processing card payment");
             
-            // Save payment token if customer wants to save card
-            const saveCard = document.getElementById('saveCardCheckbox').checked;
-            if (saveCard && reusableToken && (selectedCustomer.id || selectedCustomer.customer_id)) {
-              await savePaymentToken(reusableToken);
+            // MIGRATION FIX: Use process-card-not-present-sale backend
+            if (selectedPaymentMethod === 'new') {
+              console.log("🆕 New card - tokenizing first");
+              document.getElementById('processingMessage').textContent = 'Creating payment token...';
+              
+              if (typeof postData !== 'function') {
+                throw new Error('Payment tokenization not available');
+              }
+              
+              const tokenResponse = await postData();
+              console.log("🎫 Token response:", tokenResponse);
+              
+              if (tokenResponse.statusCode !== '00') {
+                throw new Error('Token generation failed');
+              }
+              
+              paymentTokenId = tokenResponse.payment_token_id;
+              console.log("✅ Token created:", paymentTokenId);
+            } else {
+              // MIGRATION FIX: Use correct 'token' field from saved card
+              const card = savedCards.find(c => c.id === selectedPaymentMethod);
+              reusableToken = card.token;
+              console.log("💳 Using saved card token:", reusableToken);
+            }
+
+            document.getElementById('processingMessage').textContent = 'Processing payment...';
+            saleResponse = await processSale();
+            console.log("✅ Card sale completed");
+          }
+
+          document.getElementById('processingOverlay').classList.remove('active');
+
+          if (!saleResponse.success) {
+            console.error("❌ Processing failed");
+            showDeclineModal({
+              code: 'ERROR',
+              message: 'PROCESSING ERROR',
+              definition: 'Payment processing failed',
+            });
+            return;
+          }
+
+          console.log("🎯 Transaction approved:", saleResponse.approved);
+          
+          if (saleResponse.approved) {
+            console.log("✅ Transaction approved!");
+            
+            // Save token if needed
+            if (selectedPaymentMethod === 'new' && selectedCustomer.customer_id && document.getElementById('saveCardCheckbox').checked) {
+              console.log("💾 Saving payment token...");
+              const legacyResponse = {
+                iposTransactResponse: saleResponse.transactionData
+              };
+              await savePaymentToken(legacyResponse);
             }
             
-            await saveTransaction(saleResult);
-            showSuccessPage(saleResult);
+            // Save transaction
+            console.log("💾 Saving transaction to database...");
+            const legacyResponse = {
+              iposTransactResponse: saleResponse.transactionData
+            };
+            await saveTransaction(legacyResponse);
+            
+            console.log("🎉 Showing success page");
+            showSuccessPage(legacyResponse);
           } else {
-            const declineInfo = getDeclineInfo(saleResult.iposTransactResponse || saleResult.iposhpresponse);
-            console.error('❌ Payment declined:', declineInfo);
-            showDeclineModal(declineInfo);
+            console.error("❌ Transaction declined");
+            showDeclineModal({
+              code: saleResponse.responseCode || 'DECLINED',
+              message: saleResponse.responseMessage || 'Payment Declined',
+              definition: saleResponse.responseMessage || 'Please try another payment method',
+            });
           }
         } catch (error) {
-          console.error('❌ Payment error:', error);
-          throw error;
-        } finally {
-          document.getElementById('processingOverlay').style.display = 'none';
+          console.error('💥 Error in placeOrder:', error);
+          document.getElementById('processingOverlay').classList.remove('active');
+          showAlert('reviewAlerts', 'error', error.message);
         }
       }
 
-      // Process saved card payment
-      async function processSavedCardPayment() {
-        console.log('💳 Processing saved card payment...');
+      // Process Google Pay sale
+      async function processGooglePaySale() {
+        console.log("💳 Processing Google Pay sale...");
         
-        const savedCvv = document.getElementById('savedCvv').value;
-        const card = savedCards.find(c => c.id === selectedPaymentMethod);
-        
-        if (!card || !card.token) {
-          throw new Error('Invalid saved card');
-        }
-
-        try {
-          console.log('💰 Processing sale with saved token...');
-          const saleResult = await window.processSale({
-            registerkey: DEJAVOO_AUTH_TOKEN,
+        const requestBody = {
+          merchantAuthentication: {
+            merchantId: MERCHANT_ID,
+            transactionReferenceId: 'GPAY' + Date.now(),
+          },
+          transactionRequest: {
+            transactionType: 1,
             amount: 15500,
-            reusableToken: card.token,
-            cvdIndicator: 'PROVIDED',
-            cvdCode: savedCvv,
-            invoiceNumber: `WEB${Date.now()}`,
-            billingEmail: selectedCustomer.email || ''
-          });
+            applySteamSettingTipFeeTax: false
+          },
+          preferences: {
+            eReceipt: true,
+            customerName: selectedCustomer.customer_name,
+            customerEmail: selectedCustomer.email || 'guest@example.com',
+            customerMobile: selectedCustomer.customer_phone || ''
+          },
+          Avs: {
+            StreetNo: "155",
+            Zip: "30316"
+          },
+          GooglePay: googlePayData
+        };
 
-          console.log('📥 Sale API response:', saleResult);
+        console.log('📤 iPOS Transact Request:', JSON.stringify(requestBody, null, 2));
 
-          if (saleResult?.iposTransactResponse?.responseCode === 'A01' || 
-              saleResult?.iposhpresponse?.responseCode === 'A01') {
-            console.log('✅ Payment approved');
-            await saveTransaction(saleResult);
-            showSuccessPage(saleResult);
-          } else {
-            const declineInfo = getDeclineInfo(saleResult.iposTransactResponse || saleResult.iposhpresponse);
-            console.error('❌ Payment declined:', declineInfo);
-            showDeclineModal(declineInfo);
-          }
-        } catch (error) {
-          console.error('❌ Payment error:', error);
-          throw error;
-        } finally {
-          document.getElementById('processingOverlay').style.display = 'none';
+        const response = await fetch(API_BASE_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            token: API_AUTH_TOKEN,
+          },
+          body: JSON.stringify(requestBody),
+        });
+
+        console.log('📥 API Response Status:', response.status);
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('❌ API request failed:', errorText);
+          throw new Error('API request failed: ' + response.status);
         }
+
+        const responseData = await response.json();
+        console.log('📥 API Response Data:', responseData);
+        
+        return responseData;
       }
 
-      // Save payment token
-      async function savePaymentToken(token) {
+      // Process sale
+      async function processSale() {
+        const requestBody = {
+          merchantAuthentication: {
+            merchantId: MERCHANT_ID,
+            transactionReferenceId: 'WEB' + Date.now(),
+          },
+          transactionRequest: {
+            transactionType: 1,
+            amount: Math.round(155.00 * 100),
+            tipAmount: 0,
+            requestCardToken: false,
+          },
+        };
+
+        // Use paymentTokenId for new cards, cardToken for saved cards
+        if (selectedPaymentMethod === 'new') {
+          requestBody.transactionRequest.paymentTokenId = paymentTokenId;
+          requestBody.transactionRequest.requestCardToken = selectedCustomer?.customer_id && document.getElementById('saveCardCheckbox')?.checked;
+        } else {
+          requestBody.transactionRequest.cardToken = reusableToken;
+          requestBody.transactionRequest.cvv = document.getElementById('savedCvv').value;
+        }
+
+        console.log('📤 iPOS API request:', JSON.stringify(requestBody, null, 2));
+
+        const response = await fetch(API_BASE_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            token: API_AUTH_TOKEN,
+          },
+          body: JSON.stringify(requestBody),
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error('Payment processing failed: ' + errorText);
+        }
+        
+        const responseData = await response.json();
+        console.log('📥 Response:', responseData);
+        
+        const transactionData = responseData.iposhpresponse || responseData.iposTransactResponse;
+        
+        if (!transactionData) {
+          throw new Error('Invalid response from payment processor');
+        }
+        
+        const responseCode = transactionData.responseCode || '';
+        const responseMessage = transactionData.responseMessage || transactionData.errResponseMessage || '';
+        const approved = responseCode === '200';
+        
+        return {
+          success: true,
+          approved: approved,
+          transactionData: transactionData,
+          responseCode: responseCode,
+          responseMessage: responseMessage,
+        };
+      }
+
+      // Save token
+      async function savePaymentToken(saleResponse) {
         try {
-          const ccnumber = document.getElementById('ccnumber').value.replace(/\s/g, '');
-          const ccexpiry = document.getElementById('ccexpiry').value.replace(/\D/g, '');
-          const lastFour = ccnumber.slice(-4);
-          const cardType = getCardType(ccnumber);
-          const expiryMonth = ccexpiry.substring(0, 2);
-          const expiryYear = ccexpiry.substring(2, 4);
+          const transactionData = saleResponse.iposTransactResponse || saleResponse.iposhpresponse;
           
+          if (!transactionData.chdToken) {
+            console.warn('⚠️ No chdToken in response - cannot save card');
+            return;
+          }
+
+          const ccnumber = document.getElementById('ccnumber').value.replace(/\s/g, '');
+          const lastFour = ccnumber.slice(-4);
+          const firstFour = ccnumber.slice(0, 4);
+          const cardType = getCardType(ccnumber);
+          const expiry = document.getElementById('ccexpiry').value.split('/');
+          
+          // Generate card fingerprint
+          const fingerprintData = firstFour + lastFour + expiry[0] + '20' + expiry[1];
+          const cardFingerprint = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(fingerprintData))
+            .then(hash => Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join(''));
+
           const payload = {
             customer_id: selectedCustomer.id || selectedCustomer.customer_id,
             winery_id: WINERY_ID,
-            processor: 'dejavoo',
-            token: token,
+            processor_payment_method_id: transactionData.chdToken,
+            card_last_4: lastFour,
             card_type: cardType,
-            last_4: lastFour,
-            expiry_month: expiryMonth,
-            expiry_year: expiryYear
+            card_brand: cardType,
+            card_expiry_month: expiry[0],
+            card_expiry_year: '20' + expiry[1],
+            card_fingerprint: cardFingerprint,
+            card_bin: firstFour,
+            source_channel: 'card_not_present'
           };
           
           console.log('💾 Saving payment token:', payload);
-          
+
           const response = await fetch('/.netlify/functions/save-payment-token', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
           });
-          
-          if (!response.ok) {
-            const errorText = await response.text();
-            console.error('❌ Save token error:', errorText);
+
+          if (response.ok) {
+            console.log('✅ Card token saved');
+          } else if (response.status === 409) {
+            console.log('ℹ️ Card token already exists');
           } else {
-            console.log('✅ Payment token saved');
+            console.warn('⚠️ Failed to save card token:', response.status);
           }
         } catch (error) {
-          console.error('Failed to save payment token:', error);
+          console.error('❌ Error saving token:', error);
         }
-      }
-
-      // Get decline info
-      function getDeclineInfo(response) {
-        if (!response) {
-          return {
-            code: 'N/A',
-            message: 'Unknown error',
-            definition: 'No response data available'
-          };
-        }
-
-        const declineCodes = {
-          'D01': 'Refer to card issuer',
-          'D02': 'Refer to card issuer (special condition)',
-          'D03': 'Invalid merchant',
-          'D04': 'Pick up card (no fraud)',
-          'D05': 'Do not honor',
-          'D07': 'Pick up card (special condition)',
-          'D12': 'Invalid transaction',
-          'D13': 'Invalid amount',
-          'D14': 'Invalid card number',
-          'D15': 'Invalid issuer',
-          'D19': 'Re-enter transaction',
-          'D30': 'Format error',
-          'D41': 'Lost card',
-          'D43': 'Stolen card',
-          'D51': 'Insufficient funds',
-          'D54': 'Expired card',
-          'D55': 'Invalid PIN',
-          'D57': 'Transaction not permitted to cardholder',
-          'D58': 'Transaction not permitted to terminal',
-          'D61': 'Exceeds withdrawal amount limit',
-          'D62': 'Restricted card',
-          'D63': 'Security violation',
-          'D65': 'Exceeds withdrawal frequency limit',
-          'D75': 'PIN tries exceeded',
-          'D76': 'Invalid product codes',
-          'D77': 'Reconcile error',
-          'D78': 'Trace number not found',
-          'D79': 'Life cycle error',
-          'D80': 'Invalid date',
-          'D82': 'Invalid CVV',
-          'D83': 'Unable to verify PIN',
-          'D85': 'Valid for all purchases except cash',
-          'D86': 'Cannot verify PIN',
-          'D91': 'Issuer or switch inoperative',
-          'D92': 'Unable to route transaction',
-          'D96': 'System malfunction'
-        };
-
-        const code = response.responseCode || 'N/A';
-        const message = response.responseMessage || response.errResponseMessage || 'Unknown error';
-        const definition = declineCodes[code] || 'No additional details available';
-
-        return { code, message, definition };
       }
 
       // Save transaction
@@ -1218,7 +1138,7 @@
           const transactionData = saleResponse.iposTransactResponse || saleResponse.iposhpresponse;
           
           if (!transactionData) {
-            console.warn('No transaction data to save');
+            console.warn('⚠️ No transaction data to save');
             return;
           }
           
@@ -1243,7 +1163,7 @@
             response_data: transactionData
           };
           
-          console.log('🔍 Sending transaction payload:', payload);
+          console.log('💾 Saving transaction:', payload);
 
           const response = await fetch('/.netlify/functions/save-transaction', {
             method: 'POST',
@@ -1251,14 +1171,11 @@
             body: JSON.stringify(payload)
           });
           
-          if (!response.ok) {
-            const errorText = await response.text();
-            console.error('❌ Save transaction error response:', errorText);
+          if (response.ok) {
+            console.log('✅ Transaction saved');
           }
-          
-          console.log('✅ Transaction saved to database');
         } catch (error) {
-          console.error('Failed to save transaction:', error);
+          console.error('❌ Failed to save transaction:', error);
         }
       }
 
@@ -1278,13 +1195,11 @@
       }
 
       function showDeclineModal(declineInfo) {
-        // Remove any existing decline modal
         const existingModal = document.getElementById('declineModal');
         if (existingModal) {
           existingModal.remove();
         }
 
-        // Create decline modal
         const modal = document.createElement('div');
         modal.id = 'declineModal';
         modal.style.cssText = `
@@ -1313,12 +1228,8 @@
         `;
 
         content.innerHTML = `
-          <div style="color: #e74c3c; font-size: 64px; margin-bottom: 20px;">
-            ✕
-          </div>
-          <h2 style="color: #333; margin: 0 0 30px 0; font-size: 28px;">
-            PAYMENT DECLINED
-          </h2>
+          <div style="color: #e74c3c; font-size: 64px; margin-bottom: 20px;">✕</div>
+          <h2 style="color: #333; margin: 0 0 30px 0; font-size: 28px;">PAYMENT DECLINED</h2>
           <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 30px; text-align: left;">
             <div style="margin-bottom: 15px;">
               <div style="color: #666; font-size: 14px; margin-bottom: 5px;">Decline Code</div>
@@ -1343,20 +1254,16 @@
             cursor: pointer;
             font-family: Georgia, serif;
             font-weight: bold;
-          ">
-            Close
-          </button>
+          ">Close</button>
         `;
 
         modal.appendChild(content);
         document.body.appendChild(modal);
 
-        // Handle close button
         document.getElementById('closeDeclineModal').addEventListener('click', () => {
           modal.remove();
         });
       }
-
 
       function setStep(step) {
         for (let i = 1; i <= 3; i++) {
@@ -1410,6 +1317,16 @@
 
       // Initialize
       window.addEventListener('DOMContentLoaded', loadConfig);
+      
+      // Close customer search dropdown when clicking outside
+      document.addEventListener('click', function(e) {
+        const searchInput = document.getElementById('customerSearch');
+        const resultsDiv = document.getElementById('customerResults');
+        
+        if (searchInput && resultsDiv && !searchInput.contains(e.target) && !resultsDiv.contains(e.target)) {
+          resultsDiv.style.display = 'none';
+        }
+      });
     </script>
   </body>
 </html>

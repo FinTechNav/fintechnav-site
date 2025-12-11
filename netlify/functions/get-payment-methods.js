@@ -25,9 +25,10 @@ exports.handler = async (event) => {
   }
 
   const params = event.queryStringParameters || {};
-  const { customer_id } = params;
+  const { customer_id, winery_id } = params;
 
   console.log('Customer ID requested:', customer_id);
+  console.log('Winery ID requested:', winery_id);
 
   if (!customer_id) {
     console.log('ERROR: No customer_id provided');
@@ -37,6 +38,18 @@ exports.handler = async (event) => {
       body: JSON.stringify({
         success: false,
         error: 'customer_id required',
+      }),
+    };
+  }
+
+  if (!winery_id) {
+    console.log('ERROR: No winery_id provided');
+    return {
+      statusCode: 400,
+      headers,
+      body: JSON.stringify({
+        success: false,
+        error: 'winery_id required',
       }),
     };
   }
@@ -51,11 +64,12 @@ exports.handler = async (event) => {
     await client.connect();
     console.log('Database connected successfully');
 
-    console.log('Fetching payment methods for customer:', customer_id);
+    console.log('Fetching payment methods for customer:', customer_id, 'winery:', winery_id);
     const query = `
       SELECT 
         id,
         customer_id,
+        processor_payment_method_id as token,
         card_brand,
         card_last_4,
         card_expiry_month,
@@ -66,11 +80,12 @@ exports.handler = async (event) => {
         created_at
       FROM payment_methods
       WHERE customer_id = $1 
+        AND winery_id = $2
         AND deleted_at IS NULL
       ORDER BY is_default DESC, created_at DESC
     `;
 
-    const result = await client.query(query, [customer_id]);
+    const result = await client.query(query, [customer_id, winery_id]);
     console.log('Payment methods found:', result.rows.length);
 
     const response = {
