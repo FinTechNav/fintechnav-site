@@ -576,10 +576,12 @@ exports.handler = async (event, context) => {
     try {
       console.log('🔄 Calling fetch...');
 
-      // Use relative URL for Netlify redirects to work
-      console.log('🔗 Proxy URL:', apiBaseUrl);
+      // Construct full URL from environment or request headers
+      const baseUrl = process.env.URL || `https://${event.headers.host}`;
+      const fullUrl = `${baseUrl}${apiBaseUrl}`;
+      console.log('🔗 Full proxy URL:', fullUrl);
 
-      response = await fetch(apiBaseUrl, {
+      response = await fetch(fullUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
