@@ -1055,7 +1055,7 @@
           requestBody.paymentTokenId = paymentTokenId;
           requestBody.cvv = document.getElementById('cccvv').value;
           requestBody.saveCard = selectedCustomer?.customer_id && document.getElementById('saveCardCheckbox')?.checked;
-          requestBody.billingZip = document.getElementById('billingZip').value;
+          requestBody.billingZip = document.getElementById('billingZip').value.split('-')[0].trim();
           console.log('🆕 New card payment with token:', paymentTokenId, 'CVV length:', document.getElementById('cccvv').value.length);
         } else {
           // Saved card - use cardToken + CVV
