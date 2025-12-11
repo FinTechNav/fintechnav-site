@@ -551,9 +551,12 @@ exports.handler = async (event, context) => {
 
     // Add payment method
     if (paymentTokenId) {
-      // New card - use single-use token
+      // New card - use single-use token + CVV (required for AMEX)
       requestBody.transactionRequest.paymentTokenId = paymentTokenId;
-      console.log('💳 Using payment token (new card)');
+      if (cvv) {
+        requestBody.transactionRequest.cvv = cvv;
+      }
+      console.log('💳 Using payment token (new card) with CVV:', cvv ? 'present' : 'missing');
     } else {
       // Saved card - use card token + CVV
       requestBody.transactionRequest.cardToken = cardToken;
