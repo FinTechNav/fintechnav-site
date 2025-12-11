@@ -537,6 +537,7 @@ exports.handler = async (event, context) => {
         transactionReferenceId: transactionReferenceId,
       },
       transactionRequest: {
+        transactionType: 1, // Sale transaction
         amount: Math.round(parseFloat(amount) * 100), // Convert to cents
         tipAmount: Math.round(parseFloat(tipAmount) * 100),
         requestCardToken: saveCard, // Request reusable token if saving
