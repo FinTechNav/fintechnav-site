@@ -377,8 +377,13 @@
             ? 'https://payment.ipospays.tech/ftd/v1/gpay-ftd.js'
             : 'https://payment.ipospays.com/ftd/v1/gpay-ftd.js';
           
-          // Set security_key attribute FIRST
+          // CRITICAL: Set security_key globally BEFORE loading script
+          window.security_key = DEJAVOO_AUTH_TOKEN;
+          
+          // Set security_key attribute on script tag
           gpayScript.setAttribute('security_key', DEJAVOO_AUTH_TOKEN);
+          console.log('🔑 Google Pay security_key set:', DEJAVOO_AUTH_TOKEN ? '✓' : '✗');
+          
           // Then set src to load the script
           gpayScript.src = gpayUrl;
           
