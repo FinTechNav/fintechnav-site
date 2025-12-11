@@ -42,17 +42,7 @@ exports.handler = async (event) => {
     };
   }
 
-  if (!winery_id) {
-    console.log('ERROR: No winery_id provided');
-    return {
-      statusCode: 400,
-      headers,
-      body: JSON.stringify({
-        success: false,
-        error: 'winery_id required',
-      }),
-    };
-  }
+  // winery_id is optional for backward compatibility
 
   const client = new Client({
     connectionString: process.env.DATABASE_URL,
@@ -64,28 +54,64 @@ exports.handler = async (event) => {
     await client.connect();
     console.log('Database connected successfully');
 
-    console.log('Fetching payment methods for customer:', customer_id, 'winery:', winery_id);
-    const query = `
-      SELECT 
-        id,
-        customer_id,
-        processor_payment_method_id as token,
-        card_brand,
-        card_last_4,
-        card_expiry_month,
-        card_expiry_year,
-        card_fingerprint,
-        billing_zip,
-        is_default,
-        created_at
-      FROM payment_methods
-      WHERE customer_id = $1 
-        AND winery_id = $2
-        AND deleted_at IS NULL
-      ORDER BY is_default DESC, created_at DESC
-    `;
+    console.log(
+      'Fetching payment methods for customer:',
+      customer_id,
+      'winery:',
+      winery_id || 'not specified'
+    );
 
-    const result = await client.query(query, [customer_id, winery_id]);
+    // Build query conditionally based on winery_id
+    let query;
+    let queryParams;
+
+    if (winery_id) {
+      // With winery filter (for eCommerce)
+      query = `
+        SELECT 
+          id,
+          customer_id,
+          processor_payment_method_id as token,
+          card_brand,
+          card_last_4,
+          card_expiry_month,
+          card_expiry_year,
+          card_fingerprint,
+          billing_zip,
+          is_default,
+          created_at
+        FROM payment_methods
+        WHERE customer_id = $1 
+          AND winery_id = $2
+          AND deleted_at IS NULL
+        ORDER BY is_default DESC, created_at DESC
+      `;
+      queryParams = [customer_id, winery_id];
+    } else {
+      // Without winery filter (for POS backward compatibility)
+      query = `
+        SELECT 
+          id,
+          customer_id,
+          processor_payment_method_id as token,
+          card_brand,
+          card_last_4,
+          card_expiry_month,
+          card_expiry_year,
+          card_fingerprint,
+          billing_zip,
+          is_default,
+          created_at
+        FROM payment_methods
+        WHERE customer_id = $1 
+          AND deleted_at IS NULL
+        ORDER BY is_default DESC, created_at DESC
+      `;
+      queryParams = [customer_id];
+    }
+
+    console.log('Query parameters:', queryParams);
+    const result = await client.query(query, queryParams);
     console.log('Payment methods found:', result.rows.length);
 
     const response = {
