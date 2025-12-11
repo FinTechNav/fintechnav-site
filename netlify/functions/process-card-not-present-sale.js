@@ -7,6 +7,7 @@ const DECLINE_CODES = {
     definition: 'Transaction approved (iPOS Transact)',
     isApproval: true,
   },
+  400: { message: 'DECLINE', definition: 'Transaction declined', isApproval: false },
   '00': { message: 'APPROVAL', definition: 'Approved and complete', isApproval: true },
   '01': { message: 'CALL', definition: 'Refer to issuer', isApproval: false },
   '02': { message: 'CALL', definition: 'Refer to issuer-Special condition', isApproval: false },
@@ -673,9 +674,16 @@ exports.handler = async (event, context) => {
     }
 
     // Extract response code (iPOS uses lowercase 'responseCode')
-    const responseCode = transactionData.responseCode || transactionData.ResponseCode || '';
-    const responseMessage =
-      transactionData.responseMessage || transactionData.errResponseMessage || '';
+    // For declines (400), use the errResponseCode which has the actual decline reason
+    let responseCode = transactionData.responseCode || transactionData.ResponseCode || '';
+    let responseMessage = transactionData.responseMessage || '';
+
+    // If transaction failed (400), use the error response code for better decline info
+    if (responseCode === '400' && transactionData.errResponseCode) {
+      responseCode = transactionData.errResponseCode;
+      responseMessage = transactionData.errResponseMessage || responseMessage;
+      console.log('📊 Using errResponseCode for decline:', responseCode);
+    }
 
     console.log('📊 Response code:', responseCode);
     console.log('📊 Response message:', responseMessage);
