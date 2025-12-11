@@ -1084,6 +1084,31 @@
         const responseData = await response.json();
         console.log('📥 Backend response:', JSON.stringify(responseData, null, 2));
         
+        // Log processor details
+        if (responseData.transactionData) {
+          console.group('🔍 PROCESSOR TRANSACTION DETAILS');
+          console.log('Transaction ID:', responseData.transactionData.transactionId);
+          console.log('Response Code:', responseData.transactionData.responseCode);
+          console.log('Response Message:', responseData.transactionData.responseMessage);
+          console.log('Approval Code:', responseData.transactionData.responseApprovalCode);
+          console.log('Card Type:', responseData.transactionData.cardType);
+          console.log('Card Label:', responseData.transactionData.label);
+          console.log('Amount:', responseData.transactionData.amount);
+          console.log('Batch Number:', responseData.transactionData.batchNumber);
+          console.log('RRN:', responseData.transactionData.rrn);
+          console.log('Full Transaction Data:', responseData.transactionData);
+          console.groupEnd();
+        }
+        
+        if (responseData.declineInfo) {
+          console.group('⚠️ DECLINE INFO');
+          console.log('Code:', responseData.declineInfo.code);
+          console.log('Message:', responseData.declineInfo.message);
+          console.log('Definition:', responseData.declineInfo.definition);
+          console.log('Is Approval:', responseData.declineInfo.isApproval);
+          console.groupEnd();
+        }
+        
         return responseData;
       }
 
