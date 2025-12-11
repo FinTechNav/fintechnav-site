@@ -21,14 +21,26 @@
 # Scheduled token refresh - runs daily at 11:00 AM UTC (6:00 AM EST)
 [functions."scheduled-token-refresh"]
 # Proxy redirects for iPOS Transact API (free tier network workaround)
+#[[redirects]]
+#  from = "/api/ipos-transact-sandbox/*"
+#  to = "https://test.iposcloud.net/ipostransact/:splat"
+#  status = 200
+#  force = true
+
+#[[redirects]]
+#  from = "/api/ipos-transact-prod/*"
+#  to = "https://api.iposcloud.net/ipostransact/:splat"
+#  status = 200
+#  force = true
+
 [[redirects]]
   from = "/api/ipos-transact-sandbox/*"
-  to = "https://test.iposcloud.net/ipostransact/:splat"
+  to = "https://payment.ipospays.tech/:splat"
   status = 200
   force = true
 
 [[redirects]]
   from = "/api/ipos-transact-prod/*"
-  to = "https://api.iposcloud.net/ipostransact/:splat"
+  to = "https://payment.ipospays.com/:splat"
   status = 200
   force = true
