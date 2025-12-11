@@ -1016,65 +1016,63 @@
       }
 
       // Process sale
+      // Process sale using backend
       async function processSale() {
+        console.log('💰 Processing payment via backend...');
+        
         const requestBody = {
-          merchantAuthentication: {
-            merchantId: MERCHANT_ID,
-            transactionReferenceId: 'WEB' + Date.now(),
-          },
-          transactionRequest: {
-            transactionType: 1,
-            amount: Math.round(155.00 * 100),
-            tipAmount: 0,
-            requestCardToken: false,
-          },
+          // Transaction details
+          amount: 155.00,
+          subtotal: 155.00,
+          tax: 0.00,
+          tipAmount: 0,
+          
+          // Customer & context
+          customerId: selectedCustomer.id || selectedCustomer.customer_id,
+          wineryId: WINERY_ID,
+          orderId: 'WEB' + Date.now(),
+          referenceId: 'WEB' + Date.now(),
+          
+          // Cart items (optional)
+          cartItems: [],
         };
 
-        // Use paymentTokenId for new cards, cardToken for saved cards
+        // Add payment method based on type
         if (selectedPaymentMethod === 'new') {
-          requestBody.transactionRequest.paymentTokenId = paymentTokenId;
-          requestBody.transactionRequest.requestCardToken = selectedCustomer?.customer_id && document.getElementById('saveCardCheckbox')?.checked;
+          // New card - use paymentTokenId
+          requestBody.paymentTokenId = paymentTokenId;
+          requestBody.saveCard = selectedCustomer?.customer_id && document.getElementById('saveCardCheckbox')?.checked;
+          requestBody.billingZip = document.getElementById('billingZip').value;
+          console.log('🆕 New card payment with token:', paymentTokenId);
         } else {
-          requestBody.transactionRequest.cardToken = reusableToken;
-          requestBody.transactionRequest.cvv = document.getElementById('savedCvv').value;
+          // Saved card - use cardToken + CVV
+          requestBody.cardToken = reusableToken;
+          requestBody.cvv = document.getElementById('savedCvv').value;
+          console.log('💳 Saved card payment with token:', reusableToken);
         }
 
-        console.log('📤 iPOS API request:', JSON.stringify(requestBody, null, 2));
+        console.log('📤 Backend request:', JSON.stringify(requestBody, null, 2));
 
-        const response = await fetch(API_BASE_URL, {
+        const response = await fetch('/.netlify/functions/process-card-not-present-sale', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            token: API_AUTH_TOKEN,
           },
           body: JSON.stringify(requestBody),
         });
 
+        console.log('📥 Backend response status:', response.status);
+
         if (!response.ok) {
           const errorText = await response.text();
+          console.error('❌ Backend error:', errorText);
           throw new Error('Payment processing failed: ' + errorText);
         }
         
         const responseData = await response.json();
-        console.log('📥 Response:', responseData);
+        console.log('📥 Backend response:', JSON.stringify(responseData, null, 2));
         
-        const transactionData = responseData.iposhpresponse || responseData.iposTransactResponse;
-        
-        if (!transactionData) {
-          throw new Error('Invalid response from payment processor');
-        }
-        
-        const responseCode = transactionData.responseCode || '';
-        const responseMessage = transactionData.responseMessage || transactionData.errResponseMessage || '';
-        const approved = responseCode === '200';
-        
-        return {
-          success: true,
-          approved: approved,
-          transactionData: transactionData,
-          responseCode: responseCode,
-          responseMessage: responseMessage,
-        };
+        return responseData;
       }
 
       // Save token
