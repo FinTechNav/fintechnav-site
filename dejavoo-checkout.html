@@ -340,13 +340,19 @@
 
         try {
           console.log('🔄 Loading configuration...');
-          const response = await fetch(`/.netlify/functions/get-winery-processor-config?winery_id=${WINERY_ID}`);
+          const response = await fetch(`/.netlify/functions/get-dejavoo-config?winery_id=${WINERY_ID}`);
           
           if (!response.ok) {
             throw new Error(`HTTP ${response.status}`);
           }
 
           const config = await response.json();
+          
+          console.log('📋 Config received:', {
+            dejavooAuthToken: config.dejavooAuthToken ? '✓ present' : '✗ missing',
+            merchantId: config.merchantId,
+            environment: config.environment
+          });
           
           DEJAVOO_AUTH_TOKEN = config.dejavooAuthToken;
           MERCHANT_ID = config.merchantId;
