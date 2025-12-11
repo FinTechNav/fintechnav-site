@@ -962,10 +962,10 @@
             showSuccessPage(legacyResponse);
           } else {
             console.error("❌ Transaction declined");
-            showDeclineModal({
-              code: saleResponse.responseCode || 'DECLINED',
-              message: saleResponse.responseMessage || 'Payment Declined',
-              definition: saleResponse.responseMessage || 'Please try another payment method',
+            showDeclineModal(saleResponse.declineInfo || {
+              code: 'DECLINED',
+              message: 'Payment Declined',
+              definition: 'Please try another payment method',
             });
           }
         } catch (error) {

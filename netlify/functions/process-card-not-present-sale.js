@@ -7,7 +7,6 @@ const DECLINE_CODES = {
     definition: 'Transaction approved (iPOS Transact)',
     isApproval: true,
   },
-  400: { message: 'DECLINE', definition: 'Transaction declined', isApproval: false },
   '00': { message: 'APPROVAL', definition: 'Approved and complete', isApproval: true },
   '01': { message: 'CALL', definition: 'Refer to issuer', isApproval: false },
   '02': { message: 'CALL', definition: 'Refer to issuer-Special condition', isApproval: false },
