@@ -2,6 +2,11 @@ const { Client } = require('pg');
 
 // Decline code mapping (inlined to avoid module import issues in Netlify)
 const DECLINE_CODES = {
+  200: {
+    message: 'APPROVAL',
+    definition: 'Transaction approved (iPOS Transact)',
+    isApproval: true,
+  },
   '00': { message: 'APPROVAL', definition: 'Approved and complete', isApproval: true },
   '01': { message: 'CALL', definition: 'Refer to issuer', isApproval: false },
   '02': { message: 'CALL', definition: 'Refer to issuer-Special condition', isApproval: false },
