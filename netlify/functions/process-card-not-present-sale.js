@@ -506,10 +506,11 @@ exports.handler = async (event, context) => {
     const apiAuthToken = processorConfig.api_auth_token;
 
     // Use Netlify proxy instead of direct API call (free tier network restriction workaround)
+    // The redirect rule expects /api/ipos-transact-sandbox/* so we need to add the API path
     const apiBaseUrl =
       config.processor_environment === 'production'
-        ? '/api/ipos-transact-prod'
-        : '/api/ipos-transact-sandbox';
+        ? '/api/ipos-transact-prod/api/v2/iposTransact'
+        : '/api/ipos-transact-sandbox/api/v2/iposTransact';
 
     console.log('🔑 Merchant ID:', merchantId);
     console.log('🔑 API Base URL:', apiBaseUrl);
