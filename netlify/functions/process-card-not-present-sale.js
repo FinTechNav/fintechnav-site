@@ -453,16 +453,6 @@ exports.handler = async (event, context) => {
       };
     }
 
-    if (cardToken && !cvv) {
-      return {
-        statusCode: 400,
-        headers,
-        body: JSON.stringify({
-          error: 'CVV is required for saved card transactions',
-        }),
-      };
-    }
-
     // Connect to database to get processor configuration
     const client = new Client({
       connectionString: process.env.DATABASE_URL,
