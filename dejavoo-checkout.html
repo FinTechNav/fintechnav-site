@@ -133,15 +133,6 @@
               <div id="savedCardsList" class="saved-cards"></div>
             </div>
 
-            <!-- CVV for saved card -->
-            <div id="savedCardCvv" style="display: none">
-              <div class="form-group">
-                <label>CVV <span class="required">*</span></label>
-                <input type="text" id="savedCvv" placeholder="123" maxlength="4" />
-                <div class="help-text">Security code required for saved cards</div>
-              </div>
-            </div>
-
             <!-- New Card Form -->
             <div id="newCardForm">
               <h3 style="font-size: 0.9rem; margin-bottom: 15px; color: #666" id="newCardHeading">CARD DETAILS</h3>
@@ -757,7 +748,6 @@
         }
         
         document.getElementById(`card-${paymentMethodId}`).checked = true;
-        document.getElementById('savedCardCvv').style.display = 'block';
         document.getElementById('newCardForm').style.display = 'none';
       }
 
@@ -776,7 +766,6 @@
         }
         
         document.getElementById('card-new').checked = true;
-        document.getElementById('savedCardCvv').style.display = 'none';
         document.getElementById('newCardForm').style.display = 'block';
         document.getElementById('newCardHeading').textContent = 'NEW CARD DETAILS';
       }
@@ -832,13 +821,6 @@
           if (!billingZip) {
             alert('Please enter ZIP code');
             document.getElementById('billingZip').focus();
-            return;
-          }
-        } else if (selectedPaymentMethod !== 'googlepay') {
-          const savedCvv = document.getElementById('savedCvv').value.trim();
-          if (!savedCvv || savedCvv.length < 3) {
-            alert('Please enter CVV for saved card');
-            document.getElementById('savedCvv').focus();
             return;
           }
         }
@@ -1058,9 +1040,8 @@
           requestBody.billingZip = document.getElementById('billingZip').value.split('-')[0].trim();
           console.log('🆕 New card payment with token:', paymentTokenId, 'CVV length:', document.getElementById('cccvv').value.length);
         } else {
-          // Saved card - use cardToken + CVV
+          // Saved card - use cardToken (no CVV needed)
           requestBody.cardToken = reusableToken;
-          requestBody.cvv = document.getElementById('savedCvv').value;
           console.log('💳 Saved card payment with token:', reusableToken);
         }
 
@@ -1347,9 +1328,6 @@
         e.target.value = e.target.value.replace(/\D/g, '');
       });
 
-      document.getElementById('savedCvv').addEventListener('input', function(e) {
-        e.target.value = e.target.value.replace(/\D/g, '');
-      });
 
       // Initialize
       window.addEventListener('DOMContentLoaded', loadConfig);
