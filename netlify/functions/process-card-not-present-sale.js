@@ -644,6 +644,35 @@ exports.handler = async (event, context) => {
     // Extract transaction data
     const transactionData = responseData.iposhpresponse || responseData.iposTransactResponse;
 
+    console.log('');
+    console.log('═══════════════════════════════════════════════════════════');
+    console.log('📋 iPOS TRANSACT API COMPLETE RESPONSE');
+    console.log('═══════════════════════════════════════════════════════════');
+    console.log('Response Code:', transactionData?.responseCode);
+    console.log('Response Message:', transactionData?.responseMessage);
+    console.log('Transaction ID:', transactionData?.transactionId);
+    console.log('Transaction Reference ID:', transactionData?.transactionReferenceId);
+    console.log('Transaction Type:', transactionData?.transactionType);
+    console.log('Amount:', transactionData?.amount);
+    console.log('Total Amount:', transactionData?.totalAmount);
+    console.log('Approval Code:', transactionData?.responseApprovalCode);
+    console.log('RRN:', transactionData?.rrn);
+    console.log('Batch Number:', transactionData?.batchNumber);
+    console.log('Card Type:', transactionData?.cardType);
+    console.log('Card Label:', transactionData?.label);
+    console.log('Error Response Code:', transactionData?.errResponseCode);
+    console.log('Error Response Message:', transactionData?.errResponseMessage);
+    console.log('Card Token:', transactionData?.cardToken);
+    console.log('');
+    console.log('ALL FIELDS IN RESPONSE:');
+    if (transactionData) {
+      Object.keys(transactionData).forEach((key) => {
+        console.log(`  - ${key}:`, transactionData[key]);
+      });
+    }
+    console.log('═══════════════════════════════════════════════════════════');
+    console.log('');
+
     if (!transactionData) {
       console.error('❌ No transaction data in response');
       await client.end();

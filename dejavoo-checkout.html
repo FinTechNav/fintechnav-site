@@ -888,6 +888,16 @@
               
               const tokenResponse = await postData();
               console.log("🎫 Token response:", tokenResponse);
+              console.group('📋 FREEDOM TO DESIGN TOKENIZATION RESPONSE');
+              console.log('Status Code:', tokenResponse.statusCode);
+              console.log('Message:', tokenResponse.message);
+              console.log('Payment Token ID:', tokenResponse.payment_token_id);
+              console.log('Card Number (masked):', tokenResponse.ccNumber);
+              console.log('Card Expiry (masked):', tokenResponse.ccExpiry);
+              console.log('CVV (masked):', tokenResponse.ccCvv);
+              console.log('Error Field:', tokenResponse.errorField);
+              console.log('Full Response:', JSON.stringify(tokenResponse, null, 2));
+              console.groupEnd();
               
               if (tokenResponse.statusCode !== '00') {
                 throw new Error('Token generation failed');
