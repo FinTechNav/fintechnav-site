@@ -472,22 +472,21 @@ exports.handler = async (event, context) => {
           wineryId,
           customerId: customerId || null,
           orderNumber: referenceId || orderId,
-          channel: 'ecommerce',
+          orderSource: 'ecommerce',
           status: 'pending',
-          subtotalCents: Math.round((subtotal || amount) * 100),
-          taxCents: Math.round((tax || 0) * 100),
-          tipCents: Math.round(tipAmount * 100),
-          totalCents: Math.round(amount * 100),
+          subtotal: parseFloat(subtotal || amount),
+          tax: parseFloat(tax || 0),
+          total: parseFloat(amount),
         });
 
         const orderResult = await client.query(
           `INSERT INTO orders (
             id, winery_id, customer_id, order_number,
-            channel, status, currency_code,
-            subtotal_cents, tax_cents, tip_cents, total_cents,
+            order_source, status,
+            subtotal, tax, total, transaction_tip,
             created_at
           ) VALUES (
-            $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12
+            $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11
           )
           ON CONFLICT (id) DO NOTHING
           RETURNING id`,
@@ -498,11 +497,10 @@ exports.handler = async (event, context) => {
             referenceId || orderId,
             'ecommerce',
             'pending',
-            'USD', // TODO: Get from winery settings
-            Math.round((subtotal || amount) * 100),
-            Math.round((tax || 0) * 100),
-            Math.round(tipAmount * 100),
-            Math.round(amount * 100),
+            parseFloat(subtotal || amount),
+            parseFloat(tax || 0),
+            parseFloat(amount),
+            parseFloat(tipAmount || 0),
             new Date(),
           ]
         );
