@@ -1034,7 +1034,7 @@
           // Customer & context
           customerId: selectedCustomer.id || selectedCustomer.customer_id,
           wineryId: WINERY_ID,
-          orderId: 'WEB' + Date.now(),
+          orderId: crypto.randomUUID(),
           referenceId: 'WEB' + Date.now(),
           
           // Cart items (optional)
