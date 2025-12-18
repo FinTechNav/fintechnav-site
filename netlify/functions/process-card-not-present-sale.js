@@ -544,23 +544,22 @@ exports.handler = async (event, context) => {
       transactionRequest: {
         transactionType: 1, // Sale transaction
         amount: Math.round(parseFloat(amount) * 100), // Convert to cents
-        tipAmount: Math.round(parseFloat(tipAmount) * 100),
-        requestCardToken: saveCard, // Request reusable token if saving
+        applySteamSettingTipFeeTax: 'false', // Required field - use false for eCommerce
+      },
+      preferences: {
+        eReceipt: false, // Required field
+        requestCardToken: saveCard, // Move from transactionRequest to preferences
       },
     };
 
     // Add payment method
     if (paymentTokenId) {
-      // New card - use single-use token + CVV (required for AMEX)
+      // New card - use single-use token (CVV already embedded in token)
       requestBody.transactionRequest.paymentTokenId = paymentTokenId;
-      if (cvv) {
-        requestBody.transactionRequest.cvv = cvv;
-      }
-      console.log('💳 Using payment token (new card) with CVV:', cvv ? 'present' : 'missing');
+      console.log('💳 Using payment token (new card)');
     } else {
-      // Saved card - use card token + CVV
+      // Saved card - use card token (no CVV field exists in API)
       requestBody.transactionRequest.cardToken = cardToken;
-      requestBody.transactionRequest.cvv = cvv;
       console.log('💳 Using saved card token');
     }
 
@@ -578,7 +577,7 @@ exports.handler = async (event, context) => {
     console.log('  - Merchant ID:', merchantId);
     console.log('  - Transaction Reference:', transactionReferenceId);
     console.log('  - Amount (cents):', requestBody.transactionRequest.amount);
-    console.log('  - Request card token:', requestBody.transactionRequest.requestCardToken);
+    console.log('  - Request card token:', requestBody.preferences.requestCardToken);
     console.log('  - Full request body:', JSON.stringify(requestBody, null, 2));
 
     // Call iPOS Transact API via Netlify proxy
