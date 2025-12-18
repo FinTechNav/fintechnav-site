@@ -429,6 +429,7 @@ exports.handler = async (event, context) => {
     console.log('  - Amount:', amount);
     console.log('  - Customer ID:', customerId);
     console.log('  - Winery ID:', wineryId);
+    console.log('  - Order ID:', orderId);
     console.log('  - Save card:', saveCard);
 
     // Validate required parameters
@@ -461,6 +462,42 @@ exports.handler = async (event, context) => {
 
     await client.connect();
     console.log('✅ Database connected');
+
+    // Create order record first (required for foreign key constraint)
+    if (orderId) {
+      try {
+        console.log('📦 Creating order record:', orderId);
+        await client.query(
+          `INSERT INTO orders (
+            id, winery_id, customer_id, order_number,
+            channel, status, currency_code,
+            subtotal_cents, tax_cents, tip_cents, total_cents,
+            created_at
+          ) VALUES (
+            $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12
+          )
+          ON CONFLICT (id) DO NOTHING`,
+          [
+            orderId,
+            wineryId,
+            customerId || null,
+            referenceId || orderId,
+            'ecommerce',
+            'pending',
+            'USD', // TODO: Get from winery settings
+            Math.round((subtotal || amount) * 100),
+            Math.round((tax || 0) * 100),
+            Math.round(tipAmount * 100),
+            Math.round(amount * 100),
+            new Date(),
+          ]
+        );
+        console.log('✅ Order record created');
+      } catch (orderError) {
+        console.error('⚠️ Failed to create order record:', orderError.message);
+        // Continue - order might already exist (ON CONFLICT DO NOTHING)
+      }
+    }
 
     // Get winery payment configuration
     const configResult = await client.query(
