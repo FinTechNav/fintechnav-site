@@ -903,8 +903,7 @@ class CustomerDetailsScreen {
         <div style="flex-shrink: 0;">
           ${this.renderLTVCard(customer)}
         </div>
-        <div style="flex: 1; min-height: 0;"></div>
-        <div style="flex-shrink: 0;">
+        <div style="flex: 1; min-height: 0; overflow-y: auto; padding-right: 5px;">
           ${this.renderPaymentMethods()}
         </div>
       </div>
@@ -1113,8 +1112,8 @@ class CustomerDetailsScreen {
           <div style="display: flex; align-items: center; gap: 10px;">
             <span style="font-size: 24px;">${cardBrandLogos[paymentMethod.card_brand] || '💳'}</span>
             <div>
-              <div style="color: #ecf0f1; font-weight: 600;">${paymentMethod.card_brand} •••• ${paymentMethod.card_last_4}</div>
-              <div style="color: #95a5a6; font-size: 12px;">Expires ${paymentMethod.card_expiry_month}/${paymentMethod.card_expiry_year}</div>
+              <div style="color: #ecf0f1; font-weight: 600;">${paymentMethod.card_brand} •••• ${paymentMethod.last_four}</div>
+              <div style="color: #95a5a6; font-size: 12px;">Expires ${paymentMethod.expiry_month}/${paymentMethod.expiry_year}</div>
             </div>
           </div>
           <button onclick="customerDetailsScreen.deletePaymentMethod('${paymentMethod.id}')" style="
@@ -1127,7 +1126,8 @@ class CustomerDetailsScreen {
         </div>
         
         <div style="color: #95a5a6; font-size: 12px;">
-          ${paymentMethod.billing_zip ? `Billing Zip: ${paymentMethod.billing_zip}` : ''}
+          ${paymentMethod.billing_name || ''}
+          ${paymentMethod.billing_address ? `<br>${paymentMethod.billing_address}` : ''}
         </div>
       </div>
     `;
