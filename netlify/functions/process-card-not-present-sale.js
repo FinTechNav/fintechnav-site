@@ -467,7 +467,20 @@ exports.handler = async (event, context) => {
     if (orderId) {
       try {
         console.log('📦 Creating order record:', orderId);
-        await client.query(
+        console.log('📦 Order details:', {
+          orderId,
+          wineryId,
+          customerId: customerId || null,
+          orderNumber: referenceId || orderId,
+          channel: 'ecommerce',
+          status: 'pending',
+          subtotalCents: Math.round((subtotal || amount) * 100),
+          taxCents: Math.round((tax || 0) * 100),
+          tipCents: Math.round(tipAmount * 100),
+          totalCents: Math.round(amount * 100),
+        });
+
+        const orderResult = await client.query(
           `INSERT INTO orders (
             id, winery_id, customer_id, order_number,
             channel, status, currency_code,
@@ -476,7 +489,8 @@ exports.handler = async (event, context) => {
           ) VALUES (
             $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12
           )
-          ON CONFLICT (id) DO NOTHING`,
+          ON CONFLICT (id) DO NOTHING
+          RETURNING id`,
           [
             orderId,
             wineryId,
@@ -492,11 +506,22 @@ exports.handler = async (event, context) => {
             new Date(),
           ]
         );
-        console.log('✅ Order record created');
+
+        if (orderResult.rows.length > 0) {
+          console.log('✅ Order record created:', orderResult.rows[0].id);
+        } else {
+          console.log('ℹ️ Order already exists (ON CONFLICT)');
+        }
       } catch (orderError) {
-        console.error('⚠️ Failed to create order record:', orderError.message);
-        // Continue - order might already exist (ON CONFLICT DO NOTHING)
+        console.error('❌ Failed to create order record:');
+        console.error('  Error message:', orderError.message);
+        console.error('  Error code:', orderError.code);
+        console.error('  Error detail:', orderError.detail);
+        console.error('  Error stack:', orderError.stack);
+        // Continue - order might already exist
       }
+    } else {
+      console.log('⚠️ No orderId provided - skipping order creation');
     }
 
     // Get winery payment configuration
@@ -841,6 +866,15 @@ exports.handler = async (event, context) => {
       // Save transaction record
       try {
         console.log('💾 Saving transaction record...');
+        console.log('💾 Transaction values:', {
+          orderId: orderId || null,
+          wineryId,
+          customerId: customerId || null,
+          paymentMethodId,
+          referenceId: transactionReferenceId,
+          amount: parseFloat(amount),
+        });
+
         const txResult = await client.query(
           `INSERT INTO transactions (
             order_id, winery_id, customer_id, payment_method_id,
@@ -888,7 +922,12 @@ exports.handler = async (event, context) => {
         transactionId = txResult.rows[0].id;
         console.log('✅ Transaction saved:', transactionId);
       } catch (txError) {
-        console.error('⚠️ Failed to save transaction (non-fatal):', txError.message);
+        console.error('❌ Failed to save transaction:');
+        console.error('  Error message:', txError.message);
+        console.error('  Error code:', txError.code);
+        console.error('  Error detail:', txError.detail);
+        console.error('  Error constraint:', txError.constraint);
+        console.error('  Error table:', txError.table);
         // Continue - transaction was approved even if we couldn't save the record
       }
     } else {
