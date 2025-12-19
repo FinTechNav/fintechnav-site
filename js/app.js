@@ -11,6 +11,8 @@ const App = {
   cssVariablesChecked: false,
   autoLogoutTimer: null,
   sessionState: null,
+  deviceFailedAttempts: 0,
+  deviceLockoutUntil: null,
 
   async init() {
     this.verifyThemeCSS();
@@ -383,13 +385,43 @@ const App = {
       return;
     }
 
-    // Try each user in the winery with this PIN
-    console.log('🔐 Submitting PIN, checking against', this.users.length, 'users');
-    console.log('💾 Session state:', this.sessionState);
+    // Check device lockout
+    if (this.deviceLockoutUntil && new Date() < this.deviceLockoutUntil) {
+      const secondsLeft = Math.ceil((this.deviceLockoutUntil - new Date()) / 1000);
+      if (errorEl) {
+        errorEl.textContent = `Device locked. Try again in ${secondsLeft} second${secondsLeft !== 1 ? 's' : ''}`;
+      }
+      this.pinEntry = '';
+      this.updatePinDots();
+      return;
+    }
 
-    for (const user of this.users) {
+    console.log('🔐 Submitting PIN');
+    console.log('💾 Session state:', this.sessionState);
+    console.log('⚠️ Device failed attempts:', this.deviceFailedAttempts);
+
+    // Check if we're in overlay mode with a session to resume
+    const loginScreen = document.getElementById('loginMethodScreen');
+    const isOverlay = loginScreen.getAttribute('data-is-overlay') === 'true';
+
+    let usersToTry = [...this.users];
+
+    // In overlay mode, prioritize the session user first
+    if (isOverlay && this.sessionState && this.sessionState.userId) {
+      console.log('🎯 Overlay mode: Prioritizing session user');
+      const sessionUserIndex = usersToTry.findIndex((u) => u.id === this.sessionState.userId);
+      if (sessionUserIndex > 0) {
+        // Move session user to front of array
+        const sessionUser = usersToTry.splice(sessionUserIndex, 1)[0];
+        usersToTry.unshift(sessionUser);
+        console.log('✨ Session user moved to front:', sessionUser.first_name);
+      }
+    }
+
+    // Try PIN against users in order (session user first if overlay)
+    for (const user of usersToTry) {
       try {
-        console.log(`🔍 Trying PIN for user: ${user.first_name} ${user.last_name} (${user.id})`);
+        console.log(`🔍 Trying PIN for: ${user.first_name} ${user.last_name}`);
 
         const response = await fetch('/.netlify/functions/validate-pin', {
           method: 'POST',
@@ -401,11 +433,14 @@ const App = {
         });
 
         const data = await response.json();
-        console.log(`📊 Response for ${user.first_name}:`, data);
 
         if (data.success) {
-          // PIN matched for this user
           console.log('✅ PIN matched for:', user.first_name, user.last_name);
+
+          // Reset device lockout on successful login
+          this.deviceFailedAttempts = 0;
+          this.deviceLockoutUntil = null;
+
           this.currentUser = {
             ...user,
             layout_preference: data.employee.layout_preference,
@@ -414,20 +449,60 @@ const App = {
           };
           this.loginSuccess();
           return;
-        } else {
-          console.log(`❌ PIN failed for ${user.first_name}:`, data.error);
         }
       } catch (error) {
         console.error(`💥 Error checking PIN for ${user.first_name}:`, error);
       }
     }
 
-    // No match found
+    // No match found - increment device lockout
+    console.log('❌ No PIN match found');
+    this.deviceFailedAttempts++;
+    console.log('📈 Device failed attempts now:', this.deviceFailedAttempts);
+
+    // Exponential backoff: 5 attempts = 3s, 6 = 5s, 7 = 8s, 8 = 13s, 9 = 21s, 10 = 34s...
+    if (this.deviceFailedAttempts >= 5) {
+      const fibonacci = (n) => {
+        if (n <= 1) return 1;
+        let a = 1,
+          b = 1;
+        for (let i = 2; i <= n; i++) {
+          [a, b] = [b, a + b];
+        }
+        return b;
+      };
+
+      const lockoutSeconds = fibonacci(this.deviceFailedAttempts - 4);
+      this.deviceLockoutUntil = new Date(Date.now() + lockoutSeconds * 1000);
+
+      console.log(`🔒 Device locked for ${lockoutSeconds} seconds`);
+
+      if (errorEl) {
+        errorEl.textContent = `Too many failed attempts. Device locked for ${lockoutSeconds} second${lockoutSeconds !== 1 ? 's' : ''}`;
+      }
+
+      // Start countdown
+      const updateCountdown = () => {
+        if (this.deviceLockoutUntil && new Date() < this.deviceLockoutUntil) {
+          const secondsLeft = Math.ceil((this.deviceLockoutUntil - new Date()) / 1000);
+          if (errorEl && secondsLeft > 0) {
+            errorEl.textContent = `Device locked. Try again in ${secondsLeft} second${secondsLeft !== 1 ? 's' : ''}`;
+          }
+          setTimeout(updateCountdown, 1000);
+        } else if (errorEl) {
+          errorEl.textContent = '';
+        }
+      };
+      updateCountdown();
+    } else {
+      if (errorEl) {
+        const attemptsLeft = 5 - this.deviceFailedAttempts;
+        errorEl.textContent = `Invalid PIN. ${attemptsLeft} attempt${attemptsLeft !== 1 ? 's' : ''} remaining before lockout`;
+      }
+    }
+
     this.pinEntry = '';
     this.updatePinDots();
-    if (errorEl) {
-      errorEl.textContent = 'Invalid PIN. Please try again.';
-    }
   },
 
   selectUser(userId) {
@@ -459,18 +534,24 @@ const App = {
     const isOverlay = loginScreen.getAttribute('data-is-overlay') === 'true';
 
     if (isOverlay) {
+      console.log('🔄 Overlay login detected, checking session resumption');
+      console.log('👤 Current user:', this.currentUser.id);
+      console.log('💾 Session user:', this.sessionState?.userId);
+
       // Check if same user is logging back in
       if (this.sessionState && this.sessionState.userId === this.currentUser.id) {
+        console.log('✅ Same user - restoring session');
         // Same user - restore their session
         if (this.sessionState.cart) {
           POSScreen.cart = [...this.sessionState.cart];
-          POSScreen.updateCart();
+          POSScreen.renderCart();
         }
         if (this.sessionState.currentCustomer) {
           POSScreen.currentCustomer = { ...this.sessionState.currentCustomer };
           POSScreen.updateCustomerDisplay();
         }
       } else {
+        console.log('🆕 Different user - resetting POS');
         // Different user - start fresh
         POSScreen.reset();
       }
@@ -483,6 +564,7 @@ const App = {
       // Clear session state
       this.sessionState = null;
     } else {
+      console.log('🎬 Initial login (not overlay)');
       // Initial login (not overlay)
       document.getElementById('loginMethodScreen').style.display = 'none';
       document.getElementById('appContainer').style.display = 'flex';
@@ -633,7 +715,7 @@ const App = {
     loginScreen.setAttribute('data-is-overlay', 'true');
     loginScreen.style.display = 'flex';
 
-    // Reset to PIN login (default)
+    // Default to PIN login for quick tasting room workflow
     this.showLoginMethod('pin');
   },
 
