@@ -600,18 +600,19 @@ const App = {
     this.currentUser = null;
     this.pinEntry = '';
 
-    // Show login overlay on top of POS
+    // Show login overlay on top of POS (keep app container visible)
     const loginScreen = document.getElementById('loginMethodScreen');
     const appContainer = document.getElementById('appContainer');
 
+    // Keep app container visible and blur it
+    appContainer.classList.add('blurred');
+
+    // Show login as overlay
     loginScreen.setAttribute('data-is-overlay', 'true');
     loginScreen.style.display = 'flex';
-    appContainer.classList.add('blurred');
 
     // Reset to PIN login (default)
     this.showLoginMethod('pin');
-
-    // Don't reset POS yet - keep it visible underneath
   },
 
   toggleSidebar() {
