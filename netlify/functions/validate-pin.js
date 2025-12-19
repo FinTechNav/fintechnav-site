@@ -34,8 +34,7 @@ exports.handler = async (event) => {
 
     // Get employee data
     const employeeQuery = `
-      SELECT id, first_name, last_name, pin_hash, pin_attempts, pin_locked_until, layout_preference,
-             auto_logout_enabled, auto_logout_minutes
+      SELECT id, first_name, last_name, pin_hash, pin_attempts, pin_locked_until, layout_preference
       FROM employees
       WHERE id = $1 AND status = 'active' AND deleted_at IS NULL
     `;
@@ -56,18 +55,6 @@ exports.handler = async (event) => {
     const employee = result.rows[0];
     console.log('👤 Employee found:', employee.first_name, employee.last_name);
     console.log('🔑 Has pin_hash:', !!employee.pin_hash);
-
-    // Check if account is locked
-    if (employee.pin_locked_until && new Date(employee.pin_locked_until) > new Date()) {
-      const minutesLeft = Math.ceil((new Date(employee.pin_locked_until) - new Date()) / 60000);
-      return {
-        statusCode: 403,
-        body: JSON.stringify({
-          success: false,
-          error: `Account locked. Try again in ${minutesLeft} minute${minutesLeft > 1 ? 's' : ''}`,
-        }),
-      };
-    }
 
     // Check if PIN is set
     if (!employee.pin_hash) {
@@ -103,12 +90,7 @@ exports.handler = async (event) => {
     console.log('🔐 PIN valid:', isValid);
 
     if (isValid) {
-      // Reset failed attempts on successful login
-      await client.query(
-        'UPDATE employees SET pin_attempts = 0, pin_locked_until = NULL WHERE id = $1',
-        [employee_id]
-      );
-
+      // Successful login - device handles lockout, no need for server-side attempt tracking
       return {
         statusCode: 200,
         body: JSON.stringify({
@@ -124,30 +106,12 @@ exports.handler = async (event) => {
         }),
       };
     } else {
-      // Increment failed attempts
-      const newAttempts = (employee.pin_attempts || 0) + 1;
-      const lockUntil = newAttempts >= 5 ? new Date(Date.now() + 15 * 60000) : null;
-
-      await client.query(
-        'UPDATE employees SET pin_attempts = $1, pin_locked_until = $2 WHERE id = $3',
-        [newAttempts, lockUntil, employee_id]
-      );
-
-      if (lockUntil) {
-        return {
-          statusCode: 403,
-          body: JSON.stringify({
-            success: false,
-            error: 'Too many failed attempts. Account locked for 15 minutes.',
-          }),
-        };
-      }
-
+      // Invalid PIN - device handles lockout, just return simple error
       return {
         statusCode: 401,
         body: JSON.stringify({
           success: false,
-          error: `Invalid PIN. ${5 - newAttempts} attempt${5 - newAttempts === 1 ? '' : 's'} remaining.`,
+          error: 'Invalid PIN',
         }),
       };
     }
