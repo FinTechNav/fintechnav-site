@@ -1,0 +1,51 @@
+/* Login Overlay Styles */
+.login-overlay[data-is-overlay="true"] {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 999;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.35);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+
+/* Ensure sidebar stays above overlay */
+.sidebar {
+    z-index: 1000 !important;
+}
+
+.login-overlay[data-is-overlay="true"] .login-container {
+    position: relative;
+    max-width: 500px;
+    animation: slideDown 0.3s ease-out;
+    z-index: 1001;
+}
+
+@keyframes slideDown {
+    from {
+        transform: translateY(-20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* Blur the app container when overlay is active */
+.app-container.blurred {
+    filter: blur(4px) brightness(0.7);
+    pointer-events: none;
+}
+
+/* Ensure app container stays visible behind overlay */
+.app-container.blurred {
+    display: flex !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+}
