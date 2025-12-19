@@ -1,6 +1,11 @@
 // Products Screen functionality - Enhanced with all product attributes
 const ProductsScreen = {
   products: [],
+  displayedProducts: [],
+  itemsPerPage: 50,
+  currentPage: 0,
+  isLoadingMore: false,
+  scrollContainer: null,
   selectedProductIds: new Set(),
   editingProduct: null,
   showingDetails: false,
@@ -19,7 +24,14 @@ const ProductsScreen = {
 
     await this.loadProducts();
     this.loadingState.products = false;
+
+    // Initialize pagination
+    const filtered = this.getFilteredAndSortedProducts();
+    this.currentPage = 0;
+    this.displayedProducts = filtered.slice(0, this.itemsPerPage);
+
     this.renderProducts();
+    this.setupInfiniteScroll();
   },
 
   async loadProducts() {
@@ -104,6 +116,104 @@ const ProductsScreen = {
     return filtered;
   },
 
+  setupInfiniteScroll() {
+    setTimeout(() => {
+      const tbody = document.querySelector('#productsContainer .data-table tbody');
+      if (tbody) {
+        if (this.scrollContainer) {
+          this.scrollContainer.removeEventListener('scroll', this.handleScroll);
+        }
+        this.scrollContainer = tbody;
+        this.scrollContainer.addEventListener('scroll', this.handleScroll.bind(this));
+      }
+    }, 100);
+  },
+
+  handleScroll(e) {
+    if (this.isLoadingMore) return;
+
+    const container = e.target;
+    const scrollTop = container.scrollTop;
+    const scrollHeight = container.scrollHeight;
+    const clientHeight = container.clientHeight;
+
+    if (scrollHeight - scrollTop - clientHeight < 300) {
+      this.loadMoreProducts();
+    }
+  },
+
+  loadMoreProducts() {
+    if (this.isLoadingMore) return;
+
+    const filtered = this.getFilteredAndSortedProducts();
+    const remainingProducts = filtered.length - this.displayedProducts.length;
+    if (remainingProducts === 0) return;
+
+    this.isLoadingMore = true;
+    this.currentPage++;
+
+    const startIndex = this.currentPage * this.itemsPerPage;
+    const endIndex = startIndex + this.itemsPerPage;
+    const nextBatch = filtered.slice(startIndex, endIndex);
+
+    this.displayedProducts = [...this.displayedProducts, ...nextBatch];
+
+    this.isLoadingMore = false;
+    this.renderMoreProducts(nextBatch);
+  },
+
+  renderMoreProducts(newProducts) {
+    const tbody = document.querySelector('#productsContainer .data-table tbody');
+    if (tbody) {
+      const html = newProducts.map((p) => this.renderProductRow(p)).join('');
+      tbody.insertAdjacentHTML('beforeend', html);
+    }
+  },
+
+  renderProductRow(p) {
+    return `
+      <tr>
+        <td class="text-center">
+          <input type="checkbox" 
+            ${this.selectedProductIds.has(p.id) ? 'checked' : ''}
+            onchange="ProductsScreen.toggleProduct(${p.id})"
+            style="cursor: pointer; width: 18px; height: 18px;">
+        </td>
+        <td class="text-primary">
+          ${p.name}
+          ${p.image_url ? '🖼️' : ''}
+        </td>
+        <td class="text-muted">${p.vintage || '-'}</td>
+        <td class="text-muted">${p.varietal || '-'}</td>
+        <td class="text-muted">
+          <span class="wine-type-badge" style="background: ${this.getTypeColor(p.wine_color || p.product_category || p.type)}; padding: 2px 8px; border-radius: 4px; font-size: 0.85em;">
+            ${p.wine_color || p.product_category || p.type || 'Product'}
+          </span>
+        </td>
+        <td class="text-accent text-right font-semibold">
+          $${parseFloat(p.price || 0).toFixed(2)}
+        </td>
+        <td class="text-center" style="color: ${p.available_quantity > p.reorder_point ? '#27ae60' : '#e74c3c'};">
+          ${p.track_inventory ? p.available_quantity || 0 : '∞'}
+        </td>
+        <td class="text-center" style="color: ${p.online_status === 'available' ? '#27ae60' : '#e74c3c'};">
+          ${p.online_status || 'available'}
+        </td>
+        <td class="text-center">
+          <button onclick="ProductsScreen.viewDetails(${p.id})" 
+            class="btn btn-info btn-sm"
+            title="View Details">👁️</button>
+          <button onclick="ProductsScreen.editProduct(${p.id})" 
+            class="btn btn-warning btn-sm"
+            title="Edit">✏️</button>
+          <button onclick="ProductsScreen.deleteProduct(${p.id})" 
+            class="btn btn-danger btn-sm"
+            title="Delete">🗑️</button>
+        </td>
+      </tr>
+    `;
+  },
+
   renderProducts() {
     const container = document.getElementById('productsContainer');
 
@@ -181,60 +291,14 @@ const ProductsScreen = {
                     ${
                       filtered.length === 0
                         ? '<tr><td colspan="9" class="empty-state">No products match your filters</td></tr>'
-                        : filtered
-                            .map(
-                              (p) => `
-                        <tr>
-                            <td class="text-center">
-                                <input type="checkbox" 
-                                    ${this.selectedProductIds.has(p.id) ? 'checked' : ''}
-                                    onchange="ProductsScreen.toggleProduct(${p.id})"
-                                    style="cursor: pointer; width: 18px; height: 18px;">
-                            </td>
-                            <td class="text-primary">
-                                ${p.name}
-                                ${p.image_url ? '🖼️' : ''}
-                            </td>
-                            <td class="text-muted">${p.vintage || '-'}</td>
-                            <td class="text-muted">${p.varietal || '-'}</td>
-                            <td class="text-muted">
-                                <span class="wine-type-badge" style="background: ${this.getTypeColor(p.wine_color || p.product_category || p.type)}; padding: 2px 8px; border-radius: 4px; font-size: 0.85em;">
-                                    ${p.wine_color || p.product_category || p.type || 'Product'}
-                                </span>
-                            </td>
-                            <td class="text-accent text-right font-semibold">
-                                $${parseFloat(p.price || 0).toFixed(2)}
-                            </td>
-                            <td class="text-center" style="color: ${p.available_quantity > p.reorder_point ? '#27ae60' : '#e74c3c'};">
-                                ${p.track_inventory ? p.available_quantity || 0 : '∞'}
-                            </td>
-                            <td class="text-center" style="color: ${p.online_status === 'available' ? '#27ae60' : '#e74c3c'};">
-                                ${p.online_status || 'available'}
-                            </td>
-                            <td class="text-center">
-                                <button onclick="ProductsScreen.viewDetails(${p.id})" 
-                                    class="btn btn-info btn-sm"
-                                    title="View Details">👁️</button>
-                                <button onclick="ProductsScreen.editProduct(${p.id})" 
-                                    class="btn btn-warning btn-sm"
-                                    title="Edit">✏️</button>
-                                <button onclick="ProductsScreen.deleteProduct(${p.id})" 
-                                    class="btn btn-danger btn-sm"
-                                    title="Delete">🗑️</button>
-                            </td>
-                        </tr>
-                    `
-                            )
-                            .join('')
+                        : this.displayedProducts.map((p) => this.renderProductRow(p)).join('')
                     }
                 </tbody>
             </table>
         `;
 
     container.innerHTML = tableHtml;
-
-    // Render table separately so search input keeps focus
-    this.renderProductsTable();
+    this.setupInfiniteScroll();
   },
 
   renderProductsTable() {
@@ -329,27 +393,38 @@ const ProductsScreen = {
 
   handleSearch(value) {
     this.searchTerm = value;
-    this.renderProductsTable(); // Only re-render table, not inputs
+    this.resetPagination();
+    this.renderProductsTable();
   },
 
   handleFilterType(value) {
     this.filterType = value;
+    this.resetPagination();
     this.renderProductsTable();
   },
 
   handleFilterStatus(value) {
     this.filterStatus = value;
+    this.resetPagination();
     this.renderProductsTable();
   },
 
   handleSort(value) {
     this.sortBy = value;
+    this.resetPagination();
     this.renderProductsTable();
   },
 
   toggleSortOrder() {
     this.sortOrder = this.sortOrder === 'asc' ? 'desc' : 'asc';
+    this.resetPagination();
     this.renderProductsTable();
+  },
+
+  resetPagination() {
+    this.currentPage = 0;
+    const filtered = this.getFilteredAndSortedProducts();
+    this.displayedProducts = filtered.slice(0, this.itemsPerPage);
   },
 
   getTypeColor(wineColor) {
