@@ -584,8 +584,6 @@ const App = {
   },
 
   logout() {
-    console.log('🚪 Logout initiated');
-
     // Stop auto-logout timer
     this.stopAutoLogoutTimer();
 
@@ -596,7 +594,6 @@ const App = {
       currentCustomer: POSScreen.currentCustomer ? { ...POSScreen.currentCustomer } : null,
       layoutPreference: this.currentUser?.layout_preference || 'commerce',
     };
-    console.log('💾 Session state saved:', this.sessionState);
 
     // Clear current user but keep winery
     const previousUser = this.currentUser;
@@ -606,33 +603,13 @@ const App = {
     // Show login overlay on top of POS (keep app container visible)
     const loginScreen = document.getElementById('loginMethodScreen');
     const appContainer = document.getElementById('appContainer');
-    const sidebar = document.getElementById('sidebar');
-
-    console.log(
-      '📊 Before blur - appContainer display:',
-      window.getComputedStyle(appContainer).display
-    );
-    console.log('📊 Before blur - sidebar display:', window.getComputedStyle(sidebar).display);
-    console.log(
-      '📊 Before blur - sidebar visibility:',
-      window.getComputedStyle(sidebar).visibility
-    );
 
     // Keep app container visible and blur it
     appContainer.classList.add('blurred');
 
-    console.log(
-      '📊 After blur - appContainer display:',
-      window.getComputedStyle(appContainer).display
-    );
-    console.log('📊 After blur - appContainer classes:', appContainer.className);
-    console.log('📊 After blur - sidebar display:', window.getComputedStyle(sidebar).display);
-    console.log('📊 After blur - sidebar visibility:', window.getComputedStyle(sidebar).visibility);
-
     // Show login as overlay
     loginScreen.setAttribute('data-is-overlay', 'true');
     loginScreen.style.display = 'flex';
-    console.log('🔐 Login overlay shown');
 
     // Reset to PIN login (default)
     this.showLoginMethod('pin');
