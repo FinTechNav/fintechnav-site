@@ -995,10 +995,13 @@ const App = {
           }
         }
 
-        // Navigate to saved screen if not POS
-        if (session.current_screen && session.current_screen !== 'pos') {
+        // Navigate to saved screen (always, to ensure correct screen is shown)
+        if (session.current_screen) {
           console.log('📍 Navigating to saved screen:', session.current_screen);
           await this.navigateTo(session.current_screen);
+        } else {
+          console.log('📍 No saved screen, defaulting to POS');
+          await this.navigateTo('pos');
         }
       } else {
         console.log('ℹ️ No session to restore (expired or new user)');
