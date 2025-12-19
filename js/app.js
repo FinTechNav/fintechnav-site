@@ -385,7 +385,7 @@ const App = {
       return;
     }
 
-    // Check device lockout
+    // Check device lockout BEFORE trying any PINs
     if (this.deviceLockoutUntil && new Date() < this.deviceLockoutUntil) {
       const secondsLeft = Math.ceil((this.deviceLockoutUntil - new Date()) / 1000);
       if (errorEl) {
@@ -460,19 +460,9 @@ const App = {
     this.deviceFailedAttempts++;
     console.log('📈 Device failed attempts now:', this.deviceFailedAttempts);
 
-    // Exponential backoff: 5 attempts = 3s, 6 = 5s, 7 = 8s, 8 = 13s, 9 = 21s, 10 = 34s...
+    // Start lockout after 5 failed attempts, increase by 5 seconds each time
     if (this.deviceFailedAttempts >= 5) {
-      const fibonacci = (n) => {
-        if (n <= 1) return 1;
-        let a = 1,
-          b = 1;
-        for (let i = 2; i <= n; i++) {
-          [a, b] = [b, a + b];
-        }
-        return b;
-      };
-
-      const lockoutSeconds = fibonacci(this.deviceFailedAttempts - 4);
+      const lockoutSeconds = (this.deviceFailedAttempts - 4) * 5;
       this.deviceLockoutUntil = new Date(Date.now() + lockoutSeconds * 1000);
 
       console.log(`🔒 Device locked for ${lockoutSeconds} seconds`);
@@ -489,17 +479,17 @@ const App = {
             errorEl.textContent = `Device locked. Try again in ${secondsLeft} second${secondsLeft !== 1 ? 's' : ''}`;
           }
           setTimeout(updateCountdown, 1000);
-        } else if (errorEl) {
-          errorEl.textContent = '';
+        } else {
+          if (errorEl) {
+            errorEl.textContent = '';
+          }
+          // Clear the lockout time when countdown completes
+          this.deviceLockoutUntil = null;
         }
       };
       updateCountdown();
-    } else {
-      if (errorEl) {
-        const attemptsLeft = 5 - this.deviceFailedAttempts;
-        errorEl.textContent = `Invalid PIN. ${attemptsLeft} attempt${attemptsLeft !== 1 ? 's' : ''} remaining before lockout`;
-      }
     }
+    // Don't show any error message for first 4 attempts - stay silent
 
     this.pinEntry = '';
     this.updatePinDots();
