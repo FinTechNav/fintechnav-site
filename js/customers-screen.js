@@ -107,7 +107,7 @@ class CustomersScreen {
 
   async loadCustomers() {
     try {
-      const response = await fetch('/.netlify/functions/get-customers?limit=100');
+      const response = await fetch('/.netlify/functions/get-customers?limit=1000');
       const data = await response.json();
       if (data.success) {
         this.customers = data.customers;
