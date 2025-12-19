@@ -108,7 +108,7 @@ exports.handler = async (event, context) => {
             winery_id,
             customer_id || null,
             employee_id || null,
-            payment_method, // 'cash', 'check', 'ach', etc.
+            null, // No processor for cash/check/ACH - constraint only allows 'dejavoo', 'stripe', or NULL
             payment_reference || `${payment_method.toUpperCase()}${Date.now()}`,
             order_source || 'pos',
             'sale',
