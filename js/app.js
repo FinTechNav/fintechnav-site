@@ -226,7 +226,11 @@ const App = {
 
     document.getElementById('wineryLoginScreen').style.display = 'none';
     document.getElementById('loginMethodScreen').style.display = 'flex';
-    document.getElementById('loginMethodWinery').textContent = this.currentWinery.name;
+
+    // Update login screen with winery logo and name
+    if (typeof window.updateLoginWineryDisplay === 'function') {
+      window.updateLoginWineryDisplay(this.currentWinery);
+    }
 
     // Default to PIN login
     this.showLoginMethod('pin');
