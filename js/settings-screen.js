@@ -159,21 +159,75 @@ const SettingsScreen = {
   },
 
   renderUsersTab() {
+    const currentUser = App.currentUser;
+    if (!currentUser) {
+      return `
+        <div class="settings-page-header">
+          <h2 class="settings-page-title">User Settings</h2>
+          <p class="settings-page-subtitle">Personal preferences</p>
+        </div>
+        <div class="section-container">
+          <div class="empty-state">No user logged in</div>
+        </div>
+      `;
+    }
+
+    const autoLogoutEnabled = currentUser.auto_logout_enabled !== false;
+    const autoLogoutMinutes = currentUser.auto_logout_minutes || 5;
+    const minuteOptions = [1, 2, 3, 4, 5, 10, 15, 30, 60, 90];
+
     return `
       <div class="settings-page-header">
-        <h2 class="settings-page-title">Users</h2>
-        <p class="settings-page-subtitle">Manage user accounts for this winery</p>
+        <h2 class="settings-page-title">User Settings</h2>
+        <p class="settings-page-subtitle">Personal preferences for ${currentUser.first_name} ${currentUser.last_name}</p>
       </div>
       
       <div class="section-container">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-          <h3 class="section-header" style="margin: 0;">User Accounts</h3>
-          <button class="btn">+ Add User</button>
-        </div>
+        <h3 class="section-header">Auto Logout</h3>
         
-        <div class="empty-state">
-          User management coming soon...
+        <div class="section-grid">
+          <label class="payment-method-option">
+            <input 
+              type="checkbox" 
+              id="autoLogoutEnabled" 
+              ${autoLogoutEnabled ? 'checked' : ''} 
+              onchange="SettingsScreen.toggleAutoLogout(this.checked)"
+              style="width: 20px; height: 20px; cursor: pointer;" 
+            />
+            <div style="flex: 1;">
+              <div class="text-primary font-semibold">Enable Auto Logout</div>
+              <div class="text-muted text-small" style="margin-top: 4px;">
+                Automatically log out after a period of inactivity
+              </div>
+            </div>
+          </label>
         </div>
+
+        ${
+          autoLogoutEnabled
+            ? `
+          <div style="margin-top: 20px;">
+            <label class="form-label">Auto logout after:</label>
+            <select 
+              id="autoLogoutMinutes" 
+              class="form-control" 
+              style="width: 200px; padding: 8px;" 
+              onchange="SettingsScreen.updateAutoLogoutMinutes(parseInt(this.value))"
+            >
+              ${minuteOptions
+                .map(
+                  (min) => `
+                <option value="${min}" ${min === autoLogoutMinutes ? 'selected' : ''}>
+                  ${min} minute${min !== 1 ? 's' : ''}
+                </option>
+              `
+                )
+                .join('')}
+            </select>
+          </div>
+        `
+            : ''
+        }
       </div>
     `;
   },
@@ -794,5 +848,58 @@ const SettingsScreen = {
         </div>
       </div>
     `;
+  },
+
+  async toggleAutoLogout(enabled) {
+    if (!App.currentUser) return;
+
+    try {
+      const response = await fetch('/.netlify/functions/update-employee-settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          employee_id: App.currentUser.id,
+          auto_logout_enabled: enabled,
+        }),
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        App.currentUser.auto_logout_enabled = enabled;
+        if (enabled) {
+          App.startAutoLogoutTimer();
+        } else {
+          App.stopAutoLogoutTimer();
+        }
+        this.render();
+      }
+    } catch (error) {
+      console.error('Error updating auto-logout setting:', error);
+      alert('Failed to update auto-logout setting');
+    }
+  },
+
+  async updateAutoLogoutMinutes(minutes) {
+    if (!App.currentUser) return;
+
+    try {
+      const response = await fetch('/.netlify/functions/update-employee-settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          employee_id: App.currentUser.id,
+          auto_logout_minutes: minutes,
+        }),
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        App.currentUser.auto_logout_minutes = minutes;
+        App.startAutoLogoutTimer();
+      }
+    } catch (error) {
+      console.error('Error updating auto-logout minutes:', error);
+      alert('Failed to update auto-logout minutes');
+    }
   },
 };

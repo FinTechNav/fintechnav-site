@@ -46,7 +46,9 @@ exports.handler = async (event, context) => {
         first_name,
         last_name,
         role,
-        status
+        status,
+        auto_logout_enabled,
+        auto_logout_minutes
       FROM employees
       WHERE winery_id = $1
         AND deleted_at IS NULL

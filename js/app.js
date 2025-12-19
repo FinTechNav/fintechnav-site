@@ -9,6 +9,8 @@ const App = {
   wineries: [],
   users: [],
   cssVariablesChecked: false,
+  autoLogoutTimer: null,
+  sessionState: null,
 
   async init() {
     this.verifyThemeCSS();
@@ -21,6 +23,7 @@ const App = {
     this.registerServiceWorker();
     this.initMobileHandlers();
     this.initKeyboardHandler();
+    this.initActivityListeners();
 
     // Add comprehensive diagnostics
     this.logViewportDiagnostics();
@@ -429,56 +432,90 @@ const App = {
       }
     }
 
-    document.getElementById('loginMethodScreen').style.display = 'none';
-    document.getElementById('appContainer').style.display = 'flex';
+    // Check if this is an overlay login (session resumption)
+    const loginScreen = document.getElementById('loginMethodScreen');
+    const isOverlay = loginScreen.getAttribute('data-is-overlay') === 'true';
 
-    this.updateWineryDisplay();
-    this.applyLayoutPreference();
-
-    // Trigger winery header load after login completes
-    if (typeof window.loadWineryHeader === 'function') {
-      setTimeout(() => window.loadWineryHeader(), 500);
-    }
-
-    const isMobile = window.innerWidth <= 768;
-
-    if (isMobile) {
-      const initMobile = () => {
-        if (typeof MobilePOS !== 'undefined') {
-          MobilePOS.init();
-        } else {
-          setTimeout(initMobile, 100);
+    if (isOverlay) {
+      // Check if same user is logging back in
+      if (this.sessionState && this.sessionState.userId === this.currentUser.id) {
+        // Same user - restore their session
+        if (this.sessionState.cart) {
+          POSScreen.cart = [...this.sessionState.cart];
+          POSScreen.updateCart();
         }
-      };
-      initMobile();
+        if (this.sessionState.currentCustomer) {
+          POSScreen.currentCustomer = { ...this.sessionState.currentCustomer };
+          POSScreen.updateCustomerDisplay();
+        }
+      } else {
+        // Different user - start fresh
+        POSScreen.reset();
+      }
+
+      // Hide overlay, remove blur
+      loginScreen.style.display = 'none';
+      loginScreen.setAttribute('data-is-overlay', 'false');
+      document.getElementById('appContainer').classList.remove('blurred');
+
+      // Clear session state
+      this.sessionState = null;
     } else {
-      this.createMobileMenuButton();
-      POSScreen.init();
+      // Initial login (not overlay)
+      document.getElementById('loginMethodScreen').style.display = 'none';
+      document.getElementById('appContainer').style.display = 'flex';
 
-      // Monitor for style changes on product cards
-      setTimeout(() => {
-        const productCards = document.querySelectorAll('.product-card');
-        if (productCards.length > 0) {
-          productCards.forEach((card, index) => {
-            if (index === 0) {
-              // Only monitor first card to reduce noise
-              const observer = new MutationObserver((mutations) => {
-                mutations.forEach((mutation) => {
-                  if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
-                  }
+      this.updateWineryDisplay();
+      this.applyLayoutPreference();
+
+      // Trigger winery header load after login completes
+      if (typeof window.loadWineryHeader === 'function') {
+        setTimeout(() => window.loadWineryHeader(), 500);
+      }
+
+      const isMobile = window.innerWidth <= 768;
+
+      if (isMobile) {
+        const initMobile = () => {
+          if (typeof MobilePOS !== 'undefined') {
+            MobilePOS.init();
+          } else {
+            setTimeout(initMobile, 100);
+          }
+        };
+        initMobile();
+      } else {
+        this.createMobileMenuButton();
+        POSScreen.init();
+
+        // Monitor for style changes on product cards
+        setTimeout(() => {
+          const productCards = document.querySelectorAll('.product-card');
+          if (productCards.length > 0) {
+            productCards.forEach((card, index) => {
+              if (index === 0) {
+                // Only monitor first card to reduce noise
+                const observer = new MutationObserver((mutations) => {
+                  mutations.forEach((mutation) => {
+                    if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
+                    }
+                  });
                 });
-              });
 
-              observer.observe(card, {
-                attributes: true,
-                attributeOldValue: true,
-                attributeFilter: ['style'],
-              });
-            }
-          });
-        }
-      }, 1000);
+                observer.observe(card, {
+                  attributes: true,
+                  attributeOldValue: true,
+                  attributeFilter: ['style'],
+                });
+              }
+            });
+          }
+        }, 1000);
+      }
     }
+
+    // Start auto-logout timer after login
+    this.startAutoLogoutTimer();
   },
 
   applyLayoutPreference() {
@@ -547,33 +584,34 @@ const App = {
   },
 
   logout() {
-    // Clear user but keep winery
+    // Stop auto-logout timer
+    this.stopAutoLogoutTimer();
+
+    // Save current POS session state
+    this.sessionState = {
+      userId: this.currentUser?.id,
+      cart: POSScreen.cart ? [...POSScreen.cart] : [],
+      currentCustomer: POSScreen.currentCustomer ? { ...POSScreen.currentCustomer } : null,
+      layoutPreference: this.currentUser?.layout_preference || 'commerce',
+    };
+
+    // Clear current user but keep winery
+    const previousUser = this.currentUser;
     this.currentUser = null;
     this.pinEntry = '';
 
-    // Clear userName from localStorage (keep selectedWineryId since staying on same winery)
-    localStorage.removeItem('userName');
+    // Show login overlay on top of POS
+    const loginScreen = document.getElementById('loginMethodScreen');
+    const appContainer = document.getElementById('appContainer');
 
-    // Hide app, show login method screen (stay on current winery)
-    document.getElementById('appContainer').style.display = 'none';
-    document.getElementById('loginMethodScreen').style.display = 'flex';
-
-    // Remove mobile menu button
-    const mobileBtn = document.getElementById('mobileMenuBtn');
-    if (mobileBtn) mobileBtn.remove();
-
-    // Close sidebar and remove overlay
-    const sidebar = document.getElementById('sidebar');
-    if (sidebar) sidebar.classList.remove('expanded');
-    const overlay = document.querySelector('.sidebar-overlay');
-    if (overlay) overlay.remove();
-    document.body.classList.remove('sidebar-open');
+    loginScreen.setAttribute('data-is-overlay', 'true');
+    loginScreen.style.display = 'flex';
+    appContainer.classList.add('blurred');
 
     // Reset to PIN login (default)
     this.showLoginMethod('pin');
 
-    // Reset POS
-    POSScreen.reset();
+    // Don't reset POS yet - keep it visible underneath
   },
 
   toggleSidebar() {
@@ -651,6 +689,43 @@ const App = {
     } else if (screen === 'settings') {
       await SettingsScreen.init();
     }
+  },
+
+  startAutoLogoutTimer() {
+    // Clear any existing timer
+    this.stopAutoLogoutTimer();
+
+    if (!this.currentUser || !this.currentUser.auto_logout_enabled) {
+      return;
+    }
+
+    const minutes = this.currentUser.auto_logout_minutes || 5;
+    const milliseconds = minutes * 60 * 1000;
+
+    this.autoLogoutTimer = setTimeout(() => {
+      this.logout();
+    }, milliseconds);
+  },
+
+  stopAutoLogoutTimer() {
+    if (this.autoLogoutTimer) {
+      clearTimeout(this.autoLogoutTimer);
+      this.autoLogoutTimer = null;
+    }
+  },
+
+  resetAutoLogoutTimer() {
+    if (this.currentUser && this.currentUser.auto_logout_enabled) {
+      this.startAutoLogoutTimer();
+    }
+  },
+
+  initActivityListeners() {
+    // Reset timer on any user activity
+    const activityEvents = ['mousedown', 'keydown', 'touchstart', 'scroll'];
+    activityEvents.forEach((event) => {
+      document.addEventListener(event, () => this.resetAutoLogoutTimer(), { passive: true });
+    });
   },
 
   registerServiceWorker() {

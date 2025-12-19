@@ -34,7 +34,8 @@ exports.handler = async (event) => {
 
     // Get employee data
     const employeeQuery = `
-      SELECT id, first_name, last_name, pin_hash, pin_attempts, pin_locked_until, layout_preference
+      SELECT id, first_name, last_name, pin_hash, pin_attempts, pin_locked_until, layout_preference,
+             auto_logout_enabled, auto_logout_minutes
       FROM employees
       WHERE id = $1 AND status = 'active' AND deleted_at IS NULL
     `;
@@ -117,6 +118,8 @@ exports.handler = async (event) => {
             first_name: employee.first_name,
             last_name: employee.last_name,
             layout_preference: employee.layout_preference || 'commerce',
+            auto_logout_enabled: employee.auto_logout_enabled !== false,
+            auto_logout_minutes: employee.auto_logout_minutes || 5,
           },
         }),
       };
