@@ -628,7 +628,10 @@ const App = {
       screenElement.style.display = screen === 'pos' ? 'flex' : 'block';
     }
 
-    event.currentTarget.classList.add('active');
+    // Only try to access event if it exists (when called from click handler)
+    if (typeof event !== 'undefined' && event && event.currentTarget) {
+      event.currentTarget.classList.add('active');
+    }
 
     if (window.innerWidth <= 430) {
       const sidebar = document.getElementById('sidebar');
