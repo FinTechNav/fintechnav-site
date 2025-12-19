@@ -589,7 +589,7 @@ const App = {
     this.loginSuccess();
   },
 
-  loginSuccess() {
+  async loginSuccess() {
     // Store winery and user info in localStorage for later use
     if (this.currentWinery && this.currentWinery.id) {
       localStorage.setItem('selectedWineryId', this.currentWinery.id);
@@ -626,9 +626,11 @@ const App = {
           POSScreen.updateCustomerDisplay();
         }
       } else {
-        console.log('🆕 Different user - resetting POS');
-        // Different user - start fresh
+        console.log('🆕 Different user - loading their session');
+        // Different user - reset POS first
         POSScreen.reset();
+        // Then load the new user's session from database
+        await this.loadUserSession();
       }
 
       // Hide overlay, remove blur
