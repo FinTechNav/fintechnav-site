@@ -262,9 +262,14 @@ const App = {
     if (userNameElem) userNameElem.textContent = '';
     if (userNameNoLogoElem) userNameNoLogoElem.textContent = '';
 
-    // Hide app container
+    // Reset overlay state and remove blur
     const appContainer = document.getElementById('appContainer');
+    const loginMethodScreen = document.getElementById('loginMethodScreen');
+
     appContainer.style.display = 'none';
+    appContainer.classList.remove('blurred');
+
+    loginMethodScreen.setAttribute('data-is-overlay', 'false');
 
     document.getElementById('wineryLoginScreen').style.display = 'flex';
     document.getElementById('loginMethodScreen').style.display = 'none';
