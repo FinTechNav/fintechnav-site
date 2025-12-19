@@ -36,6 +36,12 @@ class CustomersScreen {
       maxOrders: null,
       lastOrderDays: null,
     };
+    // Infinite scroll
+    this.displayedCustomers = [];
+    this.itemsPerPage = 100;
+    this.currentPage = 0;
+    this.isLoadingMore = false;
+    this.scrollContainer = null;
   }
 
   async init() {
@@ -101,7 +107,7 @@ class CustomersScreen {
 
   async loadCustomers() {
     try {
-      const response = await fetch('/.netlify/functions/get-customers?limit=1000');
+      const response = await fetch('/.netlify/functions/get-customers?limit=100');
       const data = await response.json();
       if (data.success) {
         this.customers = data.customers;
@@ -199,6 +205,10 @@ class CustomersScreen {
     }
 
     this.filteredCustomers = this.sortCustomers(filtered);
+
+    // Reset pagination when filters change
+    this.currentPage = 0;
+    this.displayedCustomers = this.filteredCustomers.slice(0, this.itemsPerPage);
   }
 
   sortBy(field) {
@@ -1249,12 +1259,13 @@ class CustomersScreen {
       return '<div class="no-customers">No customers found</div>';
     }
 
-    const allSelected = this.filteredCustomers.every((c) => this.selectedCustomers.has(c.id));
+    const customersToRender = this.displayedCustomers;
 
+    return customersToRender.map((customer) => this.renderCustomerCard(customer)).join('');
+  }
+
+  renderCustomerCard(customer) {
     return `
-      ${this.filteredCustomers
-        .map(
-          (customer) => `
       <div class="customer-card" onclick="customersScreen.viewCustomer('${customer.id}')">
         <div class="card-select">
           <input 
@@ -1295,9 +1306,6 @@ class CustomersScreen {
           </button>
         </div>
       </div>
-    `
-        )
-        .join('')}
     `;
   }
 
@@ -1314,6 +1322,8 @@ class CustomersScreen {
         ? '<img src="https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-38.svg" class="sort-icon menu-icon-sort-asc" alt="Ascending">'
         : '<img src="https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-37.svg" class="sort-icon menu-icon-sort-desc" alt="Descending">';
     };
+
+    const customersToRender = this.displayedCustomers;
 
     return `
       <table class="customers-table">
@@ -1351,57 +1361,57 @@ class CustomersScreen {
           </tr>
         </thead>
         <tbody>
-          ${this.filteredCustomers
-            .map(
-              (customer) => `
-            <tr onclick="customersScreen.viewCustomer('${customer.id}')">
-              <td onclick="event.stopPropagation()">
-                <input 
-                  type="checkbox" 
-                  ${this.selectedCustomers.has(customer.id) ? 'checked' : ''}
-                  onchange="customersScreen.toggleSelection('${customer.id}')"
-                />
-              </td>
-              <td>
-                <div class="customer-name-cell">
-                  ${this.getFullName(customer)}
-                </div>
-              </td>
-              <td>${customer.email}</td>
-              <td>${customer.phone || '-'}</td>
-              <td>${customer.city || '-'}</td>
-              <td>${customer.state_code || customer.province || '-'}</td>
-              <td>${customer.order_count || 0}</td>
-              <td>${this.formatCurrency(customer.lifetime_value_cents, customer.currency_code)}</td>
-              <td>
-                <div class="status-badges">
-                  ${customer.customer_status === 'vip' ? '<span class="badge badge-vip">VIP</span>' : ''}
-                  ${customer.club_member_status === 'active' ? '<span class="badge badge-club">Club</span>' : ''}
-                  ${customer.allocation_list_status === 'active' ? '<span class="badge badge-allocation">Allocation</span>' : ''}
-                </div>
-              </td>
-              <td onclick="event.stopPropagation()" class="actions-cell">
-                <div class="actions-cell-container">
-                  <button class="btn-action" onclick="customersScreen.createOrder('${customer.id}')" title="Create Order">
-                    <img src="https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-22.svg" class="action-icon menu-icon-pos" alt="POS">
-                  </button>
-                  <button class="btn-action" onclick="customersScreen.emailCustomer('${customer.id}')" title="Email">
-                    <img src="https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-109.svg" class="action-icon menu-icon-email" alt="Email">
-                  </button>
-                  <button class="btn-action" onclick="customersScreen.textCustomer('${customer.id}')" title="Text">
-                    <img src="https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-110.svg" class="action-icon menu-icon-sms" alt="SMS">
-                  </button>
-                  <button class="btn-action" onclick="customersScreen.addNote('${customer.id}')" title="Note">
-                    <img src="https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-111.svg" class="action-icon menu-icon-note" alt="Note">
-                  </button>
-                </div>
-              </td>
-            </tr>
-          `
-            )
-            .join('')}
+          ${customersToRender.map((customer) => this.renderCustomerRow(customer)).join('')}
         </tbody>
       </table>
+    `;
+  }
+
+  renderCustomerRow(customer) {
+    return `
+      <tr onclick="customersScreen.viewCustomer('${customer.id}')">
+        <td onclick="event.stopPropagation()">
+          <input 
+            type="checkbox" 
+            ${this.selectedCustomers.has(customer.id) ? 'checked' : ''}
+            onchange="customersScreen.toggleSelection('${customer.id}')"
+          />
+        </td>
+        <td>
+          <div class="customer-name-cell">
+            ${this.getFullName(customer)}
+          </div>
+        </td>
+        <td>${customer.email}</td>
+        <td>${customer.phone || '-'}</td>
+        <td>${customer.city || '-'}</td>
+        <td>${customer.state_code || customer.province || '-'}</td>
+        <td>${customer.order_count || 0}</td>
+        <td>${this.formatCurrency(customer.lifetime_value_cents, customer.currency_code)}</td>
+        <td>
+          <div class="status-badges">
+            ${customer.customer_status === 'vip' ? '<span class="badge badge-vip">VIP</span>' : ''}
+            ${customer.club_member_status === 'active' ? '<span class="badge badge-club">Club</span>' : ''}
+            ${customer.allocation_list_status === 'active' ? '<span class="badge badge-allocation">Allocation</span>' : ''}
+          </div>
+        </td>
+        <td onclick="event.stopPropagation()" class="actions-cell">
+          <div class="actions-cell-container">
+            <button class="btn-action" onclick="customersScreen.createOrder('${customer.id}')" title="Create Order">
+              <img src="https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-22.svg" class="action-icon menu-icon-pos" alt="POS">
+            </button>
+            <button class="btn-action" onclick="customersScreen.emailCustomer('${customer.id}')" title="Email">
+              <img src="https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-109.svg" class="action-icon menu-icon-email" alt="Email">
+            </button>
+            <button class="btn-action" onclick="customersScreen.textCustomer('${customer.id}')" title="Text">
+              <img src="https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-110.svg" class="action-icon menu-icon-sms" alt="SMS">
+            </button>
+            <button class="btn-action" onclick="customersScreen.addNote('${customer.id}')" title="Note">
+              <img src="https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-111.svg" class="action-icon menu-icon-note" alt="Note">
+            </button>
+          </div>
+        </td>
+      </tr>
     `;
   }
 
@@ -1438,6 +1448,99 @@ class CustomersScreen {
         this.applyFilters();
         this.render();
       });
+    }
+
+    // Setup infinite scroll
+    this.setupInfiniteScroll();
+  }
+
+  setupInfiniteScroll() {
+    // Find scroll container based on current view
+    const findScrollContainer = () => {
+      if (this.currentView === 'grid') {
+        return document.querySelector('.customers-container.grid');
+      } else {
+        return document.querySelector('.customers-table tbody');
+      }
+    };
+
+    // Debounced scroll handler
+    let scrollTimeout;
+    const handleScroll = (e) => {
+      if (this.isLoadingMore) return;
+
+      clearTimeout(scrollTimeout);
+      scrollTimeout = setTimeout(() => {
+        const container = e.target;
+        const scrollTop = container.scrollTop;
+        const scrollHeight = container.scrollHeight;
+        const clientHeight = container.clientHeight;
+
+        // Load more when within 300px of bottom
+        if (scrollHeight - scrollTop - clientHeight < 300) {
+          this.loadMoreCustomers();
+        }
+      }, 100);
+    };
+
+    // Re-attach scroll listener after each render
+    const attachScrollListener = () => {
+      if (this.scrollContainer) {
+        this.scrollContainer.removeEventListener('scroll', handleScroll);
+      }
+
+      this.scrollContainer = findScrollContainer();
+      if (this.scrollContainer) {
+        this.scrollContainer.addEventListener('scroll', handleScroll);
+      }
+    };
+
+    // Initial attachment
+    setTimeout(attachScrollListener, 100);
+
+    // Re-attach after renders
+    const originalRender = this.render.bind(this);
+    this.render = () => {
+      originalRender();
+      setTimeout(attachScrollListener, 100);
+    };
+  }
+
+  loadMoreCustomers() {
+    if (this.isLoadingMore) return;
+
+    const remainingCustomers = this.filteredCustomers.length - this.displayedCustomers.length;
+    if (remainingCustomers === 0) return;
+
+    this.isLoadingMore = true;
+    this.currentPage++;
+
+    const startIndex = this.currentPage * this.itemsPerPage;
+    const endIndex = startIndex + this.itemsPerPage;
+    const nextBatch = this.filteredCustomers.slice(startIndex, endIndex);
+
+    this.displayedCustomers = [...this.displayedCustomers, ...nextBatch];
+
+    this.isLoadingMore = false;
+    this.renderMoreItems();
+  }
+
+  renderMoreItems() {
+    // Append new items without full re-render
+    if (this.currentView === 'grid') {
+      const container = document.querySelector('.customers-container.grid');
+      if (container) {
+        const newItems = this.displayedCustomers.slice(-this.itemsPerPage);
+        const html = newItems.map((customer) => this.renderCustomerCard(customer)).join('');
+        container.insertAdjacentHTML('beforeend', html);
+      }
+    } else {
+      const tbody = document.querySelector('.customers-table tbody');
+      if (tbody) {
+        const newItems = this.displayedCustomers.slice(-this.itemsPerPage);
+        const html = newItems.map((customer) => this.renderCustomerRow(customer)).join('');
+        tbody.insertAdjacentHTML('beforeend', html);
+      }
     }
   }
 
