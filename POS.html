@@ -464,7 +464,7 @@
                     const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
                     
                     // Determine which logo to use based on theme
-                    const logoUrl = currentTheme === 'dark' ? winery.logo_dark_url : winery.logo_light_url;
+                    const logoUrl = currentTheme === 'dark' ? winery.logo_dark_url : winery.logo_dark_url;
                     
                     // Update winery name in both containers
                     const wineryNameElem = document.getElementById('currentWineryName');
@@ -562,7 +562,7 @@
                     const theme = document.documentElement.getAttribute('data-theme') || 'dark';
                     // Jensen's URLs are backwards: logo_light_url is actually light-colored (for dark bg)
                     // So we need: dark theme gets logo_light_url, light theme gets logo_dark_url
-                    const logoUrl = theme === 'dark' ? wineryData.logo_light_url : wineryData.logo_dark_url;
+                    const logoUrl = theme === 'dark' ? wineryData.logo_light_url : wineryData.logo_light_url;
                     
                     if (logoUrl && logoUrl.trim() !== '' && loginLogo && loginName) {
                         loginLogo.src = logoUrl;
