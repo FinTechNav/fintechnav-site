@@ -10,11 +10,7 @@ exports.handler = async (event) => {
   }
 
   const client = new Client({
-    host: process.env.DB_HOST,
-    port: process.env.DB_PORT,
-    database: process.env.DB_NAME,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
+    connectionString: process.env.DATABASE_URL,
     ssl: false,
   });
 
@@ -88,12 +84,15 @@ exports.handler = async (event) => {
     };
   } catch (error) {
     console.error('❌ Error loading session:', error);
+    console.error('Error stack:', error.stack);
+    console.error('Error details:', JSON.stringify(error, null, 2));
     return {
       statusCode: 500,
       body: JSON.stringify({
         success: false,
         error: 'Failed to load session',
         details: error.message,
+        stack: error.stack,
       }),
     };
   } finally {
