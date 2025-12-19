@@ -627,10 +627,17 @@ const App = {
         }
       } else {
         console.log('🆕 Different user - loading their session');
+        console.log('🔍 About to call loadUserSession for different user');
         // Different user - reset POS first
         POSScreen.reset();
+        console.log('✅ POS reset complete, now loading session...');
         // Then load the new user's session from database
-        await this.loadUserSession();
+        try {
+          await this.loadUserSession();
+          console.log('✅ loadUserSession completed');
+        } catch (error) {
+          console.error('❌ Error in loadUserSession:', error);
+        }
       }
 
       // Hide overlay, remove blur
