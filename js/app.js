@@ -13,6 +13,7 @@ const App = {
   sessionState: null,
   deviceLockout: null, // Server-side lockout state
   saveSessionTimeout: null, // Debounced session save timer
+  loginInProgress: false, // Prevent concurrent logins
 
   async init() {
     this.verifyThemeCSS();
@@ -590,123 +591,144 @@ const App = {
   },
 
   async loginSuccess() {
-    // Store winery and user info in localStorage for later use
-    if (this.currentWinery && this.currentWinery.id) {
-      localStorage.setItem('selectedWineryId', this.currentWinery.id);
+    // Prevent concurrent login attempts
+    if (this.loginInProgress) {
+      console.log('⚠️ Login already in progress, skipping duplicate call');
+      return;
     }
 
-    if (this.currentUser) {
-      const userName =
-        this.currentUser.name ||
-        `${this.currentUser.first_name} ${this.currentUser.last_name}`.trim();
-      if (userName) {
-        localStorage.setItem('userName', userName);
+    this.loginInProgress = true;
+    console.log('🔐 loginSuccess called, setting loginInProgress = true');
+
+    try {
+      // Store winery and user info in localStorage for later use
+      if (this.currentWinery && this.currentWinery.id) {
+        localStorage.setItem('selectedWineryId', this.currentWinery.id);
       }
-    }
 
-    // Check if this is an overlay login (session resumption)
-    const loginScreen = document.getElementById('loginMethodScreen');
-    const isOverlay = loginScreen.getAttribute('data-is-overlay') === 'true';
-
-    if (isOverlay) {
-      console.log('🔄 Overlay login detected, checking session resumption');
-      console.log('👤 Current user:', this.currentUser.id);
-      console.log('💾 Session user:', this.sessionState?.userId);
-
-      // Check if same user is logging back in
-      if (this.sessionState && this.sessionState.userId === this.currentUser.id) {
-        console.log('✅ Same user - restoring session');
-        // Same user - restore their session
-        if (this.sessionState.cart) {
-          POSScreen.cart = [...this.sessionState.cart];
-          POSScreen.renderCart();
-        }
-        if (this.sessionState.currentCustomer) {
-          POSScreen.currentCustomer = { ...this.sessionState.currentCustomer };
-          POSScreen.updateCustomerDisplay();
-        }
-      } else {
-        console.log('🆕 Different user - loading their session');
-        console.log('🔍 About to call loadUserSession for different user');
-        // Different user - reset POS first
-        POSScreen.reset();
-        console.log('✅ POS reset complete, now loading session...');
-        // Then load the new user's session from database
-        try {
-          await this.loadUserSession();
-          console.log('✅ loadUserSession completed');
-        } catch (error) {
-          console.error('❌ Error in loadUserSession:', error);
+      if (this.currentUser) {
+        const userName =
+          this.currentUser.name ||
+          `${this.currentUser.first_name} ${this.currentUser.last_name}`.trim();
+        if (userName) {
+          localStorage.setItem('userName', userName);
         }
       }
 
-      // Hide overlay, remove blur
-      loginScreen.style.display = 'none';
-      loginScreen.setAttribute('data-is-overlay', 'false');
-      document.getElementById('appContainer').classList.remove('blurred');
+      // Check if this is an overlay login (session resumption)
+      const loginScreen = document.getElementById('loginMethodScreen');
+      const isOverlay = loginScreen.getAttribute('data-is-overlay') === 'true';
+      console.log(
+        '🔍 isOverlay check:',
+        isOverlay,
+        'attribute value:',
+        loginScreen.getAttribute('data-is-overlay')
+      );
 
-      // Clear session state
-      this.sessionState = null;
-    } else {
-      console.log('🎬 Initial login (not overlay)');
-      // Initial login (not overlay)
-      document.getElementById('loginMethodScreen').style.display = 'none';
-      document.getElementById('appContainer').style.display = 'flex';
+      if (isOverlay) {
+        console.log('🔄 Overlay login detected, checking session resumption');
+        console.log('👤 Current user:', this.currentUser.id);
+        console.log('💾 Session user:', this.sessionState?.userId);
 
-      this.updateWineryDisplay();
-      this.applyLayoutPreference();
-
-      // Trigger winery header load after login completes
-      if (typeof window.loadWineryHeader === 'function') {
-        setTimeout(() => window.loadWineryHeader(), 500);
-      }
-
-      const isMobile = window.innerWidth <= 768;
-
-      if (isMobile) {
-        const initMobile = () => {
-          if (typeof MobilePOS !== 'undefined') {
-            MobilePOS.init();
-          } else {
-            setTimeout(initMobile, 100);
+        // Check if same user is logging back in
+        if (this.sessionState && this.sessionState.userId === this.currentUser.id) {
+          console.log('✅ Same user - restoring session');
+          // Same user - restore their session
+          if (this.sessionState.cart) {
+            POSScreen.cart = [...this.sessionState.cart];
+            POSScreen.renderCart();
           }
-        };
-        initMobile();
+          if (this.sessionState.currentCustomer) {
+            POSScreen.currentCustomer = { ...this.sessionState.currentCustomer };
+            POSScreen.updateCustomerDisplay();
+          }
+        } else {
+          console.log('🆕 Different user - loading their session');
+          console.log('🔍 About to call loadUserSession for different user');
+          // Different user - reset POS first
+          POSScreen.reset();
+          console.log('✅ POS reset complete, now loading session...');
+          // Then load the new user's session from database
+          try {
+            await this.loadUserSession();
+            console.log('✅ loadUserSession completed');
+          } catch (error) {
+            console.error('❌ Error in loadUserSession:', error);
+          }
+        }
+
+        // Hide overlay, remove blur
+        loginScreen.style.display = 'none';
+        loginScreen.setAttribute('data-is-overlay', 'false');
+        document.getElementById('appContainer').classList.remove('blurred');
+
+        // Clear session state
+        this.sessionState = null;
       } else {
-        this.createMobileMenuButton();
-        POSScreen.init();
+        console.log('🎬 Initial login (not overlay)');
+        // Initial login (not overlay)
+        document.getElementById('loginMethodScreen').style.display = 'none';
+        document.getElementById('appContainer').style.display = 'flex';
 
-        // Load saved session from database after POS is initialized
-        this.loadUserSession();
+        this.updateWineryDisplay();
+        this.applyLayoutPreference();
 
-        // Monitor for style changes on product cards
-        setTimeout(() => {
-          const productCards = document.querySelectorAll('.product-card');
-          if (productCards.length > 0) {
-            productCards.forEach((card, index) => {
-              if (index === 0) {
-                // Only monitor first card to reduce noise
-                const observer = new MutationObserver((mutations) => {
-                  mutations.forEach((mutation) => {
-                    if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
-                    }
+        // Trigger winery header load after login completes
+        if (typeof window.loadWineryHeader === 'function') {
+          setTimeout(() => window.loadWineryHeader(), 500);
+        }
+
+        const isMobile = window.innerWidth <= 768;
+
+        if (isMobile) {
+          const initMobile = () => {
+            if (typeof MobilePOS !== 'undefined') {
+              MobilePOS.init();
+            } else {
+              setTimeout(initMobile, 100);
+            }
+          };
+          initMobile();
+        } else {
+          this.createMobileMenuButton();
+          POSScreen.init();
+
+          // Load saved session from database after POS is initialized
+          this.loadUserSession();
+
+          // Monitor for style changes on product cards
+          setTimeout(() => {
+            const productCards = document.querySelectorAll('.product-card');
+            if (productCards.length > 0) {
+              productCards.forEach((card, index) => {
+                if (index === 0) {
+                  // Only monitor first card to reduce noise
+                  const observer = new MutationObserver((mutations) => {
+                    mutations.forEach((mutation) => {
+                      if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
+                      }
+                    });
                   });
-                });
 
-                observer.observe(card, {
-                  attributes: true,
-                  attributeOldValue: true,
-                  attributeFilter: ['style'],
-                });
-              }
-            });
-          }
-        }, 1000);
+                  observer.observe(card, {
+                    attributes: true,
+                    attributeOldValue: true,
+                    attributeFilter: ['style'],
+                  });
+                }
+              });
+            }
+          }, 1000);
+        }
       }
-    }
 
-    // Start auto-logout timer after login
-    this.startAutoLogoutTimer();
+      // Start auto-logout timer after login
+      this.startAutoLogoutTimer();
+    } finally {
+      // Always clear the lock
+      console.log('🔓 Clearing loginInProgress flag');
+      this.loginInProgress = false;
+    }
   },
 
   applyLayoutPreference() {
