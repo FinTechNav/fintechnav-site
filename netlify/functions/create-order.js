@@ -31,6 +31,11 @@ exports.handler = async (event, context) => {
     tax,
     total,
     items,
+    payment_method,
+    payment_reference,
+    payment_status,
+    transaction_amount,
+    transaction_tip,
   } = JSON.parse(event.body);
 
   const client = new Client({
@@ -80,6 +85,53 @@ exports.handler = async (event, context) => {
     );
 
     const orderId = orderResult.rows[0].id;
+
+    // Create transaction record for non-card payments (cash, ACH, check, etc.)
+    // This ensures customer stats trigger fires for all payment types
+    if (payment_method && payment_method !== 'credit' && payment_method !== 'card') {
+      try {
+        console.log('💾 Creating transaction record for', payment_method, 'payment...');
+
+        await client.query(
+          `INSERT INTO transactions (
+            order_id, winery_id, customer_id, employee_id,
+            processor, reference_id,
+            transaction_channel, transaction_type, payment_method_type,
+            amount, subtotal, tax, tip,
+            status, status_code, status_message,
+            processed_at
+          ) VALUES (
+            $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17
+          )`,
+          [
+            orderId,
+            winery_id,
+            customer_id || null,
+            employee_id || null,
+            payment_method, // 'cash', 'check', 'ach', etc.
+            payment_reference || `${payment_method.toUpperCase()}${Date.now()}`,
+            order_source || 'pos',
+            'sale',
+            payment_method,
+            parseFloat(transaction_amount || total),
+            parseFloat(subtotal || 0),
+            parseFloat(tax || 0),
+            parseFloat(transaction_tip || 0),
+            payment_status || 'approved',
+            '00',
+            payment_status === 'paid' ? 'Approved' : 'Pending',
+            new Date(),
+          ]
+        );
+
+        console.log('✅ Transaction record created for', payment_method, 'payment');
+      } catch (txError) {
+        console.error('⚠️ Failed to create transaction record (non-fatal):', txError.message);
+        console.error('   Error code:', txError.code);
+        console.error('   Error detail:', txError.detail);
+        // Continue - order was created successfully
+      }
+    }
 
     // Create order items
     for (const item of items) {
