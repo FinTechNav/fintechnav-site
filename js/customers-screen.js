@@ -107,15 +107,46 @@ class CustomersScreen {
 
   async loadCustomers() {
     try {
-      const response = await fetch('/.netlify/functions/get-customers?limit=1000');
-      const data = await response.json();
-      if (data.success) {
-        this.customers = data.customers;
-        this.applyFilters();
-      } else {
-        alert('Failed to load customers: ' + (data.error || 'Unknown error'));
+      let allCustomers = [];
+      let offset = 0;
+      const limit = 500; // Load in batches of 500
+      let total = 0;
+
+      // First request to get total count
+      const firstResponse = await fetch(
+        `/.netlify/functions/get-customers?limit=${limit}&offset=${offset}`
+      );
+      const firstData = await firstResponse.json();
+
+      if (!firstData.success) {
+        alert('Failed to load customers: ' + (firstData.error || 'Unknown error'));
+        return;
       }
+
+      allCustomers = firstData.customers;
+      total = firstData.total;
+      offset += limit;
+
+      // Continue loading if there are more customers
+      while (offset < total) {
+        const response = await fetch(
+          `/.netlify/functions/get-customers?limit=${limit}&offset=${offset}`
+        );
+        const data = await response.json();
+
+        if (data.success) {
+          allCustomers = [...allCustomers, ...data.customers];
+          offset += limit;
+        } else {
+          console.error('Failed to load batch at offset', offset);
+          break;
+        }
+      }
+
+      this.customers = allCustomers;
+      this.applyFilters();
     } catch (error) {
+      console.error('Error loading customers:', error);
       alert('Failed to load customers. Please try again.');
     }
   }
