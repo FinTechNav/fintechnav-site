@@ -384,8 +384,13 @@ const App = {
     }
 
     // Try each user in the winery with this PIN
+    console.log('🔐 Submitting PIN, checking against', this.users.length, 'users');
+    console.log('💾 Session state:', this.sessionState);
+
     for (const user of this.users) {
       try {
+        console.log(`🔍 Trying PIN for user: ${user.first_name} ${user.last_name} (${user.id})`);
+
         const response = await fetch('/.netlify/functions/validate-pin', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -396,17 +401,25 @@ const App = {
         });
 
         const data = await response.json();
+        console.log(`📊 Response for ${user.first_name}:`, data);
 
         if (data.success) {
           // PIN matched for this user
+          console.log('✅ PIN matched for:', user.first_name, user.last_name);
           this.currentUser = {
             ...user,
             layout_preference: data.employee.layout_preference,
+            auto_logout_enabled: data.employee.auto_logout_enabled,
+            auto_logout_minutes: data.employee.auto_logout_minutes,
           };
           this.loginSuccess();
           return;
+        } else {
+          console.log(`❌ PIN failed for ${user.first_name}:`, data.error);
         }
-      } catch (error) {}
+      } catch (error) {
+        console.error(`💥 Error checking PIN for ${user.first_name}:`, error);
+      }
     }
 
     // No match found
@@ -418,7 +431,11 @@ const App = {
   },
 
   selectUser(userId) {
-    this.currentUser = this.users.find((u) => u.id === userId);
+    const user = this.users.find((u) => u.id === userId);
+    console.log('👤 User selected:', user);
+    console.log('💾 Session state:', this.sessionState);
+
+    this.currentUser = user;
     this.loginSuccess();
   },
 
