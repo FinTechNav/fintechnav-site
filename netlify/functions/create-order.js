@@ -117,9 +117,9 @@ exports.handler = async (event, context) => {
             parseFloat(subtotal || 0),
             parseFloat(tax || 0),
             parseFloat(transaction_tip || 0),
-            payment_status || 'approved',
+            'approved', // Cash/check/ACH are always approved - constraint allows: pending, approved, declined, error, voided, refunded, processing
             '00',
-            payment_status === 'paid' ? 'Approved' : 'Pending',
+            'Approved',
             new Date(),
           ]
         );
