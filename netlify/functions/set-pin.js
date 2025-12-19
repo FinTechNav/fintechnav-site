@@ -40,6 +40,52 @@ exports.handler = async (event) => {
 
     await client.connect();
 
+    // Get employee's winery_id
+    const employeeQuery = `
+      SELECT winery_id 
+      FROM employees 
+      WHERE id = $1 AND status = 'active' AND deleted_at IS NULL
+    `;
+    const employeeResult = await client.query(employeeQuery, [employee_id]);
+
+    if (employeeResult.rows.length === 0) {
+      return {
+        statusCode: 404,
+        body: JSON.stringify({
+          success: false,
+          error: 'Employee not found or inactive',
+        }),
+      };
+    }
+
+    const winery_id = employeeResult.rows[0].winery_id;
+
+    // Check if PIN already exists for another employee in this winery
+    const duplicateCheckQuery = `
+      SELECT id, first_name, last_name, pin_hash
+      FROM employees
+      WHERE winery_id = $1 
+        AND id != $2 
+        AND status = 'active' 
+        AND deleted_at IS NULL
+        AND pin_hash IS NOT NULL
+    `;
+    const duplicateResult = await client.query(duplicateCheckQuery, [winery_id, employee_id]);
+
+    // Check each existing PIN hash in this winery against the new PIN
+    for (const otherEmployee of duplicateResult.rows) {
+      const isDuplicate = await bcrypt.compare(pin, otherEmployee.pin_hash);
+      if (isDuplicate) {
+        return {
+          statusCode: 400,
+          body: JSON.stringify({
+            success: false,
+            error: 'Invalid PIN. Please choose a different PIN.',
+          }),
+        };
+      }
+    }
+
     // Hash the PIN
     const saltRounds = 10;
     const pin_hash = await bcrypt.hash(pin, saltRounds);
@@ -57,16 +103,6 @@ exports.handler = async (event) => {
     `;
 
     const result = await client.query(updateQuery, [pin_hash, employee_id]);
-
-    if (result.rows.length === 0) {
-      return {
-        statusCode: 404,
-        body: JSON.stringify({
-          success: false,
-          error: 'Employee not found or inactive',
-        }),
-      };
-    }
 
     return {
       statusCode: 200,
