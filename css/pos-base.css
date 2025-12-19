@@ -23,7 +23,7 @@ body {
     height: 100vh;
 }
 
-/* Hide sidebar when on login screen */
-.login-screen:not([style*="display: none"]) ~ .app-container .sidebar {
+/* Hide sidebar when on login screen (but not when overlay) */
+.login-screen:not([style*="display: none"]):not([data-is-overlay="true"]) ~ .app-container .sidebar {
     display: none;
 }

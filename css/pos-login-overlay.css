@@ -31,9 +31,9 @@
     }
 }
 
-/* Blur the entire app container including sidebar */
+/* Blur the app container when overlay is active */
 .app-container.blurred {
-    filter: blur(4px) brightness(0.7);
+    filter: blur(4px) brightness(0.85);
     pointer-events: none;
     display: flex !important;
     opacity: 1 !important;
