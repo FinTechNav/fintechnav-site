@@ -11,8 +11,7 @@ const App = {
   cssVariablesChecked: false,
   autoLogoutTimer: null,
   sessionState: null,
-  deviceFailedAttempts: 0,
-  deviceLockoutUntil: null,
+  deviceLockout: null, // Server-side lockout state
 
   async init() {
     this.verifyThemeCSS();
@@ -278,7 +277,7 @@ const App = {
     this.updatePinDots();
   },
 
-  showLoginMethod(method) {
+  async showLoginMethod(method) {
     this.currentLoginMethod = method;
     this.pinEntry = '';
     this.updatePinDots();
@@ -301,6 +300,25 @@ const App = {
     } else {
       document.getElementById('userLoginMethod').style.display = 'none';
       document.getElementById('pinLoginMethod').style.display = 'block';
+
+      // Check device lockout status when showing PIN login
+      if (this.currentWinery?.id) {
+        try {
+          const lockoutResponse = await fetch(
+            `/.netlify/functions/device-lockout?winery_id=${this.currentWinery.id}`
+          );
+          const lockoutData = await lockoutResponse.json();
+
+          if (lockoutData.is_locked) {
+            this.deviceLockout = lockoutData;
+            this.startLockoutCountdown();
+          } else {
+            this.deviceLockout = lockoutData;
+          }
+        } catch (error) {
+          console.error('Error checking device lockout:', error);
+        }
+      }
     }
 
     // Clear any errors
@@ -341,6 +359,18 @@ const App = {
   },
 
   enterPin(digit) {
+    // Block PIN entry during device lockout (check server state)
+    if (this.deviceLockout?.is_locked) {
+      const secondsLeft = Math.ceil(
+        (new Date(this.deviceLockout.locked_until) - new Date()) / 1000
+      );
+      const errorEl = document.getElementById('pinError');
+      if (errorEl && secondsLeft > 0) {
+        errorEl.textContent = `Device locked. Try again in ${secondsLeft} second${secondsLeft !== 1 ? 's' : ''}`;
+      }
+      return;
+    }
+
     if (this.pinEntry.length < 4) {
       this.pinEntry += digit;
       this.updatePinDots();
@@ -353,6 +383,11 @@ const App = {
   },
 
   backspacePin() {
+    // Block backspace during device lockout (check server state)
+    if (this.deviceLockout?.is_locked) {
+      return;
+    }
+
     this.pinEntry = this.pinEntry.slice(0, -1);
     this.updatePinDots();
     const pinError = document.getElementById('pinError');
@@ -385,20 +420,35 @@ const App = {
       return;
     }
 
-    // Check device lockout BEFORE trying any PINs
-    if (this.deviceLockoutUntil && new Date() < this.deviceLockoutUntil) {
-      const secondsLeft = Math.ceil((this.deviceLockoutUntil - new Date()) / 1000);
-      if (errorEl) {
-        errorEl.textContent = `Device locked. Try again in ${secondsLeft} second${secondsLeft !== 1 ? 's' : ''}`;
+    // Check device lockout from server BEFORE trying any PINs
+    try {
+      const lockoutResponse = await fetch(
+        `/.netlify/functions/device-lockout?winery_id=${this.currentWinery.id}`
+      );
+      const lockoutData = await lockoutResponse.json();
+
+      if (lockoutData.is_locked) {
+        const secondsLeft = Math.ceil((new Date(lockoutData.locked_until) - new Date()) / 1000);
+        if (errorEl && secondsLeft > 0) {
+          errorEl.textContent = `Device locked. Try again in ${secondsLeft} second${secondsLeft !== 1 ? 's' : ''}`;
+
+          // Start countdown
+          this.deviceLockout = lockoutData;
+          this.startLockoutCountdown();
+        }
+        this.pinEntry = '';
+        this.updatePinDots();
+        return;
       }
-      this.pinEntry = '';
-      this.updatePinDots();
-      return;
+
+      this.deviceLockout = lockoutData;
+    } catch (error) {
+      console.error('Error checking device lockout:', error);
+      // Continue with login attempt if lockout check fails
     }
 
     console.log('🔐 Submitting PIN');
     console.log('💾 Session state:', this.sessionState);
-    console.log('⚠️ Device failed attempts:', this.deviceFailedAttempts);
 
     // Check if we're in overlay mode with a session to resume
     const loginScreen = document.getElementById('loginMethodScreen');
@@ -438,8 +488,19 @@ const App = {
           console.log('✅ PIN matched for:', user.first_name, user.last_name);
 
           // Reset device lockout on successful login
-          this.deviceFailedAttempts = 0;
-          this.deviceLockoutUntil = null;
+          try {
+            await fetch('/.netlify/functions/device-lockout', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                winery_id: this.currentWinery.id,
+                action: 'reset',
+              }),
+            });
+            this.deviceLockout = null;
+          } catch (error) {
+            console.error('Error resetting device lockout:', error);
+          }
 
           this.currentUser = {
             ...user,
@@ -455,44 +516,64 @@ const App = {
       }
     }
 
-    // No match found - increment device lockout
+    // No match found - increment device lockout on server
     console.log('❌ No PIN match found');
-    this.deviceFailedAttempts++;
-    console.log('📈 Device failed attempts now:', this.deviceFailedAttempts);
 
-    // Start lockout after 5 failed attempts, increase by 5 seconds each time
-    if (this.deviceFailedAttempts >= 5) {
-      const lockoutSeconds = (this.deviceFailedAttempts - 4) * 5;
-      this.deviceLockoutUntil = new Date(Date.now() + lockoutSeconds * 1000);
+    try {
+      const lockoutResponse = await fetch('/.netlify/functions/device-lockout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          winery_id: this.currentWinery.id,
+          action: 'increment',
+        }),
+      });
 
-      console.log(`🔒 Device locked for ${lockoutSeconds} seconds`);
+      const lockoutData = await lockoutResponse.json();
+      this.deviceLockout = lockoutData;
 
-      if (errorEl) {
-        errorEl.textContent = `Too many failed attempts. Device locked for ${lockoutSeconds} second${lockoutSeconds !== 1 ? 's' : ''}`;
-      }
+      console.log('📈 Device failed attempts now:', lockoutData.failed_attempts);
 
-      // Start countdown
-      const updateCountdown = () => {
-        if (this.deviceLockoutUntil && new Date() < this.deviceLockoutUntil) {
-          const secondsLeft = Math.ceil((this.deviceLockoutUntil - new Date()) / 1000);
-          if (errorEl && secondsLeft > 0) {
-            errorEl.textContent = `Device locked. Try again in ${secondsLeft} second${secondsLeft !== 1 ? 's' : ''}`;
-          }
-          setTimeout(updateCountdown, 1000);
-        } else {
-          if (errorEl) {
-            errorEl.textContent = '';
-          }
-          // Clear the lockout time when countdown completes
-          this.deviceLockoutUntil = null;
+      if (lockoutData.is_locked) {
+        console.log(`🔒 Device locked for ${lockoutData.lockout_seconds} seconds`);
+
+        if (errorEl) {
+          errorEl.textContent = `Too many failed attempts. Device locked for ${lockoutData.lockout_seconds} second${lockoutData.lockout_seconds !== 1 ? 's' : ''}`;
         }
-      };
-      updateCountdown();
+
+        // Start countdown
+        this.startLockoutCountdown();
+      }
+      // Silent failure for first 4 attempts (no error message)
+    } catch (error) {
+      console.error('Error incrementing device lockout:', error);
     }
-    // Don't show any error message for first 4 attempts - stay silent
 
     this.pinEntry = '';
     this.updatePinDots();
+  },
+
+  startLockoutCountdown() {
+    const updateCountdown = () => {
+      if (this.deviceLockout?.is_locked && new Date(this.deviceLockout.locked_until) > new Date()) {
+        const secondsLeft = Math.ceil(
+          (new Date(this.deviceLockout.locked_until) - new Date()) / 1000
+        );
+        const errorEl = document.getElementById('pinError');
+        if (errorEl && secondsLeft > 0) {
+          errorEl.textContent = `Device locked. Try again in ${secondsLeft} second${secondsLeft !== 1 ? 's' : ''}`;
+        }
+        setTimeout(updateCountdown, 1000);
+      } else {
+        const errorEl = document.getElementById('pinError');
+        if (errorEl) {
+          errorEl.textContent = '';
+        }
+        // Clear lockout state
+        this.deviceLockout = null;
+      }
+    };
+    updateCountdown();
   },
 
   selectUser(userId) {
