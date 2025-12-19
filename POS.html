@@ -544,23 +544,37 @@
         window.loadWineryHeader = loadWineryHeader;
         
         // Function to update login screen with winery info
-        window.updateLoginWineryDisplay = function(winery) {
+        window.updateLoginWineryDisplay = async function(winery) {
             const loginLogo = document.getElementById('loginWineryLogo');
             const loginName = document.getElementById('loginWineryName');
             
-            if (!winery) return;
+            if (!winery || !winery.id) return;
             
-            // Get theme to select appropriate logo
-            const theme = document.documentElement.getAttribute('data-theme') || 'dark';
-            const logoUrl = theme === 'dark' ? winery.logo_dark_url : winery.logo_light_url;
-            
-            if (logoUrl && loginLogo && loginName) {
-                loginLogo.src = logoUrl;
-                loginLogo.style.display = 'block';
-                loginName.textContent = winery.name;
-            } else if (loginName) {
-                if (loginLogo) loginLogo.style.display = 'none';
-                loginName.textContent = winery.name;
+            try {
+                // Fetch full winery data including logos
+                const response = await fetch(`/.netlify/functions/get-winery-info?winery_id=${winery.id}`);
+                const data = await response.json();
+                
+                if (data.success && data.winery) {
+                    const wineryData = data.winery;
+                    const theme = document.documentElement.getAttribute('data-theme') || 'dark';
+                    const logoUrl = theme === 'dark' ? wineryData.logo_dark_url : wineryData.logo_light_url;
+                    
+                    if (logoUrl && logoUrl.trim() !== '' && loginLogo && loginName) {
+                        loginLogo.src = logoUrl;
+                        loginLogo.style.display = 'block';
+                        loginName.textContent = wineryData.name;
+                    } else if (loginName) {
+                        if (loginLogo) loginLogo.style.display = 'none';
+                        loginName.textContent = wineryData.name;
+                    }
+                }
+            } catch (error) {
+                // Fallback to just showing name
+                if (loginName) {
+                    if (loginLogo) loginLogo.style.display = 'none';
+                    loginName.textContent = winery.name;
+                }
             }
         };
         

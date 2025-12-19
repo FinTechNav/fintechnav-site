@@ -56,9 +56,18 @@
 }
 
 .login-winery-name {
-    font-size: 32px;
-    color: var(--accent-primary);
+    font-size: 18px;
+    color: var(--text-primary);
     margin: 10px 0 0 0;
+    font-weight: 400;
+}
+
+[data-theme="dark"] .login-winery-name {
+    color: #dcdcdc;
+}
+
+[data-theme="light"] .login-winery-name {
+    color: #444443;
 }
 
 .login-header h1 {
