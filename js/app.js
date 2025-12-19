@@ -12,6 +12,7 @@ const App = {
   autoLogoutTimer: null,
   sessionState: null,
   deviceLockout: null, // Server-side lockout state
+  saveSessionTimeout: null, // Debounced session save timer
 
   async init() {
     this.verifyThemeCSS();
@@ -231,6 +232,9 @@ const App = {
   },
 
   backToWinerySelection() {
+    // Clear session from database before switching wineries
+    this.clearUserSession();
+
     this.currentWinery = null;
     this.users = [];
     this.pinEntry = '';
@@ -663,6 +667,9 @@ const App = {
         this.createMobileMenuButton();
         POSScreen.init();
 
+        // Load saved session from database after POS is initialized
+        this.loadUserSession();
+
         // Monitor for style changes on product cards
         setTimeout(() => {
           const productCards = document.querySelectorAll('.product-card');
@@ -842,6 +849,9 @@ const App = {
       screenElement.style.display = screen === 'pos' ? 'flex' : 'block';
     }
 
+    // Save session when changing screens
+    this.saveUserSession();
+
     // Only try to access event if it exists (when called from click handler)
     if (typeof event !== 'undefined' && event && event.currentTarget) {
       event.currentTarget.classList.add('active');
@@ -900,8 +910,131 @@ const App = {
     // Reset timer on any user activity
     const activityEvents = ['mousedown', 'keydown', 'touchstart', 'scroll'];
     activityEvents.forEach((event) => {
-      document.addEventListener(event, () => this.resetAutoLogoutTimer(), { passive: true });
+      document.addEventListener(
+        event,
+        () => {
+          this.resetAutoLogoutTimer();
+          // Also save session on activity (debounced to avoid too many calls)
+          this.debouncedSaveSession();
+        },
+        { passive: true }
+      );
     });
+  },
+
+  // Debounced session save to avoid too many database calls
+  debouncedSaveSession() {
+    if (this.saveSessionTimeout) {
+      clearTimeout(this.saveSessionTimeout);
+    }
+    this.saveSessionTimeout = setTimeout(() => {
+      this.saveUserSession();
+    }, 5000); // Save every 5 seconds of activity
+  },
+
+  async loadUserSession() {
+    if (!this.currentUser || !this.currentWinery) {
+      console.log('⚠️ Cannot load session: no user or winery');
+      return;
+    }
+
+    try {
+      console.log('📖 Loading session from database...');
+      const response = await fetch(
+        `/.netlify/functions/load-user-session?employee_id=${this.currentUser.id}&winery_id=${this.currentWinery.id}`
+      );
+      const data = await response.json();
+
+      if (data.success && data.session_found) {
+        console.log('✅ Session found, restoring state');
+        const session = data.session;
+
+        // Restore POS state
+        if (session.pos_state) {
+          if (session.pos_state.cart && Array.isArray(session.pos_state.cart)) {
+            POSScreen.cart = session.pos_state.cart;
+            POSScreen.renderCart();
+            console.log('🛒 Restored cart with', session.pos_state.cart.length, 'items');
+          }
+
+          if (session.pos_state.currentCustomer) {
+            POSScreen.currentCustomer = session.pos_state.currentCustomer;
+            POSScreen.updateCustomerDisplay();
+            console.log('👤 Restored customer:', session.pos_state.currentCustomer.first_name);
+          }
+        }
+
+        // Navigate to saved screen if not POS
+        if (session.current_screen && session.current_screen !== 'pos') {
+          console.log('📍 Navigating to saved screen:', session.current_screen);
+          await this.navigateTo(session.current_screen);
+        }
+      } else {
+        console.log('ℹ️ No session to restore (expired or new user)');
+      }
+    } catch (error) {
+      console.error('❌ Error loading session:', error);
+      // Continue without session - not critical
+    }
+  },
+
+  async saveUserSession() {
+    if (!this.currentUser || !this.currentWinery) {
+      return;
+    }
+
+    try {
+      // Gather current state
+      const posState = {
+        cart: POSScreen.cart || [],
+        currentCustomer: POSScreen.currentCustomer || null,
+        layoutPreference: this.currentUser.layout_preference || 'commerce',
+      };
+
+      const response = await fetch('/.netlify/functions/save-user-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          employee_id: this.currentUser.id,
+          winery_id: this.currentWinery.id,
+          current_screen: this.currentScreen,
+          pos_state: posState,
+        }),
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        console.log('💾 Session saved');
+      }
+    } catch (error) {
+      console.error('❌ Error saving session:', error);
+      // Non-critical, continue
+    }
+  },
+
+  async clearUserSession() {
+    if (!this.currentUser || !this.currentWinery) {
+      return;
+    }
+
+    try {
+      const response = await fetch('/.netlify/functions/clear-user-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          employee_id: this.currentUser.id,
+          winery_id: this.currentWinery.id,
+        }),
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        console.log('🗑️ Session cleared from database');
+      }
+    } catch (error) {
+      console.error('❌ Error clearing session:', error);
+      // Non-critical
+    }
   },
 
   registerServiceWorker() {
