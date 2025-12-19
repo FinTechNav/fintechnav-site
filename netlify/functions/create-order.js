@@ -110,7 +110,7 @@ exports.handler = async (event, context) => {
             employee_id || null,
             null, // No processor for cash/check/ACH - constraint only allows 'dejavoo', 'stripe', or NULL
             payment_reference || `${payment_method.toUpperCase()}${Date.now()}`,
-            order_source || 'pos',
+            null, // transaction_channel constraint only allows 'card_present', 'card_not_present', or NULL
             'sale',
             payment_method,
             parseFloat(transaction_amount || total),
