@@ -99,8 +99,10 @@
     <div id="loginMethodScreen" class="login-screen login-overlay" style="display: none;" data-is-overlay="false">
         <div class="login-container">
             <div class="login-header">
-                <img id="loginWineryLogo" src="" alt="Winery Logo" class="login-logo" style="display: none;">
-                <h1 id="loginWineryName" class="login-winery-name">Jensen Family Winery</h1>
+                <div class="login-header-content">
+                    <img id="loginWineryLogo" src="" alt="Winery Logo" class="login-logo" style="display: none;">
+                    <h1 id="loginWineryName" class="login-winery-name">Jensen Family Winery</h1>
+                </div>
                 <p id="loginMethodWinery" style="display: none;">Jensen Family Winery</p>
             </div>
 
@@ -558,6 +560,7 @@
                 if (data.success && data.winery) {
                     const wineryData = data.winery;
                     const theme = document.documentElement.getAttribute('data-theme') || 'dark';
+                    // Use dark logo for dark theme, light logo for light theme (matching main header)
                     const logoUrl = theme === 'dark' ? wineryData.logo_dark_url : wineryData.logo_light_url;
                     
                     if (logoUrl && logoUrl.trim() !== '' && loginLogo && loginName) {

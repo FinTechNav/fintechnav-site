@@ -39,26 +39,31 @@
     flex-shrink: 0;
 }
 
+.login-header-content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+}
+
 .login-logo {
-    max-width: 300px;
-    max-height: 80px;
+    max-width: 120px;
+    max-height: 48px;
     width: auto;
     height: auto;
-    margin: 0 auto 10px;
-    display: block;
 }
 
 .login-subtitle {
-    font-size: 18px;
+    font-size: 14.4px;
     color: var(--text-secondary);
     font-weight: 400;
     margin: 0;
 }
 
 .login-winery-name {
-    font-size: 18px;
+    font-size: 14.4px;
     color: var(--text-primary);
-    margin: 10px 0 0 0;
+    margin: 0;
     font-weight: 400;
 }
 
