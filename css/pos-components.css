@@ -576,6 +576,115 @@
   opacity: 0.7;
 }
 
+/* Settings checkbox inputs */
+.payment-method-option input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+}
+
+.payment-method-option.disabled input[type="checkbox"] {
+  cursor: not-allowed;
+}
+
+/* Settings option content wrapper */
+.settings-option-content {
+  flex: 1;
+}
+
+/* Settings option description */
+.settings-option-description {
+  margin-top: 4px;
+}
+
+/* Settings dropdown container */
+.settings-dropdown-container {
+  margin-top: 20px;
+}
+
+/* Settings select elements */
+.settings-dropdown-container select {
+  width: 200px;
+  padding: 8px;
+}
+
+/* ===================================
+   CART CUSTOMER SECTION
+   =================================== */
+
+.cart-customer-section {
+  padding: 15px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.cart-customer-label {
+  display: block;
+  color: var(--text-tertiary);
+  font-size: 12px;
+  margin-bottom: 8px;
+}
+
+.cart-customer-search-container {
+  position: relative;
+}
+
+.cart-customer-search-input {
+  width: 100%;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  color: var(--text-primary);
+  font-size: 14px;
+}
+
+.cart-customer-search-results {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: var(--bg-modal-box);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  margin-top: 4px;
+  max-height: 300px;
+  overflow-y: auto;
+  z-index: 1000;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.cart-customer-display {
+  display: none;
+}
+
+.cart-customer-info-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.cart-customer-name {
+  font-weight: 600;
+}
+
+.cart-customer-email {
+  font-size: 12px;
+  margin-top: 2px;
+}
+
+.cart-customer-clear-btn {
+  border: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 /* ===================================
    TERMINAL CONFIGURATION
    =================================== */
