@@ -27,3 +27,66 @@ body {
 .login-screen:not([style*="display: none"]):not([data-is-overlay="true"]) ~ .app-container .sidebar {
     display: none;
 }
+
+/* ===================================
+   WINERY HEADER STYLES
+   =================================== */
+
+/* Header loading skeleton */
+#wineryHeaderLoading {
+    display: none;
+    align-items: center;
+    gap: 20px;
+    width: 100%;
+}
+
+#wineryHeaderLoading .skeleton-logo {
+    width: 150px;
+    height: 60px;
+}
+
+#wineryHeaderLoading .skeleton-text-container {
+    flex: 1;
+}
+
+#wineryHeaderLoading .skeleton-title {
+    width: 300px;
+    height: 20px;
+    margin-bottom: 8px;
+}
+
+#wineryHeaderLoading .skeleton-subtitle {
+    width: 200px;
+    height: 14px;
+}
+
+/* Header with logo */
+#wineryLogoContainer {
+    display: none;
+    align-items: center;
+    gap: 20px;
+}
+
+.winery-logo {
+    max-height: 60px;
+    max-width: 250px;
+    height: auto;
+    width: auto;
+}
+
+/* Header text */
+.header-text-primary {
+    font-size: 18px;
+    margin: 0;
+}
+
+.header-text-secondary {
+    font-size: 12px;
+    color: var(--text-tertiary);
+    margin: 5px 0 0 0;
+}
+
+/* Header text only (no logo) */
+#wineryTextOnly {
+    display: none;
+}
