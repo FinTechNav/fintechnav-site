@@ -192,11 +192,10 @@ const SettingsScreen = {
               id="autoLogoutEnabled" 
               ${autoLogoutEnabled ? 'checked' : ''} 
               onchange="SettingsScreen.toggleAutoLogout(this.checked)"
-              style="width: 20px; height: 20px; cursor: pointer;" 
             />
-            <div style="flex: 1;">
+            <div class="settings-option-content">
               <div class="text-primary font-semibold">Enable Auto Logout</div>
-              <div class="text-muted text-small" style="margin-top: 4px;">
+              <div class="text-muted text-small settings-option-description">
                 Automatically log out after a period of inactivity
               </div>
             </div>
@@ -206,12 +205,11 @@ const SettingsScreen = {
         ${
           autoLogoutEnabled
             ? `
-          <div style="margin-top: 20px;">
+          <div class="settings-dropdown-container">
             <label class="form-label">Auto logout after:</label>
             <select 
               id="autoLogoutMinutes" 
               class="form-control" 
-              style="width: 200px; padding: 8px;" 
               onchange="SettingsScreen.updateAutoLogoutMinutes(parseInt(this.value))"
             >
               ${minuteOptions
@@ -248,28 +246,28 @@ const SettingsScreen = {
         
         <div class="section-grid">
           <label class="payment-method-option ${hasCreditCard ? 'disabled' : ''}">
-            <input type="checkbox" ${hasCreditCard ? 'checked disabled' : 'disabled'} style="width: 20px; height: 20px; cursor: ${hasCreditCard ? 'not-allowed' : 'not-allowed'};" />
-            <div style="flex: 1;">
+            <input type="checkbox" ${hasCreditCard ? 'checked disabled' : 'disabled'} />
+            <div class="settings-option-content">
               <div class="text-primary font-semibold">💳 Credit/Debit Card</div>
-              <div class="text-muted text-small" style="margin-top: 4px;">
+              <div class="text-muted text-small settings-option-description">
                 ${hasCreditCard ? 'Configured and enabled' : 'Configure terminals below to enable'}
               </div>
             </div>
           </label>
           
           <label class="payment-method-option">
-            <input type="checkbox" ${this.paymentTypes.cash ? 'checked' : ''} onchange="SettingsScreen.togglePaymentType('cash')" style="width: 20px; height: 20px; cursor: pointer;" />
-            <div style="flex: 1;">
+            <input type="checkbox" ${this.paymentTypes.cash ? 'checked' : ''} onchange="SettingsScreen.togglePaymentType('cash')" />
+            <div class="settings-option-content">
               <div class="text-primary font-semibold">💵 Cash</div>
-              <div class="text-muted text-small" style="margin-top: 4px;">Accept cash payments at POS</div>
+              <div class="text-muted text-small settings-option-description">Accept cash payments at POS</div>
             </div>
           </label>
           
           <label class="payment-method-option">
-            <input type="checkbox" ${this.paymentTypes.check ? 'checked' : ''} onchange="SettingsScreen.togglePaymentType('check')" style="width: 20px; height: 20px; cursor: pointer;" />
-            <div style="flex: 1;">
+            <input type="checkbox" ${this.paymentTypes.check ? 'checked' : ''} onchange="SettingsScreen.togglePaymentType('check')" />
+            <div class="settings-option-content">
               <div class="text-primary font-semibold">🏦 Check</div>
-              <div class="text-muted text-small" style="margin-top: 4px;">Accept check payments at POS</div>
+              <div class="text-muted text-small settings-option-description">Accept check payments at POS</div>
             </div>
           </label>
         </div>
