@@ -1003,49 +1003,41 @@
         console.log("💳 Processing Google Pay sale...");
         
         const requestBody = {
-          merchantAuthentication: {
-            merchantId: MERCHANT_ID,
-            transactionReferenceId: 'GPAY' + Date.now(),
-          },
-          transactionRequest: {
-            transactionType: 1,
-            amount: 15500,
-            applySteamSettingTipFeeTax: false
-          },
-          preferences: {
-            eReceipt: true,
-            customerName: selectedCustomer.customer_name,
-            customerEmail: selectedCustomer.email || 'guest@example.com',
-            customerMobile: selectedCustomer.customer_phone || ''
-          },
-          Avs: {
-            StreetNo: "155",
-            Zip: "30316"
-          },
-          GooglePay: googlePayData
+          winery_id: WINERY_ID,
+          customer_id: selectedCustomer.id || selectedCustomer.customer_id,
+          amount: '155.00',
+          subtotal: '155.00',
+          tax: '0.00',
+          tip: '0.00',
+          google_pay_data: googlePayData,
+          billing_name: selectedCustomer.first_name + ' ' + selectedCustomer.last_name,
+          billing_address: selectedCustomer.address || '',
+          billing_city: selectedCustomer.city || '',
+          billing_state: selectedCustomer.state || '',
+          billing_zip: selectedCustomer.zip || '',
         };
 
-        console.log('📤 iPOS Transact Request:', JSON.stringify(requestBody, null, 2));
+        console.log('📤 Backend request:', JSON.stringify(requestBody, null, 2));
 
-        const response = await fetch(API_BASE_URL, {
+        const response = await fetch('https://api.heavypourwine.com/api/v1/payments/process-googlepay-sale', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            token: API_AUTH_TOKEN,
+            'x-api-key': API_KEY
           },
           body: JSON.stringify(requestBody),
         });
 
-        console.log('📥 API Response Status:', response.status);
+        console.log('📥 Backend response status:', response.status);
 
         if (!response.ok) {
           const errorText = await response.text();
-          console.error('❌ API request failed:', errorText);
-          throw new Error('API request failed: ' + response.status);
+          console.error('❌ Backend error:', errorText);
+          throw new Error('Google Pay processing failed: ' + errorText);
         }
 
         const responseData = await response.json();
-        console.log('📥 API Response Data:', responseData);
+        console.log('📥 Backend response:', JSON.stringify(responseData, null, 2));
         
         return responseData;
       }
