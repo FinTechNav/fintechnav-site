@@ -304,8 +304,9 @@
     </div>
 
     <script>
-      // Configuration - SET YOUR WINERY ID HERE
-      const WINERY_ID = '22222222-2222-2222-2222-222222222222'; // Jensen Family Winery
+      // Configuration - SET YOUR WINERY ID AND API KEY HERE
+      const WINERY_ID = 'a57d4c17-c049-4788-a7f5-e8554c9254b0'; // Jensen Family Winery
+      const API_KEY = 'hp_prod_80d85cd5_350bcd944f5ed3b9f92332eef45d1609';
       
       let MERCHANT_ID = '';
       let API_AUTH_TOKEN = '';
@@ -332,7 +333,11 @@
 
         try {
           console.log('🔄 Loading configuration...');
-          const response = await fetch(`/.netlify/functions/get-dejavoo-config?winery_id=${WINERY_ID}`);
+          const response = await fetch(`https://api.heavypourwine.com/api/v1/payments/config?winery_id=${WINERY_ID}`, {
+            headers: {
+              'X-API-Key': API_KEY
+            }
+          });
           
           if (!response.ok) {
             throw new Error(`HTTP ${response.status}`);
@@ -488,7 +493,11 @@
       async function loadCustomers() {
         try {
           console.log('🔄 Loading customers...');
-          const response = await fetch(`/.netlify/functions/get-customers?limit=1000`);
+          const response = await fetch(`https://api.heavypourwine.com/api/v1/customers?winery_id=${WINERY_ID}&limit=1000`, {
+            headers: {
+              'X-API-Key': API_KEY
+            }
+          });
           
           console.log('📥 Response status:', response.status);
           
@@ -657,10 +666,14 @@
           console.log('📡 Loading saved cards for customer:', customerId);
           console.log('🏢 Winery ID:', WINERY_ID);
           
-          const url = `/.netlify/functions/get-payment-methods?customer_id=${customerId}&winery_id=${WINERY_ID}`;
+          const url = `https://api.heavypourwine.com/api/v1/payments/methods?customer_id=${customerId}&winery_id=${WINERY_ID}`;
           console.log('📍 Fetching from:', url);
           
-          const response = await fetch(url);
+          const response = await fetch(url, {
+            headers: {
+              'X-API-Key': API_KEY
+            }
+          });
           console.log('📥 Response status:', response.status);
           
           if (!response.ok) {
@@ -1057,10 +1070,11 @@
 
         console.log('📤 Backend request:', JSON.stringify(requestBody, null, 2));
 
-        const response = await fetch('/.netlify/functions/process-card-not-present-sale', {
+        const response = await fetch('https://api.heavypourwine.com/api/v1/payments/process-cnp-sale', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'X-API-Key': API_KEY
           },
           body: JSON.stringify(requestBody),
         });
@@ -1141,9 +1155,12 @@
           
           console.log('💾 Saving payment token:', payload);
 
-          const response = await fetch('/.netlify/functions/save-payment-token', {
+          const response = await fetch('https://api.heavypourwine.com/api/v1/payments/save-method', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+              'Content-Type': 'application/json',
+              'X-API-Key': API_KEY
+            },
             body: JSON.stringify(payload)
           });
 
@@ -1192,9 +1209,12 @@
           
           console.log('💾 Saving transaction:', payload);
 
-          const response = await fetch('/.netlify/functions/save-transaction', {
+          const response = await fetch('https://api.heavypourwine.com/api/v1/payments/save-transaction', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+              'Content-Type': 'application/json',
+              'X-API-Key': API_KEY
+            },
             body: JSON.stringify(payload)
           });
           
