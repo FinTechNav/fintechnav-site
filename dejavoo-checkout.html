@@ -1002,6 +1002,11 @@
       async function processGooglePaySale() {
         console.log("💳 Processing Google Pay sale...");
         
+        // Get customer name - fallback to Google Pay name if customer fields missing
+        const customerName = selectedCustomer.first_name && selectedCustomer.last_name
+          ? selectedCustomer.first_name + ' ' + selectedCustomer.last_name
+          : (googlePayData.paymentMethodData?.info?.billingAddress?.name || 'Guest');
+        
         const requestBody = {
           winery_id: WINERY_ID,
           customer_id: selectedCustomer.id || selectedCustomer.customer_id,
@@ -1010,11 +1015,11 @@
           tax: '0.00',
           tip: '0.00',
           google_pay_data: googlePayData,
-          billing_name: selectedCustomer.first_name + ' ' + selectedCustomer.last_name,
-          billing_address: selectedCustomer.address || '',
-          billing_city: selectedCustomer.city || '',
-          billing_state: selectedCustomer.state || '',
-          billing_zip: selectedCustomer.zip || '',
+          billing_name: customerName,
+          billing_address: selectedCustomer.address || googlePayData.paymentMethodData?.info?.billingAddress?.address1 || '',
+          billing_city: selectedCustomer.city || googlePayData.paymentMethodData?.info?.billingAddress?.locality || '',
+          billing_state: selectedCustomer.state || googlePayData.paymentMethodData?.info?.billingAddress?.administrativeArea || '',
+          billing_zip: selectedCustomer.zip || googlePayData.paymentMethodData?.info?.billingAddress?.postalCode || '',
         };
 
         console.log('📤 Backend request:', JSON.stringify(requestBody, null, 2));
