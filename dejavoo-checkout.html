@@ -1060,33 +1060,37 @@
         console.log('💰 Processing payment via backend...');
         
         const requestBody = {
-          // Transaction details
-          amount: 155.00,
-          subtotal: 155.00,
-          tax: 0.00,
-          tipAmount: 0,
+          // Required fields - snake_case and strings
+          winery_id: WINERY_ID,
+          amount: '155.00',
+          subtotal: '155.00',
+          tax: '0.00',
+          tip: '0.00',
+          billing_name: selectedCustomer.first_name + ' ' + selectedCustomer.last_name,
           
-          // Customer & context
-          customerId: selectedCustomer.id || selectedCustomer.customer_id,
-          wineryId: WINERY_ID,
-          orderId: crypto.randomUUID(),
-          referenceId: 'WEB' + Date.now(),
-          
-          // Cart items (optional)
-          cartItems: [],
+          // Optional fields
+          customer_id: selectedCustomer.id || selectedCustomer.customer_id,
+          order_id: crypto.randomUUID(),
         };
 
         // Add payment method based on type
         if (selectedPaymentMethod === 'new') {
-          // New card - use paymentTokenId + CVV (required for AMEX)
-          requestBody.paymentTokenId = paymentTokenId;
-          requestBody.cvv = document.getElementById('cccvv').value;
-          requestBody.saveCard = selectedCustomer?.customer_id && document.getElementById('saveCardCheckbox')?.checked;
-          requestBody.billingZip = document.getElementById('billingZip').value.split('-')[0].trim();
+          // New card - use paymentTokenId + CVV
+          requestBody.payment_token = paymentTokenId;
+          requestBody.card_cvv = document.getElementById('cccvv').value;
+          requestBody.save_card = selectedCustomer?.customer_id && document.getElementById('saveCardCheckbox')?.checked;
+          requestBody.billing_zip = document.getElementById('billingZip').value.split('-')[0].trim();
+          requestBody.billing_address = document.getElementById('billingAddress').value;
+          requestBody.billing_city = document.getElementById('billingCity').value;
+          requestBody.billing_state = document.getElementById('billingState').value;
+          requestBody.use_saved_card = false;
           console.log('🆕 New card payment with token:', paymentTokenId, 'CVV length:', document.getElementById('cccvv').value.length);
         } else {
-          // Saved card - use cardToken (no CVV needed)
-          requestBody.cardToken = reusableToken;
+          // Saved card - use reusableToken
+          requestBody.payment_token = reusableToken;
+          requestBody.card_cvv = '000'; // Dummy CVV for saved cards
+          requestBody.use_saved_card = true;
+          requestBody.save_card = false;
           console.log('💳 Saved card payment with token:', reusableToken);
         }
 
