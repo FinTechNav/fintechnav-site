@@ -494,7 +494,7 @@
         try {
           console.log('🔄 Loading customers with pagination...');
           
-          let allCustomers = [];
+          allCustomers = []; // Reset global variable
           let offset = 0;
           const limit = 100;
           let total = 0;
@@ -531,7 +531,6 @@
             offset += limit;
           }
           
-          allCustomers = allCustomers;
           filteredCustomers = allCustomers; // Initially show all
           console.log(`✅ Loaded all ${allCustomers.length} customers`);
         } catch (error) {
