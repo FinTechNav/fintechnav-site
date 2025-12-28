@@ -979,6 +979,9 @@
             }
             
             console.log("🎉 Showing success page");
+            const legacyResponse = {
+              iposTransactResponse: saleResponse.transactionData
+            };
             showSuccessPage(legacyResponse);
           } else {
             console.error("❌ Transaction declined");
