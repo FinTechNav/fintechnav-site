@@ -978,13 +978,6 @@
               await savePaymentToken(legacyResponse);
             }
             
-            // Save transaction
-            console.log("💾 Saving transaction to database...");
-            const legacyResponse = {
-              iposTransactResponse: saleResponse.transactionData
-            };
-            await saveTransaction(legacyResponse);
-            
             console.log("🎉 Showing success page");
             showSuccessPage(legacyResponse);
           } else {
