@@ -492,25 +492,48 @@
       // Load customers
       async function loadCustomers() {
         try {
-          console.log('🔄 Loading customers...');
-          const response = await fetch(`https://api.heavypourwine.com/api/v1/customers?winery_id=${WINERY_ID}&limit=1000`, {
-            headers: {
-              'X-API-Key': API_KEY
+          console.log('🔄 Loading customers with pagination...');
+          
+          let allCustomers = [];
+          let offset = 0;
+          const limit = 100;
+          let total = 0;
+          
+          // Fetch all customers using pagination
+          while (true) {
+            const response = await fetch(
+              `https://api.heavypourwine.com/api/v1/customers?winery_id=${WINERY_ID}&limit=${limit}&offset=${offset}`,
+              {
+                headers: {
+                  'X-API-Key': API_KEY
+                }
+              }
+            );
+            
+            console.log(`📥 Page response status: ${response.status} (offset: ${offset})`);
+            
+            if (!response.ok) throw new Error('Failed to load customers');
+            
+            const data = await response.json();
+            
+            if (!data.success) throw new Error('Failed to load customers');
+            
+            allCustomers = allCustomers.concat(data.customers);
+            total = data.total;
+            
+            console.log(`📦 Loaded ${allCustomers.length} of ${total} customers`);
+            
+            // Check if we've loaded all customers
+            if (offset + limit >= total) {
+              break;
             }
-          });
+            
+            offset += limit;
+          }
           
-          console.log('📥 Response status:', response.status);
-          
-          if (!response.ok) throw new Error('Failed to load customers');
-          
-          const data = await response.json();
-          console.log('📦 Response data:', data);
-          
-          if (!data.success) throw new Error('Failed to load customers');
-          
-          allCustomers = data.customers;
+          allCustomers = allCustomers;
           filteredCustomers = allCustomers; // Initially show all
-          console.log('✅ Loaded customers:', allCustomers.length);
+          console.log(`✅ Loaded all ${allCustomers.length} customers`);
         } catch (error) {
           console.error('❌ Failed to load customers:', error);
           showAlert('customerAlerts', 'error', 'Unable to load customer list');
