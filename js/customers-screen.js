@@ -266,6 +266,11 @@ class CustomersScreen {
         [field]: c[field],
       }))
     );
+
+    // Reset pagination when sorting
+    this.currentPage = 0;
+    this.displayedCustomers = this.filteredCustomers.slice(0, this.itemsPerPage);
+    console.log('Reset pagination - displaying first', this.itemsPerPage, 'customers');
     console.log('=== SORT BY COMPLETE ===');
 
     this.render();
