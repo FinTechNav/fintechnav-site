@@ -243,13 +243,31 @@ class CustomersScreen {
   }
 
   sortBy(field) {
+    console.log('=== SORT BY TRIGGERED ===');
+    console.log('Field:', field);
+    console.log('Current sortField:', this.sortField);
+    console.log('Current sortDirection:', this.sortDirection);
+
     if (this.sortField === field) {
       this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+      console.log('Toggling direction to:', this.sortDirection);
     } else {
       this.sortField = field;
       this.sortDirection = 'asc';
+      console.log('New field, setting direction to: asc');
     }
     this.filteredCustomers = this.sortCustomers(this.filteredCustomers);
+
+    console.log('filteredCustomers length after sort:', this.filteredCustomers.length);
+    console.log(
+      'First 3 customers after sort:',
+      this.filteredCustomers.slice(0, 3).map((c) => ({
+        name: this.getFullName(c),
+        [field]: c[field],
+      }))
+    );
+    console.log('=== SORT BY COMPLETE ===');
+
     this.render();
     if (this.showMap) {
       this.initializeMap();
@@ -257,6 +275,9 @@ class CustomersScreen {
   }
 
   sortCustomers(customers) {
+    console.log('sortCustomers called - field:', this.sortField, 'direction:', this.sortDirection);
+    console.log('Input customers count:', customers.length);
+
     return [...customers].sort((a, b) => {
       let aVal = a[this.sortField];
       let bVal = b[this.sortField];
@@ -1341,6 +1362,13 @@ class CustomersScreen {
   }
 
   renderListView() {
+    console.log(
+      'renderListView called - displayedCustomers:',
+      this.displayedCustomers.length,
+      'filteredCustomers:',
+      this.filteredCustomers.length
+    );
+
     if (this.filteredCustomers.length === 0) {
       return '<div class="no-customers">No customers found</div>';
     }
