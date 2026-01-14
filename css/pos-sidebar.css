@@ -114,83 +114,83 @@
 
 /* Theme-based icon switching */
 [data-theme="light"] .menu-icon-cart {
-    content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-22.svg');
+    content: url('https://cdn.heavypourwine.com/LightMode/Point-Of-Sale.svg');
 }
 
 [data-theme="dark"] .menu-icon-cart {
-    content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/DarkMode/DarkMode-icons-50.svg');
+    content: url('https://cdn.heavypourwine.com/DarkMode/Point-Of-Sale.svg');
 }
 
 [data-theme="light"] .menu-icon-customers {
-    content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-25.svg');
+    content: url('https://cdn.heavypourwine.com/LightMode/Customers.svg');
 }
 
 [data-theme="dark"] .menu-icon-customers {
-    content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/DarkMode/DarkMode-icons-53.svg');
+    content: url('https://cdn.heavypourwine.com/DarkMode/Customers.svg');
 }
 
 [data-theme="light"] .menu-icon-orders {
-    content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-23.svg');
+    content: url('https://cdn.heavypourwine.com/LightMode/Orders.svg');
 }
 
 [data-theme="dark"] .menu-icon-orders {
-    content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/DarkMode/DarkMode-icons-51.svg');
+    content: url('https://cdn.heavypourwine.com/DarkMode/Orders.svg');
 }
 
 [data-theme="light"] .menu-icon-products {
-    content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-20.svg');
+    content: url('https://cdn.heavypourwine.com/LightMode/Products.svg');
 }
 
 [data-theme="dark"] .menu-icon-products {
-    content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/DarkMode/DarkMode-icons-48.svg');
+    content: url('https://cdn.heavypourwine.com/DarkMode/Products.svg');
 }
 
 [data-theme="light"] .menu-icon-reservations {
-    content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-17.svg');
+    content: url('https://cdn.heavypourwine.com/LightMode/Calendar.svg');
 }
 
 [data-theme="dark"] .menu-icon-reservations {
-    content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/DarkMode/DarkMode-icons-45.svg');
+    content: url('https://cdn.heavypourwine.com/DarkMode/Calendar.svg');
 }
 
 [data-theme="light"] .menu-icon-club {
-    content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-29.svg');
+    content: url('https://cdn.heavypourwine.com/LightMode/Club.svg');
 }
 
 [data-theme="dark"] .menu-icon-club {
-    content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/DarkMode/DarkMode-icons-57.svg');
+    content: url('https://cdn.heavypourwine.com/DarkMode/Club.svg');
 }
 
 [data-theme="light"] .menu-icon-reports {
-    content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-19.svg');
+    content: url('https://cdn.heavypourwine.com/LightMode/Reports.svg');
 }
 
 [data-theme="dark"] .menu-icon-reports {
-    content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/DarkMode/DarkMode-icons-47.svg');
+    content: url('https://cdn.heavypourwine.com/DarkMode/Reports.svg');
 }
 
 [data-theme="light"] .menu-icon-settings {
-    content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-28.svg');
+    content: url('https://cdn.heavypourwine.com/LightMode/Settings.svg');
 }
 
 [data-theme="dark"] .menu-icon-settings {
-    content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/DarkMode/DarkMode-icons-56.svg');
+    content: url('https://cdn.heavypourwine.com/DarkMode/Settings.svg');
 }
 
 [data-theme="light"] .menu-icon-hamburger {
-    content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-107.svg');
+    content: url('https://cdn.heavypourwine.com/LightMode/Hamburger.svg');
 }
 
 [data-theme="dark"] .menu-icon-hamburger {
-    content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/DarkMode/DarkMode-icons-97.svg');
+    content: url('https://cdn.heavypourwine.com/DarkMode/Hamburger.svg');
 }
 
 [data-theme="light"] .menu-icon-theme-toggle {
-    content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-113.svg');
+    content: url('https://cdn.heavypourwine.com/LightMode/Light-Dark-Toggle.svg');
 }
 
 [data-theme="dark"] .menu-icon-theme-toggle {
-    content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/DarkMode/DarkMode-icons-112.svg');
+    content: url('https://cdn.heavypourwine.com/DarkMode/Light-Dark-Toggle.svg');
 }
 
 .menu-label {

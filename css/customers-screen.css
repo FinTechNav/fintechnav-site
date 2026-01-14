@@ -141,59 +141,59 @@
 
 /* Theme-based icon switching for customer screen */
 [data-theme="light"] .menu-icon-search {
-  content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-15.svg');
+  content: url('https://cdn.heavypourwine.com/LightMode/Search.svg');
 }
 
 [data-theme="dark"] .menu-icon-search {
-  content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/DarkMode/DarkMode-icons-43.svg');
+  content: url('https://cdn.heavypourwine.com/DarkMode/Search.svg');
 }
 
 [data-theme="light"] .menu-icon-filter {
-  content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-33.svg');
+  content: url('https://cdn.heavypourwine.com/LightMode/Filter.svg');
 }
 
 [data-theme="dark"] .menu-icon-filter {
-  content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/DarkMode/DarkMode-icons-61.svg');
+  content: url('https://cdn.heavypourwine.com/DarkMode/Filter.svg');
 }
 
 [data-theme="light"] .menu-icon-map {
-  content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-30.svg');
+  content: url('https://cdn.heavypourwine.com/LightMode/Map.svg');
 }
 
 [data-theme="dark"] .menu-icon-map {
-  content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/DarkMode/DarkMode-icons-58.svg');
+  content: url('https://cdn.heavypourwine.com/DarkMode/Map.svg');
 }
 
 [data-theme="light"] .menu-icon-tile {
-  content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-32.svg');
+  content: url('https://cdn.heavypourwine.com/LightMode/Tile-View.svg');
 }
 
 [data-theme="dark"] .menu-icon-tile {
-  content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/DarkMode/DarkMode-icons-60.svg');
+  content: url('https://cdn.heavypourwine.com/DarkMode/Tile-View.svg');
 }
 
 [data-theme="light"] .menu-icon-list {
-  content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-35.svg');
+  content: url('https://cdn.heavypourwine.com/LightMode/List-View.svg');
 }
 
 [data-theme="dark"] .menu-icon-list {
-  content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/DarkMode/DarkMode-icons-63.svg');
+  content: url('https://cdn.heavypourwine.com/DarkMode/List-View.svg');
 }
 
 [data-theme="light"] .menu-icon-add-customer {
-  content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-27.svg');
+  content: url('https://cdn.heavypourwine.com/LightMode/Add-Customer.svg');
 }
 
 [data-theme="dark"] .menu-icon-add-customer {
-  content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/DarkMode/DarkMode-icons-55.svg');
+  content: url('https://cdn.heavypourwine.com/DarkMode/Add-Customer.svg');
 }
 
 [data-theme="light"] .menu-icon-export {
-  content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-31.svg');
+  content: url('https://cdn.heavypourwine.com/LightMode/Export.svg');
 }
 
 [data-theme="dark"] .menu-icon-export {
-  content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/DarkMode/DarkMode-icons-59.svg');
+  content: url('https://cdn.heavypourwine.com/DarkMode/Export.svg');
 }
 
 .grouping-selector {
@@ -442,59 +442,59 @@
 
 /* Theme-based icon switching for bulk actions */
 [data-theme="light"] .menu-icon-club {
-  content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-29.svg');
+  content: url('https://cdn.heavypourwine.com/LightMode/Club.svg');
 }
 
 [data-theme="dark"] .menu-icon-club {
-  content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/DarkMode/DarkMode-icons-57.svg');
+  content: url('https://cdn.heavypourwine.com/DarkMode/Club.svg');
 }
 
 [data-theme="light"] .menu-icon-delete {
-  content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-14.svg');
+  content: url('https://cdn.heavypourwine.com/LightMode/Delete.svg');
 }
 
 [data-theme="dark"] .menu-icon-delete {
-  content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/DarkMode/DarkMode-icons-42.svg');
+  content: url('https://cdn.heavypourwine.com/DarkMode/Delete.svg');
 }
 
 [data-theme="light"] .menu-icon-email {
-  content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-109.svg');
+  content: url('https://cdn.heavypourwine.com/LightMode/Email.svg');
 }
 
 [data-theme="dark"] .menu-icon-email {
-  content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/DarkMode/DarkMode-icons-99.svg');
+  content: url('https://cdn.heavypourwine.com/DarkMode/Email.svg');
 }
 
 [data-theme="light"] .menu-icon-sms {
-  content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-110.svg');
+  content: url('https://cdn.heavypourwine.com/LightMode/SMS.svg');
 }
 
 [data-theme="dark"] .menu-icon-sms {
-  content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/DarkMode/DarkMode-icons-100.svg');
+  content: url('https://cdn.heavypourwine.com/DarkMode/SMS.svg');
 }
 
 [data-theme="light"] .menu-icon-note {
-  content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-111.svg');
+  content: url('https://cdn.heavypourwine.com/LightMode/Note.svg');
 }
 
 [data-theme="dark"] .menu-icon-note {
-  content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/DarkMode/DarkMode-icons-101.svg');
+  content: url('https://cdn.heavypourwine.com/DarkMode/Note.svg');
 }
 
 [data-theme="light"] .menu-icon-select-all {
-  content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-102.svg');
+  content: url('https://cdn.heavypourwine.com/LightMode/Checkmark.svg');
 }
 
 [data-theme="dark"] .menu-icon-select-all {
-  content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/DarkMode/DarkMode-icons-92.svg');
+  content: url('https://cdn.heavypourwine.com/DarkMode/Checkmark.svg');
 }
 
 [data-theme="light"] .menu-icon-deselect {
-  content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-103.svg');
+  content: url('https://cdn.heavypourwine.com/LightMode/Deselect.svg');
 }
 
 [data-theme="dark"] .menu-icon-deselect {
-  content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/DarkMode/DarkMode-icons-93.svg');
+  content: url('https://cdn.heavypourwine.com/DarkMode/Deselect.svg');
 }
 
 .customers-stats {
@@ -788,35 +788,35 @@
 
 /* Theme-based icon switching for sort icons */
 [data-theme="light"] .menu-icon-sort-none {
-  content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-39.svg');
+  content: url('https://cdn.heavypourwine.com/LightMode/Sorted-Not-sorted.svg');
 }
 
 [data-theme="dark"] .menu-icon-sort-none {
-  content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/DarkMode/DarkMode-icons-67.svg');
+  content: url('https://cdn.heavypourwine.com/DarkMode/Sorted-Not-sorted.svg');
 }
 
 [data-theme="light"] .menu-icon-sort-asc {
-  content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-38.svg');
+  content: url('https://cdn.heavypourwine.com/LightMode/Sorted-Ascending.svg');
 }
 
 [data-theme="dark"] .menu-icon-sort-asc {
-  content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/DarkMode/DarkMode-icons-66.svg');
+  content: url('https://cdn.heavypourwine.com/DarkMode/Sorted-Ascending.svg');
 }
 
 [data-theme="light"] .menu-icon-sort-desc {
-  content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-37.svg');
+  content: url('https://cdn.heavypourwine.com/LightMode/Sorted-Descending.svg');
 }
 
 [data-theme="dark"] .menu-icon-sort-desc {
-  content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/DarkMode/DarkMode-icons-65.svg');
+  content: url('https://cdn.heavypourwine.com/DarkMode/Sorted-Descending.svg');
 }
 
 [data-theme="light"] .menu-icon-pos {
-  content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-22.svg');
+  content: url('https://cdn.heavypourwine.com/LightMode/Point-Of-Sale.svg');
 }
 
 [data-theme="dark"] .menu-icon-pos {
-  content: url('https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/DarkMode/DarkMode-icons-50.svg');
+  content: url('https://cdn.heavypourwine.com/DarkMode/Point-Of-Sale.svg');
 }
 
 /* List View */

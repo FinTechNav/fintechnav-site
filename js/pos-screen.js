@@ -996,7 +996,7 @@ const POSScreen = {
       overlay.className = 'processing-overlay';
       overlay.innerHTML = `
         <div class="processing-content">
-          <img id="swirlingWineOverlay" src="https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/ProcessingWait/SwishyCupProcessing-74.svg" alt="Processing" style="width: 80px; height: 80px; margin: 0 auto 20px;" />
+          <img id="swirlingWineOverlay" src="https://cdn.heavypourwine.com/ProcessingWait/SwishyCupProcessing-74.svg" alt="Processing" style="width: 80px; height: 80px; margin: 0 auto 20px;" />
           <h3 id="processingMessage">${message}</h3>
           <p style="color: #e8e8e8; margin-top: 10px; font-size: 16px; font-weight: 500;">
             Please wait...
@@ -1007,14 +1007,14 @@ const POSScreen = {
 
       // Start wine swirling animation
       const frames = [
-        'https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/ProcessingWait/SwishyCupProcessing-74.svg',
-        'https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/ProcessingWait/SwishyCupProcessing-75.svg',
-        'https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/ProcessingWait/SwishyCupProcessing-76.svg',
-        'https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/ProcessingWait/SwishyCupProcessing-77.svg',
-        'https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/ProcessingWait/SwishyCupProcessing-78.svg',
-        'https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/ProcessingWait/SwishyCupProcessing-79.svg',
-        'https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/ProcessingWait/SwishyCupProcessing-80.svg',
-        'https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/ProcessingWait/SwishyCupProcessing-81.svg',
+        'https://cdn.heavypourwine.com/ProcessingWait/SwishyCupProcessing-74.svg',
+        'https://cdn.heavypourwine.com/ProcessingWait/SwishyCupProcessing-75.svg',
+        'https://cdn.heavypourwine.com/ProcessingWait/SwishyCupProcessing-76.svg',
+        'https://cdn.heavypourwine.com/ProcessingWait/SwishyCupProcessing-77.svg',
+        'https://cdn.heavypourwine.com/ProcessingWait/SwishyCupProcessing-78.svg',
+        'https://cdn.heavypourwine.com/ProcessingWait/SwishyCupProcessing-79.svg',
+        'https://cdn.heavypourwine.com/ProcessingWait/SwishyCupProcessing-80.svg',
+        'https://cdn.heavypourwine.com/ProcessingWait/SwishyCupProcessing-81.svg',
       ];
 
       let currentFrame = 0;
@@ -1408,7 +1408,7 @@ const POSScreen = {
           <!-- Right Side: Payment Info -->
           <div style="display: flex; flex-direction: column; justify-content: center; text-align: center;">
             <div style="margin-bottom: 15px;">
-              <img src="https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/AllModes/AllModes-icons-73.svg" alt="Cash" style="width: 100px; height: 100px;" />
+              <img src="https://cdn.heavypourwine.com/AllModes/Cash.svg" alt="Cash" style="width: 100px; height: 100px;" />
             </div>
             <h2 style="color: var(--accent-success); margin-bottom: 10px; font-size: 25pt; font-weight: 600; font-family: Montserrat, sans-serif;">PAYMENT RECEIVED</h2>
             
@@ -1539,7 +1539,7 @@ const POSScreen = {
           <!-- Right Side: Payment Info -->
           <div style="display: flex; flex-direction: column; justify-content: center; text-align: center;">
             <div style="margin-bottom: 15px;">
-              <img src="https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/AllModes/AllModes-icons-70.svg" alt="Payment Approved" style="width: 100px; height: 100px;" />
+              <img src="https://cdn.heavypourwine.com/AllModes/Payment-Approved.svg" alt="Payment Approved" style="width: 100px; height: 100px;" />
             </div>
             <h2 style="color: var(--accent-success); margin-bottom: 10px; font-size: 25pt; font-weight: 600; font-family: Montserrat, sans-serif;">PAYMENT RECEIVED</h2>
             <div style="font-size: 13pt; color: var(--text-modal-secondary); margin-bottom: 25px; font-weight: 500; font-family: Montserrat, sans-serif;">Transaction Approved</div>
@@ -1673,7 +1673,7 @@ const POSScreen = {
 
     content.innerHTML = `
       <div style="margin-bottom: 20px;">
-        <img id="swirlingWineAnimation" src="https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/ProcessingWait/SwishyCupProcessing-74.svg" alt="Processing" style="width: 80px; height: 80px;" />
+        <img id="swirlingWineAnimation" src="https://cdn.heavypourwine.com/ProcessingWait/SwishyCupProcessing-74.svg" alt="Processing" style="width: 80px; height: 80px;" />
       </div>
       <h2 style="color: #e8e8e8; margin-bottom: 10px; font-size: 24px; font-weight: 600;">Processing payment on terminal...</h2>
       <p style="color: #e8e8e8; font-size: 16px; font-weight: 500;">Please wait...</p>
@@ -1684,14 +1684,14 @@ const POSScreen = {
 
     // Start wine swirling animation
     const frames = [
-      'https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/ProcessingWait/SwishyCupProcessing-74.svg',
-      'https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/ProcessingWait/SwishyCupProcessing-75.svg',
-      'https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/ProcessingWait/SwishyCupProcessing-76.svg',
-      'https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/ProcessingWait/SwishyCupProcessing-77.svg',
-      'https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/ProcessingWait/SwishyCupProcessing-78.svg',
-      'https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/ProcessingWait/SwishyCupProcessing-79.svg',
-      'https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/ProcessingWait/SwishyCupProcessing-80.svg',
-      'https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/ProcessingWait/SwishyCupProcessing-81.svg',
+      'https://cdn.heavypourwine.com/ProcessingWait/SwishyCupProcessing-74.svg',
+      'https://cdn.heavypourwine.com/ProcessingWait/SwishyCupProcessing-75.svg',
+      'https://cdn.heavypourwine.com/ProcessingWait/SwishyCupProcessing-76.svg',
+      'https://cdn.heavypourwine.com/ProcessingWait/SwishyCupProcessing-77.svg',
+      'https://cdn.heavypourwine.com/ProcessingWait/SwishyCupProcessing-78.svg',
+      'https://cdn.heavypourwine.com/ProcessingWait/SwishyCupProcessing-79.svg',
+      'https://cdn.heavypourwine.com/ProcessingWait/SwishyCupProcessing-80.svg',
+      'https://cdn.heavypourwine.com/ProcessingWait/SwishyCupProcessing-81.svg',
     ];
 
     let currentFrame = 0;
@@ -1966,7 +1966,7 @@ const POSScreen = {
 
     content.innerHTML = `
       <div style="margin-bottom: 20px;">
-        <img src="https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/AllModes/AllModes-icons-71.svg" alt="Payment Declined" style="width: 80px; height: 80px;" />
+        <img src="https://cdn.heavypourwine.com/AllModes/Payment-Declined.svg" alt="Payment Declined" style="width: 80px; height: 80px;" />
       </div>
       <h2 style="color: #c0392b; margin: 0 0 25px 0; font-size: 26px; font-weight: 700;">
         PAYMENT DECLINED
