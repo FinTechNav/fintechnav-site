@@ -404,7 +404,7 @@ class CustomersScreen {
 
         <div class="customers-toolbar">
           <div class="search-box">
-            <img src="https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-15.svg" class="search-icon menu-icon-search" alt="Search">
+            <img src="https://cdn.heavypourwine.com/LightMode/Search.svg" class="search-icon menu-icon-search" alt="Search">
             <input 
               type="text" 
               id="customer-search" 
@@ -428,13 +428,13 @@ class CustomersScreen {
           </div>
 
           <button class="btn-filter ${activeFilterCount > 0 ? 'active' : ''}" id="filter-btn" onclick="customersScreen.openFilterModal()">
-            <img src="https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-33.svg" class="toolbar-icon menu-icon-filter" alt="Filter">
+            <img src="https://cdn.heavypourwine.com/LightMode/Filter.svg" class="toolbar-icon menu-icon-filter" alt="Filter">
             Filter
             ${activeFilterCount > 0 ? `<span class="filter-badge">${activeFilterCount}</span>` : ''}
           </button>
 
           <button class="btn-map ${this.showMap ? 'active' : ''}" onclick="customersScreen.toggleMap()" title="Map View">
-            <img src="https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-30.svg" class="toolbar-icon menu-icon-map" alt="Map">
+            <img src="https://cdn.heavypourwine.com/LightMode/Map.svg" class="toolbar-icon menu-icon-map" alt="Map">
             Map
             ${this.polygonFilter ? '<span class="filter-badge">1</span>' : ''}
           </button>
@@ -445,7 +445,7 @@ class CustomersScreen {
               onclick="customersScreen.setView('grid')"
               title="Grid View"
             >
-              <img src="https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-32.svg" class="toolbar-icon menu-icon-tile" alt="Tile View">
+              <img src="https://cdn.heavypourwine.com/LightMode/Tile-View.svg" class="toolbar-icon menu-icon-tile" alt="Tile View">
             </button>
             <button 
               class="view-btn ${this.currentView === 'list' ? 'active' : ''}" 
@@ -453,16 +453,16 @@ class CustomersScreen {
               title="List View"
               ${this.showMap ? 'disabled' : ''}
             >
-              <img src="https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-35.svg" class="toolbar-icon menu-icon-list" alt="List View">
+              <img src="https://cdn.heavypourwine.com/LightMode/List-View.svg" class="toolbar-icon menu-icon-list" alt="List View">
             </button>
           </div>
 
           <button class="btn-primary" onclick="customersScreen.createCustomer()">
-            <img src="https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-27.svg" class="toolbar-icon menu-icon-add-customer" alt="Add Customer">
+            <img src="https://cdn.heavypourwine.com/LightMode/Add-Customer.svg" class="toolbar-icon menu-icon-add-customer" alt="Add Customer">
             Add Customer
           </button>
           <button class="btn-secondary" onclick="customersScreen.exportCustomers()">
-            <img src="https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-31.svg" class="toolbar-icon menu-icon-export" alt="Export">
+            <img src="https://cdn.heavypourwine.com/LightMode/Export.svg" class="toolbar-icon menu-icon-export" alt="Export">
             Export
           </button>
         </div>
@@ -477,7 +477,7 @@ class CustomersScreen {
               !this.filteredCustomers.every((c) => this.selectedCustomers.has(c.id))
                 ? `
               <button class="btn-select-all" onclick="customersScreen.toggleSelectAll(true)">
-                <img src="https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-102.svg" class="select-icon menu-icon-select-all" alt="Select All" style="width: 16px; height: 16px; margin-right: 6px;">
+                <img src="https://cdn.heavypourwine.com/LightMode/Checkmark.svg" class="select-icon menu-icon-select-all" alt="Select All" style="width: 16px; height: 16px; margin-right: 6px;">
                 Select All
               </button>
             `
@@ -1288,23 +1288,23 @@ class CustomersScreen {
     return `
       <div class="bulk-actions-bar">
         <button class="btn-bulk" onclick="customersScreen.bulkEmail()">
-          <img src="https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-109.svg" class="bulk-icon menu-icon-email" alt="Email">
+          <img src="https://cdn.heavypourwine.com/LightMode/Email.svg" class="bulk-icon menu-icon-email" alt="Email">
           Email Selected
         </button>
         <button class="btn-bulk" onclick="customersScreen.bulkExport()">
-          <img src="https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-31.svg" class="bulk-icon menu-icon-export" alt="Export">
+          <img src="https://cdn.heavypourwine.com/LightMode/Export.svg" class="bulk-icon menu-icon-export" alt="Export">
           Export Selected
         </button>
         <button class="btn-bulk" onclick="customersScreen.bulkAddToClub()">
-          <img src="https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-29.svg" class="bulk-icon menu-icon-club" alt="Club">
+          <img src="https://cdn.heavypourwine.com/LightMode/Club.svg" class="bulk-icon menu-icon-club" alt="Club">
           Add to Club
         </button>
         <button class="btn-bulk" onclick="customersScreen.deselectAll()">
-          <img src="https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-103.svg" class="bulk-icon menu-icon-deselect" alt="Deselect">
+          <img src="https://cdn.heavypourwine.com/LightMode/Deselect.svg" class="bulk-icon menu-icon-deselect" alt="Deselect">
           Deselect All
         </button>
         <button class="btn-bulk btn-danger" onclick="customersScreen.bulkDelete()">
-          <img src="https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-14.svg" class="bulk-icon menu-icon-delete" alt="Delete">
+          <img src="https://cdn.heavypourwine.com/LightMode/Delete.svg" class="bulk-icon menu-icon-delete" alt="Delete">
           Delete Selected
         </button>
       </div>
@@ -1350,16 +1350,16 @@ class CustomersScreen {
         </div>
         <div class="customer-actions">
           <button class="btn-icon" onclick="event.stopPropagation(); customersScreen.createOrder('${customer.id}')" title="Create Order">
-            <img src="https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-22.svg" class="action-icon menu-icon-pos" alt="POS">
+            <img src="https://cdn.heavypourwine.com/LightMode/Point-Of-Sale.svg" class="action-icon menu-icon-pos" alt="POS">
           </button>
           <button class="btn-icon" onclick="event.stopPropagation(); customersScreen.emailCustomer('${customer.id}')" title="Email">
-            <img src="https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-109.svg" class="action-icon menu-icon-email" alt="Email">
+            <img src="https://cdn.heavypourwine.com/LightMode/Email.svg" class="action-icon menu-icon-email" alt="Email">
           </button>
           <button class="btn-icon" onclick="event.stopPropagation(); customersScreen.textCustomer('${customer.id}')" title="Text">
-            <img src="https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-110.svg" class="action-icon menu-icon-sms" alt="SMS">
+            <img src="https://cdn.heavypourwine.com/LightMode/SMS.svg" class="action-icon menu-icon-sms" alt="SMS">
           </button>
           <button class="btn-icon" onclick="event.stopPropagation(); customersScreen.addNote('${customer.id}')" title="Note">
-            <img src="https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-111.svg" class="action-icon menu-icon-note" alt="Note">
+            <img src="https://cdn.heavypourwine.com/LightMode/Note.svg" class="action-icon menu-icon-note" alt="Note">
           </button>
         </div>
       </div>
@@ -1380,11 +1380,11 @@ class CustomersScreen {
 
     const getSortIcon = (field) => {
       if (this.sortField !== field) {
-        return '<img src="https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-39.svg" class="sort-icon menu-icon-sort-none" alt="Not sorted">';
+        return '<img src="https://cdn.heavypourwine.com/LightMode/Sorted-Not-sorted.svg" class="sort-icon menu-icon-sort-none" alt="Not sorted">';
       }
       return this.sortDirection === 'asc'
-        ? '<img src="https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-38.svg" class="sort-icon menu-icon-sort-asc" alt="Ascending">'
-        : '<img src="https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-37.svg" class="sort-icon menu-icon-sort-desc" alt="Descending">';
+        ? '<img src="https://cdn.heavypourwine.com/LightMode/Sorted-Ascending.svg" class="sort-icon menu-icon-sort-asc" alt="Ascending">'
+        : '<img src="https://cdn.heavypourwine.com/LightMode/Sorted-Descending.svg" class="sort-icon menu-icon-sort-desc" alt="Descending">';
     };
 
     const customersToRender = this.displayedCustomers;
@@ -1462,16 +1462,16 @@ class CustomersScreen {
         <td onclick="event.stopPropagation()" class="actions-cell">
           <div class="actions-cell-container">
             <button class="btn-action" onclick="customersScreen.createOrder('${customer.id}')" title="Create Order">
-              <img src="https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-22.svg" class="action-icon menu-icon-pos" alt="POS">
+              <img src="https://cdn.heavypourwine.com/LightMode/Point-Of-Sale.svg" class="action-icon menu-icon-pos" alt="POS">
             </button>
             <button class="btn-action" onclick="customersScreen.emailCustomer('${customer.id}')" title="Email">
-              <img src="https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-109.svg" class="action-icon menu-icon-email" alt="Email">
+              <img src="https://cdn.heavypourwine.com/LightMode/Email.svg" class="action-icon menu-icon-email" alt="Email">
             </button>
             <button class="btn-action" onclick="customersScreen.textCustomer('${customer.id}')" title="Text">
-              <img src="https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-110.svg" class="action-icon menu-icon-sms" alt="SMS">
+              <img src="https://cdn.heavypourwine.com/LightMode/SMS.svg" class="action-icon menu-icon-sms" alt="SMS">
             </button>
             <button class="btn-action" onclick="customersScreen.addNote('${customer.id}')" title="Note">
-              <img src="https://pub-a8c2855e013441a598cf4513d23f6a8f.r2.dev/LightMode/LightMode-icons-111.svg" class="action-icon menu-icon-note" alt="Note">
+              <img src="https://cdn.heavypourwine.com/LightMode/Note.svg" class="action-icon menu-icon-note" alt="Note">
             </button>
           </div>
         </td>
