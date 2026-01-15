@@ -44,7 +44,6 @@ class ReportsScreen {
         {
           headers: {
             'x-api-key': localStorage.getItem('apiKey') || '',
-            'x-winery-id': wineryId,
           },
         }
       );
@@ -84,7 +83,6 @@ class ReportsScreen {
       const response = await fetch(url, {
         headers: {
           'x-api-key': localStorage.getItem('apiKey') || '',
-          'x-winery-id': wineryId,
         },
       });
 
