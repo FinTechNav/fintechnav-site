@@ -907,6 +907,8 @@ const App = {
       await OrdersScreen.load();
     } else if (screen === 'reservations') {
       await ReservationsScreen.init();
+    } else if (screen === 'reports') {
+      await reportsScreen.init();
     } else if (screen === 'settings') {
       await SettingsScreen.init();
     }
