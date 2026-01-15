@@ -293,4 +293,4 @@ class ReportsScreen {
   }
 }
 
-const ReportsScreenInstance = new ReportsScreen();
+const reportsScreen = new ReportsScreen();
