@@ -50,11 +50,20 @@ class ReportsScreen {
       );
 
       const data = await response.json();
-      if (response.ok) {
+      console.log('API Response:', data);
+      console.log('Response OK:', response.ok);
+      console.log('Status:', response.status);
+
+      if (response.ok && data.success) {
         this.reportData = data;
         this.selectedDate = data.window?.start || null;
+        console.log('Report data set:', this.reportData);
+      } else {
+        console.error('API Error:', data);
       }
-    } catch (error) {}
+    } catch (error) {
+      console.error('Fetch error:', error);
+    }
   }
 
   async loadReportForDate(date) {
@@ -65,24 +74,32 @@ class ReportsScreen {
     this.render();
 
     try {
-      const response = await fetch(
+      const url =
         'https://api.heavypourwine.com/api/v1/reports/daily-sales?date=' +
-          date +
-          '&include=employees,products,club',
-        {
-          headers: {
-            'x-api-key': localStorage.getItem('apiKey') || '',
-            'x-winery-id': wineryId,
-          },
-        }
-      );
+        date +
+        '&include=employees,products,club';
+      console.log('Fetching report for date:', date);
+      console.log('URL:', url);
+
+      const response = await fetch(url, {
+        headers: {
+          'x-api-key': localStorage.getItem('apiKey') || '',
+          'x-winery-id': wineryId,
+        },
+      });
 
       const data = await response.json();
-      if (response.ok) {
+      console.log('API Response:', data);
+
+      if (response.ok && data.success) {
         this.reportData = data;
         this.selectedDate = data.window?.start || date;
+      } else {
+        console.error('API Error:', data);
       }
-    } catch (error) {}
+    } catch (error) {
+      console.error('Fetch error:', error);
+    }
 
     this.loading = false;
     this.render();
