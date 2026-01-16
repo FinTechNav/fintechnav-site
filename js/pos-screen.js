@@ -753,12 +753,12 @@ const POSScreen = {
   },
 
   async processTerminalSale(terminalConfig, subtotal, tax, total) {
-    // Get timeout settings from localStorage or use defaults
-    const dbPersistTimeout =
-      parseInt(localStorage.getItem('terminalDbPersistTimeout') || '20') * 1000;
-    const pollInterval = parseInt(localStorage.getItem('terminalPollInterval') || '5') * 1000;
-    const maxWait = parseInt(localStorage.getItem('terminalMaxWait') || '180') * 1000;
-    const enablePolling = localStorage.getItem('terminalEnablePolling') !== 'false';
+    // Terminal transactions may outlive Netlify function execution time.
+    // Keep the backend behavior unchanged for now, but remove the configurable timeout/polling UI.
+    // We use a fixed strategy: return 'processing' -> automatically poll until completion or timeout.
+    const dbPersistTimeout = 20 * 1000; // keep Netlify function's default persist timeout behavior
+    const pollInterval = 5 * 1000; // poll interval while waiting
+    const maxWait = 180 * 1000; // maximum total wait before treating as timeout
 
     this.showProcessingOverlay('Processing payment on terminal...');
 
@@ -787,21 +787,8 @@ const POSScreen = {
       });
 
       const result = await response.json();
-
       if (result.success && result.status === 'processing') {
-        // Transaction is still processing
-        if (!enablePolling) {
-          // Polling is disabled - show error immediately
-          this.hideProcessingOverlay();
-          alert(
-            `Transaction timeout after 20 seconds.\n\nPolling is disabled in Settings > Terminal Timeouts.\n\nThe transaction may still complete on the terminal. Reference: ${referenceId}`
-          );
-          return;
-        }
-
-        // Polling is enabled - start tracking
-        // Keep showing the same overlay, add buttons after 60s
-        this.addButtonsToOverlay(referenceId);
+        // Transaction is still processing. Automatically wait for completion by polling.
         this.startPolling(referenceId, subtotal, tax, total, pollInterval, maxWait);
       } else if (result.success && result.data) {
         // Got immediate response
@@ -953,38 +940,6 @@ const POSScreen = {
     } catch (error) {
       alert('Failed to create order');
     }
-  },
-
-  addButtonsToOverlay(referenceId) {
-    setTimeout(() => {
-      const overlay = document.getElementById('processingOverlay');
-      if (!overlay) return;
-
-      const existingButtons = overlay.querySelector('.overlay-buttons');
-      if (existingButtons) return; // Already added
-
-      const buttonContainer = document.createElement('div');
-      buttonContainer.className = 'overlay-buttons';
-      buttonContainer.style.cssText = 'margin-top: 20px;';
-
-      buttonContainer.innerHTML = `
-        <button onclick="POSScreen.manualStatusCheck('${referenceId}')" 
-                style="background: #8b7355; color: white; border: none; padding: 12px 24px; 
-                       border-radius: 5px; cursor: pointer; margin-right: 10px; font-family: Georgia, serif;">
-          Check Status Now
-        </button>
-        <button onclick="POSScreen.cancelPolling()" 
-                style="background: #95a5a6; color: white; border: none; padding: 12px 24px; 
-                       border-radius: 5px; cursor: pointer; font-family: Georgia, serif;">
-          Cancel
-        </button>
-      `;
-
-      const content = overlay.querySelector('.processing-content');
-      if (content) {
-        content.appendChild(buttonContainer);
-      }
-    }, 60000); // 60 seconds
   },
 
   showProcessingOverlay(message = 'Processing...') {
@@ -1731,36 +1686,16 @@ const POSScreen = {
 
   async startPolling(referenceId, subtotal, tax, total, pollInterval, maxWait) {
     const startTime = Date.now();
-    let lastStatusCheckTime = 0;
-    const minStatusCheckDelay = 30000; // Wait at least 30s before first Status API check
-    let nextStatusCheckDelay = minStatusCheckDelay; // Can be increased if terminal is busy
 
+    // Poll terminal_transaction_status until approved/declined/error or until maxWait.
     this.pollingInterval = setInterval(async () => {
       const elapsed = Date.now() - startTime;
 
       if (elapsed > maxWait) {
         this.stopPolling();
+        this.hideProcessingOverlay();
         this.showTimeoutMessage(referenceId);
         return;
-      }
-
-      // Check Status API with intelligent backoff
-      const timeSinceLastCheck = Date.now() - lastStatusCheckTime;
-      if (elapsed >= minStatusCheckDelay && timeSinceLastCheck >= nextStatusCheckDelay) {
-        lastStatusCheckTime = Date.now();
-
-        try {
-          // Pass silent=true to avoid showing alert during automatic checks
-          const statusResult = await this.manualStatusCheck(referenceId, true);
-
-          // If terminal is busy, respect the delay it requested
-          if (statusResult && statusResult.data && statusResult.data.GeneralResponse) {
-            const delaySeconds = statusResult.data.GeneralResponse.DelayBeforeNextRequest;
-            if (delaySeconds && delaySeconds > 0) {
-              nextStatusCheckDelay = delaySeconds * 1000;
-            }
-          }
-        } catch (err) {}
       }
 
       try {
@@ -1769,7 +1704,12 @@ const POSScreen = {
         );
         const statusData = await response.json();
 
-        // Check if transaction was not attempted (terminal timeout with "Not found")
+        // If not found yet, keep polling
+        if (statusData.status === 'not_found') {
+          return;
+        }
+
+        // Handle terminal timeout where no payment was attempted
         if (statusData.status === 'error' && statusData.message === 'Not found') {
           this.stopPolling();
           this.hideProcessingOverlay();
@@ -1786,6 +1726,7 @@ const POSScreen = {
           this.hideProcessingOverlay();
 
           if (statusData.status === 'approved') {
+            // Load full transaction details for receipt/order persistence
             const fullResponse = await fetch(
               `/.netlify/functions/get-transaction-by-reference?reference_id=${referenceId}`
             );
@@ -1807,15 +1748,18 @@ const POSScreen = {
                   'Transaction approved but could not load details. Please check order history.',
               });
             }
-          } else if (statusData.status === 'declined') {
+          } else {
             this.showDeclineModal({
               code: statusData.status_code || 'DECLINED',
               message: statusData.result_code || 'Payment Declined',
               definition: statusData.message || 'Please try another payment method',
             });
           }
-        } else if (statusData.status === 'error' && statusData.message !== 'Not found') {
-          // Check if this is a SPIN error with data
+          return;
+        }
+
+        if (statusData.status === 'error' && statusData.message !== 'Not found') {
+          // If this is a SPIN error with data
           if (statusData.data && statusData.data.GeneralResponse) {
             const generalResponse = statusData.data.GeneralResponse;
             this.stopPolling();
@@ -1828,11 +1772,12 @@ const POSScreen = {
                 generalResponse.Message ||
                 'An error occurred processing the payment',
             });
-          } else {
-            // Generic error - keep polling
           }
+          // Otherwise keep polling
         }
-      } catch (error) {}
+      } catch (error) {
+        // keep polling
+      }
     }, pollInterval);
   },
 
@@ -1843,53 +1788,13 @@ const POSScreen = {
     }
   },
 
-  cancelPolling() {
-    this.stopPolling();
-    this.hideProcessingOverlay();
-    this.showDeclineModal({
-      code: 'CANCELLED',
-      message: 'Status Check Cancelled',
-      definition:
-        'Status checking cancelled. Transaction may still be processing. Check order history or use reference ID to verify.',
-    });
-  },
-
-  async manualStatusCheck(referenceId, silent = false) {
-    try {
-      const response = await fetch('/.netlify/functions/verify-terminal-transaction', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reference_id: referenceId }),
-      });
-
-      const result = await response.json();
-
-      if (!silent) {
-        if (result.success && result.status) {
-          alert(
-            `Transaction status: ${result.status}\n\nThe status has been updated. Please wait for automatic update or check again.`
-          );
-        } else {
-          alert('Could not verify transaction status. Please try again.');
-        }
-      }
-
-      return result;
-    } catch (error) {
-      if (!silent) {
-        alert('Error checking status. Please try again.');
-      }
-      return null;
-    }
-  },
-
   showTimeoutMessage(referenceId) {
     this.hideProcessingModal();
 
     this.showDeclineModal({
       code: '13',
       message: 'Timed out',
-      definition: `Transaction is taking longer than expected. Reference ID: ${referenceId}. You can check this transaction later in order history or use the Manual Status Check button.`,
+      definition: `Transaction is taking longer than expected. Reference ID: ${referenceId}. You can check this transaction later in order history or use the reference ID to verify.`,
     });
   },
 
