@@ -607,17 +607,17 @@ const POSScreen = {
 
         return `
             <div class="cart-item">
-                <div class="cart-item-top">
-                    <div class="cart-item-info">
-                        <div class="cart-item-name">${item.name}</div>
-                        <div class="cart-item-details">${details}</div>
+                <div class="cart-item-info">
+                    <div class="cart-item-name">${item.name}</div>
+                    <div class="cart-item-details">${details}</div>
+                </div>
+                <div class="cart-item-bottom">
+                    <div class="cart-item-qty">
+                        <div class="qty-btn" onclick="POSScreen.updateQuantity(${item.id}, -1)">−</div>
+                        <div class="qty-display">${item.quantity}</div>
+                        <div class="qty-btn" onclick="POSScreen.updateQuantity(${item.id}, 1)">+</div>
                     </div>
                     <div class="cart-item-price">$${(parseFloat(item.price) * item.quantity).toFixed(2)}</div>
-                </div>
-                <div class="cart-item-qty">
-                    <div class="qty-btn" onclick="POSScreen.updateQuantity(${item.id}, -1)">−</div>
-                    <div class="qty-display">${item.quantity}</div>
-                    <div class="qty-btn" onclick="POSScreen.updateQuantity(${item.id}, 1)">+</div>
                 </div>
             </div>
           `;
