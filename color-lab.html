@@ -55,73 +55,118 @@
 
   /* ---------- preview ---------- */
   .preview { flex:1; min-width:0; padding:20px; }
-  .frame { display:flex; border-radius:12px; overflow:hidden; min-height:600px;
+  .frame { display:flex; border-radius:12px; overflow:hidden; min-height:760px;
            box-shadow:0 10px 34px rgba(0,0,0,.45); }
 
-  .rail { width:212px; flex:none; background:var(--sidebar); padding:16px 14px; }
-  .brand { display:flex; align-items:center; gap:7px; margin-bottom:16px; }
+  /* left rail */
+  .rail { width:290px; flex:none; background:var(--sidebar); padding:18px 16px; }
+  .brand { display:flex; align-items:center; gap:7px; margin-bottom:14px; }
   .brand .glyph { font-size:18px; color:var(--burgundy); line-height:1; }
   .brand span { font-size:12px; font-weight:600; letter-spacing:.05em; color:var(--text); }
-  .rail h3 { margin:0 0 6px; font-size:13.5px; font-weight:600; color:var(--text); line-height:1.35; }
-  .rail p.blurb { margin:0 0 16px; font-size:11px; color:var(--muted); line-height:1.5; }
-  .step { display:flex; align-items:center; gap:8px; padding:6px 0; font-size:12px; color:var(--text); }
-  .step .dot { width:15px; text-align:center; font-size:13px; line-height:1; color:var(--stepDone); }
-  .step.todo { color:var(--muted); } .step.todo .dot { color:var(--muted); }
-  .step.active { background:var(--activeStep); border-radius:6px; padding:7px 9px; margin:2px -9px;
-                 font-weight:600; }
-  .step.active .dot { color:var(--accent); }
-  .rail p.foot { margin:16px 0 0; font-size:11px; color:var(--muted); line-height:1.5; }
+  .rail h3 { margin:0 0 8px; font-size:15px; font-weight:700; color:var(--text); line-height:1.3; }
+  .rail p.intro { margin:0 0 10px; font-size:10.5px; color:var(--muted); line-height:1.6; }
+  .rail p.intro a, .rail p.notyou a { color:var(--accent); text-decoration:underline; }
+  .rail p.notyou { margin:0 0 16px; font-size:10.5px; color:var(--muted); line-height:1.6; }
+  .steps { list-style:none; margin:0 0 12px; padding:0; }
+  .step { display:flex; align-items:center; gap:10px; padding:7px 9px; margin-bottom:2px;
+          border-left:4px solid transparent; border-radius:8px; font-size:12px;
+          color:var(--muted); cursor:default; }
+  .step .mark { width:17px; height:17px; flex:none; border-radius:50%; border:1px solid var(--border);
+                display:flex; align-items:center; justify-content:center; font-size:10px;
+                color:transparent; }
+  .step.done .mark { background:var(--stepDone); border-color:var(--stepDone); color:var(--sidebar); }
+  .step.active { background:var(--activeStep); border-left-color:var(--accent);
+                 color:var(--text); font-weight:600; }
+  .rail p.foot { margin:0; padding:0 9px; font-size:10.5px; color:var(--muted); line-height:1.5; }
+  .rail p.foot.saved { color:var(--lightGreen); font-weight:600; }
 
-  .body { flex:1; min-width:0; background:var(--canvas); display:flex; gap:16px; padding:20px 18px; }
-  .col { flex:1; min-width:0; }
-  .col h2 { margin:0; font-size:20px; font-weight:600; color:var(--text); }
-  .col p.lede { margin:5px 0 16px; font-size:12.5px; color:var(--muted); line-height:1.5; }
-  .lbl { margin:0 0 6px; font-size:12px; color:var(--text); }
+  /* right pane */
+  .body { flex:1; min-width:0; background:var(--canvas); display:flex; flex-direction:column;
+          padding:22px 22px 0; }
+  .stepwrap { flex:1; min-width:0; }
+  .stepwrap h2 { margin:0; font-size:20px; font-weight:700; color:var(--text); }
+  .stepwrap p.lede { margin:6px 0 20px; font-size:12.5px; color:var(--muted); line-height:1.6; }
+  .field { margin-bottom:16px; }
+  .lbl { display:block; margin:0 0 6px; font-size:12px; font-weight:600; color:var(--text); }
   .req { color:var(--accent); }
-  .select { background:var(--field); border:1px solid var(--border); border-radius:6px;
-            padding:9px 11px; display:flex; justify-content:space-between; align-items:center;
-            margin-bottom:13px; font-size:12px; color:var(--text); }
-  .select .caret { color:var(--muted); font-size:11px; }
-  .col h4 { margin:4px 0 4px; font-size:14px; font-weight:600; color:var(--text); }
-  .col p.hint { margin:0 0 12px; font-size:11.5px; color:var(--muted); line-height:1.5; }
+  .hint { margin:6px 0 0; font-size:11px; color:var(--muted); line-height:1.55; }
+  select.ctl, input.ctl { width:100%; font:inherit; font-size:12.5px; padding:9px 11px;
+            border-radius:8px; border:1px solid var(--border); background:var(--field);
+            color:var(--text); appearance:none; }
+  select.ctl { background-image:none; cursor:pointer; }
+  input.ctl::placeholder { color:var(--muted); }
+  .selwrap { position:relative; }
+  .selwrap .caret { position:absolute; right:11px; top:50%; transform:translateY(-50%);
+                    pointer-events:none; color:var(--muted); font-size:10px; }
 
-  .method { background:var(--card); border:1px solid var(--border); border-radius:12px;
-            padding:12px; margin-bottom:10px; }
-  .method header { display:flex; align-items:center; gap:9px; margin-bottom:10px; }
-  .disc { width:28px; height:28px; flex:none; border-radius:50%; border:1px solid var(--accent);
-          display:flex; align-items:center; justify-content:center; font-size:14px; color:var(--accent); }
-  .method header .name { flex:1; font-size:12.5px; font-weight:600; color:var(--text); }
-  .ghost { font-size:11px; color:var(--text); border:1px solid var(--border); border-radius:6px;
-           padding:3px 9px; }
-  .search { background:var(--field); border:1px solid var(--border); border-radius:6px;
-            padding:8px 10px; margin-bottom:9px; font-size:11.5px; color:var(--muted); }
-  .chips { display:flex; flex-wrap:wrap; gap:6px; }
-  .chip { font-size:11px; color:var(--text); background:var(--chip); border-radius:999px; padding:3px 9px; }
-  .adder { border:1px dashed var(--border); border-radius:6px; padding:10px; text-align:center;
-           font-size:11.5px; color:var(--text); }
+  fieldset.grp { border:0; margin:0 0 16px; padding:0; }
+  fieldset.grp legend { padding:0; margin:0 0 8px; font-size:12px; font-weight:600; color:var(--text); }
+  .checks { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:6px 16px; }
+  .chk { display:flex; align-items:center; gap:8px; font-size:12px; color:var(--text); cursor:pointer; }
+  .chk input { width:15px; height:15px; accent-color:var(--accent); flex:none; cursor:pointer; }
 
-  .side { width:190px; flex:none; }
-  .summary { background:var(--rail); border:1px solid var(--border); border-radius:12px; padding:14px; }
-  .summary .head { display:flex; align-items:center; gap:7px; margin-bottom:9px;
-                   font-size:12.5px; font-weight:600; color:var(--text); }
-  .summary .head .glyph { color:var(--accent); font-size:14px; }
-  .big { margin:0; font-size:34px; font-weight:600; color:var(--text); line-height:1.05; }
-  .summary p.unit { margin:0 0 12px; font-size:11.5px; color:var(--muted); }
-  .legend { border-top:1px solid var(--divider); padding-top:10px; }
-  .leg { display:flex; align-items:center; gap:7px; padding:3px 0; font-size:11.5px; color:var(--text); }
-  .leg .sw { width:8px; height:8px; border-radius:50%; flex:none; }
-  .leg .nm { flex:1; }
-  .saved { display:inline-block; margin-top:12px; font-size:10.5px; padding:3px 9px;
-           border-radius:999px; background:var(--lightGreen); color:#2c4a2f; font-weight:600; }
-  .why { display:flex; gap:8px; margin-top:14px; }
-  .why .glyph { color:var(--accent); font-size:15px; line-height:1.2; }
-  .why strong { display:block; font-size:12px; color:var(--text); margin-bottom:3px; font-weight:600; }
-  .why span { font-size:11px; color:var(--muted); line-height:1.5; }
-  .nav { display:flex; gap:8px; margin-top:20px; }
-  .nav .back { flex:1; text-align:center; font-size:12px; color:var(--text);
-               border:1px solid var(--border); border-radius:6px; padding:9px 0; }
-  .nav .go { flex:2; text-align:center; font-size:12px; font-weight:600; color:var(--ctaText);
-             background:var(--cta); border-radius:6px; padding:9px 0; }
+  .note { border:1px solid var(--border); background:var(--card); border-radius:10px;
+          padding:12px 13px; font-size:11.5px; color:var(--muted); line-height:1.6;
+          margin-bottom:16px; }
+
+  .assign { margin-bottom:16px; }
+  .assign > .lbl { margin-bottom:4px; }
+  .method { background:var(--card); border:1px solid var(--border); border-radius:10px;
+            padding:13px 14px; margin-bottom:11px; }
+  .method .mhead { display:flex; align-items:center; justify-content:space-between; gap:12px;
+                   width:100%; background:none; border:0; padding:0; font:inherit; cursor:pointer;
+                   text-align:left; }
+  .method .mtitle { font-size:13px; font-weight:600; color:var(--text); }
+  .method .mmeta { display:flex; align-items:center; gap:9px; font-size:11.5px; color:var(--muted); }
+  .method .mbody { margin-top:11px; }
+  .bulk { display:flex; gap:16px; margin-bottom:8px; }
+  .bulk button { background:none; border:0; padding:0; font:inherit; font-size:11.5px;
+                 font-weight:600; text-decoration:underline; cursor:pointer; }
+  .bulk .add { color:var(--accent); }
+  .bulk .clr { color:var(--muted); }
+  .sublbl { display:block; margin:0 0 5px; font-size:10px; font-weight:700; letter-spacing:.05em;
+            text-transform:uppercase; color:var(--muted); }
+  .combo { position:relative; }
+  .combo ul { position:absolute; left:0; right:0; z-index:20; margin:4px 0 0; padding:0;
+              list-style:none; max-height:220px; overflow-y:auto; border:1px solid var(--border);
+              border-radius:8px; background:var(--field); box-shadow:0 12px 26px rgba(0,0,0,.5); }
+  .combo ul li button { display:block; width:100%; text-align:left; background:none; border:0;
+                        padding:8px 12px; font:inherit; font-size:12px; color:var(--text); cursor:pointer; }
+  .combo ul li button:hover { background:var(--chip); }
+  .chips { display:flex; flex-wrap:wrap; gap:6px; margin:9px 0 0; padding:0; list-style:none; }
+  .chip { display:inline-flex; align-items:center; gap:6px; font-size:11.5px; color:var(--text);
+          background:var(--chip); border:1px solid var(--border); border-radius:999px;
+          padding:4px 10px; cursor:pointer; font-family:inherit; }
+  .chip .tp { font-size:10px; font-weight:700; color:var(--muted); }
+  .chip .x { color:var(--muted); font-size:11px; }
+  .empty { margin:9px 0 0; font-size:11px; color:var(--muted); }
+
+  .summary { background:var(--rail); border:1px solid var(--border); border-radius:10px;
+             padding:14px 15px; margin-bottom:18px; }
+  .summary h3 { margin:0 0 8px; font-size:11px; font-weight:700; letter-spacing:.05em;
+                text-transform:uppercase; color:var(--muted); }
+  .summary .big { margin:0 0 10px; font-size:20px; font-weight:700; color:var(--text); }
+  .summary ul { list-style:none; margin:0 0 10px; padding:0; border-top:1px solid var(--divider);
+                padding-top:9px; }
+  .summary li { display:flex; align-items:center; gap:8px; padding:3px 0; font-size:12px;
+                color:var(--text); }
+  .summary li .sw { width:9px; height:9px; border-radius:50%; flex:none; }
+  .summary li .nm { flex:1; }
+  .summary p.fine { margin:0; font-size:10.5px; color:var(--muted); line-height:1.55; }
+
+  .err { margin:6px 0 0; font-size:11px; color:#e46b5f; }
+
+  /* footer bar — Back / Save and continue, left of the live-chat pill */
+  .footbar { position:sticky; bottom:0; display:flex; align-items:center; justify-content:flex-end;
+             gap:10px; padding:14px 0 18px; margin-top:14px; background:var(--canvas); }
+  .btn { font:inherit; font-size:12.5px; font-weight:600; padding:10px 20px; border-radius:8px;
+         cursor:pointer; }
+  .btn.back { background:transparent; border:1px solid var(--border); color:var(--text); }
+  .btn.next { background:var(--cta); border:1px solid var(--cta); color:var(--ctaText); }
+  .pill { display:inline-flex; align-items:center; gap:7px; font-size:12px; font-weight:600;
+          color:#fff; background:var(--blue); border:0; border-radius:999px; padding:10px 16px;
+          cursor:pointer; }
+  .pill .dot { width:7px; height:7px; border-radius:50%; background:#fff; }
 </style>
 </head>
 <body>
@@ -129,7 +174,7 @@
 
   <aside class="controls">
     <h1>Colour lab</h1>
-    <p class="sub">Edit any value, press Apply. Save colors writes to a cookie on this browser; Revert reloads it.</p>
+    <p class="sub">Edit any value, press Apply. Save colors writes to a cookie on this browser; Revert reloads it. The preview is a working replica of the live Platform &amp; compliance step.</p>
 
     <div id="fields"></div>
 
@@ -152,80 +197,24 @@
 
       <div class="rail">
         <div class="brand"><span class="glyph">&#9826;</span><span>HEAVY POUR</span></div>
-        <h3>Merchant application &mdash; Glassmen Wines</h3>
-        <p class="blurb">Completing this application kicks off underwriting with PayCompass.</p>
-        <div class="step"><span class="dot">&#10003;</span>Business identity</div>
-        <div class="step"><span class="dot">&#10003;</span>Addresses</div>
-        <div class="step"><span class="dot">&#10003;</span>Business profile</div>
-        <div class="step active"><span class="dot">&#9679;</span>Platform and compliance</div>
-        <div class="step"><span class="dot">&#10003;</span>Processing profile</div>
-        <div class="step"><span class="dot">&#10003;</span>Banking</div>
-        <div class="step"><span class="dot">&#10003;</span>Owner details</div>
-        <div class="step todo"><span class="dot">&#9675;</span>Review and submit</div>
-        <p class="foot">Each step saves automatically as you go.</p>
+        <h3>Merchant application &mdash; Brad Wines</h3>
+        <p class="intro">Completing this application kicks off the merchant account underwriting process with <a href="#" onclick="return false">PayCompass</a> &mdash; Heavy Pour Wine&rsquo;s merchant services and referral partner. Underwriting decisions are made by PayCompass and one or more sponsor banks. PayCompass is a registered ISO/MSP of Pinnacle Bank, a Tennessee bank, d/b/a Synovus Bank. This form collects business and banking details for the merchant application as well as details needed to set up your Heavy Pour Wine account and SMS campaigns.</p>
+        <p class="notyou">Not the right person? <a href="#" onclick="return false">Ask us to send this to the correct contact.</a></p>
+        <ol class="steps" id="steps"></ol>
+        <p class="foot" id="railfoot">Each step saves automatically as you go.</p>
       </div>
 
       <div class="body">
-        <div class="col">
-          <h2>Platform and compliance</h2>
-          <p class="lede">Tell us how your winery handles direct-to-consumer shipping.</p>
-
-          <p class="lbl">How does your winery handle DTC compliance? <span class="req">*</span></p>
-          <div class="select"><span>Third-party shippers handle it</span><span class="caret">&#9660;</span></div>
-
-          <p class="lbl">How do you ship wine to customers? <span class="req">*</span></p>
-          <div class="select"><span>Different methods depending on the state</span><span class="caret">&#9660;</span></div>
-
-          <h4>Assign states to each shipping method</h4>
-          <p class="hint">Group states by the method you use most often.</p>
-
-          <div class="method">
-            <header><span class="disc">&#9650;</span><span class="name">Ships under our providers' licenses</span><span class="ghost">Edit</span></header>
-            <div class="search">Search or select states&hellip;</div>
-            <div class="chips">
-              <span class="chip">Alabama &#10005;</span><span class="chip">Arizona &#10005;</span>
-              <span class="chip">Colorado &#10005;</span><span class="chip">Florida &#10005;</span>
-              <span class="chip">+31 more</span>
-            </div>
-          </div>
-
-          <div class="method">
-            <header><span class="disc">&#9733;</span><span class="name">Our own state licenses</span><span class="ghost">Edit</span></header>
-            <div class="chips">
-              <span class="chip">California &#10005;</span><span class="chip">Oregon &#10005;</span>
-              <span class="chip">Washington &#10005;</span>
-            </div>
-          </div>
-
-          <div class="method">
-            <header><span class="disc">&#9635;</span><span class="name">Third-party shipping</span><span class="ghost">Edit</span></header>
-            <div class="chips">
-              <span class="chip">Alaska &#10005;</span><span class="chip">Delaware &#10005;</span>
-            </div>
-          </div>
-
-          <div class="adder">&#43;&nbsp; Add another shipping arrangement</div>
+        <div class="stepwrap">
+          <h2>Platform &amp; compliance</h2>
+          <p class="lede">Tell us which Heavy Pour Wine features you plan to use and how your winery handles direct-to-consumer shipping compliance.</p>
+          <div id="form"></div>
         </div>
 
-        <div class="side">
-          <div class="summary">
-            <div class="head"><span class="glyph">&#9776;</span>Shipping summary</div>
-            <p class="big">42</p>
-            <p class="unit">shipping states assigned</p>
-            <div class="legend">
-              <div class="leg"><span class="sw" style="background:var(--accent)"></span><span class="nm">Providers' licenses</span><span>35</span></div>
-              <div class="leg"><span class="sw" style="background:var(--blue)"></span><span class="nm">Own licenses</span><span>5</span></div>
-              <div class="leg"><span class="sw" style="background:var(--stepDone)"></span><span class="nm">Third-party</span><span>2</span></div>
-            </div>
-            <span class="saved">Saved</span>
-          </div>
-
-          <div class="why">
-            <span class="glyph">&#9873;</span>
-            <div><strong>Why this matters</strong><span>State rules vary. This confirms compliance and reduces chargeback risk.</span></div>
-          </div>
-
-          <div class="nav"><span class="back">Back</span><span class="go">Save and continue</span></div>
+        <div class="footbar">
+          <button class="btn back" id="btnBack">Back</button>
+          <button class="btn next" id="btnNext">Save and continue</button>
+          <button class="pill"><span class="dot"></span>Live chat</button>
         </div>
       </div>
 
@@ -234,6 +223,10 @@
 </div>
 
 <script>
+/* ---------------------------------------------------------------------------
+   Colour controls — writes CSS custom properties on :root, saves to a cookie,
+   and renders a live WCAG contrast readout.
+--------------------------------------------------------------------------- */
 (function () {
   var COOKIE = 'hpwColorLab';
 
@@ -260,9 +253,9 @@
       { key: 'cta',        label: 'CTA fill',        def: '#b75c11' },
       { key: 'ctaText',    label: 'CTA text',        def: '#ffffff' },
       { key: 'stepDone',   label: 'Completed step',  def: '#65c466' },
-      { key: 'blue',       label: 'License blue',    def: '#4285e6' },
+      { key: 'blue',       label: 'Live chat pill',  def: '#4285e6' },
       { key: 'burgundy',   label: 'Logo burgundy',   def: '#a40e1a' },
-      { key: 'lightGreen', label: 'Light green',     def: '#d0e5cc' }
+      { key: 'lightGreen', label: 'Saved text',      def: '#d0e5cc' }
     ]}
   ];
 
@@ -510,6 +503,623 @@
   }
   paint(start);
   renderContrast(start);
+})();
+</script>
+
+<script>
+/* ---------------------------------------------------------------------------
+   Working replica of the live Platform & compliance step
+   (heavy-pour-frontend/src/features/onboarding/components/steps/
+    PlatformFeaturesComplianceStep.tsx). Copy, option values, conditional
+   rendering and the ship-to assignment rules mirror the live form.
+--------------------------------------------------------------------------- */
+(function () {
+
+  /* ---- reference data ---- */
+
+  var STEPS = [
+    { label: 'Business identity',   complete: false },
+    { label: 'Addresses',           complete: false },
+    { label: 'Owner details',       complete: false },
+    { label: 'Banking',             complete: false },
+    { label: 'Business profile',    complete: false },
+    { label: 'Processing profile',  complete: false },
+    { label: 'Platform & compliance', complete: false, active: true },
+    { label: 'Support & Go-live',   complete: true },
+    { label: 'Review and submit',   complete: false }
+  ];
+
+  var WEBSITE_PLATFORMS = [
+    ['wordpress',   'WordPress'],
+    ['squarespace', 'Squarespace'],
+    ['wix',         'Wix'],
+    ['custom',      'Custom-built site'],
+    ['none',        'No website yet'],
+    ['other',       'Other']
+  ];
+
+  var FEATURES = [
+    ['pos',              'Tasting-room point of sale'],
+    ['card_present',     'Card-present terminals'],
+    ['ai_assistant',     'AI assistant'],
+    ['wine_club',        'Wine club'],
+    ['allocations',      'Allocations'],
+    ['reservations',     'Reservations'],
+    ['email_marketing',  'Email marketing'],
+    ['sms_marketing',    'Text (SMS) marketing'],
+    ['native_compliance','Built-in DTC compliance'],
+    ['wine_sales_plugin','Website wine-sales plugin'],
+    ['cms_seo_plugin',   'Website CMS / SEO plugin'],
+    ['android_app',      'Android app'],
+    ['ios_app',          'iOS app']
+  ];
+
+  var COMPLIANCE_APPROACHES = [
+    ['none',            'Third-party shippers handle it'],
+    ['in_house',        'We file it ourselves'],
+    ['consultant_firm', 'A compliance consultant / firm'],
+    ['provider',        'A compliance provider'],
+    ['mixed',           'A mix of these']
+  ];
+
+  var COMPLIANCE_PROVIDERS = ['Sovos ShipCompliant', 'Wineshipping'];
+  var PROVIDER_OTHER = '__other__';
+
+  var GLOBAL_LICENSE_TYPES = [
+    ['provider_license',  "Ships under our providers' licenses"],
+    ['own_state_license', 'Our own state licenses'],
+    ['third_party',       '3rd party shipping'],
+    ['multiple',          'Multiple — it varies by state']
+  ];
+
+  var METHODS = [
+    ['provider',    "Ships under our providers' licenses"],
+    ['self',        'Our own state licenses'],
+    ['third_party', '3rd party shipping']
+  ];
+
+  var SMS_EXPLAINER =
+    'To send text messages to your customers, carriers require that your winery has a publicly ' +
+    'accessible privacy policy and terms of service page — both must explicitly state how you ' +
+    'collect and use mobile phone numbers, that message and data rates may apply, and how ' +
+    'customers can opt out — without these, your SMS campaign registration will be rejected ' +
+    'before messages can be sent. If you provide your Privacy and Terms of Services URLs, we\u2019ll ' +
+    'review them to ensure your text campaign setup goes smoothly. You can also provide the URLs ' +
+    'later if you don\u2019t have access to them now.';
+
+  /* stateCode, name, dtcPermitted — from dtc_state_rules (prod, 2026-07-20) */
+  var STATES = [
+    ['AL','Alabama',1],['AK','Alaska',1],['AZ','Arizona',1],['AR','Arkansas',1],
+    ['CA','California',1],['CO','Colorado',1],['CT','Connecticut',1],['DE','Delaware',0],
+    ['DC','District of Columbia',1],['FL','Florida',1],['GA','Georgia',1],['GU','Guam',0],
+    ['HI','Hawaii',1],['ID','Idaho',1],['IL','Illinois',1],['IN','Indiana',1],
+    ['IA','Iowa',1],['KS','Kansas',1],['KY','Kentucky',1],['LA','Louisiana',1],
+    ['ME','Maine',1],['MD','Maryland',1],['MA','Massachusetts',1],['MI','Michigan',1],
+    ['MN','Minnesota',1],['MS','Mississippi',1],['MO','Missouri',1],['MT','Montana',1],
+    ['NE','Nebraska',1],['NV','Nevada',1],['NH','New Hampshire',1],['NJ','New Jersey',1],
+    ['NM','New Mexico',1],['NY','New York',1],['NC','North Carolina',1],['ND','North Dakota',1],
+    ['OH','Ohio',1],['OK','Oklahoma',1],['OR','Oregon',1],['PA','Pennsylvania',0],
+    ['PR','Puerto Rico',0],['RI','Rhode Island',0],['SC','South Carolina',1],
+    ['SD','South Dakota',1],['TN','Tennessee',1],['TX','Texas',1],['UT','Utah',0],
+    ['VT','Vermont',1],['VI','U.S. Virgin Islands',0],['VA','Virginia',1],
+    ['WA','Washington',1],['WV','West Virginia',1],['WI','Wisconsin',1],['WY','Wyoming',1]
+  ].map(function (r) { return { code: r[0], name: r[1], open: r[2] === 1 }; });
+
+  var OPEN = {};
+  STATES.forEach(function (s) { if (s.open) { OPEN[s.code] = true; } });
+
+  /* ---- form state ---- */
+
+  var state = {
+    websitePlatform: '',
+    websitePlatformOther: '',
+    features: {},
+    cardPresentTerminalCount: '',
+    privacyPolicyUrl: '',
+    termsUrl: '',
+    complianceApproach: '',
+    providerSelect: '',
+    complianceProviderOther: '',
+    complianceConsultantName: '',
+    globalLicenseType: '',
+    shipTo: [],
+    saved: false
+  };
+
+  var expanded = { provider: true, self: true, third_party: true };
+  var query = { provider: '', self: '', third_party: '', flat: '' };
+  var openList = null;
+
+  var formEl = document.getElementById('form');
+  var stepsEl = document.getElementById('steps');
+  var footEl = document.getElementById('railfoot');
+
+  /* ---- helpers ---- */
+
+  function mk(tag, attrs, kids) {
+    var el = document.createElement(tag);
+    if (attrs) {
+      Object.keys(attrs).forEach(function (k) {
+        if (k === 'class') { el.className = attrs[k]; }
+        else if (k === 'text') { el.textContent = attrs[k]; }
+        else if (k === 'html') { el.innerHTML = attrs[k]; }
+        else if (k.indexOf('on') === 0) { el.addEventListener(k.slice(2), attrs[k]); }
+        else if (attrs[k] === true) { el[k] = true; }
+        else if (attrs[k] !== null && attrs[k] !== undefined) { el.setAttribute(k, attrs[k]); }
+      });
+    }
+    (kids || []).forEach(function (c) { if (c) { el.appendChild(c); } });
+    return el;
+  }
+
+  function labelFor(text, required) {
+    var l = mk('label', { class: 'lbl' });
+    l.appendChild(document.createTextNode(text + ' '));
+    if (required) { l.appendChild(mk('span', { class: 'req', text: '*' })); }
+    return l;
+  }
+
+  function selectField(opts) {
+    var sel = mk('select', { class: 'ctl', onchange: opts.onchange });
+    sel.appendChild(mk('option', { value: '', text: 'Select one…' }));
+    opts.options.forEach(function (o) {
+      var op = mk('option', { value: o[0], text: o[1] });
+      if (o[0] === opts.value) { op.selected = true; }
+      sel.appendChild(op);
+    });
+    if (!opts.value) { sel.value = ''; }
+    return mk('div', { class: 'field' }, [
+      labelFor(opts.label, opts.required),
+      mk('div', { class: 'selwrap' }, [sel, mk('span', { class: 'caret', text: '▼' })])
+    ]);
+  }
+
+  function textField(opts) {
+    var inp = mk('input', {
+      class: 'ctl', type: 'text', value: opts.value || '',
+      placeholder: opts.placeholder || '',
+      oninput: function (e) { opts.oninput(e.target.value); }
+    });
+    return mk('div', { class: 'field' }, [
+      labelFor(opts.label, opts.required), inp,
+      opts.hint ? mk('p', { class: 'hint', text: opts.hint }) : null
+    ]);
+  }
+
+  function countBy(source) {
+    return state.shipTo.filter(function (s) { return s.source === source; }).length;
+  }
+
+  function statesFor(source) {
+    var set = {};
+    state.shipTo.forEach(function (s) { if (s.source === source) { set[s.code] = true; } });
+    return STATES.filter(function (s) { return set[s.code]; });
+  }
+
+  function isMultiple() { return state.globalLicenseType === 'multiple'; }
+
+  function deriveSource(global) {
+    if (global === 'provider_license') { return 'provider'; }
+    if (global === 'own_state_license') { return 'self'; }
+    if (global === 'third_party') { return 'third_party'; }
+    return null;
+  }
+
+  /* ---- mutations (mirrors of the live handlers) ---- */
+
+  function assignStateToMethod(code, source) {
+    var found = false;
+    state.shipTo.forEach(function (s) {
+      if (s.code === code) { s.source = source; found = true; }
+    });
+    if (!found) { state.shipTo.push({ code: code, source: source }); }
+    render();
+  }
+
+  function removeState(code) {
+    state.shipTo = state.shipTo.filter(function (s) { return s.code !== code; });
+    render();
+  }
+
+  function addRemainingToMethod(source) {
+    var assigned = {};
+    state.shipTo.forEach(function (s) { assigned[s.code] = true; });
+    var eligible = STATES.filter(function (s) {
+      if (assigned[s.code]) { return false; }
+      return source === 'third_party' ? true : s.open;
+    });
+    eligible.forEach(function (s) { state.shipTo.push({ code: s.code, source: source }); });
+    render();
+  }
+
+  function clearMethod(source) {
+    state.shipTo = state.shipTo.filter(function (s) { return s.source !== source; });
+    render();
+  }
+
+  function addFlatState(code) {
+    var exists = state.shipTo.some(function (s) { return s.code === code; });
+    if (exists) { return; }
+    state.shipTo.push({ code: code, source: OPEN[code] ? null : 'third_party' });
+    render();
+  }
+
+  function selectAllOpenStates() {
+    state.shipTo = STATES.filter(function (s) { return s.open; })
+      .map(function (s) { return { code: s.code, source: null }; });
+    render();
+  }
+
+  function deselectAllStates() {
+    state.shipTo = [];
+    render();
+  }
+
+  function onGlobalLicenseChange(next) {
+    var previous = state.globalLicenseType;
+    state.globalLicenseType = next;
+    if (next === 'multiple' && previous !== 'multiple') {
+      var derived = deriveSource(previous);
+      state.shipTo.forEach(function (s) {
+        if (!OPEN[s.code]) { s.source = 'third_party'; return; }
+        if (s.source) { return; }
+        if (derived) { s.source = derived; }
+      });
+    }
+    render();
+  }
+
+  function onFeatureToggle(key, checked) {
+    if (checked) { state.features[key] = true; } else { delete state.features[key]; }
+    if (key === 'native_compliance' && checked) {
+      state.complianceApproach = '';
+      state.providerSelect = '';
+      state.complianceProviderOther = '';
+      state.complianceConsultantName = '';
+    }
+    if (key === 'card_present' && !checked) { state.cardPresentTerminalCount = ''; }
+    render();
+  }
+
+  /* ---- combobox ---- */
+
+  function combobox(key, options, onSelect) {
+    var wrap = mk('div', { class: 'combo' });
+    var inp = mk('input', {
+      class: 'ctl', type: 'text', placeholder: 'Search or select states…',
+      'data-combo': key, value: query[key],
+      oninput: function (e) { query[key] = e.target.value; openList = key; render(true, key); },
+      onfocus: function () { openList = key; render(true, key); }
+    });
+    wrap.appendChild(inp);
+
+    if (openList === key) {
+      var q = query[key].trim().toLowerCase();
+      var filtered = (q
+        ? options.filter(function (o) {
+            return o.name.toLowerCase().indexOf(q) !== -1 ||
+                   o.code.toLowerCase().indexOf(q) !== -1;
+          })
+        : options).slice(0, 60);
+      if (filtered.length) {
+        var ul = mk('ul');
+        filtered.forEach(function (o) {
+          var b = mk('button', {
+            type: 'button', text: o.name,
+            onmousedown: function (e) {
+              e.preventDefault();
+              query[key] = '';
+              openList = null;
+              onSelect(o.code);
+            }
+          });
+          ul.appendChild(mk('li', null, [b]));
+        });
+        wrap.appendChild(ul);
+      }
+    }
+    return wrap;
+  }
+
+  function chipList(rows, showThirdPartyNote) {
+    if (!rows.length) { return null; }
+    var ul = mk('ul', { class: 'chips' });
+    rows.forEach(function (s) {
+      var b = mk('button', {
+        type: 'button', class: 'chip',
+        onclick: function () { removeState(s.code); }
+      });
+      b.appendChild(document.createTextNode(s.name));
+      if (showThirdPartyNote && !s.open) {
+        b.appendChild(mk('span', { class: 'tp', text: '· 3rd party' }));
+      }
+      b.appendChild(mk('span', { class: 'x', text: '✕' }));
+      ul.appendChild(mk('li', null, [b]));
+    });
+    return ul;
+  }
+
+  /* ---- method card ---- */
+
+  function methodCard(source, title) {
+    var assignedHere = {};
+    state.shipTo.forEach(function (s) { if (s.source === source) { assignedHere[s.code] = true; } });
+    var options = STATES.filter(function (s) {
+      if (assignedHere[s.code]) { return false; }
+      return source === 'third_party' ? true : s.open;
+    });
+    var rows = statesFor(source);
+
+    var head = mk('button', {
+      type: 'button', class: 'mhead',
+      onclick: function () { expanded[source] = !expanded[source]; render(); }
+    }, [
+      mk('span', { class: 'mtitle', text: title }),
+      mk('span', { class: 'mmeta' }, [
+        mk('span', { text: rows.length + (rows.length === 1 ? ' state' : ' states') }),
+        mk('span', { text: expanded[source] ? 'Edit ▾' : 'Edit ▸' })
+      ])
+    ]);
+
+    var card = mk('div', { class: 'method' }, [head]);
+
+    if (expanded[source]) {
+      var body = mk('div', { class: 'mbody' }, [
+        mk('div', { class: 'bulk' }, [
+          mk('button', {
+            type: 'button', class: 'add', text: 'Add remaining states',
+            onclick: function () { addRemainingToMethod(source); }
+          }),
+          mk('button', {
+            type: 'button', class: 'clr', text: 'Clear',
+            onclick: function () { clearMethod(source); }
+          })
+        ]),
+        mk('span', { class: 'sublbl', text: 'States' }),
+        combobox(source, options, function (code) { assignStateToMethod(code, source); })
+      ]);
+      var chips = chipList(rows, false);
+      body.appendChild(chips || mk('p', { class: 'empty', text: 'No states assigned yet.' }));
+      card.appendChild(body);
+    }
+    return card;
+  }
+
+  /* ---- completion (mirrors the step schema's required set) ---- */
+
+  function stepComplete() {
+    if (!state.websitePlatform) { return false; }
+    if (state.websitePlatform === 'other' && !state.websitePlatformOther.trim()) { return false; }
+    if (state.features.card_present && !state.cardPresentTerminalCount.trim()) { return false; }
+    if (!state.features.native_compliance) {
+      if (!state.complianceApproach) { return false; }
+      if (state.complianceApproach === 'provider') {
+        if (!state.providerSelect) { return false; }
+        if (state.providerSelect === PROVIDER_OTHER && !state.complianceProviderOther.trim()) {
+          return false;
+        }
+      }
+      if (state.complianceApproach === 'consultant_firm' && !state.complianceConsultantName.trim()) {
+        return false;
+      }
+    }
+    if (!state.globalLicenseType) { return false; }
+    if (!state.shipTo.length) { return false; }
+    if (isMultiple() && state.shipTo.some(function (s) { return !s.source; })) { return false; }
+    return true;
+  }
+
+  /* ---- render ---- */
+
+  function renderSteps() {
+    stepsEl.innerHTML = '';
+    STEPS.forEach(function (s) {
+      var done = s.active ? stepComplete() : s.complete;
+      var li = mk('li', {
+        class: 'step' + (s.active ? ' active' : '') + (done ? ' done' : '')
+      }, [
+        mk('span', { class: 'mark', text: done ? '✓' : '' }),
+        mk('span', { text: s.label })
+      ]);
+      stepsEl.appendChild(li);
+    });
+    footEl.textContent = state.saved
+      ? 'Saved — you can leave anytime and pick up right where you left off.'
+      : 'Each step saves automatically as you go.';
+    footEl.className = state.saved ? 'foot saved' : 'foot';
+  }
+
+  function render(keepFocus, focusKey) {
+    formEl.innerHTML = '';
+
+    /* (a) website platform */
+    formEl.appendChild(selectField({
+      label: 'Your current website platform', required: true,
+      options: WEBSITE_PLATFORMS, value: state.websitePlatform,
+      onchange: function (e) { state.websitePlatform = e.target.value; render(); }
+    }));
+    if (state.websitePlatform === 'other') {
+      formEl.appendChild(textField({
+        label: 'Which platform?', required: true, value: state.websitePlatformOther,
+        oninput: function (v) { state.websitePlatformOther = v; renderSteps(); }
+      }));
+    }
+
+    /* (b) feature multi-select */
+    var checks = mk('div', { class: 'checks' });
+    FEATURES.forEach(function (f) {
+      var box = mk('input', {
+        type: 'checkbox',
+        onchange: function (e) { onFeatureToggle(f[0], e.target.checked); }
+      });
+      if (state.features[f[0]]) { box.checked = true; }
+      checks.appendChild(mk('label', { class: 'chk' }, [box, mk('span', { text: f[1] })]));
+    });
+    var fs = mk('fieldset', { class: 'grp' }, [
+      mk('legend', { text: 'Which Heavy Pour Wine features do you plan to use?' }),
+      checks,
+      mk('p', { class: 'hint', text: 'Pick everything you expect to use — we use this to set up your account.' })
+    ]);
+    formEl.appendChild(fs);
+
+    /* SMS policy URLs — only when Text (SMS) marketing is selected */
+    if (state.features.sms_marketing) {
+      formEl.appendChild(mk('p', { class: 'note', text: SMS_EXPLAINER }));
+      formEl.appendChild(textField({
+        label: 'Privacy policy URL (optional)', placeholder: 'https://…',
+        value: state.privacyPolicyUrl,
+        oninput: function (v) { state.privacyPolicyUrl = v; }
+      }));
+      formEl.appendChild(textField({
+        label: 'Terms of service URL (optional)', placeholder: 'https://…',
+        value: state.termsUrl,
+        oninput: function (v) { state.termsUrl = v; }
+      }));
+    }
+
+    /* (c) card-present terminal count */
+    if (state.features.card_present) {
+      formEl.appendChild(textField({
+        label: 'How many card-present terminals do you need?', required: true,
+        value: state.cardPresentTerminalCount,
+        oninput: function (v) { state.cardPresentTerminalCount = v; renderSteps(); }
+      }));
+    }
+
+    /* (d) compliance approach */
+    if (state.features.native_compliance) {
+      formEl.appendChild(mk('p', {
+        class: 'note',
+        text: 'You selected Heavy Pour Wine\u2019s built-in DTC compliance — no outside compliance setup needed.'
+      }));
+    } else {
+      formEl.appendChild(selectField({
+        label: 'How does your winery handle DTC compliance?', required: true,
+        options: COMPLIANCE_APPROACHES, value: state.complianceApproach,
+        onchange: function (e) { state.complianceApproach = e.target.value; render(); }
+      }));
+      if (state.complianceApproach === 'provider') {
+        var provOpts = COMPLIANCE_PROVIDERS.map(function (n) { return [n, n]; });
+        provOpts.push([PROVIDER_OTHER, 'Other…']);
+        formEl.appendChild(selectField({
+          label: 'Which compliance provider?', required: true,
+          options: provOpts, value: state.providerSelect,
+          onchange: function (e) { state.providerSelect = e.target.value; render(); }
+        }));
+        if (state.providerSelect === PROVIDER_OTHER) {
+          formEl.appendChild(textField({
+            label: 'Provider name', required: true, value: state.complianceProviderOther,
+            oninput: function (v) { state.complianceProviderOther = v; renderSteps(); }
+          }));
+        }
+      }
+      if (state.complianceApproach === 'consultant_firm') {
+        formEl.appendChild(textField({
+          label: 'Compliance consultant / firm name', required: true,
+          value: state.complianceConsultantName,
+          oninput: function (v) { state.complianceConsultantName = v; renderSteps(); }
+        }));
+      }
+    }
+
+    /* (e) global license + ship-to */
+    formEl.appendChild(selectField({
+      label: 'How is all your wine shipped?', required: true,
+      options: GLOBAL_LICENSE_TYPES, value: state.globalLicenseType,
+      onchange: function (e) { onGlobalLicenseChange(e.target.value); }
+    }));
+
+    if (isMultiple()) {
+      var assign = mk('div', { class: 'assign' }, [
+        labelFor('Assign states to each shipping method', false),
+        mk('p', {
+          class: 'hint',
+          text: 'Group states by the shipping method you use most often. You can review and adjust exceptions for any state later.'
+        })
+      ]);
+      var cards = mk('div', { style: 'margin-top:11px' });
+      METHODS.forEach(function (m) { cards.appendChild(methodCard(m[0], m[1])); });
+      assign.appendChild(cards);
+      formEl.appendChild(assign);
+
+      var provider = countBy('provider');
+      var self = countBy('self');
+      var third = countBy('third_party');
+      var total = provider + self + third;
+
+      var ul = mk('ul');
+      [['var(--accent)', "Providers' licenses", provider],
+       ['var(--stepDone)', 'Own licenses', self],
+       ['var(--muted)', '3rd party shipping', third]].forEach(function (r) {
+        ul.appendChild(mk('li', null, [
+          mk('span', { class: 'sw', style: 'background:' + r[0] }),
+          mk('span', { class: 'nm', text: r[1] }),
+          mk('span', { text: String(r[2]) })
+        ]));
+      });
+
+      formEl.appendChild(mk('div', { class: 'summary' }, [
+        mk('h3', { text: 'Shipping summary' }),
+        mk('p', { class: 'big', text: total + ' shipping ' + (total === 1 ? 'state' : 'states') + ' assigned' }),
+        ul,
+        mk('p', { class: 'fine', text: 'You can review and adjust exceptions for any state in the Review by state section.' })
+      ]));
+    } else {
+      var picked = {};
+      state.shipTo.forEach(function (s) { picked[s.code] = true; });
+      var flatOptions = STATES.filter(function (s) { return !picked[s.code]; });
+      var flatRows = STATES.filter(function (s) { return picked[s.code]; });
+
+      var flat = mk('fieldset', { class: 'grp' }, [
+        mk('legend', { text: 'Which states do you ship wine to?' }),
+        mk('p', {
+          class: 'hint',
+          style: 'margin:0 0 8px',
+          text: 'Search for and add every state you ship to. States not open for direct-to-consumer wine shipping can still be added and ship 3rd party.'
+        }),
+        mk('div', { class: 'bulk' }, [
+          mk('button', {
+            type: 'button', class: 'add', text: 'Select all open states',
+            onclick: selectAllOpenStates
+          }),
+          mk('button', {
+            type: 'button', class: 'clr', text: 'Deselect all',
+            onclick: deselectAllStates
+          })
+        ]),
+        combobox('flat', flatOptions, addFlatState)
+      ]);
+      flat.appendChild(chipList(flatRows, true) || mk('p', { class: 'empty', text: 'No states added yet.' }));
+      formEl.appendChild(flat);
+    }
+
+    renderSteps();
+
+    if (keepFocus && focusKey) {
+      var target = formEl.querySelector('.combo > input[data-combo="' + focusKey + '"]');
+      if (target) {
+        target.focus();
+        target.setSelectionRange(target.value.length, target.value.length);
+      }
+    }
+  }
+
+  document.addEventListener('mousedown', function (e) {
+    if (!e.target.closest || !e.target.closest('.combo')) {
+      if (openList !== null) { openList = null; render(); }
+    }
+  });
+
+  document.getElementById('btnNext').addEventListener('click', function () {
+    state.saved = true;
+    renderSteps();
+  });
+  document.getElementById('btnBack').addEventListener('click', function () {
+    state.saved = false;
+    renderSteps();
+  });
+
+  render();
 })();
 </script>
 </body>
