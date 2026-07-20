@@ -4,6 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Heavy Pour — merchant application colour lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap">
 <style>
   :root {
     --canvas:#5b5b5b; --sidebar:#444443; --field:#303030; --card:#444443;
@@ -14,7 +17,7 @@
     --stepDone:#65c466; --blue:#4285e6; --burgundy:#a40e1a; --lightGreen:#d0e5cc;
   }
   * { box-sizing:border-box; }
-  body { margin:0; font-family:Montserrat,system-ui,-apple-system,"Segoe UI",sans-serif;
+  body { margin:0; font-family:"Montserrat",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
          background:#1a1a1a; color:#eaeaea; }
   .lab { display:flex; align-items:flex-start; min-height:100vh; }
 
@@ -60,13 +63,18 @@
 
   /* left rail */
   .rail { width:290px; flex:none; background:var(--sidebar); padding:18px 16px; }
-  .brand { display:flex; align-items:center; gap:7px; margin-bottom:14px; }
-  .brand .glyph { font-size:18px; color:var(--burgundy); line-height:1; }
-  .brand span { font-size:12px; font-weight:600; letter-spacing:.05em; color:var(--text); }
+  .brand { margin-bottom:16px; }
+  .brand img { display:block; width:150px; height:auto; }
   .rail h3 { margin:0 0 8px; font-size:15px; font-weight:700; color:var(--text); line-height:1.3; }
   .rail p.intro { margin:0 0 10px; font-size:10.5px; color:var(--muted); line-height:1.6; }
-  .rail p.intro a, .rail p.notyou a { color:var(--accent); text-decoration:underline; }
-  .rail p.notyou { margin:0 0 16px; font-size:10.5px; color:var(--muted); line-height:1.6; }
+  .rail p.intro a { color:var(--accent); text-decoration:underline; }
+  .rail .notyoucard { display:flex; align-items:flex-start; gap:10px; margin:16px 0 0;
+                      padding:13px 14px; border:1px solid var(--border); border-radius:10px; }
+  .rail .notyoucard img { width:20px; height:20px; flex:none; margin-top:1px; display:block; }
+  .rail .notyoucard strong { display:block; margin-bottom:4px; font-size:11.5px; font-weight:600;
+                             color:var(--text); }
+  .rail .notyoucard a { font-size:10.5px; color:var(--muted); text-decoration:underline;
+                        line-height:1.5; }
   .steps { list-style:none; margin:0 0 12px; padding:0; }
   .step { display:flex; align-items:center; gap:10px; padding:7px 9px; margin-bottom:2px;
           border-left:4px solid transparent; border-radius:8px; font-size:12px;
@@ -82,7 +90,10 @@
 
   /* right pane */
   .body { flex:1; min-width:0; background:var(--canvas); display:flex; flex-direction:column;
-          padding:22px 22px 0; }
+          padding:22px; position:relative; }
+  .cols { display:flex; gap:20px; align-items:flex-start; }
+  .maincol { flex:1; min-width:0; }
+  .siderail { width:252px; flex:none; }
   .stepwrap { flex:1; min-width:0; }
   .stepwrap h2 { margin:0; font-size:20px; font-weight:700; color:var(--text); }
   .stepwrap p.lede { margin:6px 0 20px; font-size:12.5px; color:var(--muted); line-height:1.6; }
@@ -116,6 +127,11 @@
   .method .mhead { display:flex; align-items:center; justify-content:space-between; gap:12px;
                    width:100%; background:none; border:0; padding:0; font:inherit; cursor:pointer;
                    text-align:left; }
+  .method .disc { width:36px; height:36px; flex:none; border-radius:50%;
+                  border:1px solid var(--accent); display:flex; align-items:center;
+                  justify-content:center; }
+  .method .disc img { width:19px; height:19px; display:block; }
+  .method .mleft { display:flex; align-items:center; gap:11px; min-width:0; }
   .method .mtitle { font-size:13px; font-weight:600; color:var(--text); }
   .method .mmeta { display:flex; align-items:center; gap:9px; font-size:11.5px; color:var(--muted); }
   .method .mbody { margin-top:11px; }
@@ -156,14 +172,14 @@
 
   .err { margin:6px 0 0; font-size:11px; color:#e46b5f; }
 
-  /* footer bar — Back / Save and continue, left of the live-chat pill */
-  .footbar { position:sticky; bottom:0; display:flex; align-items:center; justify-content:flex-end;
-             gap:10px; padding:14px 0 18px; margin-top:14px; background:var(--canvas); }
-  .btn { font:inherit; font-size:12.5px; font-weight:600; padding:10px 20px; border-radius:8px;
+  /* footer — Save and continue sits below the form fields, in the field colours */
+  .footbar { display:flex; align-items:center; justify-content:flex-end; gap:10px;
+             padding:4px 0 26px; margin-top:18px; }
+  .btn { font:inherit; font-size:12.5px; font-weight:600; padding:10px 22px; border-radius:8px;
          cursor:pointer; }
-  .btn.back { background:transparent; border:1px solid var(--border); color:var(--text); }
-  .btn.next { background:var(--cta); border:1px solid var(--cta); color:var(--ctaText); }
-  .pill { display:inline-flex; align-items:center; gap:7px; font-size:12px; font-weight:600;
+  .btn.next { background:var(--field); border:1px solid var(--border); color:var(--text); }
+  .pill { position:absolute; right:22px; bottom:18px; z-index:5;
+          display:inline-flex; align-items:center; gap:7px; font-size:12px; font-weight:600;
           color:#fff; background:var(--blue); border:0; border-radius:999px; padding:10px 16px;
           cursor:pointer; }
   .pill .dot { width:7px; height:7px; border-radius:50%; background:#fff; }
@@ -196,26 +212,39 @@
     <div class="frame">
 
       <div class="rail">
-        <div class="brand"><span class="glyph">&#9826;</span><span>HEAVY POUR</span></div>
+        <div class="brand"><img src="https://cdn.heavypourwine.com/DarkMode/HPW-Logo-With-Glass.svg" alt="Heavy Pour Wine"></div>
         <h3>Merchant application &mdash; Brad Wines</h3>
         <p class="intro">Completing this application kicks off the merchant account underwriting process with <a href="#" onclick="return false">PayCompass</a> &mdash; Heavy Pour Wine&rsquo;s merchant services and referral partner. Underwriting decisions are made by PayCompass and one or more sponsor banks. PayCompass is a registered ISO/MSP of Pinnacle Bank, a Tennessee bank, d/b/a Synovus Bank. This form collects business and banking details for the merchant application as well as details needed to set up your Heavy Pour Wine account and SMS campaigns.</p>
-        <p class="notyou">Not the right person? <a href="#" onclick="return false">Ask us to send this to the correct contact.</a></p>
         <ol class="steps" id="steps"></ol>
         <p class="foot" id="railfoot">Each step saves automatically as you go.</p>
+        <div class="notyoucard">
+          <img src="https://cdn.heavypourwine.com/DarkMode/Email.svg" alt="">
+          <div>
+            <strong>Not the right person?</strong>
+            <a href="#" onclick="return false">Ask us to send this to the correct contact.</a>
+          </div>
+        </div>
       </div>
 
       <div class="body">
         <div class="stepwrap">
           <h2>Platform &amp; compliance</h2>
           <p class="lede">Tell us which Heavy Pour Wine features you plan to use and how your winery handles direct-to-consumer shipping compliance.</p>
-          <div id="form"></div>
         </div>
 
-        <div class="footbar">
-          <button class="btn back" id="btnBack">Back</button>
-          <button class="btn next" id="btnNext">Save and continue</button>
-          <button class="pill"><span class="dot"></span>Live chat</button>
+        <div class="cols">
+          <div class="maincol">
+            <div id="form"></div>
+
+            <div class="footbar">
+              <button class="btn next" id="btnNext">Save and continue</button>
+            </div>
+          </div>
+
+          <div class="siderail" id="siderail"></div>
         </div>
+
+        <button class="pill"><span class="dot"></span>Live chat</button>
       </div>
 
     </div>
@@ -253,7 +282,7 @@
       { key: 'cta',        label: 'CTA fill',        def: '#b75c11' },
       { key: 'ctaText',    label: 'CTA text',        def: '#ffffff' },
       { key: 'stepDone',   label: 'Completed step',  def: '#65c466' },
-      { key: 'blue',       label: 'Live chat pill',  def: '#4285e6' },
+      { key: 'blue',       label: 'Live chat pill',  def: '#b75c11' },
       { key: 'burgundy',   label: 'Logo burgundy',   def: '#a40e1a' },
       { key: 'lightGreen', label: 'Saved text',      def: '#d0e5cc' }
     ]}
@@ -573,10 +602,14 @@
   ];
 
   var METHODS = [
-    ['provider',    "Ships under our providers' licenses"],
-    ['self',        'Our own state licenses'],
-    ['third_party', '3rd party shipping']
+    ['provider',    "Ships under our providers' licenses", 'Law'],
+    ['self',        'Our own state licenses',             'Ribbon'],
+    ['third_party', '3rd party shipping',                 'Delivery']
   ];
+
+  var ICON_BASE = 'https://cdn.heavypourwine.com/DarkMode/';
+  var METHOD_ICON = {};
+  METHODS.forEach(function (m) { METHOD_ICON[m[0]] = m[2]; });
 
   var SMS_EXPLAINER =
     'To send text messages to your customers, carriers require that your winery has a publicly ' +
@@ -610,6 +643,22 @@
 
   /* ---- form state ---- */
 
+  /* Seeded scenario: "A mix of these" compliance, shipping that varies by state,
+     and states already assigned across the three methods (35 / 5 / 2). */
+  var SEED_PROVIDER = ['AL','AZ','AR','CO','CT','DC','FL','GA','HI','IL','IN','IA','KS','KY',
+                       'LA','ME','MD','MA','MI','MN','MS','MO','MT','NE','NH','NJ','NM','NY',
+                       'NC','ND','OH','OK','SC','SD','TN'];
+  var SEED_SELF = ['CA','OR','WA','ID','NV'];
+  var SEED_THIRD = ['AK','DE'];
+
+  function seedShipTo() {
+    var out = [];
+    SEED_PROVIDER.forEach(function (c) { out.push({ code: c, source: 'provider' }); });
+    SEED_SELF.forEach(function (c) { out.push({ code: c, source: 'self' }); });
+    SEED_THIRD.forEach(function (c) { out.push({ code: c, source: 'third_party' }); });
+    return out;
+  }
+
   var state = {
     websitePlatform: '',
     websitePlatformOther: '',
@@ -617,12 +666,12 @@
     cardPresentTerminalCount: '',
     privacyPolicyUrl: '',
     termsUrl: '',
-    complianceApproach: '',
+    complianceApproach: 'mixed',
     providerSelect: '',
     complianceProviderOther: '',
     complianceConsultantName: '',
-    globalLicenseType: '',
-    shipTo: [],
+    globalLicenseType: 'multiple',
+    shipTo: seedShipTo(),
     saved: false
   };
 
@@ -631,6 +680,7 @@
   var openList = null;
 
   var formEl = document.getElementById('form');
+  var sideEl = document.getElementById('siderail');
   var stepsEl = document.getElementById('steps');
   var footEl = document.getElementById('railfoot');
 
@@ -854,7 +904,12 @@
       type: 'button', class: 'mhead',
       onclick: function () { expanded[source] = !expanded[source]; render(); }
     }, [
-      mk('span', { class: 'mtitle', text: title }),
+      mk('span', { class: 'mleft' }, [
+        mk('span', { class: 'disc' }, [
+          mk('img', { src: ICON_BASE + METHOD_ICON[source] + '.svg', alt: '' })
+        ]),
+        mk('span', { class: 'mtitle', text: title })
+      ]),
       mk('span', { class: 'mmeta' }, [
         mk('span', { text: rows.length + (rows.length === 1 ? ' state' : ' states') }),
         mk('span', { text: expanded[source] ? 'Edit ▾' : 'Edit ▸' })
@@ -931,6 +986,7 @@
 
   function render(keepFocus, focusKey) {
     formEl.innerHTML = '';
+    sideEl.innerHTML = '';
 
     /* (a) website platform */
     formEl.appendChild(selectField({
@@ -1043,13 +1099,13 @@
       formEl.appendChild(assign);
 
       var provider = countBy('provider');
-      var self = countBy('self');
+      var selfCount = countBy('self');
       var third = countBy('third_party');
-      var total = provider + self + third;
+      var total = provider + selfCount + third;
 
       var ul = mk('ul');
       [['var(--accent)', "Providers' licenses", provider],
-       ['var(--stepDone)', 'Own licenses', self],
+       ['var(--stepDone)', 'Own licenses', selfCount],
        ['var(--muted)', '3rd party shipping', third]].forEach(function (r) {
         ul.appendChild(mk('li', null, [
           mk('span', { class: 'sw', style: 'background:' + r[0] }),
@@ -1058,7 +1114,7 @@
         ]));
       });
 
-      formEl.appendChild(mk('div', { class: 'summary' }, [
+      sideEl.appendChild(mk('div', { class: 'summary' }, [
         mk('h3', { text: 'Shipping summary' }),
         mk('p', { class: 'big', text: total + ' shipping ' + (total === 1 ? 'state' : 'states') + ' assigned' }),
         ul,
@@ -1112,10 +1168,6 @@
 
   document.getElementById('btnNext').addEventListener('click', function () {
     state.saved = true;
-    renderSteps();
-  });
-  document.getElementById('btnBack').addEventListener('click', function () {
-    state.saved = false;
     renderSteps();
   });
 
