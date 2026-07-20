@@ -205,9 +205,74 @@
           color:#fff; background:var(--blue); border:0; border-radius:999px; padding:10px 16px;
           cursor:pointer; }
   .pill .dot { width:7px; height:7px; border-radius:50%; background:#fff; }
+
+  /* ---------- responsive ----------
+     Two steps. Under 1100px the lab stops being side-by-side: the control
+     panel becomes a full-width block above the preview and the frame stops
+     being pinned to the viewport, because a 100vh frame under a stacked
+     panel would push the form off screen. Under 760px the frame itself
+     stacks, so the rail sits above the form rather than beside it. */
+  @media (max-width: 1100px) {
+    .lab { flex-direction:column; align-items:stretch; }
+    .controls { width:100%; position:static; max-height:none; overflow:visible;
+                border-right:0; border-bottom:1px solid #3a3a3a; }
+    .controls.collapsed { width:100%; padding:16px 14px; overflow:visible; }
+    .controls.collapsed .panelToggle { justify-content:space-between; padding:8px 10px; }
+    .controls.collapsed .panelToggle .ttl { display:inline; }
+    .preview { height:auto; padding:16px; }
+    .frame { height:auto; }
+    .rail { overflow-y:visible; }
+  }
+
+  @media (max-width: 760px) {
+    .preview { padding:12px; }
+  }
+
+  /* ---------- device toggle ----------
+     Fixed to the viewport and outside .lab on purpose: mobile view hides the
+     colour lab, so a toggle living inside it would make the choice one-way. */
+  .viewToggle { position:fixed; top:12px; right:12px; z-index:60; display:flex; gap:5px;
+                padding:5px; border-radius:9px; background:rgba(26,26,26,.94);
+                border:1px solid #3a3a3a; box-shadow:0 6px 18px rgba(0,0,0,.5); }
+  .viewToggle button { font:inherit; font-size:11.5px; font-weight:600; padding:6px 13px;
+                       border-radius:6px; border:0; background:none; color:#c6c6c6;
+                       cursor:pointer; }
+  .viewToggle button.on { background:#b75c11; color:#fff; }
+  .viewToggle button:not(.on):hover { color:#eaeaea; }
+
+  /* ---------- mobile view ----------
+     Driven by a class rather than a media query so the Computer/Mobile toggle
+     and an actual phone produce the same layout from one set of rules.
+     matchMedia sets the class on load for genuinely narrow screens; the
+     toggle sets it by hand on a desktop. */
+  body.mobileView .controls { display:none; }
+  body.mobileView .preview { max-width:420px; margin:0 auto; padding:12px; height:auto; }
+  body.mobileView .frame { flex-direction:column; border-radius:10px; height:auto; }
+  body.mobileView .rail { width:100%; padding:16px 14px; overflow-y:visible; }
+  body.mobileView .brand img { max-width:100%; }
+  body.mobileView .body { padding:16px 14px; overflow-y:visible; }
+  body.mobileView .cols { flex-direction:column; gap:0; }
+  /* Summary lifts above the form. In DOM order it would stack after Save and
+     continue, which reads as content past the end of the form. */
+  body.mobileView .siderail { width:100%; position:static; order:-1; }
+  body.mobileView .checks { grid-template-columns:1fr; }
+  body.mobileView .stepwrap h2 { font-size:18px; }
+  body.mobileView .stepwrap p.lede { margin-bottom:16px; }
+  body.mobileView .method .mhead { flex-wrap:wrap; row-gap:8px; }
+  body.mobileView .footbar { padding-bottom:18px; }
+  body.mobileView .footbar .btn { flex:1; }
+  /* Anchored to the frame, not the viewport. In simulated mobile the frame is
+     a 420px column on a wide desktop, and position:fixed would strand the pill
+     in the empty space beside it. */
+  body.mobileView .pill { right:14px; bottom:14px; }
 </style>
 </head>
 <body>
+<div class="viewToggle" id="viewToggle" role="group" aria-label="Preview device">
+  <button id="viewDesktop" class="on" type="button">Computer</button>
+  <button id="viewMobile" type="button">Mobile</button>
+</div>
+
 <div class="lab">
 
   <aside class="controls" id="controls">
@@ -259,7 +324,7 @@
       <div class="rail">
         <div class="brand"><img id="logoImg" src="https://cdn.heavypourwine.com/DarkMode/HPW-Logo-With-Glass.svg" alt="Heavy Pour Wine"></div>
         <h3>Merchant application &mdash; Brad Wines</h3>
-        <p class="intro">Completing this application kicks off the merchant account underwriting process with <a href="#" onclick="return false">PayCompass</a> &mdash; Heavy Pour Wine&rsquo;s merchant services and referral partner. Underwriting decisions are made by PayCompass and one or more sponsor banks. PayCompass is a registered ISO/MSP of Pinnacle Bank, a Tennessee bank, d/b/a Synovus Bank. This form collects business and banking details for the merchant application as well as details needed to set up your Heavy Pour Wine account and SMS campaigns.</p>
+        <p class="intro">Completing this application starts underwriting with <a href="#" onclick="return false">PayCompass</a>, our merchant services and referral partner. PayCompass and its sponsor banks make the underwriting decision; this form also collects information needed to set up your Heavy Pour Wine account and SMS campaigns. PayCompass is a registered ISO/MSP of Pinnacle Bank, a Tennessee bank, d/b/a Synovus Bank.</p>
         <ol class="steps" id="steps"></ol>
         <p class="foot" id="railfoot">Each step saves automatically as you go.</p>
         <div class="notyoucard">
@@ -700,6 +765,36 @@
     panelToggle.setAttribute('title', collapsed ? 'Hide colour lab' : 'Show colour lab');
     chevEl.innerHTML = collapsed ? '&lsaquo;' : '&rsaquo;';
   });
+
+  /* On a narrow screen the panel stacks above the preview, so leaving it open
+     means eighteen colour rows before the form is reachable. Start collapsed
+     there; the toggle still opens it. */
+  if (window.innerWidth <= 1100) {
+    controlsEl.className = 'controls collapsed';
+    panelToggle.setAttribute('aria-expanded', 'false');
+    panelToggle.setAttribute('title', 'Show colour lab');
+    chevEl.innerHTML = '&rsaquo;';
+  }
+
+  /* Device view. One class drives every phone rule, so the toggle on a desktop
+     and a real phone render identically instead of drifting apart. Mobile view
+     hides the colour lab, which is why the toggle sits outside it. */
+  var viewDesktop = document.getElementById('viewDesktop');
+  var viewMobile = document.getElementById('viewMobile');
+
+  function setView(mode) {
+    var mobile = mode === 'mobile';
+    document.body.className = mobile ? 'mobileView' : '';
+    viewDesktop.className = mobile ? '' : 'on';
+    viewMobile.className = mobile ? 'on' : '';
+  }
+
+  viewDesktop.addEventListener('click', function () { setView('desktop'); });
+  viewMobile.addEventListener('click', function () { setView('mobile'); });
+
+  /* Load-time only, with no resize listener: re-deciding on every resize would
+     overrule a choice the designer just made. */
+  setView(window.matchMedia('(max-width: 760px)').matches ? 'mobile' : 'desktop');
 
   var start = defaults();
   var stored = loadSet();
