@@ -48,6 +48,15 @@
              text-decoration:underline; cursor:pointer; padding:0; }
   .status { min-height:15px; font-size:11px; color:#7fb98a; margin-bottom:12px; }
 
+  .seg { display:flex; gap:6px; }
+  .seg button { flex:1; font:inherit; font-size:11.5px; padding:7px 8px; border-radius:6px;
+                border:1px solid #4a4a4a; background:#333; color:#eaeaea; cursor:pointer; }
+  .seg button.on { background:#b75c11; border-color:#b75c11; color:#fff; }
+  .exchange { width:100%; height:150px; margin-top:2px; padding:8px; border-radius:6px;
+              border:1px solid #4a4a4a; background:#1c1c1c; color:#eaeaea; resize:vertical;
+              font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:10.5px;
+              line-height:1.55; white-space:pre; }
+
   table.contrast { width:100%; border-collapse:collapse; font-size:11px; }
   table.contrast th { text-align:left; font-weight:600; color:#8f8f8f; font-size:10px;
                       letter-spacing:.06em; text-transform:uppercase; padding-bottom:4px; }
@@ -62,9 +71,9 @@
            box-shadow:0 10px 34px rgba(0,0,0,.45); }
 
   /* left rail */
-  .rail { width:290px; flex:none; background:var(--sidebar); padding:18px 16px; }
+  .rail { width:310px; flex:none; background:var(--sidebar); padding:18px 16px; }
   .brand { margin-bottom:16px; }
-  .brand img { display:block; width:150px; height:auto; }
+  .brand img { display:block; width:215px; height:auto; }
   .rail h3 { margin:0 0 8px; font-size:15px; font-weight:700; color:var(--text); line-height:1.3; }
   .rail p.intro { margin:0 0 10px; font-size:10.5px; color:var(--muted); line-height:1.6; }
   .rail p.intro a { color:var(--accent); text-decoration:underline; }
@@ -158,17 +167,19 @@
   .empty { margin:9px 0 0; font-size:11px; color:var(--muted); }
 
   .summary { background:var(--rail); border:1px solid var(--border); border-radius:10px;
-             padding:14px 15px; margin-bottom:18px; }
-  .summary h3 { margin:0 0 8px; font-size:11px; font-weight:700; letter-spacing:.05em;
-                text-transform:uppercase; color:var(--muted); }
-  .summary .big { margin:0 0 10px; font-size:20px; font-weight:700; color:var(--text); }
-  .summary ul { list-style:none; margin:0 0 10px; padding:0; border-top:1px solid var(--divider);
-                padding-top:9px; }
-  .summary li { display:flex; align-items:center; gap:8px; padding:3px 0; font-size:12px;
+             padding:16px 17px; margin-bottom:18px; }
+  .summary .shead { display:flex; align-items:center; gap:9px; margin-bottom:15px; }
+  .summary .shead img { width:20px; height:20px; display:block; flex:none; }
+  .summary h3 { margin:0; font-size:13.5px; font-weight:600; color:var(--text); }
+  .summary .big { margin:0; font-size:40px; font-weight:700; line-height:1; color:var(--text); }
+  .summary p.unit { margin:9px 0 0; font-size:12px; color:var(--muted); }
+  .summary ul { list-style:none; margin:18px 0 0; padding:0; }
+  .summary li { display:flex; align-items:center; gap:9px; padding:5px 0; font-size:12.5px;
                 color:var(--text); }
   .summary li .sw { width:9px; height:9px; border-radius:50%; flex:none; }
   .summary li .nm { flex:1; }
-  .summary p.fine { margin:0; font-size:10.5px; color:var(--muted); line-height:1.55; }
+  .summary p.fine { margin:14px 0 0; padding-top:12px; border-top:1px solid var(--divider);
+                    font-size:10.5px; color:var(--muted); line-height:1.55; }
 
   .err { margin:6px 0 0; font-size:11px; color:#e46b5f; }
 
@@ -190,9 +201,17 @@
 
   <aside class="controls">
     <h1>Colour lab</h1>
-    <p class="sub">Edit any value, press Apply. Save colors writes to a cookie on this browser; Revert reloads it. The preview is a working replica of the live Platform &amp; compliance step.</p>
+    <p class="sub">Edit any value, press Apply. Save colors keeps the set on this browser; Revert reloads it. Use Copy under Hand-off to send the final set to Brad. The preview is a working replica of the live Platform &amp; compliance step.</p>
 
     <div id="fields"></div>
+
+    <div class="group">
+      <h2>Logo</h2>
+      <div class="seg">
+        <button id="logoDark" class="on">Dark mode</button>
+        <button id="logoLight">Light mode</button>
+      </div>
+    </div>
 
     <div class="actions">
       <button class="primary" id="apply">Apply</button>
@@ -201,6 +220,16 @@
     </div>
     <div style="margin-bottom:10px"><button class="linkish" id="reset">Reset to designer defaults</button></div>
     <p class="status" id="status"></p>
+
+    <div class="group">
+      <h2>Hand-off</h2>
+      <p class="sub" style="margin-bottom:4px">These are the current values. Press Copy and send the text to Brad, or paste a set in and press Load.</p>
+      <textarea class="exchange" id="exchange" spellcheck="false"></textarea>
+      <div class="actions" style="margin:7px 0 0">
+        <button id="copy">Copy</button>
+        <button id="load">Load pasted</button>
+      </div>
+    </div>
 
     <table class="contrast">
       <thead><tr><th>Contrast check</th><th></th><th></th></tr></thead>
@@ -212,7 +241,7 @@
     <div class="frame">
 
       <div class="rail">
-        <div class="brand"><img src="https://cdn.heavypourwine.com/DarkMode/HPW-Logo-With-Glass.svg" alt="Heavy Pour Wine"></div>
+        <div class="brand"><img id="logoImg" src="https://cdn.heavypourwine.com/DarkMode/HPW-Logo-With-Glass.svg" alt="Heavy Pour Wine"></div>
         <h3>Merchant application &mdash; Brad Wines</h3>
         <p class="intro">Completing this application kicks off the merchant account underwriting process with <a href="#" onclick="return false">PayCompass</a> &mdash; Heavy Pour Wine&rsquo;s merchant services and referral partner. Underwriting decisions are made by PayCompass and one or more sponsor banks. PayCompass is a registered ISO/MSP of Pinnacle Bank, a Tennessee bank, d/b/a Synovus Bank. This form collects business and banking details for the merchant application as well as details needed to set up your Heavy Pour Wine account and SMS campaigns.</p>
         <ol class="steps" id="steps"></ol>
@@ -453,6 +482,7 @@
     }
     paint(res.values);
     renderContrast(res.values);
+    refreshExchange(res.values);
     say('Applied.');
   }
 
@@ -480,6 +510,78 @@
     return m;
   }
 
+  /* Persistence. localStorage is primary because a cookie written from a
+     file:// page is discarded by Chrome — and the designer opens this file
+     locally. The cookie is kept as a fallback for anything that blocks
+     localStorage. Either one alone is enough to restore a set. */
+  function saveSet(values) {
+    var raw = JSON.stringify(values);
+    var ok = false;
+    try { window.localStorage.setItem(COOKIE, raw); ok = true; } catch (e) { /* ignore */ }
+    try { setCookie(COOKIE, raw, 365); ok = true; } catch (e) { /* ignore */ }
+    return ok;
+  }
+
+  function loadSet() {
+    var raw = null;
+    try { raw = window.localStorage.getItem(COOKIE); } catch (e) { raw = null; }
+    if (!raw) { raw = getCookie(COOKIE); }
+    if (!raw) { return null; }
+    try { return JSON.parse(raw); }
+    catch (e) { return null; }
+  }
+
+  var exchangeEl = document.getElementById('exchange');
+
+  function pad(s, n) {
+    var out = s;
+    while (out.length < n) { out += ' '; }
+    return out;
+  }
+
+  function two(n) {
+    return (n < 10 ? '0' : '') + n;
+  }
+
+  /* Human-readable and machine-parseable: "key  #hex  Label". Comment lines
+     start with # and carry no key, so the importer skips them. */
+  function exportText(map) {
+    var d = new Date();
+    var stamp = d.getFullYear() + '-' + two(d.getMonth() + 1) + '-' + two(d.getDate());
+    var lines = ['# Heavy Pour \u2014 merchant application colour set',
+                 '# saved ' + stamp, ''];
+    GROUPS.forEach(function (g) {
+      lines.push('# ' + g.title);
+      g.tokens.forEach(function (t) {
+        lines.push(pad(t.key, 12) + pad(map[t.key] || t.def, 10) + t.label);
+      });
+      lines.push('');
+    });
+    return lines.join('\n').replace(/\n+$/, '\n');
+  }
+
+  function refreshExchange(map) {
+    exchangeEl.value = exportText(map);
+  }
+
+  /* Accepts the exported block, or any text with "key #hex" pairs. Unknown
+     keys and unparseable values are reported rather than silently dropped. */
+  function importText(text) {
+    var known = {};
+    ALL.forEach(function (t) { known[t.key] = true; });
+    var found = {};
+    var unknown = [];
+    text.split(/\r?\n/).forEach(function (line) {
+      var m = line.match(/^\s*([A-Za-z][A-Za-z0-9]*)\s+(#?[0-9a-fA-F]{3,6})\b/);
+      if (!m) { return; }
+      var n = normalize(m[2]);
+      if (!n) { return; }
+      if (known[m[1]]) { found[m[1]] = n; }
+      else { unknown.push(m[1]); }
+    });
+    return { values: found, unknown: unknown, count: Object.keys(found).length };
+  }
+
   document.getElementById('apply').addEventListener('click', apply);
 
   document.getElementById('save').addEventListener('click', function () {
@@ -488,25 +590,25 @@
       say('Not saved. Invalid hex: ' + res.bad.join(', '), true);
       return;
     }
-    setCookie(COOKIE, JSON.stringify(res.values), 365);
+    var ok = saveSet(res.values);
     paint(res.values);
     renderContrast(res.values);
-    say('Saved to this browser.');
+    refreshExchange(res.values);
+    if (ok) { say('Saved to this browser.'); }
+    else { say('Could not save here. Copy the text below instead.', true); }
   });
 
   document.getElementById('revert').addEventListener('click', function () {
-    var raw = getCookie(COOKIE);
-    if (!raw) {
+    var map = loadSet();
+    if (!map) {
       say('Nothing saved yet.', true);
       return;
     }
-    var map;
-    try { map = JSON.parse(raw); }
-    catch (e) { say('Saved colours are unreadable.', true); return; }
     writeFields(map);
     var res = readFields();
     paint(res.values);
     renderContrast(res.values);
+    refreshExchange(res.values);
     say('Reverted to saved colours.');
   });
 
@@ -515,23 +617,72 @@
     writeFields(m);
     paint(m);
     renderContrast(m);
+    refreshExchange(m);
     say('Reset to designer defaults. Not saved.');
   });
 
-  var startRaw = getCookie(COOKIE);
-  var start = defaults();
-  if (startRaw) {
-    try {
-      var parsed = JSON.parse(startRaw);
-      Object.keys(parsed).forEach(function (k) { start[k] = parsed[k]; });
-      writeFields(start);
-      say('Loaded saved colours.');
-    } catch (e) {
-      say('Saved colours were unreadable; showing defaults.', true);
+  document.getElementById('copy').addEventListener('click', function () {
+    exchangeEl.focus();
+    exchangeEl.select();
+    var done = false;
+    try { done = document.execCommand('copy'); } catch (e) { done = false; }
+    if (done) {
+      say('Copied. Paste it into a message to Brad.');
+      return;
     }
+    if (window.navigator && window.navigator.clipboard) {
+      window.navigator.clipboard.writeText(exchangeEl.value).then(
+        function () { say('Copied. Paste it into a message to Brad.'); },
+        function () { say('Copy blocked \u2014 the text is selected, press Cmd+C.', true); }
+      );
+      return;
+    }
+    say('Copy blocked \u2014 the text is selected, press Cmd+C.', true);
+  });
+
+  document.getElementById('load').addEventListener('click', function () {
+    var parsed = importText(exchangeEl.value);
+    if (parsed.count === 0) {
+      say('No colours found in that text.', true);
+      return;
+    }
+    var merged = defaults();
+    Object.keys(parsed.values).forEach(function (k) { merged[k] = parsed.values[k]; });
+    writeFields(merged);
+    var res = readFields();
+    paint(res.values);
+    renderContrast(res.values);
+    refreshExchange(res.values);
+    var msg = 'Loaded ' + parsed.count + ' of ' + ALL.length + ' colours.';
+    if (parsed.unknown.length) { msg += ' Ignored: ' + parsed.unknown.join(', ') + '.'; }
+    say(msg, parsed.count < ALL.length);
+  });
+
+  var LOGO_BASE = 'https://cdn.heavypourwine.com/';
+  var logoImg = document.getElementById('logoImg');
+  var logoDark = document.getElementById('logoDark');
+  var logoLight = document.getElementById('logoLight');
+
+  function setLogoMode(mode) {
+    logoImg.src = LOGO_BASE + mode + '/HPW-Logo-With-Glass.svg';
+    var isDark = mode === 'DarkMode';
+    logoDark.className = isDark ? 'on' : '';
+    logoLight.className = isDark ? '' : 'on';
+  }
+
+  logoDark.addEventListener('click', function () { setLogoMode('DarkMode'); });
+  logoLight.addEventListener('click', function () { setLogoMode('LightMode'); });
+
+  var start = defaults();
+  var stored = loadSet();
+  if (stored) {
+    Object.keys(stored).forEach(function (k) { start[k] = stored[k]; });
+    writeFields(start);
+    say('Loaded saved colours.');
   }
   paint(start);
   renderContrast(start);
+  refreshExchange(start);
 })();
 </script>
 
@@ -1115,8 +1266,12 @@
       });
 
       sideEl.appendChild(mk('div', { class: 'summary' }, [
-        mk('h3', { text: 'Shipping summary' }),
-        mk('p', { class: 'big', text: total + ' shipping ' + (total === 1 ? 'state' : 'states') + ' assigned' }),
+        mk('div', { class: 'shead' }, [
+          mk('img', { src: ICON_BASE + 'Orders.svg', alt: '' }),
+          mk('h3', { text: 'Shipping summary' })
+        ]),
+        mk('p', { class: 'big', text: String(total) }),
+        mk('p', { class: 'unit', text: 'shipping ' + (total === 1 ? 'state' : 'states') + ' assigned' }),
         ul,
         mk('p', { class: 'fine', text: 'You can review and adjust exceptions for any state in the Review by state section.' })
       ]));
