@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Heavy Pour — merchant application colour lab</title>
+<style>
+  :root {
+    --canvas:#5b5b5b; --sidebar:#444443; --field:#303030; --card:#444443;
+    --rail:#444443; --chip:#303030; --activeStep:#303030;
+    --border:#727272; --divider:#727272;
+    --text:#ffffff; --muted:#c8c8c8;
+    --accent:#b75c11; --cta:#b75c11; --ctaText:#ffffff;
+    --stepDone:#65c466; --blue:#4285e6; --burgundy:#a40e1a; --lightGreen:#d0e5cc;
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:Montserrat,system-ui,-apple-system,"Segoe UI",sans-serif;
+         background:#1a1a1a; color:#eaeaea; }
+  .lab { display:flex; align-items:flex-start; min-height:100vh; }
+
+  /* ---------- controls ---------- */
+  .controls { width:330px; flex:none; background:#242424; border-right:1px solid #3a3a3a;
+              padding:16px 14px; position:sticky; top:0; max-height:100vh; overflow-y:auto; }
+  .controls h1 { margin:0 0 2px; font-size:15px; font-weight:600; }
+  .controls .sub { margin:0 0 14px; font-size:11px; color:#9a9a9a; line-height:1.5; }
+  .group { margin-bottom:14px; }
+  .group > h2 { margin:0 0 6px; font-size:10px; font-weight:600; letter-spacing:.09em;
+                text-transform:uppercase; color:#8f8f8f; }
+  .row { display:flex; align-items:center; gap:8px; margin-bottom:5px; }
+  .row label { flex:1; font-size:11.5px; color:#d2d2d2; }
+  .row input[type=color] { width:30px; height:26px; padding:0; border:1px solid #4a4a4a;
+                           border-radius:5px; background:#242424; cursor:pointer; flex:none; }
+  .row input[type=text] { width:86px; flex:none; font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+                          font-size:11.5px; padding:5px 6px; border-radius:5px;
+                          border:1px solid #4a4a4a; background:#1c1c1c; color:#eaeaea; }
+  .row input[type=text].bad { border-color:#c0392b; }
+
+  .actions { display:flex; flex-wrap:wrap; gap:7px; margin:16px 0 6px; }
+  .actions button { flex:1 1 auto; font:inherit; font-size:12px; font-weight:500; padding:8px 10px;
+                    border-radius:6px; border:1px solid #4a4a4a; background:#333; color:#eaeaea;
+                    cursor:pointer; }
+  .actions button.primary { background:#b75c11; border-color:#b75c11; color:#fff; flex-basis:100%; }
+  .actions button:hover { filter:brightness(1.15); }
+  .linkish { background:none; border:none; color:#9a9a9a; font:inherit; font-size:11px;
+             text-decoration:underline; cursor:pointer; padding:0; }
+  .status { min-height:15px; font-size:11px; color:#7fb98a; margin-bottom:12px; }
+
+  table.contrast { width:100%; border-collapse:collapse; font-size:11px; }
+  table.contrast th { text-align:left; font-weight:600; color:#8f8f8f; font-size:10px;
+                      letter-spacing:.06em; text-transform:uppercase; padding-bottom:4px; }
+  table.contrast td { padding:3px 0; border-top:1px solid #333; color:#c6c6c6; }
+  table.contrast td.n { text-align:right; font-family:ui-monospace,Menlo,monospace; width:44px; }
+  table.contrast td.v { text-align:right; width:38px; font-weight:600; }
+  .pass { color:#65c466; } .warn { color:#e0a33a; } .fail { color:#e46b5f; }
+
+  /* ---------- preview ---------- */
+  .preview { flex:1; min-width:0; padding:20px; }
+  .frame { display:flex; border-radius:12px; overflow:hidden; min-height:600px;
+           box-shadow:0 10px 34px rgba(0,0,0,.45); }
+
+  .rail { width:212px; flex:none; background:var(--sidebar); padding:16px 14px; }
+  .brand { display:flex; align-items:center; gap:7px; margin-bottom:16px; }
+  .brand .glyph { font-size:18px; color:var(--burgundy); line-height:1; }
+  .brand span { font-size:12px; font-weight:600; letter-spacing:.05em; color:var(--text); }
+  .rail h3 { margin:0 0 6px; font-size:13.5px; font-weight:600; color:var(--text); line-height:1.35; }
+  .rail p.blurb { margin:0 0 16px; font-size:11px; color:var(--muted); line-height:1.5; }
+  .step { display:flex; align-items:center; gap:8px; padding:6px 0; font-size:12px; color:var(--text); }
+  .step .dot { width:15px; text-align:center; font-size:13px; line-height:1; color:var(--stepDone); }
+  .step.todo { color:var(--muted); } .step.todo .dot { color:var(--muted); }
+  .step.active { background:var(--activeStep); border-radius:6px; padding:7px 9px; margin:2px -9px;
+                 font-weight:600; }
+  .step.active .dot { color:var(--accent); }
+  .rail p.foot { margin:16px 0 0; font-size:11px; color:var(--muted); line-height:1.5; }
+
+  .body { flex:1; min-width:0; background:var(--canvas); display:flex; gap:16px; padding:20px 18px; }
+  .col { flex:1; min-width:0; }
+  .col h2 { margin:0; font-size:20px; font-weight:600; color:var(--text); }
+  .col p.lede { margin:5px 0 16px; font-size:12.5px; color:var(--muted); line-height:1.5; }
+  .lbl { margin:0 0 6px; font-size:12px; color:var(--text); }
+  .req { color:var(--accent); }
+  .select { background:var(--field); border:1px solid var(--border); border-radius:6px;
+            padding:9px 11px; display:flex; justify-content:space-between; align-items:center;
+            margin-bottom:13px; font-size:12px; color:var(--text); }
+  .select .caret { color:var(--muted); font-size:11px; }
+  .col h4 { margin:4px 0 4px; font-size:14px; font-weight:600; color:var(--text); }
+  .col p.hint { margin:0 0 12px; font-size:11.5px; color:var(--muted); line-height:1.5; }
+
+  .method { background:var(--card); border:1px solid var(--border); border-radius:12px;
+            padding:12px; margin-bottom:10px; }
+  .method header { display:flex; align-items:center; gap:9px; margin-bottom:10px; }
+  .disc { width:28px; height:28px; flex:none; border-radius:50%; border:1px solid var(--accent);
+          display:flex; align-items:center; justify-content:center; font-size:14px; color:var(--accent); }
+  .method header .name { flex:1; font-size:12.5px; font-weight:600; color:var(--text); }
+  .ghost { font-size:11px; color:var(--text); border:1px solid var(--border); border-radius:6px;
+           padding:3px 9px; }
+  .search { background:var(--field); border:1px solid var(--border); border-radius:6px;
+            padding:8px 10px; margin-bottom:9px; font-size:11.5px; color:var(--muted); }
+  .chips { display:flex; flex-wrap:wrap; gap:6px; }
+  .chip { font-size:11px; color:var(--text); background:var(--chip); border-radius:999px; padding:3px 9px; }
+  .adder { border:1px dashed var(--border); border-radius:6px; padding:10px; text-align:center;
+           font-size:11.5px; color:var(--text); }
+
+  .side { width:190px; flex:none; }
+  .summary { background:var(--rail); border:1px solid var(--border); border-radius:12px; padding:14px; }
+  .summary .head { display:flex; align-items:center; gap:7px; margin-bottom:9px;
+                   font-size:12.5px; font-weight:600; color:var(--text); }
+  .summary .head .glyph { color:var(--accent); font-size:14px; }
+  .big { margin:0; font-size:34px; font-weight:600; color:var(--text); line-height:1.05; }
+  .summary p.unit { margin:0 0 12px; font-size:11.5px; color:var(--muted); }
+  .legend { border-top:1px solid var(--divider); padding-top:10px; }
+  .leg { display:flex; align-items:center; gap:7px; padding:3px 0; font-size:11.5px; color:var(--text); }
+  .leg .sw { width:8px; height:8px; border-radius:50%; flex:none; }
+  .leg .nm { flex:1; }
+  .saved { display:inline-block; margin-top:12px; font-size:10.5px; padding:3px 9px;
+           border-radius:999px; background:var(--lightGreen); color:#2c4a2f; font-weight:600; }
+  .why { display:flex; gap:8px; margin-top:14px; }
+  .why .glyph { color:var(--accent); font-size:15px; line-height:1.2; }
+  .why strong { display:block; font-size:12px; color:var(--text); margin-bottom:3px; font-weight:600; }
+  .why span { font-size:11px; color:var(--muted); line-height:1.5; }
+  .nav { display:flex; gap:8px; margin-top:20px; }
+  .nav .back { flex:1; text-align:center; font-size:12px; color:var(--text);
+               border:1px solid var(--border); border-radius:6px; padding:9px 0; }
+  .nav .go { flex:2; text-align:center; font-size:12px; font-weight:600; color:var(--ctaText);
+             background:var(--cta); border-radius:6px; padding:9px 0; }
+</style>
+</head>
+<body>
+<div class="lab">
+
+  <aside class="controls">
+    <h1>Colour lab</h1>
+    <p class="sub">Edit any value, press Apply. Save colors writes to a cookie on this browser; Revert reloads it.</p>
+
+    <div id="fields"></div>
+
+    <div class="actions">
+      <button class="primary" id="apply">Apply</button>
+      <button id="save">Save colors</button>
+      <button id="revert">Revert to saved</button>
+    </div>
+    <div style="margin-bottom:10px"><button class="linkish" id="reset">Reset to designer defaults</button></div>
+    <p class="status" id="status"></p>
+
+    <table class="contrast">
+      <thead><tr><th>Contrast check</th><th></th><th></th></tr></thead>
+      <tbody id="contrast"></tbody>
+    </table>
+  </aside>
+
+  <main class="preview">
+    <div class="frame">
+
+      <div class="rail">
+        <div class="brand"><span class="glyph">&#9826;</span><span>HEAVY POUR</span></div>
+        <h3>Merchant application &mdash; Glassmen Wines</h3>
+        <p class="blurb">Completing this application kicks off underwriting with PayCompass.</p>
+        <div class="step"><span class="dot">&#10003;</span>Business identity</div>
+        <div class="step"><span class="dot">&#10003;</span>Addresses</div>
+        <div class="step"><span class="dot">&#10003;</span>Business profile</div>
+        <div class="step active"><span class="dot">&#9679;</span>Platform and compliance</div>
+        <div class="step"><span class="dot">&#10003;</span>Processing profile</div>
+        <div class="step"><span class="dot">&#10003;</span>Banking</div>
+        <div class="step"><span class="dot">&#10003;</span>Owner details</div>
+        <div class="step todo"><span class="dot">&#9675;</span>Review and submit</div>
+        <p class="foot">Each step saves automatically as you go.</p>
+      </div>
+
+      <div class="body">
+        <div class="col">
+          <h2>Platform and compliance</h2>
+          <p class="lede">Tell us how your winery handles direct-to-consumer shipping.</p>
+
+          <p class="lbl">How does your winery handle DTC compliance? <span class="req">*</span></p>
+          <div class="select"><span>Third-party shippers handle it</span><span class="caret">&#9660;</span></div>
+
+          <p class="lbl">How do you ship wine to customers? <span class="req">*</span></p>
+          <div class="select"><span>Different methods depending on the state</span><span class="caret">&#9660;</span></div>
+
+          <h4>Assign states to each shipping method</h4>
+          <p class="hint">Group states by the method you use most often.</p>
+
+          <div class="method">
+            <header><span class="disc">&#9650;</span><span class="name">Ships under our providers' licenses</span><span class="ghost">Edit</span></header>
+            <div class="search">Search or select states&hellip;</div>
+            <div class="chips">
+              <span class="chip">Alabama &#10005;</span><span class="chip">Arizona &#10005;</span>
+              <span class="chip">Colorado &#10005;</span><span class="chip">Florida &#10005;</span>
+              <span class="chip">+31 more</span>
+            </div>
+          </div>
+
+          <div class="method">
+            <header><span class="disc">&#9733;</span><span class="name">Our own state licenses</span><span class="ghost">Edit</span></header>
+            <div class="chips">
+              <span class="chip">California &#10005;</span><span class="chip">Oregon &#10005;</span>
+              <span class="chip">Washington &#10005;</span>
+            </div>
+          </div>
+
+          <div class="method">
+            <header><span class="disc">&#9635;</span><span class="name">Third-party shipping</span><span class="ghost">Edit</span></header>
+            <div class="chips">
+              <span class="chip">Alaska &#10005;</span><span class="chip">Delaware &#10005;</span>
+            </div>
+          </div>
+
+          <div class="adder">&#43;&nbsp; Add another shipping arrangement</div>
+        </div>
+
+        <div class="side">
+          <div class="summary">
+            <div class="head"><span class="glyph">&#9776;</span>Shipping summary</div>
+            <p class="big">42</p>
+            <p class="unit">shipping states assigned</p>
+            <div class="legend">
+              <div class="leg"><span class="sw" style="background:var(--accent)"></span><span class="nm">Providers' licenses</span><span>35</span></div>
+              <div class="leg"><span class="sw" style="background:var(--blue)"></span><span class="nm">Own licenses</span><span>5</span></div>
+              <div class="leg"><span class="sw" style="background:var(--stepDone)"></span><span class="nm">Third-party</span><span>2</span></div>
+            </div>
+            <span class="saved">Saved</span>
+          </div>
+
+          <div class="why">
+            <span class="glyph">&#9873;</span>
+            <div><strong>Why this matters</strong><span>State rules vary. This confirms compliance and reduces chargeback risk.</span></div>
+          </div>
+
+          <div class="nav"><span class="back">Back</span><span class="go">Save and continue</span></div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<script>
+(function () {
+  var COOKIE = 'hpwColorLab';
+
+  var GROUPS = [
+    { title: 'Surfaces', tokens: [
+      { key: 'canvas',     label: 'Main window',      def: '#5b5b5b' },
+      { key: 'sidebar',    label: 'Left bar',         def: '#444443' },
+      { key: 'field',      label: 'Input fields',     def: '#303030' },
+      { key: 'card',       label: 'Method cards',     def: '#444443' },
+      { key: 'rail',       label: 'Summary panel',    def: '#444443' },
+      { key: 'chip',       label: 'State chips',      def: '#303030' },
+      { key: 'activeStep', label: 'Active step row',  def: '#303030' }
+    ]},
+    { title: 'Lines', tokens: [
+      { key: 'border',  label: 'Borders',  def: '#727272' },
+      { key: 'divider', label: 'Dividers', def: '#727272' }
+    ]},
+    { title: 'Text', tokens: [
+      { key: 'text',  label: 'Primary text', def: '#ffffff' },
+      { key: 'muted', label: 'Muted text',   def: '#c8c8c8' }
+    ]},
+    { title: 'Accents', tokens: [
+      { key: 'accent',     label: 'Orange accent',   def: '#b75c11' },
+      { key: 'cta',        label: 'CTA fill',        def: '#b75c11' },
+      { key: 'ctaText',    label: 'CTA text',        def: '#ffffff' },
+      { key: 'stepDone',   label: 'Completed step',  def: '#65c466' },
+      { key: 'blue',       label: 'License blue',    def: '#4285e6' },
+      { key: 'burgundy',   label: 'Logo burgundy',   def: '#a40e1a' },
+      { key: 'lightGreen', label: 'Light green',     def: '#d0e5cc' }
+    ]}
+  ];
+
+  var PAIRS = [
+    ['text',    'canvas',  'Text on main window'],
+    ['muted',   'canvas',  'Muted on main window'],
+    ['accent',  'canvas',  'Orange on main window'],
+    ['text',    'card',    'Text on card'],
+    ['muted',   'card',    'Muted on card'],
+    ['accent',  'card',    'Orange on card'],
+    ['text',    'sidebar', 'Text on left bar'],
+    ['muted',   'sidebar', 'Muted on left bar'],
+    ['text',    'field',   'Text on input'],
+    ['ctaText', 'cta',     'CTA text on fill']
+  ];
+
+  var ALL = [];
+  GROUPS.forEach(function (g) { g.tokens.forEach(function (t) { ALL.push(t); }); });
+
+  var fieldsEl = document.getElementById('fields');
+  var statusEl = document.getElementById('status');
+  var contrastEl = document.getElementById('contrast');
+
+  GROUPS.forEach(function (g) {
+    var wrap = document.createElement('div');
+    wrap.className = 'group';
+    var h = document.createElement('h2');
+    h.textContent = g.title;
+    wrap.appendChild(h);
+
+    g.tokens.forEach(function (t) {
+      var row = document.createElement('div');
+      row.className = 'row';
+
+      var lab = document.createElement('label');
+      lab.textContent = t.label;
+      lab.setAttribute('for', 'hex-' + t.key);
+
+      var sw = document.createElement('input');
+      sw.type = 'color';
+      sw.id = 'sw-' + t.key;
+      sw.value = t.def;
+      sw.setAttribute('aria-label', t.label + ' swatch');
+
+      var hex = document.createElement('input');
+      hex.type = 'text';
+      hex.id = 'hex-' + t.key;
+      hex.value = t.def;
+      hex.spellcheck = false;
+
+      sw.addEventListener('input', function () {
+        hex.value = sw.value;
+        hex.classList.remove('bad');
+      });
+      hex.addEventListener('input', function () {
+        var n = normalize(hex.value);
+        if (n) { sw.value = n; hex.classList.remove('bad'); }
+        else { hex.classList.add('bad'); }
+      });
+      hex.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') { apply(); }
+      });
+
+      row.appendChild(lab);
+      row.appendChild(sw);
+      row.appendChild(hex);
+      wrap.appendChild(row);
+    });
+
+    fieldsEl.appendChild(wrap);
+  });
+
+  function normalize(v) {
+    if (!v) { return null; }
+    var s = v.trim();
+    if (s.charAt(0) !== '#') { s = '#' + s; }
+    if (/^#[0-9a-fA-F]{3}$/.test(s)) {
+      s = '#' + s[1] + s[1] + s[2] + s[2] + s[3] + s[3];
+    }
+    if (/^#[0-9a-fA-F]{6}$/.test(s)) { return s.toLowerCase(); }
+    return null;
+  }
+
+  function readFields() {
+    var out = {};
+    var bad = [];
+    ALL.forEach(function (t) {
+      var el = document.getElementById('hex-' + t.key);
+      var n = normalize(el.value);
+      if (n) { out[t.key] = n; el.classList.remove('bad'); }
+      else { bad.push(t.label); el.classList.add('bad'); }
+    });
+    return { values: out, bad: bad };
+  }
+
+  function writeFields(map) {
+    ALL.forEach(function (t) {
+      var v = normalize(map[t.key]) || t.def;
+      document.getElementById('hex-' + t.key).value = v;
+      document.getElementById('sw-' + t.key).value = v;
+    });
+  }
+
+  function paint(map) {
+    var root = document.documentElement;
+    Object.keys(map).forEach(function (k) {
+      root.style.setProperty('--' + k, map[k]);
+    });
+  }
+
+  function say(msg, isError) {
+    statusEl.textContent = msg;
+    statusEl.style.color = isError ? '#e46b5f' : '#7fb98a';
+  }
+
+  function lum(hex) {
+    var r = parseInt(hex.substr(1, 2), 16) / 255;
+    var g = parseInt(hex.substr(3, 2), 16) / 255;
+    var b = parseInt(hex.substr(5, 2), 16) / 255;
+    function ch(c) {
+      return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+    }
+    return 0.2126 * ch(r) + 0.7152 * ch(g) + 0.0722 * ch(b);
+  }
+
+  function ratio(a, b) {
+    var la = lum(a);
+    var lb = lum(b);
+    var hi = Math.max(la, lb);
+    var lo = Math.min(la, lb);
+    return (hi + 0.05) / (lo + 0.05);
+  }
+
+  function renderContrast(map) {
+    contrastEl.innerHTML = '';
+    PAIRS.forEach(function (p) {
+      var fg = map[p[0]];
+      var bg = map[p[1]];
+      if (!fg || !bg) { return; }
+      var r = ratio(fg, bg);
+      var cls = r >= 4.5 ? 'pass' : (r >= 3 ? 'warn' : 'fail');
+      var verdict = r >= 4.5 ? 'AA' : (r >= 3 ? 'UI' : 'fail');
+
+      var tr = document.createElement('tr');
+      var td1 = document.createElement('td');
+      td1.textContent = p[2];
+      var td2 = document.createElement('td');
+      td2.className = 'n';
+      td2.textContent = r.toFixed(2);
+      var td3 = document.createElement('td');
+      td3.className = 'v ' + cls;
+      td3.textContent = verdict;
+
+      tr.appendChild(td1);
+      tr.appendChild(td2);
+      tr.appendChild(td3);
+      contrastEl.appendChild(tr);
+    });
+  }
+
+  function apply() {
+    var res = readFields();
+    if (res.bad.length) {
+      say('Not applied. Invalid hex: ' + res.bad.join(', '), true);
+      return;
+    }
+    paint(res.values);
+    renderContrast(res.values);
+    say('Applied.');
+  }
+
+  function setCookie(name, value, days) {
+    var d = new Date();
+    d.setTime(d.getTime() + days * 864e5);
+    document.cookie = name + '=' + encodeURIComponent(value) +
+      ';expires=' + d.toUTCString() + ';path=/;SameSite=Lax';
+  }
+
+  function getCookie(name) {
+    var parts = document.cookie ? document.cookie.split(';') : [];
+    for (var i = 0; i < parts.length; i++) {
+      var p = parts[i].trim();
+      if (p.indexOf(name + '=') === 0) {
+        return decodeURIComponent(p.substring(name.length + 1));
+      }
+    }
+    return null;
+  }
+
+  function defaults() {
+    var m = {};
+    ALL.forEach(function (t) { m[t.key] = t.def; });
+    return m;
+  }
+
+  document.getElementById('apply').addEventListener('click', apply);
+
+  document.getElementById('save').addEventListener('click', function () {
+    var res = readFields();
+    if (res.bad.length) {
+      say('Not saved. Invalid hex: ' + res.bad.join(', '), true);
+      return;
+    }
+    setCookie(COOKIE, JSON.stringify(res.values), 365);
+    paint(res.values);
+    renderContrast(res.values);
+    say('Saved to this browser.');
+  });
+
+  document.getElementById('revert').addEventListener('click', function () {
+    var raw = getCookie(COOKIE);
+    if (!raw) {
+      say('Nothing saved yet.', true);
+      return;
+    }
+    var map;
+    try { map = JSON.parse(raw); }
+    catch (e) { say('Saved colours are unreadable.', true); return; }
+    writeFields(map);
+    var res = readFields();
+    paint(res.values);
+    renderContrast(res.values);
+    say('Reverted to saved colours.');
+  });
+
+  document.getElementById('reset').addEventListener('click', function () {
+    var m = defaults();
+    writeFields(m);
+    paint(m);
+    renderContrast(m);
+    say('Reset to designer defaults. Not saved.');
+  });
+
+  var startRaw = getCookie(COOKIE);
+  var start = defaults();
+  if (startRaw) {
+    try {
+      var parsed = JSON.parse(startRaw);
+      Object.keys(parsed).forEach(function (k) { start[k] = parsed[k]; });
+      writeFields(start);
+      say('Loaded saved colours.');
+    } catch (e) {
+      say('Saved colours were unreadable; showing defaults.', true);
+    }
+  }
+  paint(start);
+  renderContrast(start);
+})();
+</script>
+</body>
+</html>
