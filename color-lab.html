@@ -86,7 +86,7 @@
   .mobilebrand { display:none; }
 
   /* left rail */
-  .rail { width:310px; flex:none; background:var(--sidebar); padding:18px 16px;
+  .rail { width:310px; flex:none; background:var(--sidebar); padding:36px 32px;
           overflow-y:auto; }
   .brand { margin-bottom:16px; }
   .brand img { display:block; width:215px; height:auto; }
@@ -115,14 +115,19 @@
 
   /* right pane */
   .body { flex:1; min-width:0; background:var(--canvas); display:flex; flex-direction:column;
-          padding:22px; overflow-y:auto; }
+          padding:33px 22px 22px; overflow-y:auto; }
+  /* The form stops growing at the width it was designed at. Anything wider than
+     this falls to the right as empty canvas rather than stretching the fields
+     and the summary panel across the whole page. Both the heading block and the
+     columns carry the same cap so they stay flush with each other. */
+  .stepwrap, .cols { width:100%; max-width:941px; }
   .cols { display:flex; gap:20px; align-items:flex-start; }
   .maincol { flex:1; min-width:0; }
   .siderail { width:252px; flex:none; position:sticky; top:0; }
   .stepwrap { flex:1; min-width:0; }
   .stepwrap h2 { margin:0; font-size:20px; font-weight:700; color:var(--text); }
   .stepwrap p.lede { margin:6px 0 20px; font-size:12.5px; color:var(--muted); line-height:1.6; }
-  .field { margin-bottom:16px; }
+  .field { margin-bottom:32px; }
   .lbl { display:block; margin:0 0 6px; font-size:12px; font-weight:600; color:var(--text); }
   .req { color:var(--accent); }
   .hint { margin:6px 0 0; font-size:11px; color:var(--muted); line-height:1.55; }
@@ -135,14 +140,14 @@
   .selwrap .caret { position:absolute; right:11px; top:50%; transform:translateY(-50%);
                     pointer-events:none; color:var(--muted); font-size:10px; }
 
-  fieldset.grp { border:0; margin:0 0 16px; padding:0; }
+  fieldset.grp { border:0; margin:0 0 32px; padding:0; }
   fieldset.grp legend { padding:0; margin:0 0 8px; font-size:12px; font-weight:600; color:var(--text); }
 
   .note { border:1px solid var(--border); background:var(--card); border-radius:10px;
           padding:12px 13px; font-size:11.5px; color:var(--muted); line-height:1.6;
-          margin-bottom:16px; }
+          margin-bottom:32px; }
 
-  .assign { margin-bottom:16px; }
+  .assign { margin-bottom:32px; }
   .assign > .lbl { margin-bottom:4px; }
   .method { background:var(--card); border:1px solid var(--border); border-radius:10px;
             padding:13px 14px; margin-bottom:11px; }
