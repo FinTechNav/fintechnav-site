@@ -9,12 +9,12 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap">
 <style>
   :root {
-    --canvas:#5b5b5b; --sidebar:#444443; --field:#303030; --card:#444443;
-    --rail:#444443; --chip:#303030; --activeStep:#303030;
-    --border:#727272; --divider:#727272;
-    --text:#ffffff; --muted:#c8c8c8;
-    --accent:#b75c11; --cta:#b75c11; --ctaText:#ffffff;
-    --stepDone:#65c466; --blue:#4285e6; --burgundy:#a40e1a; --lightGreen:#d0e5cc;
+    --canvas:#ffffff; --sidebar:#dedede; --field:#ffffff; --card:#dedede;
+    --rail:#dedede; --chip:#e4dad2; --activeStep:#d3bdab;
+    --border:#303030; --divider:#303030;
+    --text:#000000; --muted:#1c1c1c;
+    --accent:#b75c11; --cta:#b75c11; --ctaText:#b75c11;
+    --stepDone:#549254; --blue:#b75c11; --burgundy:#a40e1a; --lightGreen:#549254;
   }
   * { box-sizing:border-box; }
   body { margin:0; font-family:"Montserrat",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
@@ -326,8 +326,8 @@
     <div class="group">
       <h2>Logo</h2>
       <div class="seg">
-        <button id="logoDark" class="on">Dark mode</button>
-        <button id="logoLight">Light mode</button>
+        <button id="logoDark">Dark mode</button>
+        <button id="logoLight" class="on">Light mode</button>
       </div>
     </div>
 
@@ -360,19 +360,19 @@
     <div class="frame">
 
       <div class="mobilebrand">
-        <img class="logoImg" src="https://cdn.heavypourwine.com/DarkMode/HPW-Logo-With-Glass.svg" alt="Heavy Pour Wine">
+        <img class="logoImg" src="https://cdn.heavypourwine.com/LightMode/HPW-Logo-With-Glass.svg" alt="Heavy Pour Wine">
       </div>
 
       <div class="panes">
 
       <div class="rail">
-        <div class="brand"><img class="logoImg" src="https://cdn.heavypourwine.com/DarkMode/HPW-Logo-With-Glass.svg" alt="Heavy Pour Wine"></div>
+        <div class="brand"><img class="logoImg" src="https://cdn.heavypourwine.com/LightMode/HPW-Logo-With-Glass.svg" alt="Heavy Pour Wine"></div>
         <h3>Merchant application &mdash; Brad Wines</h3>
         <p class="intro">Completing this application starts underwriting with <a href="#" onclick="return false">PayCompass</a>, our merchant services and referral partner. PayCompass and its sponsor banks make the underwriting decision; this form also collects information needed to set up your Heavy Pour Wine account and SMS campaigns. PayCompass is a registered ISO/MSP of Pinnacle Bank, a Tennessee bank, d/b/a Synovus Bank.</p>
         <ol class="steps" id="steps"></ol>
         <p class="foot" id="railfoot">Each step saves automatically as you go.</p>
         <div class="notyoucard">
-          <img src="https://cdn.heavypourwine.com/DarkMode/Email.svg" alt="">
+          <img src="https://cdn.heavypourwine.com/LightMode/Email.svg" alt="">
           <div>
             <strong>Not the right person?</strong>
             <a href="#" onclick="return false">Ask us to send this to the correct contact.</a>
@@ -417,30 +417,30 @@
 
   var GROUPS = [
     { title: 'Surfaces', tokens: [
-      { key: 'canvas',     label: 'Main window',      def: '#5b5b5b' },
-      { key: 'sidebar',    label: 'Left bar',         def: '#444443' },
-      { key: 'field',      label: 'Input fields',     def: '#303030' },
-      { key: 'card',       label: 'Method cards',     def: '#444443' },
-      { key: 'rail',       label: 'Summary panel',    def: '#444443' },
-      { key: 'chip',       label: 'State chips',      def: '#303030' },
-      { key: 'activeStep', label: 'Active step row',  def: '#303030' }
+      { key: 'canvas',     label: 'Main window',      def: '#ffffff' },
+      { key: 'sidebar',    label: 'Left bar',         def: '#dedede' },
+      { key: 'field',      label: 'Input fields',     def: '#ffffff' },
+      { key: 'card',       label: 'Method cards',     def: '#dedede' },
+      { key: 'rail',       label: 'Summary panel',    def: '#dedede' },
+      { key: 'chip',       label: 'State chips',      def: '#e4dad2' },
+      { key: 'activeStep', label: 'Active step row',  def: '#d3bdab' }
     ]},
     { title: 'Lines', tokens: [
-      { key: 'border',  label: 'Borders',  def: '#727272' },
-      { key: 'divider', label: 'Dividers', def: '#727272' }
+      { key: 'border',  label: 'Borders',  def: '#303030' },
+      { key: 'divider', label: 'Dividers', def: '#303030' }
     ]},
     { title: 'Text', tokens: [
-      { key: 'text',  label: 'Primary text', def: '#ffffff' },
-      { key: 'muted', label: 'Muted text',   def: '#c8c8c8' }
+      { key: 'text',  label: 'Primary text', def: '#000000' },
+      { key: 'muted', label: 'Muted text',   def: '#1c1c1c' }
     ]},
     { title: 'Accents', tokens: [
       { key: 'accent',     label: 'Orange accent',   def: '#b75c11' },
       { key: 'cta',        label: 'CTA fill',        def: '#b75c11' },
-      { key: 'ctaText',    label: 'CTA text',        def: '#ffffff' },
-      { key: 'stepDone',   label: 'Completed step',  def: '#65c466' },
+      { key: 'ctaText',    label: 'CTA text',        def: '#b75c11' },
+      { key: 'stepDone',   label: 'Completed step',  def: '#549254' },
       { key: 'blue',       label: 'Live chat pill',  def: '#b75c11' },
       { key: 'burgundy',   label: 'Logo burgundy',   def: '#a40e1a' },
-      { key: 'lightGreen', label: 'Saved text',      def: '#d0e5cc' }
+      { key: 'lightGreen', label: 'Saved text',      def: '#549254' }
     ]}
   ];
 
@@ -931,7 +931,7 @@
     ['third_party', '3rd party shipping',                 'Delivery']
   ];
 
-  var ICON_BASE = 'https://cdn.heavypourwine.com/DarkMode/';
+  var ICON_BASE = 'https://cdn.heavypourwine.com/LightMode/';
   var METHOD_ICON = {};
   METHODS.forEach(function (m) { METHOD_ICON[m[0]] = m[2]; });
 
