@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Heavy Pour — live chat colour lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap">
+<style>
+  /* Live values as they render TODAY on the onboarding form. The widget reads
+     app-chrome tokens (--app-card / --app-page / --app-muted) that
+     `.onboarding-surface` never re-declares, so they fall through to `.dark`
+     while the type comes from the light onboarding block. That mismatch is the
+     defect this lab exists to solve (kb 120a73e5) — so the lab OPENS on the
+     broken state rather than on a flattering one. */
+  :root {
+    --stage:#ffffff;
+    --winBg:#8e8e8e; --panelBg:#727272; --visBubble:#878787;
+    --border:#303030;
+    --text:#000000; --muted:#dddddd; --link:#b75c11; --danger:#c0392b;
+    --cta:#d1863b; --ctaText:#ffffff; --focus:#b75c11;
+    --onlineFill:#d0e5cc; --onlineText:#576d26;
+    --awayFill:#f7e9e2;   --awayText:#b75c11;
+    --offFill:#e6e4e1;    --offText:#5c5b58;
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:"Montserrat",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+         background:#1a1a1a; color:#eaeaea; }
+  .lab { display:flex; align-items:flex-start; min-height:100vh; }
+
+  /* ---------- controls ---------- */
+  .controls { width:330px; flex:none; background:#242424; border-right:1px solid #3a3a3a;
+              padding:16px 14px; position:sticky; top:0; max-height:100vh; overflow-y:auto; }
+  .controls.collapsed { width:46px; padding:16px 7px; overflow:hidden; }
+  .controls.collapsed #panelBody { display:none; }
+  .panelToggle { display:flex; align-items:center; justify-content:space-between; gap:8px;
+                 width:100%; margin-bottom:12px; padding:8px 10px; font:inherit; font-size:13px;
+                 font-weight:600; color:#eaeaea; background:#333; border:1px solid #4a4a4a;
+                 border-radius:6px; cursor:pointer; }
+  .panelToggle:hover { filter:brightness(1.15); }
+  .panelToggle .chev { color:#9a9a9a; font-size:15px; line-height:1; }
+  .controls.collapsed .panelToggle { justify-content:center; padding:8px 0; }
+  .controls.collapsed .panelToggle .ttl { display:none; }
+  .controls .sub { margin:0 0 14px; font-size:11px; color:#9a9a9a; line-height:1.5; }
+  .group { margin-bottom:14px; }
+  .group > h2 { margin:0 0 6px; font-size:10px; font-weight:600; letter-spacing:.09em;
+                text-transform:uppercase; color:#8f8f8f; }
+  .row { display:flex; align-items:center; gap:8px; margin-bottom:5px; }
+  .row label { flex:1; font-size:11.5px; color:#d2d2d2; }
+  .row input[type=color] { width:30px; height:26px; padding:0; border:1px solid #4a4a4a;
+                           border-radius:5px; background:#242424; cursor:pointer; flex:none; }
+  .row input[type=text] { width:86px; flex:none; font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+                          font-size:11.5px; padding:5px 6px; border-radius:5px;
+                          border:1px solid #4a4a4a; background:#1c1c1c; color:#eaeaea; }
+  .row input[type=text].bad { border-color:#c0392b; }
+
+  .actions { display:flex; flex-wrap:wrap; gap:7px; margin:16px 0 6px; }
+  .actions button { flex:1 1 auto; font:inherit; font-size:12px; font-weight:500; padding:8px 10px;
+                    border-radius:6px; border:1px solid #4a4a4a; background:#333; color:#eaeaea;
+                    cursor:pointer; }
+  .actions button.primary { background:#b75c11; border-color:#b75c11; color:#fff; flex-basis:100%; }
+  .actions button:hover { filter:brightness(1.15); }
+  .linkish { background:none; border:none; color:#9a9a9a; font:inherit; font-size:11px;
+             text-decoration:underline; cursor:pointer; padding:0; }
+  .status { min-height:15px; font-size:11px; color:#7fb98a; margin-bottom:12px; }
+
+  .seg { display:flex; gap:6px; }
+  .seg button { flex:1; font:inherit; font-size:11.5px; padding:7px 8px; border-radius:6px;
+                border:1px solid #4a4a4a; background:#333; color:#eaeaea; cursor:pointer; }
+  .seg button.on { background:#b75c11; border-color:#b75c11; color:#fff; }
+  .exchange { width:100%; height:150px; margin-top:2px; padding:8px; border-radius:6px;
+              border:1px solid #4a4a4a; background:#1c1c1c; color:#eaeaea; resize:vertical;
+              font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:10.5px;
+              line-height:1.55; white-space:pre; }
+
+  table.contrast { width:100%; border-collapse:collapse; font-size:11px; }
+  table.contrast th { text-align:left; font-weight:600; color:#8f8f8f; font-size:10px;
+                      letter-spacing:.06em; text-transform:uppercase; padding-bottom:4px; }
+  table.contrast td { padding:3px 0; border-top:1px solid #333; color:#c6c6c6; }
+  table.contrast td.n { text-align:right; font-family:ui-monospace,Menlo,monospace; width:44px; }
+  table.contrast td.v { text-align:right; width:38px; font-weight:600; }
+  .pass { color:#65c466; } .warn { color:#e0a33a; } .fail { color:#e46b5f; }
+
+  /* ---------- preview ---------- */
+  .preview { flex:1; min-width:0; padding:20px; height:100vh; }
+  /* The stage stands in for the onboarding content pane the widget floats over.
+     It is CONTEXT ONLY — no token in this group ships anywhere. */
+  .stage { position:relative; height:100%; border-radius:12px; overflow:hidden;
+           background:var(--stage); box-shadow:0 10px 34px rgba(0,0,0,.45); }
+
+  .chatwin { position:absolute; right:24px; bottom:24px; width:380px;
+             height:600px; max-height:calc(100% - 48px); display:flex; flex-direction:column;
+             overflow:hidden; border-radius:20px 20px 20px 0;
+             background:var(--winBg); color:var(--text);
+             box-shadow:0 2px 8px rgba(0,0,0,.18); }
+
+  /* header */
+  .chead { display:flex; align-items:center; gap:12px; flex:none; min-height:64px;
+           border-bottom:1px solid var(--border); padding:8px 16px; }
+  .disc { width:36px; height:36px; flex:none; border-radius:50%; background:var(--panelBg);
+          display:grid; place-items:center; }
+  .disc svg { width:20px; height:20px; display:block; }
+  .cident { min-width:0; flex:1; }
+  .cident h2 { margin:0; font-size:14px; font-weight:600; color:var(--text);
+               white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .cident p { margin:0; font-size:11px; line-height:1.45; color:var(--muted); }
+  .cpill { flex:none; border-radius:999px; padding:2px 8px; font-size:10px; font-weight:700;
+           text-transform:uppercase; letter-spacing:.02em; }
+  .cmin { width:24px; height:24px; flex:none; display:grid; place-items:center; border:0;
+          background:none; border-radius:50%; color:var(--muted); cursor:pointer; }
+  .cmin svg { width:16px; height:16px; }
+
+  /* transcript */
+  .clist { flex:1; min-height:0; overflow-y:auto; padding:16px;
+           display:flex; flex-direction:column; gap:12px; }
+  .sysline { margin:0; padding:0 16px; text-align:center; font-size:11px; color:var(--muted); }
+  .vrow { display:flex; justify-content:flex-end; }
+  .vbub { max-width:82%; border-radius:16px; border:1px solid var(--border);
+          background:var(--visBubble); padding:12px 16px; font-size:14px; font-weight:600;
+          color:var(--text); }
+  .vbub .meta { margin:8px 0 0; text-align:right; font-size:10px; font-weight:400; color:var(--muted); }
+  .arow { display:flex; flex-direction:column; align-items:flex-start; }
+  .abub { max-width:82%; border-radius:16px; background:var(--winBg); padding:16px;
+          box-shadow:0 2px 8px rgba(0,0,0,.18); display:flex; flex-direction:column; gap:4px; }
+  .abub .who { margin:0; font-size:11px; font-weight:600; color:var(--muted); }
+  .abub .body { margin:0; font-size:14px; color:var(--text); }
+  .abub .meta { margin:0; font-size:10px; color:var(--muted); }
+
+  /* away / offline notice */
+  .notice { flex:none; border-top:1px solid var(--border); background:var(--panelBg);
+            padding:12px; font-size:14px; color:var(--text); }
+  .notice p.copy { margin:0; font-size:13px; color:var(--muted); line-height:1.5; }
+  .notice p.copy strong { font-weight:600; color:var(--text); }
+  .notice button.inline { font:inherit; font-size:13px; font-weight:600; color:var(--link);
+                          background:none; border:0; padding:0; text-decoration:underline;
+                          cursor:pointer; }
+  .capture { display:flex; flex-direction:column; gap:8px; }
+  .capture > p.lead { margin:0; font-size:13px; color:var(--muted); }
+  .capture label { font-size:12px; font-weight:600; color:var(--text); }
+  .caprow { display:flex; align-items:flex-start; gap:8px; }
+  .capfield { flex:1; }
+  .capfield input { width:100%; height:40px; border-radius:12px; border:1px solid var(--border);
+                    background:var(--winBg); padding:0 12px; font:inherit; font-size:14px;
+                    color:var(--text); outline:none; }
+  .capfield input::placeholder { color:var(--muted); }
+  .capfield p.err { margin:4px 0 0; font-size:11px; font-weight:600; color:var(--danger); }
+  .capbtn { flex:none; height:40px; border:0; border-radius:999px; padding:0 16px;
+            background:var(--cta); color:var(--ctaText); font:inherit; font-size:14px;
+            font-weight:700; cursor:pointer; }
+
+  /* composer */
+  .composer { flex:none; border-top:1px solid var(--border); padding:12px; }
+  .compbox { display:flex; align-items:flex-end; gap:8px; border-radius:16px;
+             border:1px solid var(--border); background:var(--winBg); padding:8px;
+             box-shadow:0 2px 8px rgba(0,0,0,.18); }
+  .compbox textarea { flex:1; min-height:40px; max-height:96px; resize:none; border:0;
+                      background:transparent; padding:8px; font:inherit; font-size:14px;
+                      color:var(--text); outline:none; }
+  .compbox textarea::placeholder { color:var(--muted); }
+  .sendbtn { flex:none; height:40px; border:0; border-radius:999px; padding:0 16px;
+             background:var(--cta); color:var(--ctaText); font:inherit; font-size:14px;
+             font-weight:700; cursor:pointer; }
+  .focusdemo:focus-visible, .compbox textarea:focus-visible, .capfield input:focus-visible {
+    outline:2px solid var(--focus); outline-offset:1px; }
+
+  /* ---------- responsive ---------- */
+  @media (max-width: 1100px) {
+    .lab { flex-direction:column; align-items:stretch; }
+    .controls { width:100%; position:static; max-height:none; overflow:visible;
+                border-right:0; border-bottom:1px solid #3a3a3a; }
+    .controls.collapsed { width:100%; padding:16px 14px; overflow:visible; }
+    .controls.collapsed .panelToggle { justify-content:space-between; padding:8px 10px; }
+    .controls.collapsed .panelToggle .ttl { display:inline; }
+    .preview { height:auto; padding:16px; }
+    .stage { height:680px; }
+  }
+
+  .viewToggle { position:fixed; top:12px; right:12px; z-index:60; display:flex; gap:5px;
+                padding:5px; border-radius:9px; background:rgba(26,26,26,.94);
+                border:1px solid #3a3a3a; box-shadow:0 6px 18px rgba(0,0,0,.5); }
+  .viewToggle button { font:inherit; font-size:11.5px; font-weight:600; padding:6px 13px;
+                       border-radius:6px; border:0; background:none; color:#c6c6c6; cursor:pointer; }
+  .viewToggle button.on { background:#b75c11; color:#fff; }
+
+  /* Mobile: the window docks full-width at the bottom, matching the component's
+     sub-1100px behaviour (it only floats at fixed width from 1100px up). */
+  body.mobileView .controls { display:none; }
+  body.mobileView .preview { max-width:420px; margin:0 auto; padding:12px; height:auto; }
+  body.mobileView .stage { height:calc(100vh - 24px); height:calc(100dvh - 24px); }
+  body.mobileView .chatwin { right:12px; left:12px; bottom:12px; width:auto;
+                             max-height:calc(100% - 24px); }
+</style>
+</head>
+<body>
+<div class="viewToggle" role="group" aria-label="Preview device">
+  <button id="viewDesktop" class="on" type="button">Computer</button>
+  <button id="viewMobile" type="button">Mobile</button>
+</div>
+
+<div class="lab">
+
+  <aside class="controls" id="controls">
+    <button class="panelToggle" id="panelToggle" aria-expanded="true" title="Hide colour lab">
+      <span class="ttl">Live chat colour lab</span><span class="chev">&lsaquo;</span>
+    </button>
+
+    <div id="panelBody">
+    <p class="sub">Edit any value, press Apply. Save colors keeps the set on this browser; Revert reloads it. Use Copy under Hand-off to send the final set to Brad. The preview is a working replica of the live chat window that floats over the onboarding form.</p>
+    <p class="sub">It opens on the colours the widget renders <em>today</em>, which is the state Brad flagged as hard to read. Press &ldquo;Try the onboarding palette&rdquo; to see it wearing the same colours as the form it sits on.</p>
+
+    <div id="fields"></div>
+
+    <div class="group">
+      <h2>Availability state</h2>
+      <div class="seg">
+        <button id="stOnline" type="button">Online</button>
+        <button id="stAway" type="button">Stepped away</button>
+        <button id="stOffline" class="on" type="button">Offline</button>
+      </div>
+    </div>
+
+    <div class="group">
+      <h2>Away panel</h2>
+      <div class="seg">
+        <button id="nvConfirm" class="on" type="button">Confirmation</button>
+        <button id="nvCapture" type="button">Email form</button>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="primary" id="apply">Apply</button>
+      <button id="save">Save colors</button>
+      <button id="revert">Revert to saved</button>
+    </div>
+    <div style="margin-bottom:6px"><button class="linkish" id="reset">Reset to today&rsquo;s live values</button></div>
+    <div style="margin-bottom:10px"><button class="linkish" id="suggest">Try the onboarding palette</button></div>
+    <p class="status" id="status"></p>
+
+    <div class="group">
+      <h2>Hand-off</h2>
+      <p class="sub" style="margin-bottom:4px">These are the current values. Press Copy and send the text to Brad, or paste a set in and press Load.</p>
+      <textarea class="exchange" id="exchange" spellcheck="false"></textarea>
+      <div class="actions" style="margin:7px 0 0">
+        <button id="copy">Copy</button>
+        <button id="load">Load pasted</button>
+      </div>
+    </div>
+
+    <table class="contrast">
+      <thead><tr><th>Contrast check</th><th></th><th></th></tr></thead>
+      <tbody id="contrast"></tbody>
+    </table>
+    </div>
+  </aside>
+
+  <main class="preview">
+    <div class="stage">
+      <section class="chatwin" aria-label="Live chat conversation">
+
+        <header class="chead">
+          <div class="disc">
+            <!-- The live header uses the CDN wine-glass asset; this is a stand-in
+                 so the lab stays self-contained and offline-safe. -->
+            <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="var(--text)" stroke-width="1.6">
+              <path d="M7 3h10l-1 6a4 4 0 0 1-8 0L7 3Z" stroke-linejoin="round"/>
+              <path d="M12 15v5M9 20h6" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <div class="cident">
+            <h2>Heavy Pour Wine</h2>
+            <p id="subline">We&rsquo;re offline &mdash; back Wednesday, 9:00 AM EDT</p>
+          </div>
+          <span class="cpill" id="pill">Offline</span>
+          <button class="cmin focusdemo" type="button" aria-label="Minimize live chat">
+            <svg viewBox="0 0 16 16" aria-hidden="true">
+              <path d="M3 8h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </button>
+        </header>
+
+        <div class="clist">
+          <p class="sysline">You&rsquo;re now chatting with Brad from Heavy Pour Wine.</p>
+
+          <div class="vrow">
+            <div class="vbub">test<p class="meta">You &middot; 4:12 PM</p></div>
+          </div>
+          <div class="vrow">
+            <div class="vbub">asdf<p class="meta">You &middot; 4:14 PM</p></div>
+          </div>
+
+          <div class="arow">
+            <div class="abub">
+              <p class="who">Brad from Heavy Pour Wine</p>
+              <p class="body">Test mall</p>
+              <p class="meta">4:15 PM</p>
+            </div>
+          </div>
+
+          <p class="sysline">Resolved (Onboarding help).</p>
+        </div>
+
+        <div class="notice" id="notice">
+          <p class="copy" id="noticeConfirm">
+            We&rsquo;ll reply here as soon as we&rsquo;re back. If you close this chat, we&rsquo;ll reply to
+            <strong>bradnjensen@gmail.com</strong>. <button class="inline focusdemo" type="button">Use a different email</button>. Or - leave us a phone number in the chat and we&rsquo;ll call you back.
+          </p>
+
+          <div class="capture" id="noticeCapture" style="display:none">
+            <p class="lead">Leave your email and we&rsquo;ll reply as soon as we&rsquo;re back.</p>
+            <label for="capEmail">Where should we reply?</label>
+            <div class="caprow">
+              <div class="capfield">
+                <input id="capEmail" type="email" placeholder="you@winery.com">
+                <p class="err">Enter a valid email address.</p>
+              </div>
+              <button class="capbtn focusdemo" type="button">Save</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="composer">
+          <div class="compbox">
+            <textarea placeholder="Type your message…" rows="1"></textarea>
+            <button class="sendbtn focusdemo" type="button">Send</button>
+          </div>
+        </div>
+
+      </section>
+    </div>
+  </main>
+</div>
+
+<script>
+/* ---------------------------------------------------------------------------
+   Colour controls for the live-chat window. Same machinery as the merchant
+   application lab: writes CSS custom properties on :root, saves to a cookie,
+   renders a live WCAG readout.
+
+   The token names below map 1:1 onto what the SHIPPED components consume, so a
+   value chosen here is directly actionable:
+     winBg     -> --app-card      (window shell, agent bubble, composer, email input)
+     panelBg   -> --app-page      (avatar disc, away/offline panel)
+     visBubble -> the visitor bubble fill (today an alpha of --foreground)
+     border    -> --border
+     text      -> --foreground
+     muted     -> --app-muted
+     link      -> --heading-link  ("Use a different email")
+     danger    -> --danger-strong (email validation error)
+     cta/ctaText -> --checkout-cta / --checkout-cta-text
+     focus     -> --app-focus-ring
+     the six pill values -> --status-online|away|unknown-fill/text
+
+   One control drives one token, deliberately. --app-card really does paint the
+   shell AND the agent bubble AND the composer in the live component, so the
+   preview keeps them tied together — splitting them here would make the lab
+   predict a render the code cannot produce.
+--------------------------------------------------------------------------- */
+(function () {
+  var COOKIE = 'hpwChatColorLab';
+
+  var GROUPS = [
+    { title: 'Surfaces', tokens: [
+      { key: 'winBg',     label: 'Chat window',      def: '#8e8e8e' },
+      { key: 'panelBg',   label: 'Away panel + disc', def: '#727272' },
+      { key: 'visBubble', label: 'Your message',     def: '#878787' }
+    ]},
+    { title: 'Lines', tokens: [
+      { key: 'border', label: 'Borders', def: '#303030' }
+    ]},
+    { title: 'Text', tokens: [
+      { key: 'text',   label: 'Message text',   def: '#000000' },
+      { key: 'muted',  label: 'Times + status', def: '#dddddd' },
+      { key: 'link',   label: 'Inline link',    def: '#b75c11' },
+      { key: 'danger', label: 'Error text',     def: '#c0392b' }
+    ]},
+    { title: 'Buttons', tokens: [
+      { key: 'cta',     label: 'Send fill',  def: '#d1863b' },
+      { key: 'ctaText', label: 'Send label', def: '#ffffff' },
+      { key: 'focus',   label: 'Focus ring', def: '#b75c11' }
+    ]},
+    { title: 'Status pills', tokens: [
+      { key: 'onlineFill', label: 'Online fill',       def: '#d0e5cc' },
+      { key: 'onlineText', label: 'Online label',      def: '#576d26' },
+      { key: 'awayFill',   label: 'Stepped away fill', def: '#f7e9e2' },
+      { key: 'awayText',   label: 'Stepped away label', def: '#b75c11' },
+      { key: 'offFill',    label: 'Offline fill',      def: '#e6e4e1' },
+      { key: 'offText',    label: 'Offline label',     def: '#5c5b58' }
+    ]},
+    { title: 'Context only', tokens: [
+      { key: 'stage', label: 'Page behind', def: '#ffffff' }
+    ]}
+  ];
+
+  /* The onboarding palette, for the "what if it matched the form" pass. Values
+     are the signed-off onboarding set (globals.css --color-onb-*), not new
+     invention. The link-on-panel pair lands at 3.43:1 here — the SAME figure
+     already accepted on kb 10e1f626 for orange on #dedede, so the table will
+     flag it and that is a real decision to make, not a bug in the preset. */
+  var SUGGESTED = {
+    winBg: '#ffffff', panelBg: '#dedede', visBubble: '#e4dad2',
+    border: '#303030',
+    text: '#000000', muted: '#1c1c1c', link: '#b75c11', danger: '#c0392b',
+    cta: '#b75c11', ctaText: '#ffffff', focus: '#b75c11',
+    onlineFill: '#d0e5cc', onlineText: '#576d26',
+    awayFill: '#f7e9e2', awayText: '#b75c11',
+    offFill: '#e6e4e1', offText: '#5c5b58',
+    stage: '#ffffff'
+  };
+
+  var PAIRS = [
+    ['text',       'winBg',     'Message text on window'],
+    ['muted',      'winBg',     'Times + status on window'],
+    ['text',       'visBubble', 'Your message text'],
+    ['muted',      'visBubble', 'Your message timestamp'],
+    ['text',       'panelBg',   'Text on away panel'],
+    ['muted',      'panelBg',   'Away panel body copy'],
+    ['link',       'panelBg',   'Inline link on away panel'],
+    ['danger',     'panelBg',   'Error text on away panel'],
+    ['ctaText',    'cta',       'Send label on fill'],
+    ['onlineText', 'onlineFill', 'Online pill'],
+    ['awayText',   'awayFill',  'Stepped away pill'],
+    ['offText',    'offFill',   'Offline pill']
+  ];
+
+  var ALL = [];
+  GROUPS.forEach(function (g) { g.tokens.forEach(function (t) { ALL.push(t); }); });
+
+  var fieldsEl = document.getElementById('fields');
+  var statusEl = document.getElementById('status');
+  var contrastEl = document.getElementById('contrast');
+
+  GROUPS.forEach(function (g) {
+    var wrap = document.createElement('div');
+    wrap.className = 'group';
+    var h = document.createElement('h2');
+    h.textContent = g.title;
+    wrap.appendChild(h);
+
+    g.tokens.forEach(function (t) {
+      var row = document.createElement('div');
+      row.className = 'row';
+
+      var lab = document.createElement('label');
+      lab.textContent = t.label;
+      lab.setAttribute('for', 'hex-' + t.key);
+
+      var sw = document.createElement('input');
+      sw.type = 'color';
+      sw.id = 'sw-' + t.key;
+      sw.value = t.def;
+      sw.setAttribute('aria-label', t.label + ' swatch');
+
+      var hex = document.createElement('input');
+      hex.type = 'text';
+      hex.id = 'hex-' + t.key;
+      hex.value = t.def;
+      hex.spellcheck = false;
+
+      sw.addEventListener('input', function () {
+        hex.value = sw.value;
+        hex.classList.remove('bad');
+      });
+      hex.addEventListener('input', function () {
+        var n = normalize(hex.value);
+        if (n) { sw.value = n; hex.classList.remove('bad'); }
+        else { hex.classList.add('bad'); }
+      });
+      hex.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') { apply(); }
+      });
+
+      row.appendChild(lab);
+      row.appendChild(sw);
+      row.appendChild(hex);
+      wrap.appendChild(row);
+    });
+
+    fieldsEl.appendChild(wrap);
+  });
+
+  function normalize(v) {
+    if (!v) { return null; }
+    var s = v.trim();
+    if (s.charAt(0) !== '#') { s = '#' + s; }
+    if (/^#[0-9a-fA-F]{3}$/.test(s)) {
+      s = '#' + s[1] + s[1] + s[2] + s[2] + s[3] + s[3];
+    }
+    if (/^#[0-9a-fA-F]{6}$/.test(s)) { return s.toLowerCase(); }
+    return null;
+  }
+
+  function readFields() {
+    var out = {};
+    var bad = [];
+    ALL.forEach(function (t) {
+      var el = document.getElementById('hex-' + t.key);
+      var n = normalize(el.value);
+      if (n) { out[t.key] = n; el.classList.remove('bad'); }
+      else { bad.push(t.label); el.classList.add('bad'); }
+    });
+    return { values: out, bad: bad };
+  }
+
+  function writeFields(map) {
+    ALL.forEach(function (t) {
+      var v = normalize(map[t.key]) || t.def;
+      document.getElementById('hex-' + t.key).value = v;
+      document.getElementById('sw-' + t.key).value = v;
+    });
+  }
+
+  function paint(map) {
+    var root = document.documentElement;
+    Object.keys(map).forEach(function (k) {
+      root.style.setProperty('--' + k, map[k]);
+    });
+  }
+
+  function say(msg, isError) {
+    statusEl.textContent = msg;
+    statusEl.style.color = isError ? '#e46b5f' : '#7fb98a';
+  }
+
+  function lum(hex) {
+    var r = parseInt(hex.substr(1, 2), 16) / 255;
+    var g = parseInt(hex.substr(3, 2), 16) / 255;
+    var b = parseInt(hex.substr(5, 2), 16) / 255;
+    function ch(c) {
+      return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+    }
+    return 0.2126 * ch(r) + 0.7152 * ch(g) + 0.0722 * ch(b);
+  }
+
+  function ratio(a, b) {
+    var la = lum(a);
+    var lb = lum(b);
+    var hi = Math.max(la, lb);
+    var lo = Math.min(la, lb);
+    return (hi + 0.05) / (lo + 0.05);
+  }
+
+  function renderContrast(map) {
+    contrastEl.innerHTML = '';
+    PAIRS.forEach(function (p) {
+      var fg = map[p[0]];
+      var bg = map[p[1]];
+      if (!fg || !bg) { return; }
+      var r = ratio(fg, bg);
+      var cls = r >= 4.5 ? 'pass' : (r >= 3 ? 'warn' : 'fail');
+      var verdict = r >= 4.5 ? 'AA' : (r >= 3 ? 'UI' : 'fail');
+
+      var tr = document.createElement('tr');
+      var td1 = document.createElement('td');
+      td1.textContent = p[2];
+      var td2 = document.createElement('td');
+      td2.className = 'n';
+      td2.textContent = r.toFixed(2);
+      var td3 = document.createElement('td');
+      td3.className = 'v ' + cls;
+      td3.textContent = verdict;
+
+      tr.appendChild(td1);
+      tr.appendChild(td2);
+      tr.appendChild(td3);
+      contrastEl.appendChild(tr);
+    });
+  }
+
+  function apply() {
+    var res = readFields();
+    if (res.bad.length) {
+      say('Not applied. Invalid hex: ' + res.bad.join(', '), true);
+      return;
+    }
+    paint(res.values);
+    renderContrast(res.values);
+    refreshExchange(res.values);
+    say('Applied.');
+  }
+
+  function setCookie(name, value, days) {
+    var d = new Date();
+    d.setTime(d.getTime() + days * 864e5);
+    document.cookie = name + '=' + encodeURIComponent(value) +
+      ';expires=' + d.toUTCString() + ';path=/;SameSite=Lax';
+  }
+
+  function getCookie(name) {
+    var parts = document.cookie ? document.cookie.split(';') : [];
+    for (var i = 0; i < parts.length; i++) {
+      var p = parts[i].trim();
+      if (p.indexOf(name + '=') === 0) {
+        return decodeURIComponent(p.substring(name.length + 1));
+      }
+    }
+    return null;
+  }
+
+  function defaults() {
+    var m = {};
+    ALL.forEach(function (t) { m[t.key] = t.def; });
+    return m;
+  }
+
+  function refreshExchange(map) {
+    var lines = ALL.map(function (t) {
+      return t.key + ': ' + (map[t.key] || t.def) + '   /* ' + t.label + ' */';
+    });
+    document.getElementById('exchange').value = lines.join('\n');
+  }
+
+  function parseExchange(text) {
+    var out = {};
+    (text || '').split('\n').forEach(function (line) {
+      var clean = line.replace(/\/\*[\s\S]*?\*\//g, '');
+      var m = clean.match(/^\s*([A-Za-z]+)\s*[:=]\s*(#?[0-9a-fA-F]{3,6})\s*,?\s*$/);
+      if (!m) { return; }
+      var n = normalize(m[2]);
+      if (n) { out[m[1]] = n; }
+    });
+    return out;
+  }
+
+  /* ---- state + notice toggles ---- */
+
+  var STATES = {
+    online: {
+      label: 'Online',
+      subline: 'Typically replies in a few minutes',
+      fill: 'onlineFill', text: 'onlineText', away: false
+    },
+    away: {
+      label: 'Stepped away',
+      subline: 'Leave a message \u2014 we\u2019ll reply as soon as we\u2019re back',
+      fill: 'awayFill', text: 'awayText', away: true
+    },
+    offline: {
+      label: 'Offline',
+      subline: 'We\u2019re offline \u2014 back Wednesday, 9:00 AM EDT',
+      fill: 'offFill', text: 'offText', away: true
+    }
+  };
+
+  var currentState = 'offline';
+  var noticeMode = 'confirm';
+
+  function renderState() {
+    var s = STATES[currentState];
+    document.getElementById('subline').textContent = s.subline;
+    var pill = document.getElementById('pill');
+    pill.textContent = s.label;
+    pill.style.background = 'var(--' + s.fill + ')';
+    pill.style.color = 'var(--' + s.text + ')';
+
+    /* Mirrors the component: the away panel renders only when the platform is
+       stepped_away or off_hours AND the visitor has already sent a message.
+       The transcript here always has visitor messages, so state alone decides. */
+    document.getElementById('notice').style.display = s.away ? '' : 'none';
+    document.getElementById('noticeConfirm').style.display =
+      noticeMode === 'confirm' ? '' : 'none';
+    document.getElementById('noticeCapture').style.display =
+      noticeMode === 'capture' ? '' : 'none';
+
+    [['stOnline', 'online'], ['stAway', 'away'], ['stOffline', 'offline']].forEach(function (b) {
+      document.getElementById(b[0]).className = currentState === b[1] ? 'on' : '';
+    });
+    document.getElementById('nvConfirm').className = noticeMode === 'confirm' ? 'on' : '';
+    document.getElementById('nvCapture').className = noticeMode === 'capture' ? 'on' : '';
+  }
+
+  document.getElementById('stOnline').addEventListener('click', function () {
+    currentState = 'online'; renderState();
+  });
+  document.getElementById('stAway').addEventListener('click', function () {
+    currentState = 'away'; renderState();
+  });
+  document.getElementById('stOffline').addEventListener('click', function () {
+    currentState = 'offline'; renderState();
+  });
+  document.getElementById('nvConfirm').addEventListener('click', function () {
+    noticeMode = 'confirm'; renderState();
+  });
+  document.getElementById('nvCapture').addEventListener('click', function () {
+    noticeMode = 'capture'; renderState();
+  });
+
+  /* ---- buttons ---- */
+
+  document.getElementById('apply').addEventListener('click', apply);
+
+  document.getElementById('save').addEventListener('click', function () {
+    var res = readFields();
+    if (res.bad.length) {
+      say('Not saved. Invalid hex: ' + res.bad.join(', '), true);
+      return;
+    }
+    setCookie(COOKIE, JSON.stringify(res.values), 365);
+    paint(res.values);
+    renderContrast(res.values);
+    refreshExchange(res.values);
+    say('Saved to this browser.');
+  });
+
+  document.getElementById('revert').addEventListener('click', function () {
+    var raw = getCookie(COOKIE);
+    if (!raw) { say('Nothing saved yet.', true); return; }
+    var map;
+    try { map = JSON.parse(raw); } catch (e) { say('Saved set unreadable.', true); return; }
+    writeFields(map);
+    apply();
+    say('Reverted to saved.');
+  });
+
+  document.getElementById('reset').addEventListener('click', function () {
+    writeFields(defaults());
+    apply();
+    say('Reset to today\u2019s live values.');
+  });
+
+  document.getElementById('suggest').addEventListener('click', function () {
+    writeFields(SUGGESTED);
+    apply();
+    say('Loaded the onboarding palette.');
+  });
+
+  document.getElementById('copy').addEventListener('click', function () {
+    var ta = document.getElementById('exchange');
+    ta.select();
+    ta.setSelectionRange(0, ta.value.length);
+    var ok = false;
+    try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+    if (ok) { say('Copied.'); return; }
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(ta.value).then(function () { say('Copied.'); },
+        function () { say('Copy failed \u2014 select the text and copy by hand.', true); });
+      return;
+    }
+    say('Copy failed \u2014 select the text and copy by hand.', true);
+  });
+
+  document.getElementById('load').addEventListener('click', function () {
+    var parsed = parseExchange(document.getElementById('exchange').value);
+    if (!Object.keys(parsed).length) {
+      say('Nothing readable in the box.', true);
+      return;
+    }
+    var merged = defaults();
+    Object.keys(parsed).forEach(function (k) { merged[k] = parsed[k]; });
+    writeFields(merged);
+    apply();
+    say('Loaded pasted set.');
+  });
+
+  document.getElementById('panelToggle').addEventListener('click', function () {
+    var el = document.getElementById('controls');
+    var collapsed = el.classList.toggle('collapsed');
+    this.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+    this.title = collapsed ? 'Show colour lab' : 'Hide colour lab';
+    this.querySelector('.chev').innerHTML = collapsed ? '&rsaquo;' : '&lsaquo;';
+  });
+
+  function setView(mobile) {
+    document.body.classList.toggle('mobileView', mobile);
+    document.getElementById('viewMobile').className = mobile ? 'on' : '';
+    document.getElementById('viewDesktop').className = mobile ? '' : 'on';
+  }
+  document.getElementById('viewMobile').addEventListener('click', function () { setView(true); });
+  document.getElementById('viewDesktop').addEventListener('click', function () { setView(false); });
+  if (window.matchMedia && window.matchMedia('(max-width: 760px)').matches) { setView(true); }
+
+  /* ---- boot ---- */
+
+  var saved = getCookie(COOKIE);
+  if (saved) {
+    try { writeFields(JSON.parse(saved)); } catch (e) { writeFields(defaults()); }
+  } else {
+    writeFields(defaults());
+  }
+  apply();
+  renderState();
+  say('');
+})();
+</script>
+</body>
+</html>
