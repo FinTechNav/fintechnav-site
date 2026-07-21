@@ -77,8 +77,13 @@
 
   /* ---------- preview ---------- */
   .preview { flex:1; min-width:0; padding:20px; height:100vh; }
-  .frame { display:flex; border-radius:12px; overflow:hidden; height:100%; position:relative;
-           box-shadow:0 10px 34px rgba(0,0,0,.45); }
+  .frame { display:flex; flex-direction:column; border-radius:12px; overflow:hidden;
+           height:100%; position:relative; box-shadow:0 10px 34px rgba(0,0,0,.45); }
+  /* Holds the rail and the form side by side. min-height:0 matters — without it
+     a flex child refuses to shrink below its content and the inner panes never
+     scroll. */
+  .panes { flex:1; min-height:0; display:flex; }
+  .mobilebrand { display:none; }
 
   /* left rail */
   .rail { width:310px; flex:none; background:var(--sidebar); padding:18px 16px;
@@ -132,9 +137,6 @@
 
   fieldset.grp { border:0; margin:0 0 16px; padding:0; }
   fieldset.grp legend { padding:0; margin:0 0 8px; font-size:12px; font-weight:600; color:var(--text); }
-  .checks { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:6px 16px; }
-  .chk { display:flex; align-items:center; gap:8px; font-size:12px; color:var(--text); cursor:pointer; }
-  .chk input { width:15px; height:15px; accent-color:var(--accent); flex:none; cursor:pointer; }
 
   .note { border:1px solid var(--border); background:var(--card); border-radius:10px;
           padding:12px 13px; font-size:11.5px; color:var(--muted); line-height:1.6;
@@ -166,15 +168,31 @@
   .combo ul { position:absolute; left:0; right:0; z-index:20; margin:4px 0 0; padding:0;
               list-style:none; max-height:220px; overflow-y:auto; border:1px solid var(--border);
               border-radius:8px; background:var(--field); box-shadow:0 12px 26px rgba(0,0,0,.5); }
-  .combo ul li button { display:block; width:100%; text-align:left; background:none; border:0;
-                        padding:8px 12px; font:inherit; font-size:12px; color:var(--text); cursor:pointer; }
+  .combo ul li button { display:flex; align-items:center; gap:9px; width:100%; text-align:left;
+                        background:none; border:0; padding:8px 12px; font:inherit; font-size:12px;
+                        color:var(--text); cursor:pointer; }
   .combo ul li button:hover { background:var(--chip); }
+  /* The box is the multi-select affordance. Without it a user has no way to know
+     more than one pick is possible, and a chosen row that simply vanished from
+     the list gave no confirmation that anything had happened. */
+  .combo .box { width:15px; height:15px; flex:none; border-radius:4px; border:1px solid var(--border);
+                display:flex; align-items:center; justify-content:center; font-size:10px;
+                line-height:1; color:transparent; }
+  .combo li.on .box { background:var(--accent); border-color:var(--accent); color:#fff; }
+  .combo li.on button { font-weight:600; }
+  .selcount { margin:9px 0 0; font-size:11px; color:var(--muted); }
   .chips { display:flex; flex-wrap:wrap; gap:6px; margin:9px 0 0; padding:0; list-style:none; }
   .chip { display:inline-flex; align-items:center; gap:6px; font-size:11.5px; color:var(--text);
           background:var(--chip); border:1px solid var(--border); border-radius:999px;
           padding:4px 10px; cursor:pointer; font-family:inherit; }
   .chip .tp { font-size:10px; font-weight:700; color:var(--muted); }
   .chip .x { color:var(--muted); font-size:11px; }
+  /* The just-added chip flashes once so the eye is drawn to where the new
+     selection landed, rather than the user having to hunt for what changed. */
+  @keyframes chipIn { from { background:var(--accent); border-color:var(--accent); }
+                      to   { background:var(--chip);   border-color:var(--border); } }
+  .chip.justAdded { animation:chipIn .75s ease-out 1; }
+  @media (prefers-reduced-motion: reduce) { .chip.justAdded { animation:none; } }
   .empty { margin:9px 0 0; font-size:11px; color:var(--muted); }
 
   .summary { background:var(--rail); border:1px solid var(--border); border-radius:10px;
@@ -247,15 +265,35 @@
      toggle sets it by hand on a desktop. */
   body.mobileView .controls { display:none; }
   body.mobileView .preview { max-width:420px; margin:0 auto; padding:12px; height:auto; }
-  body.mobileView .frame { flex-direction:column; border-radius:10px; height:auto; }
-  body.mobileView .rail { width:100%; padding:16px 14px; overflow-y:visible; }
+  /* Fixed height so the frame — not the document — owns the scrolling. dvh
+     repeats the vh value for browsers that support it, where it accounts for
+     the phone's collapsing address bar. */
+  body.mobileView .frame { flex-direction:column; border-radius:10px;
+                           height:calc(100vh - 24px); height:calc(100dvh - 24px); }
+  /* Pinned masthead: outside .panes, so it never scrolls. The rail's own copy
+     of the logo hides, rather than a second logo appearing. */
+  body.mobileView .mobilebrand { display:block; flex:none; background:var(--sidebar);
+                                 padding:14px 14px 12px; }
+  body.mobileView .mobilebrand img { display:block; width:180px; max-width:100%; height:auto; }
+  body.mobileView .rail .brand { display:none; }
+  /* Everything below the logo scrolls as one column. */
+  body.mobileView .panes { flex-direction:column; overflow-y:auto; }
+  /* The visible bar is a desktop artifact — macOS shows a persistent,
+     width-taking scrollbar when "Show scroll bars" is Always or a mouse is
+     attached. A real phone draws a transient overlay indicator that fades and
+     costs no width, and that is worth keeping, so this hides the bar only on
+     pointer devices rather than everywhere. */
+  @media (hover: hover) and (pointer: fine) {
+    body.mobileView .panes { scrollbar-width:none; }
+    body.mobileView .panes::-webkit-scrollbar { width:0; height:0; }
+  }
+  body.mobileView .rail { width:100%; padding:14px 14px 16px; overflow-y:visible; }
   body.mobileView .brand img { max-width:100%; }
   body.mobileView .body { padding:16px 14px; overflow-y:visible; }
   body.mobileView .cols { flex-direction:column; gap:0; }
   /* Summary lifts above the form. In DOM order it would stack after Save and
      continue, which reads as content past the end of the form. */
   body.mobileView .siderail { width:100%; position:static; order:-1; }
-  body.mobileView .checks { grid-template-columns:1fr; }
   body.mobileView .stepwrap h2 { font-size:18px; }
   body.mobileView .stepwrap p.lede { margin-bottom:16px; }
   body.mobileView .method .mhead { flex-wrap:wrap; row-gap:8px; }
@@ -321,8 +359,14 @@
   <main class="preview">
     <div class="frame">
 
+      <div class="mobilebrand">
+        <img class="logoImg" src="https://cdn.heavypourwine.com/DarkMode/HPW-Logo-With-Glass.svg" alt="Heavy Pour Wine">
+      </div>
+
+      <div class="panes">
+
       <div class="rail">
-        <div class="brand"><img id="logoImg" src="https://cdn.heavypourwine.com/DarkMode/HPW-Logo-With-Glass.svg" alt="Heavy Pour Wine"></div>
+        <div class="brand"><img class="logoImg" src="https://cdn.heavypourwine.com/DarkMode/HPW-Logo-With-Glass.svg" alt="Heavy Pour Wine"></div>
         <h3>Merchant application &mdash; Brad Wines</h3>
         <p class="intro">Completing this application starts underwriting with <a href="#" onclick="return false">PayCompass</a>, our merchant services and referral partner. PayCompass and its sponsor banks make the underwriting decision; this form also collects information needed to set up your Heavy Pour Wine account and SMS campaigns. PayCompass is a registered ISO/MSP of Pinnacle Bank, a Tennessee bank, d/b/a Synovus Bank.</p>
         <ol class="steps" id="steps"></ol>
@@ -353,6 +397,8 @@
 
           <div class="siderail" id="siderail"></div>
         </div>
+      </div>
+
       </div>
 
       <button class="pill"><span class="dot"></span>Live chat</button>
@@ -740,12 +786,16 @@
   });
 
   var LOGO_BASE = 'https://cdn.heavypourwine.com/';
-  var logoImg = document.getElementById('logoImg');
+  /* Two images: the rail's and the pinned mobile masthead's. Only one is ever
+     visible, but both must track the mode or switching then resizing shows the
+     wrong variant. */
+  var logoImgs = document.querySelectorAll('.logoImg');
   var logoDark = document.getElementById('logoDark');
   var logoLight = document.getElementById('logoLight');
 
   function setLogoMode(mode) {
-    logoImg.src = LOGO_BASE + mode + '/HPW-Logo-With-Glass.svg';
+    var src = LOGO_BASE + mode + '/HPW-Logo-With-Glass.svg';
+    for (var i = 0; i < logoImgs.length; i++) { logoImgs[i].src = src; }
     var isDark = mode === 'DarkMode';
     logoDark.className = isDark ? 'on' : '';
     logoLight.className = isDark ? '' : 'on';
@@ -950,7 +1000,7 @@
   };
 
   var expanded = { provider: true, self: true, third_party: true };
-  var query = { provider: '', self: '', third_party: '', flat: '' };
+  var query = { provider: '', self: '', third_party: '', flat: '', features: '' };
   var openList = null;
 
   var formEl = document.getElementById('form');
@@ -1093,7 +1143,9 @@
     render();
   }
 
-  function onFeatureToggle(key, checked) {
+  /* Side effects live here, not in the click handler, so the bulk actions get
+     identical behaviour instead of a second copy of the rules. */
+  function applyFeature(key, checked) {
     if (checked) { state.features[key] = true; } else { delete state.features[key]; }
     if (key === 'native_compliance' && checked) {
       state.complianceApproach = '';
@@ -1102,17 +1154,84 @@
       state.complianceConsultantName = '';
     }
     if (key === 'card_present' && !checked) { state.cardPresentTerminalCount = ''; }
+  }
+
+  function onFeatureToggle(key, checked) {
+    applyFeature(key, checked);
+    render();
+  }
+
+  function selectAllFeatures() {
+    FEATURES.forEach(function (f) { applyFeature(f[0], true); });
+    render();
+  }
+
+  function removeAllFeatures() {
+    FEATURES.forEach(function (f) { applyFeature(f[0], false); });
     render();
   }
 
   /* ---- combobox ---- */
 
-  function combobox(key, options, onSelect) {
+  /* onSelect re-renders, which destroys the very input the click came from.
+     Put focus back on the rebuilt one, or the list stays open but the user
+     cannot keep typing to filter it. */
+  function refocusCombo(key) {
+    var el = formEl.querySelector('.combo > input[data-combo="' + key + '"]');
+    if (el) { el.focus(); }
+  }
+
+  /* Selecting re-renders, which rebuilds the popup from scratch and resets its
+     scrollTop to 0 — picking Wyoming threw the user back up to Alabama. Capture
+     the offset before the rebuild and restore it after the new list is attached
+     (scrollTop on a detached element is a no-op, so this cannot be done while
+     the list is being constructed). */
+  var comboScroll = {};
+
+  function comboListFor(key) {
+    var el = formEl.querySelector('.combo > input[data-combo="' + key + '"]');
+    return el ? el.parentNode.querySelector('ul') : null;
+  }
+
+  function captureComboScroll(key) {
+    var ul = comboListFor(key);
+    comboScroll[key] = ul ? ul.scrollTop : 0;
+  }
+
+  function restoreComboScroll(key) {
+    if (comboScroll[key] == null) { return; }
+    var ul = comboListFor(key);
+    if (ul) { ul.scrollTop = comboScroll[key]; }
+  }
+
+  /* Selection feedback. lastAdded drives the one-shot chip flash and is cleared
+     at the end of render, so re-rendering while the user types does not replay
+     it. lastAction is scoped to one picker so adding a state is not announced
+     inside the feature picker. */
+  var lastAdded = null;
+  var lastAction = null;
+
+  function noteAction(key, code, name, added) {
+    lastAdded = added ? code : null;
+    lastAction = { key: key, text: (added ? 'Added ' : 'Removed ') + name };
+  }
+
+  /* A multi-select combobox: every option stays in the list with a checkbox
+     showing its state, the list stays open across picks, and the running
+     selection is mirrored as chips below. Options are NOT removed on selection
+     — a row that disappears is the thing that made additions invisible. */
+  function combobox(key, options, onToggle, placeholder, selected, noun) {
+    var sel = selected || {};
     var wrap = mk('div', { class: 'combo' });
     var inp = mk('input', {
-      class: 'ctl', type: 'text', placeholder: 'Search or select states…',
+      class: 'ctl', type: 'text', placeholder: placeholder || 'Search or select states…',
       'data-combo': key, value: query[key],
-      oninput: function (e) { query[key] = e.target.value; openList = key; render(true, key); },
+      oninput: function (e) {
+        /* A new filter means a different list — holding the old offset would
+           land the user somewhere arbitrary in it. */
+        query[key] = e.target.value; comboScroll[key] = 0;
+        openList = key; render(true, key);
+      },
       onfocus: function () { openList = key; render(true, key); }
     });
     wrap.appendChild(inp);
@@ -1126,32 +1245,55 @@
           })
         : options).slice(0, 60);
       if (filtered.length) {
-        var ul = mk('ul');
+        var ul = mk('ul', { role: 'listbox', 'aria-multiselectable': 'true' });
         filtered.forEach(function (o) {
+          var on = !!sel[o.code];
           var b = mk('button', {
-            type: 'button', text: o.name,
+            type: 'button',
             onmousedown: function (e) {
               e.preventDefault();
-              query[key] = '';
-              openList = null;
-              onSelect(o.code);
+              /* The list stays open and the typed filter survives, so "new"
+                 yields New York, New Jersey and New Mexico in three clicks
+                 rather than three separate searches. */
+              openList = key;
+              captureComboScroll(key);
+              noteAction(key, o.code, o.name, !on);
+              onToggle(o.code, !on);
+              refocusCombo(key);
             }
-          });
-          ul.appendChild(mk('li', null, [b]));
+          }, [
+            mk('span', { class: 'box', text: '✓' }),
+            mk('span', { text: o.name })
+          ]);
+          ul.appendChild(mk('li', {
+            class: on ? 'on' : '', role: 'option', 'aria-selected': on ? 'true' : 'false'
+          }, [b]));
         });
         wrap.appendChild(ul);
       }
     }
+
+    if (noun) {
+      var n = 0;
+      Object.keys(sel).forEach(function (k) { if (sel[k]) { n += 1; } });
+      var txt = String(n) + ' ' + noun + (n === 1 ? '' : 's') + ' selected';
+      if (lastAction && lastAction.key === key) { txt += ' · ' + lastAction.text; }
+      wrap.appendChild(mk('p', {
+        class: 'selcount', role: 'status', 'aria-live': 'polite', text: txt
+      }));
+    }
     return wrap;
   }
 
-  function chipList(rows, showThirdPartyNote) {
+  function chipList(rows, showThirdPartyNote, onRemove) {
     if (!rows.length) { return null; }
+    var remove = onRemove || removeState;
     var ul = mk('ul', { class: 'chips' });
     rows.forEach(function (s) {
       var b = mk('button', {
-        type: 'button', class: 'chip',
-        onclick: function () { removeState(s.code); }
+        type: 'button',
+        class: 'chip' + (s.code === lastAdded ? ' justAdded' : ''),
+        onclick: function () { remove(s.code); }
       });
       b.appendChild(document.createTextNode(s.name));
       if (showThirdPartyNote && !s.open) {
@@ -1169,7 +1311,6 @@
     var assignedHere = {};
     state.shipTo.forEach(function (s) { if (s.source === source) { assignedHere[s.code] = true; } });
     var options = STATES.filter(function (s) {
-      if (assignedHere[s.code]) { return false; }
       return source === 'third_party' ? true : s.open;
     });
     var rows = statesFor(source);
@@ -1200,12 +1341,14 @@
             onclick: function () { addRemainingToMethod(source); }
           }),
           mk('button', {
-            type: 'button', class: 'clr', text: 'Clear',
+            type: 'button', class: 'clr', text: 'Remove all states',
             onclick: function () { clearMethod(source); }
           })
         ]),
         mk('span', { class: 'sublbl', text: 'States' }),
-        combobox(source, options, function (code) { assignStateToMethod(code, source); })
+        combobox(source, options, function (code, on) {
+          if (on) { assignStateToMethod(code, source); } else { removeState(code); }
+        }, null, assignedHere, 'state')
       ]);
       var chips = chipList(rows, false);
       body.appendChild(chips || mk('p', { class: 'empty', text: 'No states assigned yet.' }));
@@ -1275,21 +1418,39 @@
       }));
     }
 
-    /* (b) feature multi-select */
-    var checks = mk('div', { class: 'checks' });
+    /* (b) feature picker — same combobox + chips pattern as the state picker */
+    var featureOptions = [];
+    var featureRows = [];
     FEATURES.forEach(function (f) {
-      var box = mk('input', {
-        type: 'checkbox',
-        onchange: function (e) { onFeatureToggle(f[0], e.target.checked); }
-      });
-      if (state.features[f[0]]) { box.checked = true; }
-      checks.appendChild(mk('label', { class: 'chk' }, [box, mk('span', { text: f[1] })]));
+      var row = { code: f[0], name: f[1] };
+      featureOptions.push(row);
+      if (state.features[f[0]]) { featureRows.push(row); }
     });
+
     var fs = mk('fieldset', { class: 'grp' }, [
       mk('legend', { text: 'Which Heavy Pour Wine features do you plan to use?' }),
-      checks,
-      mk('p', { class: 'hint', text: 'Pick everything you expect to use — we use this to set up your account.' })
+      mk('p', {
+        class: 'hint',
+        style: 'margin:0 0 8px',
+        text: 'Pick everything you expect to use — we use this to set up your account.'
+      }),
+      mk('div', { class: 'bulk' }, [
+        mk('button', {
+          type: 'button', class: 'add', text: 'Select all features',
+          onclick: selectAllFeatures
+        }),
+        mk('button', {
+          type: 'button', class: 'clr', text: 'Remove all features',
+          onclick: removeAllFeatures
+        })
+      ]),
+      combobox('features', featureOptions, onFeatureToggle,
+               'Search or select features…', state.features, 'feature')
     ]);
+    fs.appendChild(
+      chipList(featureRows, false, function (code) { onFeatureToggle(code, false); }) ||
+      mk('p', { class: 'empty', text: 'No features selected yet.' })
+    );
     formEl.appendChild(fs);
 
     /* SMS policy URLs — only when Text (SMS) marketing is selected */
@@ -1401,7 +1562,7 @@
     } else {
       var picked = {};
       state.shipTo.forEach(function (s) { picked[s.code] = true; });
-      var flatOptions = STATES.filter(function (s) { return !picked[s.code]; });
+      var flatOptions = STATES;
       var flatRows = STATES.filter(function (s) { return picked[s.code]; });
 
       var flat = mk('fieldset', { class: 'grp' }, [
@@ -1417,11 +1578,13 @@
             onclick: selectAllOpenStates
           }),
           mk('button', {
-            type: 'button', class: 'clr', text: 'Deselect all',
+            type: 'button', class: 'clr', text: 'Remove all states',
             onclick: deselectAllStates
           })
         ]),
-        combobox('flat', flatOptions, addFlatState)
+        combobox('flat', flatOptions, function (code, on) {
+          if (on) { addFlatState(code); } else { removeState(code); }
+        }, null, picked, 'state')
       ]);
       flat.appendChild(chipList(flatRows, true) || mk('p', { class: 'empty', text: 'No states added yet.' }));
       formEl.appendChild(flat);
@@ -1436,6 +1599,12 @@
         target.setSelectionRange(target.value.length, target.value.length);
       }
     }
+
+    if (openList !== null) { restoreComboScroll(openList); }
+
+    /* One-shot: the chip that just appeared has had its flash class applied, so
+       clear the marker or every later render replays the animation. */
+    lastAdded = null;
   }
 
   document.addEventListener('mousedown', function (e) {

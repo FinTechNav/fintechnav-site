@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PREVIEW - Onboarding invitation email</title>
+<!--
+  PREVIEW HARNESS - not the shipped template. Design review only.
+
+  Subject:  Let's set up your Heavy Pour Wine account for {{wineryName}}
+  Renewal:  Your new Heavy Pour Wine account setup link for {{wineryName}}
+  From:     {{fromName}} <{{fromEmail}}>    Reply-To: same
+
+  COPY IS VERBATIM FROM PRODUCTION sendOnboardingInvitationEmail. The mockup text was
+  placeholder; nothing here was rewritten. Sample values below stand in for template vars:
+    {{greetingName}} = Brian Kulich   (falls back to "there" when toName is null)
+    {{wineryName}}   = Glassmen Wines
+    {{fromName}}     = Brad Jensen
+    {{fromEmail}}    = somm@heavypourwine.com
+    {{fromPhone}}    = (404) 555-0142  -- CONDITIONAL: the whole line is omitted when the
+                                          rep has no phone on file. Shown here so it can be
+                                          reviewed; delete the marked block to see it without.
+
+  The renewal variant swaps ONLY the intro paragraph, to:
+    "Here's a fresh link to pick your account setup back up - your previous link had expired."
+
+  Every colour is a real token from heavy-pour-frontend/src/app/globals.css:
+    #b75c11  --color-accent-light              orange rule, links, CTA fill
+    #444443  --color-foreground-light          headings + body
+    #727272  neutral grey                      secondary/hint text
+    #ffffff  --color-surface-light             card
+    #f8f8f8  --color-chart-plot-light          header/footer bands, URL well
+    #e6e6e6  --color-background-light          borders, dashed rules
+    #f7e9e2  --color-orange-extra-extra-light  baked into the icon discs
+
+  Table-based at 600px on purpose - that is what has to survive Mailpit HTML Check
+  against Outlook desktop's Word engine. The Montserrat <link> is for THIS PREVIEW ONLY;
+  Gmail and Outlook strip web fonts, so production falls back to Helvetica/Arial.
+  Judge layout and spacing here, not the exact letterforms.
+-->
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  body { margin:0; padding:0; background:#ffffff; }
+  img { border:0; outline:none; text-decoration:none; -ms-interpolation-mode:bicubic; }
+  table { border-collapse:collapse; }
+  @media only screen and (max-width:620px) {
+    .container { width:100% !important; }
+    .pad { padding-left:24px !important; padding-right:24px !important; }
+    .stack { display:block !important; width:100% !important; text-align:center !important; padding:0 0 14px 0 !important; }
+    .h1 { font-size:26px !important; line-height:33px !important; text-align:center !important; }
+    .rule { margin-left:auto !important; margin-right:auto !important; }
+  }
+</style>
+</head>
+<body>
+
+<div style="display:none;max-height:0;overflow:hidden;opacity:0;mso-hide:all;">Your secure link to set up Heavy Pour Wine for Glassmen Wines. The link works for 7 days.</div>
+
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#ffffff;">
+<tr>
+<td align="center" style="padding:24px 12px;">
+
+<table role="presentation" class="container" width="600" cellpadding="0" cellspacing="0" style="width:600px;max-width:600px;background:#ffffff;border:1px solid #e6e6e6;">
+
+  <tr>
+    <td align="center" style="background:#f8f8f8;padding:26px 24px;">
+      <img src="hpw-logo.png" width="180" alt="Heavy Pour Wine" style="width:180px;max-width:60%;height:auto;display:block;">
+    </td>
+  </tr>
+  <tr><td style="font-size:0;line-height:0;height:2px;background:#b75c11;">&nbsp;</td></tr>
+
+  <tr>
+    <td class="pad" style="padding:32px 40px 0;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+        <tr>
+          <td class="stack" width="56" valign="middle" style="width:56px;padding-right:18px;">
+            <img src="email-icon-customers.png" width="56" height="56" alt="" style="width:56px;height:56px;display:inline-block;">
+          </td>
+          <td class="stack" valign="middle">
+            <div class="h1" style="font-family:'Montserrat',Helvetica,Arial,sans-serif;font-size:28px;line-height:34px;font-weight:700;color:#444443;">Let&rsquo;s get you set up</div>
+            <div class="rule" style="width:46px;height:3px;background:#b75c11;font-size:0;line-height:0;margin-top:10px;">&nbsp;</div>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+
+  <tr>
+    <td class="pad" style="padding:26px 40px 0;font-family:'Montserrat',Helvetica,Arial,sans-serif;font-size:15px;line-height:24px;color:#444443;">
+      Hi Brian Kulich,
+    </td>
+  </tr>
+  <tr>
+    <td class="pad" style="padding:16px 40px 0;font-family:'Montserrat',Helvetica,Arial,sans-serif;font-size:15px;line-height:24px;color:#444443;">
+      Let&rsquo;s get Glassmen Wines set up on Heavy Pour Wine. This application collects what we need to open your account &mdash; your business details, your merchant application for payment processing, and the information required to enable text messaging campaigns.
+    </td>
+  </tr>
+
+  <tr>
+    <td align="center" class="pad" style="padding:28px 40px 30px;">
+      <!--[if mso]>
+      <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="https://onboard.heavypourwine.com/?token=EXAMPLE" style="height:46px;v-text-anchor:middle;width:230px;" arcsize="12%" stroke="f" fillcolor="#b75c11">
+        <w:anchorlock/>
+        <center style="color:#ffffff;font-family:Helvetica,Arial,sans-serif;font-size:15px;font-weight:bold;">Start your application</center>
+      </v:roundrect>
+      <![endif]-->
+      <!--[if !mso]><!-- -->
+      <a href="https://onboard.heavypourwine.com/?token=EXAMPLE" style="display:inline-block;background:#b75c11;color:#ffffff;font-family:'Montserrat',Helvetica,Arial,sans-serif;font-size:15px;font-weight:600;line-height:20px;text-decoration:none;padding:13px 34px;border-radius:6px;">Start your application</a>
+      <!--<![endif]-->
+    </td>
+  </tr>
+
+  <tr><td class="pad" style="padding:0 40px;"><div style="border-top:1px dashed #e6e6e6;font-size:0;line-height:0;">&nbsp;</div></td></tr>
+
+  <tr>
+    <td class="pad" style="padding:26px 40px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+        <tr>
+          <td class="stack" width="56" valign="top" style="width:56px;padding-right:18px;">
+            <img src="email-icon-link.png" width="56" height="56" alt="" style="width:56px;height:56px;display:inline-block;">
+          </td>
+          <td class="stack" valign="top">
+            <div style="font-family:'Montserrat',Helvetica,Arial,sans-serif;font-size:13px;line-height:20px;color:#727272;">This link works for 7 days. If the button doesn&rsquo;t open, copy and paste this address into your browser:</div>
+            <div style="margin-top:12px;background:#f8f8f8;border:1px solid #e6e6e6;border-radius:6px;padding:12px 14px;font-family:Menlo,Consolas,'Courier New',monospace;font-size:12px;line-height:19px;color:#b75c11;word-break:break-all;text-align:left;">https://onboard.heavypourwine.com/?token=8a44fcaad474b2214d9097cbf8b6684f3db4ca5e5f90e6805968d75c32e113654288f7efb1fdaad7ec8e64709dbb04a65</div>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+
+  <tr><td class="pad" style="padding:0 40px;"><div style="border-top:1px dashed #e6e6e6;font-size:0;line-height:0;">&nbsp;</div></td></tr>
+
+  <tr>
+    <td class="pad" style="padding:26px 40px 32px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+        <tr>
+          <td class="stack" width="56" valign="top" style="width:56px;padding-right:18px;">
+            <img src="email-icon-email.png" width="56" height="56" alt="" style="width:56px;height:56px;display:inline-block;">
+          </td>
+          <td class="stack" valign="top" style="font-family:'Montserrat',Helvetica,Arial,sans-serif;font-size:14px;line-height:22px;color:#444443;">
+            We&rsquo;re on your side &mdash; reach out any time.
+            <div style="margin-top:12px;">Brad Jensen</div>
+            <div><a href="mailto:somm@heavypourwine.com" style="color:#b75c11;text-decoration:none;">somm@heavypourwine.com</a></div>
+            <!-- CONDITIONAL phone line - omitted entirely when fromPhone is null -->
+            <div><a href="tel:(404) 555-0142" style="color:#b75c11;text-decoration:none;">(404) 555-0142</a></div>
+            <!-- end conditional -->
+            <div>Heavy Pour Wine</div>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+
+  <tr>
+    <td align="center" style="background:#f8f8f8;border-top:1px solid #e6e6e6;padding:22px 24px;">
+      <img src="hpw-logo.png" width="140" alt="Heavy Pour Wine" style="width:140px;max-width:50%;height:auto;display:block;">
+    </td>
+  </tr>
+
+</table>
+
+</td>
+</tr>
+</table>
+
+</body>
+</html>

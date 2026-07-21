@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PREVIEW - Onboarding confirmation email</title>
+<!--
+  PREVIEW HARNESS - not the shipped template. Design review only.
+
+  Subject:  We received your merchant application for {{wineryName}}
+  From:     {{fromName}} <{{fromEmail}}>    Reply-To: same
+
+  COPY IS VERBATIM FROM PRODUCTION sendOnboardingConfirmationEmail - all eight paragraphs
+  plus the two-item list. The mockup showed a SHORT two-paragraph version; that was
+  placeholder text and is NOT used here. Nothing was rewritten, trimmed or reordered.
+  In particular the round-7 PCI-portal paragraph is present in full.
+
+  Sample values stand in for template vars:
+    {{greetingName}} = Brian Kulich   (falls back to "there" when toName is null)
+    {{wineryName}}   = Glassmen Wines
+    {{fromName}}     = Brad Jensen
+    {{fromEmail}}    = somm@heavypourwine.com
+
+  NOTE: production's confirmation email has NO phone line in the signature - unlike the
+  invitation, this payload carries no fromPhone field at all. Left as-is.
+
+  NOTE: production's confirmation email currently renders NO logo, while the invitation
+  does. This preview adds the header and footer logo bands so the two emails match.
+  That is a deliberate change to production behaviour and needs sign-off.
+
+  Every colour is a real token from heavy-pour-frontend/src/app/globals.css:
+    #b75c11  --color-accent-light              orange rule, links
+    #444443  --color-foreground-light          headings + body
+    #ffffff  --color-surface-light             card
+    #f8f8f8  --color-chart-plot-light          header/footer bands
+    #e6e6e6  --color-background-light          borders, dashed rules
+    #f7e9e2  --color-orange-extra-extra-light  baked into the icon disc
+
+  Table-based at 600px on purpose - that is what has to survive Mailpit HTML Check
+  against Outlook desktop's Word engine. The Montserrat <link> is for THIS PREVIEW ONLY;
+  Gmail and Outlook strip web fonts, so production falls back to Helvetica/Arial.
+-->
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  body { margin:0; padding:0; background:#ffffff; }
+  img { border:0; outline:none; text-decoration:none; -ms-interpolation-mode:bicubic; }
+  table { border-collapse:collapse; }
+  @media only screen and (max-width:620px) {
+    .container { width:100% !important; }
+    .pad { padding-left:24px !important; padding-right:24px !important; }
+    .stack { display:block !important; width:100% !important; text-align:center !important; padding:0 0 14px 0 !important; }
+    .h1 { font-size:26px !important; line-height:33px !important; text-align:center !important; }
+    .rule { margin-left:auto !important; margin-right:auto !important; }
+  }
+</style>
+</head>
+<body>
+
+<div style="display:none;max-height:0;overflow:hidden;opacity:0;mso-hide:all;">We received your merchant application for Glassmen Wines. Here is what happens next.</div>
+
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#ffffff;">
+<tr>
+<td align="center" style="padding:24px 12px;">
+
+<table role="presentation" class="container" width="600" cellpadding="0" cellspacing="0" style="width:600px;max-width:600px;background:#ffffff;border:1px solid #e6e6e6;">
+
+  <tr>
+    <td align="center" style="background:#f8f8f8;padding:26px 24px;">
+      <img src="hpw-logo.png" width="180" alt="Heavy Pour Wine" style="width:180px;max-width:60%;height:auto;display:block;">
+    </td>
+  </tr>
+  <tr><td style="font-size:0;line-height:0;height:2px;background:#b75c11;">&nbsp;</td></tr>
+
+  <tr>
+    <td class="pad" style="padding:32px 40px 0;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+        <tr>
+          <td class="stack" width="56" valign="middle" style="width:56px;padding-right:18px;">
+            <img src="email-icon-compliance.png" width="56" height="56" alt="" style="width:56px;height:56px;display:inline-block;">
+          </td>
+          <td class="stack" valign="middle">
+            <div class="h1" style="font-family:'Montserrat',Helvetica,Arial,sans-serif;font-size:28px;line-height:34px;font-weight:700;color:#444443;">Application received</div>
+            <div class="rule" style="width:46px;height:3px;background:#b75c11;font-size:0;line-height:0;margin-top:10px;">&nbsp;</div>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+
+  <tr>
+    <td class="pad" style="padding:26px 40px 0;font-family:'Montserrat',Helvetica,Arial,sans-serif;font-size:15px;line-height:24px;color:#444443;">
+      Hi Brian Kulich,
+    </td>
+  </tr>
+  <tr>
+    <td class="pad" style="padding:16px 40px 0;font-family:'Montserrat',Helvetica,Arial,sans-serif;font-size:15px;line-height:24px;color:#444443;">
+      We received your merchant application for <strong>Glassmen Wines</strong>. Thanks for taking the time &mdash; that&rsquo;s the big step done.
+    </td>
+  </tr>
+  <tr>
+    <td class="pad" style="padding:16px 40px 0;font-family:'Montserrat',Helvetica,Arial,sans-serif;font-size:15px;line-height:24px;color:#444443;">
+      Here&rsquo;s what happens next.
+    </td>
+  </tr>
+  <tr>
+    <td class="pad" style="padding:16px 40px 0;font-family:'Montserrat',Helvetica,Arial,sans-serif;font-size:15px;line-height:24px;color:#444443;">
+      Within the next few hours to a few days, watch for a separate email from PayCompass, our payments partner, asking you to review and digitally sign your merchant application. It comes from no-reply@paycompass.com, so keep an eye on your inbox and spam folder &mdash; signing it is what moves your application into review.
+    </td>
+  </tr>
+  <tr>
+    <td class="pad" style="padding:16px 40px 0;font-family:'Montserrat',Helvetica,Arial,sans-serif;font-size:15px;line-height:24px;color:#444443;">
+      From there, PayCompass&rsquo;s underwriting team takes a look. Most applications go through smoothly, but depending on your business they may reach out for a little more:
+    </td>
+  </tr>
+  <tr>
+    <td class="pad" style="padding:16px 40px 0;font-family:'Montserrat',Helvetica,Arial,sans-serif;font-size:15px;line-height:24px;color:#444443;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+        <tr>
+          <td valign="top" width="16" style="width:16px;color:#b75c11;font-size:15px;line-height:24px;">&bull;</td>
+          <td valign="top" style="font-family:'Montserrat',Helvetica,Arial,sans-serif;font-size:15px;line-height:24px;color:#444443;padding-bottom:10px;">
+            <strong>Financial documentation</strong> &mdash; typically the last 3&ndash;6 months of business bank statements, and, if your card volume is on the higher side, 3&ndash;6 months of statements from your prior processor.
+          </td>
+        </tr>
+        <tr>
+          <td valign="top" width="16" style="width:16px;color:#b75c11;font-size:15px;line-height:24px;">&bull;</td>
+          <td valign="top" style="font-family:'Montserrat',Helvetica,Arial,sans-serif;font-size:15px;line-height:24px;color:#444443;">
+            <strong>Identity verification</strong> &mdash; a soft credit check runs on the business owner to confirm identity and validate your tax ID. It&rsquo;s a soft inquiry, so it won&rsquo;t affect your credit score. One heads-up that saves time: if the owner&rsquo;s credit is frozen with the bureaus, temporarily lift the freeze so the check can go through &mdash; if it stays frozen, PayCompass may instead ask for a copy of the owner&rsquo;s driver&rsquo;s license to verify identity.
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+  <tr>
+    <td class="pad" style="padding:16px 40px 0;font-family:'Montserrat',Helvetica,Arial,sans-serif;font-size:15px;line-height:24px;color:#444443;">
+      Once your account is approved, PayCompass will also grant you access to a PCI compliance portal &mdash; in it, you&rsquo;ll find the standard security checks every business that accepts cards has to complete. It&rsquo;s built right into your payment processing, so the questionnaire, the periodic external security scans, your Attestation of Compliance, and a compliance badge for your website all run in one place &mdash; no separate service to arrange. This is what the monthly PCI fee in your processing covers, and it&rsquo;s the same work many wineries pay an outside firm to handle. Because Heavy Pour keeps card data off your own systems, it&rsquo;s a short, guided self-assessment rather than the long form, renewed once a year.
+    </td>
+  </tr>
+  <tr>
+    <td class="pad" style="padding:16px 40px 30px;font-family:'Montserrat',Helvetica,Arial,sans-serif;font-size:15px;line-height:24px;color:#444443;">
+      If anything&rsquo;s needed from you, PayCompass or your Heavy Pour contact will reach out directly. Otherwise, sit tight &mdash; we&rsquo;ll be in touch about getting you set up.
+    </td>
+  </tr>
+
+  <tr><td class="pad" style="padding:0 40px;"><div style="border-top:1px dashed #e6e6e6;font-size:0;line-height:0;">&nbsp;</div></td></tr>
+
+  <tr>
+    <td class="pad" style="padding:26px 40px 32px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+        <tr>
+          <td class="stack" width="56" valign="top" style="width:56px;padding-right:18px;">
+            <img src="email-icon-email.png" width="56" height="56" alt="" style="width:56px;height:56px;display:inline-block;">
+          </td>
+          <td class="stack" valign="top" style="font-family:'Montserrat',Helvetica,Arial,sans-serif;font-size:14px;line-height:22px;color:#444443;">
+            We&rsquo;re on your side &mdash; reach out any time.
+            <div style="margin-top:12px;">Brad Jensen</div>
+            <div><a href="mailto:somm@heavypourwine.com" style="color:#b75c11;text-decoration:none;">somm@heavypourwine.com</a></div>
+            <div>Heavy Pour Wine</div>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+
+  <tr>
+    <td align="center" style="background:#f8f8f8;border-top:1px solid #e6e6e6;padding:22px 24px;">
+      <img src="hpw-logo.png" width="140" alt="Heavy Pour Wine" style="width:140px;max-width:50%;height:auto;display:block;">
+    </td>
+  </tr>
+
+</table>
+
+</td>
+</tr>
+</table>
+
+</body>
+</html>
