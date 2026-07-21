@@ -47,12 +47,114 @@
     .container { width:100% !important; }
     .pad { padding-left:24px !important; padding-right:24px !important; }
     .stack { display:block !important; width:100% !important; text-align:center !important; padding:0 0 14px 0 !important; }
-    .h1 { font-size:26px !important; line-height:33px !important; text-align:center !important; }
+    .h1 { font-size:22px !important; line-height:29px !important; text-align:center !important; }
     .rule { margin-left:auto !important; margin-right:auto !important; }
   }
 </style>
+
+<!-- =====================================================================
+     COLOUR LAB — PREVIEW HARNESS ONLY. Everything from here to the closing
+     script is chrome, and none of it belongs in the shipped template.
+
+     The email markup below is UNTOUCHED: every colour is still a literal
+     inline hex, exactly as production needs it, because email clients do not
+     support CSS custom properties. The lab does not rewrite the file — at load
+     it walks the rendered DOM and swaps those literals for var(--token), so the
+     designer edits tokens in the browser while the file on disk stays
+     production-accurate. Copy the hand-off block, not this page's HTML.
+
+     KNOWN LIMIT: the Outlook VML button lives inside a conditional comment and
+     is not in the DOM, so it keeps its original colours here and must be
+     updated by hand when a set is signed off.
+===================================================================== -->
+<style>
+  :root {
+    --accent:#b75c11; --ink:#444443; --muted:#727272;
+    --card:#ffffff; --ctaText:#ffffff; --band:#f8f8f8; --line:#e6e6e6;
+  }
+  body.labOn { background:#f0f0f0; }
+  .lab { display:flex; align-items:flex-start; min-height:100vh; }
+  .controls { width:330px; flex:none; background:#242424; color:#eaeaea;
+              border-right:1px solid #3a3a3a; padding:16px 14px; position:sticky; top:0;
+              max-height:100vh; overflow-y:auto;
+              font-family:'Montserrat',Helvetica,Arial,sans-serif; }
+  .controls h1 { margin:0 0 2px; font-size:15px; font-weight:600; }
+  .controls .sub { margin:0 0 14px; font-size:11px; color:#9a9a9a; line-height:1.5; }
+  .group { margin-bottom:14px; }
+  .group > h2 { margin:0 0 6px; font-size:10px; font-weight:600; letter-spacing:.09em;
+                text-transform:uppercase; color:#8f8f8f; }
+  .row { display:flex; align-items:center; gap:8px; margin-bottom:5px; }
+  .row label { flex:1; font-size:11.5px; color:#d2d2d2; }
+  .row .uses { font-size:10px; color:#7a7a7a; }
+  .row.unused label { color:#7a7a7a; }
+  .row input[type=color] { width:30px; height:26px; padding:0; border:1px solid #4a4a4a;
+                           border-radius:5px; background:#242424; cursor:pointer; flex:none; }
+  .row input[type=text] { width:86px; flex:none;
+                          font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+                          font-size:11.5px; padding:5px 6px; border-radius:5px;
+                          border:1px solid #4a4a4a; background:#1c1c1c; color:#eaeaea; }
+  .row input[type=text].bad { border-color:#c0392b; }
+  .actions { display:flex; flex-wrap:wrap; gap:7px; margin:16px 0 6px; }
+  .actions button { flex:1 1 auto; font:inherit; font-size:12px; font-weight:500;
+                    padding:8px 10px; border-radius:6px; border:1px solid #4a4a4a;
+                    background:#333; color:#eaeaea; cursor:pointer; }
+  .actions button.primary { background:#b75c11; border-color:#b75c11; color:#fff; flex-basis:100%; }
+  .actions button:hover { filter:brightness(1.15); }
+  .linkish { background:none; border:none; color:#9a9a9a; font:inherit; font-size:11px;
+             text-decoration:underline; cursor:pointer; padding:0; }
+  .status { min-height:15px; font-size:11px; color:#7fb98a; margin-bottom:12px; }
+  .exchange { width:100%; height:150px; margin-top:2px; padding:8px; border-radius:6px;
+              border:1px solid #4a4a4a; background:#1c1c1c; color:#eaeaea; resize:vertical;
+              font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:10.5px;
+              line-height:1.55; white-space:pre; }
+  table.contrast { width:100%; border-collapse:collapse; font-size:11px; }
+  table.contrast th { text-align:left; font-weight:600; color:#8f8f8f; font-size:10px;
+                      letter-spacing:.06em; text-transform:uppercase; padding-bottom:4px; }
+  table.contrast td { padding:3px 0; border-top:1px solid #333; color:#c6c6c6; }
+  table.contrast td.n { text-align:right; font-family:ui-monospace,Menlo,monospace; width:44px; }
+  table.contrast td.v { text-align:right; width:38px; font-weight:600; }
+  .pass { color:#65c466; } .warn { color:#e0a33a; } .fail { color:#e46b5f; }
+  .note { margin:10px 0 0; font-size:10.5px; color:#8f8f8f; line-height:1.55; }
+  .preview { flex:1; min-width:0; background:var(--card); }
+  @media (max-width: 1100px) {
+    .lab { flex-direction:column; align-items:stretch; }
+    .controls { width:100%; position:static; max-height:none; overflow:visible;
+                border-right:0; border-bottom:1px solid #3a3a3a; }
+  }
+</style>
 </head>
-<body>
+<body class="labOn">
+
+<div class="lab">
+<aside class="controls">
+  <h1>Colour lab</h1>
+  <p class="sub">Edit any value and press Apply. The count beside each label is how many
+  places in THIS email use it. Use Copy under Hand-off to send the set to Brad.</p>
+  <div id="fields"></div>
+  <div class="actions">
+    <button class="primary" id="apply">Apply</button>
+    <button id="save">Save colors</button>
+    <button id="revert">Revert to saved</button>
+  </div>
+  <div style="margin-bottom:10px"><button class="linkish" id="reset">Reset to defaults</button></div>
+  <p class="status" id="status"></p>
+  <div class="group">
+    <h2>Hand-off</h2>
+    <textarea class="exchange" id="exchange" spellcheck="false"></textarea>
+    <div class="actions" style="margin:7px 0 0">
+      <button id="copy">Copy</button>
+      <button id="load">Load pasted</button>
+    </div>
+  </div>
+  <table class="contrast">
+    <thead><tr><th>Contrast check</th><th></th><th></th></tr></thead>
+    <tbody id="contrast"></tbody>
+  </table>
+  <p class="note" id="labNote"></p>
+</aside>
+
+<main class="preview">
+<div id="emailRoot">
 
 <div style="display:none;max-height:0;overflow:hidden;opacity:0;mso-hide:all;">Your secure link to set up Heavy Pour Wine for Glassmen Wines. The link works for 7 days.</div>
 
@@ -77,7 +179,7 @@
             <img src="icons/email-icon-customers.png" width="56" height="56" alt="" style="width:56px;height:56px;display:inline-block;">
           </td>
           <td class="stack" valign="middle">
-            <div class="h1" style="font-family:'Montserrat',Helvetica,Arial,sans-serif;font-size:28px;line-height:34px;font-weight:700;color:#444443;">Let&rsquo;s get you set up</div>
+            <div class="h1" style="font-family:'Montserrat',Helvetica,Arial,sans-serif;font-size:24px;line-height:30px;font-weight:700;color:#444443;">Let&rsquo;s get you set up!</div>
             <div class="rule" style="width:46px;height:3px;background:#b75c11;font-size:0;line-height:0;margin-top:10px;">&nbsp;</div>
           </td>
         </tr>
@@ -162,6 +264,346 @@
 </td>
 </tr>
 </table>
+
+</div>
+</main>
+</div>
+
+<script>
+/* ---------------------------------------------------------------------------
+   Colour lab for an EMAIL preview.
+
+   Email templates cannot use CSS custom properties — Gmail and Outlook do not
+   support them — so the markup above keeps literal inline hexes and stays a
+   faithful copy of what production sends. This script tokenises the RENDERED
+   DOM instead: it rewrites those literals to var(--token) at load, and from
+   then on the panel repaints by setting the variables. The file on disk is
+   never rewritten.
+--------------------------------------------------------------------------- */
+(function () {
+  var STORE = 'hpwEmailLab';
+
+  var TOKENS = [
+    { key: 'accent',  label: 'Orange accent',    def: '#b75c11' },
+    { key: 'ink',     label: 'Body & headings',  def: '#444443' },
+    { key: 'muted',   label: 'Secondary text',   def: '#727272' },
+    { key: 'card',    label: 'Card & page',      def: '#ffffff' },
+    { key: 'ctaText', label: 'Button text',      def: '#ffffff' },
+    { key: 'band',    label: 'Bands & URL well', def: '#f8f8f8' },
+    { key: 'line',    label: 'Borders & rules',  def: '#e6e6e6' }
+  ];
+
+  var PAIRS = [
+    ['ink',     'card',   'Body on card'],
+    ['muted',   'card',   'Secondary on card'],
+    ['accent',  'card',   'Links on card'],
+    ['ink',     'band',   'Body on band'],
+    ['accent',  'band',   'URL text in well'],
+    ['ctaText', 'accent', 'Button text on fill']
+  ];
+
+  var counts = {};
+  var unknown = {};
+  TOKENS.forEach(function (t) { counts[t.key] = 0; });
+
+  /* #ffffff is the card AND the button label, so a blind hex swap would tie
+     them together and make the button text follow the background. The button is
+     identified by being the anchor that carries the accent fill. */
+  function tokenFor(el, hex) {
+    if (hex === '#ffffff') {
+      var s = (el.getAttribute('style') || '').toLowerCase();
+      if (el.tagName === 'A' && s.indexOf('background:#b75c11') !== -1) { return 'ctaText'; }
+      return 'card';
+    }
+    for (var i = 0; i < TOKENS.length; i++) {
+      if (TOKENS[i].key === 'card' || TOKENS[i].key === 'ctaText') { continue; }
+      if (TOKENS[i].def === hex) { return TOKENS[i].key; }
+    }
+    return null;
+  }
+
+  [].forEach.call(document.querySelectorAll('#emailRoot [style]'), function (el) {
+    var s = el.getAttribute('style');
+    var out = s.replace(/#[0-9a-fA-F]{6}\b/g, function (m) {
+      var hex = m.toLowerCase();
+      var k = tokenFor(el, hex);
+      /* An unrecognised hex is reported, not quietly left behind — it means a
+         colour got into the template that the token set does not describe. */
+      if (!k) { unknown[hex] = (unknown[hex] || 0) + 1; return m; }
+      counts[k] += 1;
+      return 'var(--' + k + ')';
+    });
+    if (out !== s) { el.setAttribute('style', out); }
+  });
+
+  var fieldsEl = document.getElementById('fields');
+  var statusEl = document.getElementById('status');
+  var contrastEl = document.getElementById('contrast');
+  var exchangeEl = document.getElementById('exchange');
+
+  var wrap = document.createElement('div');
+  wrap.className = 'group';
+  TOKENS.forEach(function (t) {
+    var row = document.createElement('div');
+    row.className = 'row' + (counts[t.key] ? '' : ' unused');
+
+    var lab = document.createElement('label');
+    lab.textContent = t.label;
+    lab.setAttribute('for', 'hex-' + t.key);
+
+    var uses = document.createElement('span');
+    uses.className = 'uses';
+    uses.textContent = counts[t.key] ? String(counts[t.key]) : 'unused here';
+
+    var sw = document.createElement('input');
+    sw.type = 'color';
+    sw.id = 'sw-' + t.key;
+    sw.value = t.def;
+    sw.setAttribute('aria-label', t.label + ' swatch');
+
+    var hex = document.createElement('input');
+    hex.type = 'text';
+    hex.id = 'hex-' + t.key;
+    hex.value = t.def;
+    hex.spellcheck = false;
+
+    sw.addEventListener('input', function () {
+      hex.value = sw.value; hex.classList.remove('bad');
+    });
+    hex.addEventListener('input', function () {
+      var n = normalize(hex.value);
+      if (n) { sw.value = n; hex.classList.remove('bad'); }
+      else { hex.classList.add('bad'); }
+    });
+    hex.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') { apply(); }
+    });
+
+    row.appendChild(lab);
+    row.appendChild(uses);
+    row.appendChild(sw);
+    row.appendChild(hex);
+    wrap.appendChild(row);
+  });
+  fieldsEl.appendChild(wrap);
+
+  var notes = [];
+  notes.push('The icon discs are #f7e9e2 baked into the PNGs, so no control here can ' +
+             'change them — they need re-exporting to move.');
+  if (Object.keys(unknown).length) {
+    notes.push('Hexes in the email with no token: ' + Object.keys(unknown).join(', ') + '.');
+  }
+  document.getElementById('labNote').textContent = notes.join(' ');
+
+  function normalize(v) {
+    if (!v) { return null; }
+    var s = v.trim();
+    if (s.charAt(0) !== '#') { s = '#' + s; }
+    if (/^#[0-9a-fA-F]{3}$/.test(s)) {
+      s = '#' + s[1] + s[1] + s[2] + s[2] + s[3] + s[3];
+    }
+    if (/^#[0-9a-fA-F]{6}$/.test(s)) { return s.toLowerCase(); }
+    return null;
+  }
+
+  function readFields() {
+    var out = {};
+    var bad = [];
+    TOKENS.forEach(function (t) {
+      var el = document.getElementById('hex-' + t.key);
+      var n = normalize(el.value);
+      if (n) { out[t.key] = n; el.classList.remove('bad'); }
+      else { bad.push(t.label); el.classList.add('bad'); }
+    });
+    return { values: out, bad: bad };
+  }
+
+  function writeFields(map) {
+    TOKENS.forEach(function (t) {
+      var v = normalize(map[t.key]) || t.def;
+      document.getElementById('hex-' + t.key).value = v;
+      document.getElementById('sw-' + t.key).value = v;
+    });
+  }
+
+  function paint(map) {
+    var root = document.documentElement;
+    Object.keys(map).forEach(function (k) {
+      root.style.setProperty('--' + k, map[k]);
+    });
+  }
+
+  function say(msg, isError) {
+    statusEl.textContent = msg;
+    statusEl.style.color = isError ? '#e46b5f' : '#7fb98a';
+  }
+
+  function lum(hex) {
+    function ch(c) {
+      return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+    }
+    return 0.2126 * ch(parseInt(hex.substr(1, 2), 16) / 255) +
+           0.7152 * ch(parseInt(hex.substr(3, 2), 16) / 255) +
+           0.0722 * ch(parseInt(hex.substr(5, 2), 16) / 255);
+  }
+
+  function ratio(a, b) {
+    var la = lum(a);
+    var lb = lum(b);
+    return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05);
+  }
+
+  /* Only pairs that actually occur in THIS email are listed. The confirmation
+     has no button, and a contrast row for a element that is not on the page is
+     noise the designer would have to learn to ignore. */
+  function renderContrast(map) {
+    contrastEl.innerHTML = '';
+    PAIRS.forEach(function (p) {
+      if (!counts[p[0]] || !counts[p[1]]) { return; }
+      var fg = map[p[0]];
+      var bg = map[p[1]];
+      if (!fg || !bg) { return; }
+      var r = ratio(fg, bg);
+      var cls = r >= 4.5 ? 'pass' : (r >= 3 ? 'warn' : 'fail');
+      var tr = document.createElement('tr');
+      var td1 = document.createElement('td');
+      td1.textContent = p[2];
+      var td2 = document.createElement('td');
+      td2.className = 'n';
+      td2.textContent = r.toFixed(2);
+      var td3 = document.createElement('td');
+      td3.className = 'v ' + cls;
+      td3.textContent = r >= 4.5 ? 'AA' : (r >= 3 ? 'UI' : 'fail');
+      tr.appendChild(td1); tr.appendChild(td2); tr.appendChild(td3);
+      contrastEl.appendChild(tr);
+    });
+  }
+
+  function pad(s, n) {
+    var out = s;
+    while (out.length < n) { out += ' '; }
+    return out;
+  }
+
+  function two(n) { return (n < 10 ? '0' : '') + n; }
+
+  function exportText(map) {
+    var d = new Date();
+    var lines = ['# Heavy Pour — onboarding email colour set',
+                 '# saved ' + d.getFullYear() + '-' + two(d.getMonth() + 1) + '-' + two(d.getDate()),
+                 ''];
+    TOKENS.forEach(function (t) {
+      lines.push(pad(t.key, 10) + pad(map[t.key] || t.def, 10) + t.label +
+                 (counts[t.key] ? '' : '   (unused in this email)'));
+    });
+    return lines.join('\n') + '\n';
+  }
+
+  function refreshExchange(map) { exchangeEl.value = exportText(map); }
+
+  function importText(text) {
+    var known = {};
+    TOKENS.forEach(function (t) { known[t.key] = true; });
+    var found = {};
+    var unknownKeys = [];
+    var bad = [];
+    text.split('\n').forEach(function (raw) {
+      var line = raw.trim();
+      if (!line || line.charAt(0) === '#') { return; }
+      var m = line.match(/^([A-Za-z][A-Za-z0-9_]*)\s+(\S+)/);
+      if (!m) { return; }
+      if (!known[m[1]]) { unknownKeys.push(m[1]); return; }
+      var n = normalize(m[2]);
+      if (!n) { bad.push(m[1]); return; }
+      found[m[1]] = n;
+    });
+    return { values: found, unknown: unknownKeys, bad: bad };
+  }
+
+  function apply() {
+    var res = readFields();
+    if (res.bad.length) {
+      say('Not applied. Invalid hex: ' + res.bad.join(', '), true);
+      return;
+    }
+    paint(res.values);
+    renderContrast(res.values);
+    refreshExchange(res.values);
+    say('Applied.');
+  }
+
+  function defaults() {
+    var m = {};
+    TOKENS.forEach(function (t) { m[t.key] = t.def; });
+    return m;
+  }
+
+  /* localStorage first: a cookie written from a file:// page is discarded by
+     Chrome, and the designer opens this file locally. */
+  function saveSet(values) {
+    try { window.localStorage.setItem(STORE, JSON.stringify(values)); return true; }
+    catch (e) { return false; }
+  }
+
+  function loadSet() {
+    var raw = null;
+    try { raw = window.localStorage.getItem(STORE); } catch (e) { raw = null; }
+    if (!raw) { return null; }
+    try { return JSON.parse(raw); } catch (e) { return null; }
+  }
+
+  document.getElementById('apply').addEventListener('click', apply);
+
+  document.getElementById('save').addEventListener('click', function () {
+    var res = readFields();
+    if (res.bad.length) { say('Not saved. Invalid hex: ' + res.bad.join(', '), true); return; }
+    paint(res.values);
+    renderContrast(res.values);
+    refreshExchange(res.values);
+    var ok = saveSet(res.values);
+    say(ok ? 'Saved on this browser.' : 'Could not save in this browser.', !ok);
+  });
+
+  document.getElementById('revert').addEventListener('click', function () {
+    var saved = loadSet();
+    if (!saved) { say('Nothing saved yet.', true); return; }
+    writeFields(saved);
+    apply();
+    say('Reverted to saved.');
+  });
+
+  document.getElementById('reset').addEventListener('click', function () {
+    writeFields(defaults());
+    apply();
+    say('Reset to defaults.');
+  });
+
+  document.getElementById('copy').addEventListener('click', function () {
+    exchangeEl.select();
+    var ok = false;
+    try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+    say(ok ? 'Copied.' : 'Press Cmd+C to copy.', !ok);
+  });
+
+  document.getElementById('load').addEventListener('click', function () {
+    var res = importText(exchangeEl.value);
+    var keys = Object.keys(res.values);
+    if (!keys.length) { say('No usable "key #hex" lines found.', true); return; }
+    writeFields(res.values);
+    apply();
+    var msg = 'Loaded ' + keys.length + ' value' + (keys.length === 1 ? '' : 's') + '.';
+    if (res.unknown.length) { msg += ' Ignored unknown: ' + res.unknown.join(', ') + '.'; }
+    if (res.bad.length) { msg += ' Bad hex: ' + res.bad.join(', ') + '.'; }
+    say(msg, res.unknown.length > 0 || res.bad.length > 0);
+  });
+
+  var start = loadSet() || defaults();
+  writeFields(start);
+  paint(start);
+  renderContrast(start);
+  refreshExchange(start);
+})();
+</script>
 
 </body>
 </html>
