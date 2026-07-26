@@ -1,0 +1,1241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Heavy Pour — POS colour lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;900&display=swap">
+<style>
+  /* ==========================================================================
+     ROLE TOKENS — the surfaces / text / accents the five POS screens paint
+     with. Defaults below are the CURRENT dark-mode values the live app ships
+     (the POS runs dark-mode by default). The colour lab overwrites these on
+     :root when a palette swatch is chosen. Muted text is DERIVED (70% of the
+     primary text colour) exactly as the live app derives it, so it is not a
+     separately-pickable role.
+     ========================================================================== */
+  :root {
+    --canvas:#727272; --panel:#8e8e8e;
+    --text:#ffffff;
+    --accent:#b75c11; --cta:#d1863b; --ctaText:#ffffff;
+    --surface:#727272; --buttonRing:#dcdcdc;
+    --navActive:#846a63;
+    --paidFill:#d0e5cc; --paidText:#576d26;
+    --fulfillFill:#ead9ce; --fulfillText:#846a63;
+    --wineRed:#5b4141; --wineWhite:#847669; --wineSparkling:#a8a791; --wineRose:#967977;
+    --burgundy:#79010f;
+  }
+
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:"Montserrat",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+         background:#1a1a1a; color:#eaeaea; }
+  .lab { display:flex; align-items:flex-start; min-height:100vh; }
+
+  /* ---------- controls ---------- */
+  .controls { width:360px; flex:none; background:#242424; border-right:1px solid #3a3a3a;
+              padding:16px 14px; position:sticky; top:0; max-height:100vh; overflow-y:auto; }
+  .controls.collapsed { width:46px; padding:16px 7px; overflow:hidden; }
+  .controls.collapsed #panelBody { display:none; }
+  .panelToggle { display:flex; align-items:center; justify-content:space-between; gap:8px;
+                 width:100%; margin-bottom:12px; padding:8px 10px; font:inherit; font-size:13px;
+                 font-weight:600; color:#eaeaea; background:#333; border:1px solid #4a4a4a;
+                 border-radius:6px; cursor:pointer; }
+  .panelToggle:hover { filter:brightness(1.15); }
+  .panelToggle .chev { color:#9a9a9a; font-size:15px; line-height:1; }
+  .controls.collapsed .panelToggle { justify-content:center; padding:8px 0; }
+  .controls.collapsed .panelToggle .ttl { display:none; }
+  .controls h1 { margin:0 0 2px; font-size:15px; font-weight:600; }
+  .controls .sub { margin:0 0 14px; font-size:11px; color:#9a9a9a; line-height:1.55; }
+  .controls .sub b { color:#cfcfcf; font-weight:600; }
+  .group { margin-bottom:16px; }
+  .group > h2 { margin:0 0 7px; font-size:10px; font-weight:600; letter-spacing:.09em;
+                text-transform:uppercase; color:#8f8f8f; }
+
+  /* one role row = label + the palette-picker button */
+  .row { display:flex; align-items:center; gap:9px; margin-bottom:6px; }
+  .row .rlabel { flex:1; font-size:11.5px; color:#d2d2d2; line-height:1.3; cursor:pointer; }
+  .row .rlabel:hover { color:#fff; text-decoration:underline; text-decoration-style:dotted; }
+  .row .rlabel::before { content:"\25CE\00a0"; color:#7a7a7a; }
+
+  /* locate-flash: a bright contrasting pulse around every element using a role */
+  @keyframes hpwPulse {
+    0%   { box-shadow:0 0 0 0 rgba(0,229,255,.95); }
+    70%  { box-shadow:0 0 0 11px rgba(0,229,255,0); }
+    100% { box-shadow:0 0 0 0 rgba(0,229,255,0); }
+  }
+  .hpw-locate { outline:3px solid #00e5ff !important; outline-offset:2px; border-radius:8px;
+                animation:hpwPulse 1.3s ease-out 1; position:relative; z-index:55; }
+  .pick { display:flex; align-items:center; gap:7px; width:150px; flex:none; cursor:pointer;
+          padding:4px 7px; border-radius:6px; border:1px solid #4a4a4a; background:#1c1c1c;
+          color:#eaeaea; font:inherit; font-size:10.5px; text-align:left; }
+  .pick:hover { border-color:#6a6a6a; }
+  .pick .sw { width:18px; height:18px; flex:none; border-radius:4px; border:1px solid rgba(255,255,255,.25); }
+  .pick .nm { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+              font-family:ui-monospace,SFMono-Regular,Menlo,monospace; }
+  .pick.override { border-color:#c98235; }
+  .pick.override .nm { color:#e5a87a; }
+
+  .actions { display:flex; flex-wrap:wrap; gap:7px; margin:16px 0 6px; }
+  .actions button { flex:1 1 auto; font:inherit; font-size:12px; font-weight:500; padding:8px 10px;
+                    border-radius:6px; border:1px solid #4a4a4a; background:#333; color:#eaeaea;
+                    cursor:pointer; }
+  .actions button.primary { background:#b75c11; border-color:#b75c11; color:#fff; flex-basis:100%; }
+  .actions button:hover { filter:brightness(1.15); }
+  .linkish { background:none; border:none; color:#9a9a9a; font:inherit; font-size:11px;
+             text-decoration:underline; cursor:pointer; padding:0; }
+  .status { min-height:15px; font-size:11px; color:#7fb98a; margin:10px 0 12px; line-height:1.5; }
+  .status.err { color:#e46b5f; }
+
+  .exchange { width:100%; height:150px; margin-top:2px; padding:8px; border-radius:6px;
+              border:1px solid #4a4a4a; background:#1c1c1c; color:#eaeaea; resize:vertical;
+              font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:10.5px;
+              line-height:1.55; white-space:pre; }
+
+  table.contrast { width:100%; border-collapse:collapse; font-size:11px; }
+  table.contrast th { text-align:left; font-weight:600; color:#8f8f8f; font-size:10px;
+                      letter-spacing:.06em; text-transform:uppercase; padding-bottom:4px; }
+  table.contrast td { padding:3px 0; border-top:1px solid #333; color:#c6c6c6; }
+  table.contrast td.n { text-align:right; font-family:ui-monospace,Menlo,monospace; width:44px; }
+  table.contrast td.v { text-align:right; width:38px; font-weight:600; }
+  .pass { color:#65c466; } .warn { color:#e0a33a; } .fail { color:#e46b5f; }
+
+  /* ---------- palette popover ---------- */
+  .pop { position:fixed; z-index:100; width:328px; max-height:70vh; overflow-y:auto;
+         background:#202020; border:1px solid #4a4a4a; border-radius:10px; padding:12px;
+         box-shadow:0 18px 44px rgba(0,0,0,.6); display:none; }
+  .pop.on { display:block; }
+  .pop h3 { margin:0 0 3px; font-size:12px; font-weight:600; color:#eaeaea; }
+  .pop p { margin:0 0 9px; font-size:10.5px; color:#9a9a9a; line-height:1.5; }
+  .swatches { display:grid; grid-template-columns:repeat(8,1fr); gap:5px; }
+  .swatches button { aspect-ratio:1; border-radius:5px; border:1px solid rgba(255,255,255,.18);
+                     cursor:pointer; padding:0; position:relative; }
+  .swatches button:hover { outline:2px solid #b75c11; outline-offset:1px; }
+  .swatches button.sel { outline:2px solid #fff; outline-offset:1px; }
+  .popfoot { margin-top:11px; border-top:1px solid #333; padding-top:10px; }
+  .popfoot .cur { font-size:10.5px; color:#c6c6c6; margin:0 0 8px; font-family:ui-monospace,Menlo,monospace; }
+  .ovr { display:flex; align-items:center; gap:6px; }
+  .ovr input { flex:1; font-family:ui-monospace,Menlo,monospace; font-size:11px; padding:6px 7px;
+               border-radius:5px; border:1px solid #4a4a4a; background:#1c1c1c; color:#eaeaea; }
+  .ovr input.bad { border-color:#c0392b; }
+  .ovr button { font:inherit; font-size:11px; padding:6px 10px; border-radius:5px;
+                border:1px solid #c98235; background:#3a2c1c; color:#e5a87a; cursor:pointer; }
+  .ovr button:hover { filter:brightness(1.2); }
+  .ovrnote { margin:7px 0 0; font-size:10px; color:#c98235; line-height:1.5; }
+
+  /* ---------- preview / POS frame ---------- */
+  .preview { flex:1; min-width:0; padding:18px; height:100vh; display:flex; flex-direction:column; gap:12px; }
+  .bar { display:flex; align-items:center; gap:8px; flex:none; }
+  .screens { display:flex; gap:5px; padding:5px; border-radius:9px; background:#242424;
+             border:1px solid #3a3a3a; }
+  .screens button { font:inherit; font-size:12px; font-weight:600; padding:7px 14px; border-radius:6px;
+                    border:0; background:none; color:#c6c6c6; cursor:pointer; }
+  .screens button.on { background:#b75c11; color:#fff; }
+  .screens button:not(.on):hover { color:#eaeaea; }
+  .bar .spacer { flex:1; }
+  .modeToggle { display:flex; gap:5px; padding:5px; border-radius:9px; background:#242424; border:1px solid #3a3a3a; }
+  .modeToggle button { font:inherit; font-size:11.5px; font-weight:600; padding:6px 12px; border-radius:6px;
+                       border:0; background:none; color:#c6c6c6; cursor:pointer; }
+  .modeToggle button.on { background:#b75c11; color:#fff; }
+
+  /* muted text = 70% of the primary text colour, matching the live app. */
+  .frame { flex:1; min-height:0; border-radius:14px; overflow:hidden; position:relative;
+           box-shadow:0 10px 34px rgba(0,0,0,.45); background:var(--canvas); display:flex;
+           --muted: color-mix(in srgb, var(--text) 70%, transparent);
+           /* fixed platform dark-mode trend deltas (status fills), not editable roles */
+           --trend-up:#d0e5cc; --trend-down:#ead6d9; }
+
+  /* ----- sidebar ----- */
+  .side { width:214px; flex:none; background:var(--panel); display:flex; flex-direction:column;
+          padding:0 0 12px; transition:width .18s ease; overflow:hidden; }
+  .frame.railcollapsed .side { width:66px; }
+  .side .logo { padding:20px 18px 14px; display:flex; align-items:center; gap:9px; }
+  .side .logo img { height:38px; width:auto; display:block; }
+  .frame.railcollapsed .side .logo { padding:20px 0 14px; justify-content:center; }
+  .frame.railcollapsed .side .logo img { height:30px; }
+  .side nav { display:flex; flex-direction:column; gap:1px; padding:6px 10px; overflow-y:auto; flex:1; }
+  .side nav::-webkit-scrollbar { width:0; }
+  .navitem { display:flex; align-items:center; gap:13px; padding:9px 11px; border-radius:9px;
+             color:var(--text); font-size:13px; cursor:pointer; white-space:nowrap;
+             border-left:3px solid transparent; }
+  .navitem svg { width:19px; height:19px; flex:none; stroke:var(--text); fill:none; stroke-width:1.8; opacity:.92; }
+  .navitem.active { background:var(--navActive); border-left-color:var(--accent); font-weight:600; }
+  .navitem .lbl { flex:1; }
+  .frame.railcollapsed .navitem { justify-content:center; gap:0; padding:9px 0; border-left:0; }
+  .frame.railcollapsed .navitem .lbl { display:none; }
+  .side .navfoot { padding:6px 10px 0; border-top:1px solid color-mix(in srgb, var(--text) 14%, transparent);
+                   margin:6px 10px 0; }
+  /* expandable submenus (Point of Sale, Wine Club, Reservations, Marketing, Website, Compliance) */
+  .navitem .chev { color:var(--muted); font-size:13px; line-height:1; transition:transform .16s ease; }
+  .navitem.open .chev { transform:rotate(90deg); }
+  .frame.railcollapsed .navitem .chev { display:none; }
+  .submenu { display:none; flex-direction:column; gap:1px; padding:1px 0 5px; }
+  .submenu.open { display:flex; }
+  .frame.railcollapsed .submenu { display:none; }
+  .subitem { padding:7px 12px 7px 43px; border-radius:9px; color:var(--text); font-size:12.5px;
+             cursor:pointer; white-space:nowrap; }
+  .subitem:hover { background:color-mix(in srgb, var(--navActive) 55%, transparent); }
+  /* active submenu row = --app-sidebar-submenu-active-bg (#938580) + white, per platform */
+  .subitem.active { background:#938580; color:var(--text); font-weight:600; }
+
+  /* ----- main ----- */
+  .main { flex:1; min-width:0; display:flex; flex-direction:column; background:var(--canvas); }
+  .topbar { flex:none; margin:14px 14px 0; padding:11px 14px; border-radius:16px; background:var(--panel);
+            display:flex; align-items:center; gap:14px; }
+  .burger { width:34px; height:34px; flex:none; border-radius:9px; border:0; background:none; cursor:pointer;
+            display:flex; align-items:center; justify-content:center; }
+  .burger span { display:block; width:17px; height:2px; background:var(--text); box-shadow:0 -5px 0 var(--text),0 5px 0 var(--text); }
+  .wmark { display:flex; align-items:center; gap:10px; min-width:0; }
+  .wmark .disc { width:34px; height:34px; border-radius:50%; flex:none; border:1px solid color-mix(in srgb,var(--text) 30%,transparent);
+                 display:flex; align-items:center; justify-content:center; font-size:8px; color:var(--muted); }
+  .wmark .wn { font-size:12.5px; font-weight:700; color:var(--text); line-height:1.25; letter-spacing:.02em; }
+  .wmark .ws { font-size:10.5px; color:var(--muted); }
+  .search { flex:1; min-width:0; height:38px; border-radius:12px; background:var(--canvas);
+            display:flex; align-items:center; gap:8px; padding:0 14px; color:var(--muted); font-size:13px; }
+  .search svg { width:15px; height:15px; stroke:var(--muted); fill:none; stroke-width:2; }
+  .pill { display:inline-flex; align-items:center; gap:6px; padding:7px 13px; border-radius:999px;
+          font-size:12px; font-weight:600; }
+  .pill.ok { background:var(--paidFill); color:var(--paidText); }
+  .pill .dot { width:7px; height:7px; border-radius:50%; background:currentColor; }
+  .tbicon { width:34px; height:34px; border-radius:50%; flex:none; position:relative; border:1px solid color-mix(in srgb,var(--text) 26%,transparent);
+            display:flex; align-items:center; justify-content:center; }
+  .tbicon svg { width:16px; height:16px; stroke:var(--text); fill:none; stroke-width:1.8; }
+  .tbicon .badge { position:absolute; top:-4px; right:-4px; min-width:16px; height:16px; padding:0 4px; border-radius:999px;
+                   background:var(--accent); color:#fff; font-size:9px; font-weight:700; display:flex; align-items:center; justify-content:center; }
+  /* avatars use the platform avatar-butter pair (#dddbb6 fill / #7c7c63 initials) */
+  .avatar { width:36px; height:36px; border-radius:50%; flex:none; background:#dddbb6;
+            display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; color:#7c7c63; }
+
+  .content { flex:1; min-height:0; overflow-y:auto; padding:20px 22px 26px; }
+  .content::-webkit-scrollbar { width:0; }
+
+  /* ----- shared screen bits ----- */
+  .h1 { margin:0; font-size:26px; font-weight:700; color:var(--text); }
+  .sub { margin:5px 0 0; font-size:12.5px; color:var(--muted); }
+  .card { background:var(--panel); border-radius:18px; padding:18px 20px; }
+  .grid { display:grid; gap:16px; }
+
+  .screen { display:none; width:100%; }
+  .frame[data-screen="home"]  #s-home,
+  .frame[data-screen="sell"]  #s-sell,
+  .frame[data-screen="orders"] #s-orders,
+  .frame[data-screen="reports"] #s-reports { display:block; }
+  /* login replaces the whole shell — hide the sidebar and the entire main
+     column so the centred PIN panel fills the frame edge to edge. */
+  .frame[data-screen="login"] .side,
+  .frame[data-screen="login"] .main { display:none; }
+  .frame[data-screen="login"] #s-login { display:flex; }
+
+  /* ----- HOME ----- */
+  .kpis { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-top:18px; }
+  .kpi .kl { font-size:12px; color:var(--muted); }
+  .kpi .kv { margin:9px 0 0; font-size:30px; font-weight:700; color:var(--text); }
+  .kpi .kfoot { margin:11px 0 0; font-size:11px; color:var(--muted); }
+  .quick { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-top:6px; }
+  .qa { display:flex; flex-direction:column; align-items:center; gap:9px; }
+  .qa .qd { width:56px; height:56px; border-radius:50%; background:var(--canvas); display:flex; align-items:center; justify-content:center; }
+  .qa .qd svg { width:24px; height:24px; stroke:var(--text); fill:none; stroke-width:1.7; }
+  .qa .ql { font-size:11.5px; color:var(--text); text-align:center; }
+  .rowtitle { display:flex; align-items:center; justify-content:space-between; margin-bottom:2px; }
+  .rowtitle h3 { margin:0; font-size:14px; font-weight:600; color:var(--text); }
+  .rowtitle a { font-size:12px; color:var(--accent); text-decoration:underline; cursor:pointer; }
+  .lrow { display:flex; align-items:center; justify-content:space-between; padding:9px 0; font-size:13px; color:var(--text); }
+  .lrow + .lrow { border-top:1px solid color-mix(in srgb,var(--text) 12%,transparent); }
+  .lrow .rk { color:var(--muted); }
+  .chartbox { height:180px; border-radius:12px; margin-top:14px; background:var(--canvas);
+              display:flex; align-items:flex-end; gap:8px; padding:16px; }
+  .chartbox i { flex:1; background:var(--accent); border-radius:4px 4px 0 0; opacity:.85; display:block; }
+
+  /* ----- SELL ----- */
+  .sellwrap { display:flex; gap:14px; height:100%; }
+  .sellmain { flex:1; min-width:0; background:var(--panel); border-radius:18px; padding:16px 18px; display:flex; flex-direction:column; }
+  .counter { font-size:12.5px; color:var(--muted); margin-bottom:12px; }
+  .counter b { color:var(--text); font-weight:600; }
+  .cats { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:14px; }
+  .cat { padding:8px 15px; border-radius:999px; font-size:12.5px; color:var(--text);
+         background:var(--canvas); cursor:pointer; }
+  .cat.on { background:var(--accent); color:#fff; font-weight:600; }
+  .prodsearch { height:38px; border-radius:11px; background:var(--canvas); display:flex; align-items:center;
+                gap:8px; padding:0 13px; color:var(--muted); font-size:12.5px; margin-bottom:14px; }
+  .prodsearch svg { width:15px; height:15px; stroke:var(--muted); fill:none; stroke-width:2; }
+  .prods { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; overflow-y:auto; }
+  .prods::-webkit-scrollbar { width:0; }
+  .prod { border-radius:14px; padding:13px 14px; min-height:104px; display:flex; flex-direction:column;
+          justify-content:space-between; color:#fff; }
+  .prod .pn { font-size:12.5px; font-weight:600; line-height:1.3; }
+  .prod .pp { font-size:13px; font-weight:600; margin-top:auto; }
+  .prod.red { background:var(--wineRed); } .prod.white { background:var(--wineWhite); }
+  .prod.spark { background:var(--wineSparkling); } .prod.rose { background:var(--wineRose); }
+  .prod.other { background:var(--canvas); color:var(--text); }
+
+  /* Cart = a 64px spine (Cart 1 / + Add Cart) + the cart card. Both tints are
+     derived exactly as the app does: spine = --foreground/8, active tile +
+     card body = --cart-spine-active-bg (accent @35%), totals footer =
+     --cart-card-bg (orange-greyish-dark/navActive @35%). No solid "cart panel"
+     colour exists in the platform, so none is a pickable role. */
+  .cartwrap { width:340px; flex:none; display:flex; border-radius:18px; overflow:hidden; }
+  .cbord { border-color:color-mix(in srgb, var(--text) 18%, transparent); }
+  .cartspine { width:64px; flex:none; background:color-mix(in srgb, var(--text) 8%, transparent);
+               padding:8px; display:flex; flex-direction:column; gap:8px; }
+  .spinetile { min-height:64px; border-radius:14px; padding:8px; font-size:11px; font-weight:600;
+               color:var(--text); line-height:1.25; }
+  .spinetile.on { background:color-mix(in srgb, var(--accent) 35%, transparent); color:#e5a87a; }
+  .spineadd { border:1px dashed color-mix(in srgb, var(--text) 30%, transparent); border-radius:14px;
+              padding:10px 6px; font-size:11px; font-weight:600; color:var(--muted); text-align:center; }
+  .cart { flex:1; min-width:0; background:color-mix(in srgb, var(--accent) 35%, transparent);
+          display:flex; flex-direction:column; color:#fff; }
+  .cart .ct { text-align:center; font-size:15px; font-weight:600; padding:13px;
+              border-bottom:1px solid color-mix(in srgb, var(--text) 18%, transparent); }
+  .cart .cbtn { margin:12px 16px 8px; padding:10px; border-radius:999px;
+                border:1px solid color-mix(in srgb, var(--text) 18%, transparent);
+                display:flex; align-items:center; justify-content:center; gap:8px; font-size:13px; font-weight:500; }
+  .cart .csearch { margin:0 16px 12px; height:38px; border-radius:999px;
+                   border:1px solid color-mix(in srgb, var(--text) 18%, transparent);
+                   display:flex; align-items:center; padding:0 14px; font-size:12.5px; color:var(--muted); }
+  .citems { flex:1; overflow-y:auto; }
+  .citems::-webkit-scrollbar { width:0; }
+  .citem { padding:12px 16px; border-top:1px solid color-mix(in srgb, var(--text) 18%, transparent); }
+  .citem .top { display:flex; justify-content:space-between; gap:8px; font-size:13px; font-weight:500; }
+  .citem .ctl { display:flex; align-items:center; justify-content:space-between; margin-top:8px; }
+  .seg { display:inline-flex; border-radius:999px; overflow:hidden;
+         border:1px solid color-mix(in srgb, var(--text) 18%, transparent); }
+  .seg span { font-size:11px; padding:5px 12px; }
+  .seg .a { background:var(--cta); color:var(--ctaText); }        /* active = --toggle-segmented-active-bg */
+  .seg .b { background:var(--panel); color:var(--text); }         /* inactive = --toggle-segmented-inactive-bg (#8e8e8e) */
+  .qty { display:flex; align-items:center; gap:11px; font-size:13px; }
+  .qty b { width:28px; height:28px; border-radius:50%; font-weight:400;
+           border:1px solid color-mix(in srgb, var(--text) 18%, transparent);
+           display:flex; align-items:center; justify-content:center; }
+  /* totals footer = --cart-card-bg (orange-greyish-dark @35%, = navActive) */
+  .ctot { padding:12px 16px; background:color-mix(in srgb, var(--navActive) 35%, transparent);
+          border-top:1px solid color-mix(in srgb, var(--text) 18%, transparent); }
+  .ctot .tl { display:flex; justify-content:space-between; font-size:12px; color:var(--muted); padding:2px 0; }
+  .ctot .grand { display:flex; justify-content:space-between; align-items:baseline; font-size:16px; font-weight:700; padding-top:4px; }
+  .ctot .grand .amt { color:var(--accent); font-size:18px; }
+  .ctot .pay { display:flex; gap:12px; margin-top:12px; }
+  .ctot .pay button { flex:1; height:44px; border-radius:999px; border:0; font:inherit; font-size:14px; font-weight:600; cursor:pointer; }
+  .ctot .pay .disc { background:#bababa; color:var(--text); }     /* --color-grey-bababa + --foreground */
+  .ctot .pay .charge { background:var(--cta); color:var(--ctaText); }
+
+  /* ----- ORDERS / REPORTS tables ----- */
+  .toolbar { display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin:18px 0 14px; }
+  .field { height:38px; border-radius:11px; background:var(--panel); display:flex; align-items:center; gap:8px;
+           padding:0 13px; font-size:12.5px; color:var(--muted); }
+  .field.grow { flex:1; min-width:180px; }
+  .field svg { width:15px; height:15px; stroke:var(--muted); fill:none; stroke-width:2; }
+  .field b { color:var(--text); font-weight:600; }
+  .btnghost { margin-left:auto; height:38px; padding:0 16px; border-radius:11px; background:var(--panel);
+              color:var(--text); font-size:12.5px; font-weight:600; display:flex; align-items:center; gap:7px; cursor:pointer; }
+  .countline { font-size:12px; color:var(--muted); margin-bottom:10px; }
+  .countline b { color:var(--text); }
+  .table { background:var(--panel); border-radius:18px; overflow:hidden; }
+  .thead,.trow { display:grid; grid-template-columns:1.4fr 1fr 1.4fr .8fr .7fr 1.2fr .7fr; align-items:center;
+                 padding:13px 20px; gap:10px; }
+  .thead { font-size:10px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); font-weight:600; }
+  .trow { border-top:1px solid color-mix(in srgb,var(--text) 12%,transparent); font-size:12.5px; color:var(--text); }
+  .onum { font-weight:600; }
+  .cust { display:flex; align-items:center; gap:9px; }
+  .cust .av { width:26px; height:26px; border-radius:50%; background:#dddbb6; color:#7c7c63;
+              display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:700; }
+  .tpill { display:inline-flex; align-items:center; gap:5px; padding:4px 10px; border-radius:999px; font-size:10.5px; font-weight:600; }
+  /* Source pill = --foreground/10 fill + --app-muted text (derived, per platform) */
+  .tpill.src { background:color-mix(in srgb, var(--text) 10%, transparent); color:var(--muted); }
+  .tpill.fulfill { background:var(--fulfillFill); color:var(--fulfillText); }
+  .tpill.paid { background:var(--paidFill); color:var(--paidText); }
+  .tpill.paid .dot { width:6px; height:6px; border-radius:50%; background:currentColor; }
+  .right { text-align:right; }
+  .actbtns { display:flex; gap:6px; justify-content:flex-end; }
+  .actbtns i { width:26px; height:26px; border-radius:7px; background:var(--canvas);
+               display:flex; align-items:center; justify-content:center; }
+  .actbtns svg { width:13px; height:13px; stroke:var(--text); fill:none; stroke-width:1.8; }
+  .pager { display:flex; align-items:center; justify-content:flex-end; gap:6px; margin-top:14px; }
+  .pager span { min-width:30px; height:30px; padding:0 8px; border-radius:8px; background:var(--panel); color:var(--text);
+                display:flex; align-items:center; justify-content:center; font-size:12px; }
+  .pager span.on { background:var(--accent); color:#fff; font-weight:600; }
+
+  /* ----- REPORTS ----- */
+  .chips { display:flex; flex-wrap:wrap; gap:8px; margin:16px 0 10px; }
+  .chip { padding:7px 14px; border-radius:999px; font-size:12px; color:var(--text); background:var(--panel); cursor:pointer; }
+  .chip.on { background:var(--accent); color:#fff; font-weight:600; }
+  .tabs { display:flex; flex-wrap:wrap; gap:6px; border-bottom:1px solid color-mix(in srgb,var(--text) 12%,transparent);
+          margin-bottom:16px; padding-bottom:4px; }
+  .tab { font-size:12px; color:var(--muted); padding:8px 12px; border-radius:8px 8px 0 0; cursor:pointer; }
+  .tab.on { color:var(--text); background:var(--panel); font-weight:600; }
+  .repkpis { display:grid; grid-template-columns:repeat(6,1fr); gap:12px; }
+  .rk2 { grid-template-columns:repeat(5,1fr); margin-top:12px; }
+  .repkpi { background:var(--panel); border-radius:14px; padding:15px 16px; }
+  .repkpi .rl { font-size:10.5px; letter-spacing:.05em; text-transform:uppercase; color:var(--muted); }
+  .repkpi .rv { font-size:24px; font-weight:700; color:var(--text); margin-top:8px; }
+  .repkpi .rd { font-size:10.5px; color:var(--trend-up); margin-top:6px; }
+  .repkpi .rd.down { color:var(--trend-down); }
+  .emptyblock { background:var(--panel); border-radius:18px; margin-top:16px; padding:44px; text-align:center;
+                color:var(--muted); font-size:12.5px; }
+  .trendcard { background:var(--panel); border-radius:18px; margin-top:16px; padding:18px 20px; }
+  .trendcard h3 { margin:0 0 10px; font-size:14px; font-weight:600; color:var(--text); }
+  .trendchart { width:100%; height:190px; display:block; }
+  .trendarea { fill:color-mix(in srgb, var(--accent) 16%, transparent); }
+  .trendline { fill:none; stroke:var(--accent); stroke-width:2.5; vector-effect:non-scaling-stroke; }
+  .rtable { background:var(--panel); border-radius:18px; margin-top:16px; padding:2px 20px 14px; }
+  .rtable h3 { margin:16px 0 4px; font-size:14px; font-weight:600; color:var(--text); }
+  .rtable .rr { display:grid; grid-template-columns:2.4fr 1fr 1fr 1.2fr; padding:11px 0; font-size:12.5px; color:var(--text); align-items:center; }
+  .rtable .rr.head { color:var(--muted); font-size:10px; letter-spacing:.06em; text-transform:uppercase; font-weight:600; }
+  .rtable .rr + .rr { border-top:1px solid color-mix(in srgb, var(--text) 12%, transparent); }
+  .rtable .rr .num { text-align:right; }
+
+  /* ----- LOGIN ----- */
+  #s-login { flex:1; align-items:center; justify-content:center; background:var(--panel); }
+  .logincol { display:flex; flex-direction:column; align-items:center; gap:34px; text-align:center; }
+  .logincol > img { height:74px; width:auto; }
+  .logincol .pinh { font-size:15px; font-weight:600; color:var(--text); }
+  .dots { display:flex; gap:12px; justify-content:center; margin-top:26px; }
+  .dots i { width:9px; height:9px; border-radius:50%; border:1px solid var(--buttonRing); display:block; }
+  .dots i.on { background:var(--buttonRing); }
+  .keypad { display:grid; grid-template-columns:repeat(3,68px); gap:14px; margin-top:30px; }
+  .key { height:68px; width:68px; border-radius:50%; background:var(--surface); color:var(--text);
+         border:1px solid var(--buttonRing); font-size:24px; font-weight:600; cursor:pointer;
+         display:flex; align-items:center; justify-content:center; }
+  .key.blank { background:none; border:0; cursor:default; }
+  .key svg { width:24px; height:24px; stroke:var(--text); fill:none; stroke-width:2; }
+  .loginlink { font-size:14px; font-weight:600; color:var(--text); text-decoration:none; cursor:pointer; margin-top:6px; }
+
+  @media (max-width:1180px) {
+    .lab { flex-direction:column; align-items:stretch; }
+    .controls { width:100%; position:static; max-height:none; border-right:0; border-bottom:1px solid #3a3a3a; }
+    .controls.collapsed { width:100%; }
+    .preview { height:auto; }
+    .frame { height:760px; }
+  }
+</style>
+</head>
+<body>
+<div class="lab">
+
+  <aside class="controls" id="controls">
+    <button class="panelToggle" id="panelToggle" aria-expanded="true" title="Hide colour lab">
+      <span class="ttl">POS colour lab</span><span class="chev">&lsaquo;</span>
+    </button>
+
+    <div id="panelBody">
+    <p class="sub">Pick a colour for each surface by clicking its swatch. You can only choose from the
+      <b>existing Heavy&nbsp;Pour palette</b>. If nothing in the palette works, use
+      <b>Override&hellip;</b> inside the picker — the hand-off will flag it clearly as a new colour for
+      Brad to add. Click a colour&rsquo;s <b>name</b> (&#9678;) to flash where it appears on the
+      preview — it will switch screens or open a menu if needed. Switch screens with the tabs on the
+      right. The preview is a working replica of the live POS in its default dark theme.</p>
+
+    <div id="fields"></div>
+
+    <div class="actions">
+      <button id="save">Save colours</button>
+      <button id="revert">Revert to saved</button>
+    </div>
+    <div style="margin-bottom:2px"><button class="linkish" id="reset">Reset to current app colours</button></div>
+    <p class="status" id="status"></p>
+
+    <div class="group">
+      <h2>Hand-off</h2>
+      <p class="sub" style="margin-bottom:4px">These are your current choices. Press Copy and send the
+        text to Brad, or paste a set in and press Load.</p>
+      <textarea class="exchange" id="exchange" spellcheck="false"></textarea>
+      <div class="actions" style="margin:7px 0 0">
+        <button id="copy">Copy</button>
+        <button id="load">Load pasted</button>
+      </div>
+    </div>
+
+    <table class="contrast">
+      <thead><tr><th>Contrast check</th><th></th><th></th></tr></thead>
+      <tbody id="contrast"></tbody>
+    </table>
+    </div>
+  </aside>
+
+  <main class="preview">
+    <div class="bar">
+      <div class="screens" id="screens">
+        <button data-s="login">Login</button>
+        <button data-s="home" class="on">Home</button>
+        <button data-s="sell">Sell</button>
+        <button data-s="orders">Orders</button>
+        <button data-s="reports">Reports</button>
+      </div>
+      <div class="spacer"></div>
+      <div class="modeToggle" id="railToggleWrap">
+        <button id="railToggle">Collapse sidebar</button>
+      </div>
+    </div>
+
+    <div class="frame" id="frame" data-screen="home">
+      <!-- SIDEBAR -->
+      <aside class="side">
+        <div class="logo"><img src="https://cdn.heavypourwine.com/DarkMode/HPW-Logo-With-Glass.svg" alt="Heavy Pour Wine"></div>
+        <nav id="nav"></nav>
+        <div class="navfoot" id="navfoot"></div>
+      </aside>
+
+      <!-- MAIN -->
+      <div class="main">
+        <div class="topbar">
+          <button class="burger" id="burger"><span></span></button>
+          <div class="wmark">
+            <div class="disc">LOGO</div>
+            <div><div class="wn">JENSEN FAMILY WINERY</div><div class="ws">Dio Jensen · Cashier</div></div>
+          </div>
+          <div class="search">
+            <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+            Search&hellip;
+          </div>
+          <span class="pill ok"><span class="dot"></span>Online</span>
+          <span class="pill ok"><span class="dot"></span>Terminal Sim</span>
+          <div class="tbicon"><svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v5h-5"/></svg><span class="badge">1</span></div>
+          <div class="tbicon"><svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg><span class="badge">15</span></div>
+          <div class="tbicon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-2.7 1.1V21a2 2 0 0 1-4 0v-.1A1.6 1.6 0 0 0 6.6 19a1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0-1.1-2.7H1a2 2 0 0 1 0-4h.1A1.6 1.6 0 0 0 2.6 6.6a1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H7a1.6 1.6 0 0 0 1-1.5V1a2 2 0 0 1 4 0v.1a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V7a1.6 1.6 0 0 0 1.5 1H21a2 2 0 0 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1Z"/></svg></div>
+          <div class="avatar">DJ</div>
+        </div>
+
+        <div class="content">
+
+          <!-- HOME -->
+          <div class="screen" id="s-home">
+            <h1 class="h1">Welcome back, Dio!</h1>
+            <p class="sub">Saturday, July 25, 2026 · Today vs. yesterday</p>
+            <div class="kpis">
+              <div class="card kpi"><div class="rowtitle" style="margin-bottom:12px"><h3>Quick actions</h3><a>Customize</a></div>
+                <div class="quick">
+                  <div class="qa"><div class="qd"><svg viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.7 13.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L23 6H6"/></svg></div><div class="ql">Open POS</div></div>
+                  <div class="qa"><div class="qd"><svg viewBox="0 0 24 24"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4"/><path d="M19 8v6M22 11h-6"/></svg></div><div class="ql">New Customer</div></div>
+                  <div class="qa"><div class="qd"><svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 15l3-4 3 2 4-6"/></svg></div><div class="ql">Daily Report</div></div>
+                  <div class="qa"><div class="qd"><svg viewBox="0 0 24 24"><path d="M12 3l1.9 5.8H20l-4.9 3.6 1.9 5.8L12 14.6 7 18.2l1.9-5.8L4 8.8h6.1z"/></svg></div><div class="ql">Ask AI</div></div>
+                </div>
+              </div>
+              <div class="card kpi"><div class="kl">Net sales today</div><div class="kv">$341.48</div><div class="kfoot">▼ 50% vs yesterday</div></div>
+              <div class="card kpi"><div class="kl">Orders today</div><div class="kv">2</div><div class="kfoot">▼ 2 vs yesterday</div></div>
+              <div class="card kpi"><div class="kl">Average ticket</div><div class="kv">$170.74</div><div class="kfoot">Tips&nbsp;&nbsp;$29.00</div></div>
+            </div>
+
+            <div class="grid" style="grid-template-columns:1.4fr 1fr; margin-top:16px">
+              <div class="card">
+                <div class="rowtitle"><h3>Sales today by hour</h3><span style="font-size:11px;color:var(--muted)">2PM to 2PM</span></div>
+                <div class="chartbox"><i style="height:24%"></i><i style="height:40%"></i><i style="height:30%"></i><i style="height:64%"></i><i style="height:48%"></i><i style="height:80%"></i><i style="height:38%"></i><i style="height:56%"></i></div>
+              </div>
+              <div class="card">
+                <div class="rowtitle" style="margin-bottom:8px"><h3>Wine club this week</h3></div>
+                <div class="lrow"><span class="rk">Active Members</span><b>320</b></div>
+                <div class="lrow"><span class="rk">New signups</span><b>+0</b></div>
+                <div class="lrow"><span class="rk">Cancellations</span><b>-0</b></div>
+                <div class="lrow"><span class="rk">Card declines</span><b>0</b></div>
+              </div>
+            </div>
+
+            <div class="grid" style="grid-template-columns:repeat(3,1fr); margin-top:16px">
+              <div class="card"><div class="rowtitle" style="margin-bottom:8px"><h3>Today's top employees</h3></div><div class="lrow"><span>E2E Test</span><b>$341.48</b></div></div>
+              <div class="card"><div class="rowtitle" style="margin-bottom:8px"><h3>Top sellers today</h3></div><div class="lrow"><span>2023 Reserve Cabernet</span><span class="rk">2 bottles</span></div></div>
+              <div class="card"><div class="rowtitle" style="margin-bottom:8px"><h3>Needs attention</h3></div><div class="lrow"><span>Pick up orders 7+ days</span><b>3</b></div></div>
+            </div>
+          </div>
+
+          <!-- SELL -->
+          <div class="screen" id="s-sell">
+            <div class="sellwrap">
+              <div class="sellmain">
+                <div class="counter"><b>Counter 1</b> · Tasting Room · 4:44 PM</div>
+                <div class="cats">
+                  <span class="cat on">All</span><span class="cat">Red Wine</span><span class="cat">White Wine</span>
+                  <span class="cat">Provisions</span><span class="cat">Tasting Fee</span><span class="cat">Gift Card</span><span class="cat">Sparkling</span>
+                </div>
+                <div class="prodsearch"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>Search products</div>
+                <div class="prods">
+                  <div class="prod red"><div class="pn">2023 Reserve Cabernet</div><div class="pp">$145.00</div></div>
+                  <div class="prod white"><div class="pn">2024 Sauvignon Blanc — 3-Pack</div><div class="pp">$72.00</div></div>
+                  <div class="prod other"><div class="pn">Aged Balsamic Vinegar</div><div class="pp">$28.00</div></div>
+                  <div class="prod other"><div class="pn">Cave Tour &amp; Tasting</div><div class="pp">$65.00</div></div>
+                  <div class="prod other"><div class="pn">Classic Tasting</div><div class="pp">$25.00</div></div>
+                  <div class="prod other"><div class="pn">Gift Card $25</div><div class="pp">$25.00</div></div>
+                  <div class="prod spark"><div class="pn">Blanc de Blancs</div><div class="pp">$72.00</div></div>
+                  <div class="prod spark"><div class="pn">Brut</div><div class="pp">$55.00</div></div>
+                  <div class="prod red"><div class="pn">Cabernet Sauvignon Black Label</div><div class="pp">$166.50</div></div>
+                  <div class="prod white"><div class="pn">Chardonnay Napa Valley</div><div class="pp">$48.00</div></div>
+                  <div class="prod white"><div class="pn">Chardonnay Sonoma County</div><div class="pp">$62.00</div></div>
+                  <div class="prod red"><div class="pn">Right Bank Blend</div><div class="pp">$191.50</div></div>
+                </div>
+              </div>
+              <div class="cartwrap">
+                <div class="cartspine">
+                  <div class="spinetile on">Cart 1</div>
+                  <div class="spineadd">+ Add Cart</div>
+                </div>
+                <div class="cart">
+                  <div class="ct">Cart 1</div>
+                  <div class="cbtn"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4"/><path d="M19 8v6M22 11h-6"/></svg>Add New Customer</div>
+                  <div class="csearch"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:8px"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>Search Customer by Name, Phone, Email&hellip;</div>
+                  <div class="citems">
+                    <div class="citem"><div class="top"><span>2023 Reserve Cabernet</span><span>$145.00</span></div>
+                      <div class="ctl"><div class="seg"><span class="a">Carry-out</span><span class="b">Ship</span></div><div class="qty"><b>−</b>1<b>+</b></div></div></div>
+                    <div class="citem"><div class="top"><span>Brut</span><span>$55.00</span></div>
+                      <div class="ctl"><div class="seg"><span class="a">Carry-out</span><span class="b">Ship</span></div><div class="qty"><b>−</b>1<b>+</b></div></div></div>
+                  </div>
+                  <div class="ctot">
+                    <div class="tl"><span>SUBTOTAL</span><span>$200.00</span></div>
+                    <div class="tl"><span>TAX (CA TASTING ROOM)</span><span>$15.50</span></div>
+                    <div class="grand"><span>TOTAL</span><span class="amt">$215.50</span></div>
+                    <div class="pay"><button class="disc">Discount</button><button class="charge">Charge $215.50</button></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ORDERS -->
+          <div class="screen" id="s-orders">
+            <h1 class="h1">Orders</h1>
+            <p class="sub">Sales history, fulfillment status, refunds, and order detail.</p>
+            <div class="toolbar">
+              <div class="field grow"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>Search by order # or customer&hellip;</div>
+              <div class="field">Source:&nbsp;<b>All Sources</b>&nbsp;▾</div>
+              <div class="field">Status:&nbsp;<b>All Statuses</b>&nbsp;▾</div>
+              <div class="btnghost"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>Export</div>
+            </div>
+            <p class="countline">Showing <b>1–50</b> of <b>54,025</b> orders · <b>$8,537.00</b> on this page</p>
+            <div class="table" id="ordersTable"></div>
+            <div class="pager"><span>«</span><span>‹</span><span class="on">1</span><span>2</span><span>3</span><span>… of 1,081</span><span>›</span><span>»</span></div>
+          </div>
+
+          <!-- REPORTS -->
+          <div class="screen" id="s-reports">
+            <h1 class="h1">Reports</h1>
+            <p class="sub">Sales, payments, inventory, and wine club performance.</p>
+            <div class="chips">
+              <span class="chip">Today</span><span class="chip">Yesterday</span><span class="chip">Last 7 Days</span>
+              <span class="chip on">Month to Date</span><span class="chip">Last Month</span><span class="chip">Quarter to Date</span>
+              <span class="chip">Last Quarter</span><span class="chip">Year to Date</span><span class="chip">Custom</span>
+            </div>
+            <div class="chips" style="margin-top:0">
+              <span class="chip on">All</span><span class="chip">POS</span><span class="chip">E-Commerce</span><span class="chip">Club</span><span class="chip">Phone</span>
+            </div>
+            <div class="tabs">
+              <span class="tab on">Dashboard</span><span class="tab">Sales: Product</span><span class="tab">Sales: Category</span>
+              <span class="tab">Sales: Employee</span><span class="tab">Sales: Time</span><span class="tab">Payments</span>
+              <span class="tab">Discounts &amp; Refunds</span><span class="tab">Tax</span><span class="tab">Order Status</span>
+            </div>
+            <div class="repkpis">
+              <div class="repkpi"><div class="rl">Gross sales</div><div class="rv">$16.7K</div><div class="rd down">▼ -93.1%</div></div>
+              <div class="repkpi"><div class="rl">Orders</div><div class="rv">99</div><div class="rd down">▼ -93.7%</div></div>
+              <div class="repkpi"><div class="rl">Net sales</div><div class="rv">$16.6K</div></div>
+              <div class="repkpi"><div class="rl">Avg order</div><div class="rv">$168.2</div></div>
+              <div class="repkpi"><div class="rl">Tax</div><div class="rv">$1.1K</div></div>
+              <div class="repkpi"><div class="rl">Tips</div><div class="rv">$1.3K</div></div>
+            </div>
+            <div class="repkpis rk2">
+              <div class="repkpi"><div class="rl">Refunds</div><div class="rv">$0</div></div>
+              <div class="repkpi"><div class="rl">Discounts</div><div class="rv">$14</div></div>
+              <div class="repkpi"><div class="rl">Projected annual</div><div class="rv">$243.1K</div><div class="rd" style="color:var(--muted)">Annualized estimate</div></div>
+              <div class="repkpi"><div class="rl">Club signups</div><div class="rv">0</div></div>
+              <div class="repkpi"><div class="rl">Club cancellations</div><div class="rv">0</div></div>
+            </div>
+
+            <div class="trendcard">
+              <h3>Revenue Trend</h3>
+              <svg class="trendchart" viewBox="0 0 600 190" preserveAspectRatio="none">
+                <polygon class="trendarea" points="0,150 50,146 100,150 150,138 200,120 250,96 300,58 340,40 380,72 430,118 470,104 520,150 560,150 600,96 600,190 0,190"/>
+                <polyline class="trendline" points="0,150 50,146 100,150 150,138 200,120 250,96 300,58 340,40 380,72 430,118 470,104 520,150 560,150 600,96"/>
+              </svg>
+            </div>
+
+            <div class="rtable">
+              <h3>Top Products</h3>
+              <div class="rr head"><span>Product</span><span>SKU</span><span class="num">Qty</span><span class="num">Revenue</span></div>
+              <div class="rr"><span>2023 Reserve Cabernet</span><span>—</span><span class="num">97</span><span class="num">$14,065.00</span></div>
+              <div class="rr"><span>2024 Sauvignon Blanc - 3-Pack</span><span>—</span><span class="num">1</span><span class="num">$72.00</span></div>
+              <div class="rr"><span>Cave Tour &amp; Tasting</span><span>—</span><span class="num">1</span><span class="num">$65.00</span></div>
+              <div class="rr"><span>Aged Balsamic Vinegar</span><span>—</span><span class="num">1</span><span class="num">$28.00</span></div>
+            </div>
+          </div>
+
+        </div><!-- /content -->
+      </div><!-- /main -->
+
+      <!-- LOGIN (replaces shell) -->
+      <div class="screen" id="s-login">
+        <div class="logincol">
+          <img src="https://cdn.heavypourwine.com/DarkMode/HPW-Logo-With-Glass.svg" alt="Heavy Pour Wine">
+          <div>
+            <div class="pinh">Enter Your Personal PIN</div>
+            <div class="dots"><i class="on"></i><i class="on"></i><i></i><i></i></div>
+            <div class="keypad">
+              <div class="key">1</div><div class="key">2</div><div class="key">3</div>
+              <div class="key">4</div><div class="key">5</div><div class="key">6</div>
+              <div class="key">7</div><div class="key">8</div><div class="key">9</div>
+              <div class="key blank"></div><div class="key">0</div>
+              <div class="key"><svg viewBox="0 0 24 24"><path d="M21 5H8l-5 7 5 7h13a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2Z"/><path d="m10 9 4 6"/><path d="m14 9-4 6"/></svg></div>
+            </div>
+          </div>
+          <a class="loginlink">Manager / Owner login ›</a>
+        </div>
+      </div>
+
+    </div><!-- /frame -->
+  </main>
+</div>
+
+<!-- palette popover -->
+<div class="pop" id="pop">
+  <h3 id="popTitle">Choose a colour</h3>
+  <p>Click any swatch from the Heavy Pour palette.</p>
+  <div class="swatches" id="swatches"></div>
+  <div class="popfoot">
+    <p class="cur" id="popCur"></p>
+    <div class="ovr">
+      <input type="text" id="ovrHex" placeholder="#hex — colour NOT in the palette" spellcheck="false">
+      <button id="ovrApply">Override</button>
+    </div>
+    <p class="ovrnote">Use Override only if the palette has nothing close. Your hand-off will mark it as a
+      new colour Brad must add to the palette.</p>
+  </div>
+</div>
+
+<script>
+/* ===========================================================================
+   Heavy Pour — POS colour lab
+   Palette-constrained: every role is assigned a swatch from the existing
+   design-system palette (96 distinct colours pulled from globals.css @theme).
+   An out-of-palette value is only possible through the explicit Override
+   affordance, and is flagged as such in the hand-off text.
+   =========================================================================== */
+(function () {
+  var STORE = 'hpwPosColorLab';
+
+  /* ---- the existing HPW palette (name → hex), from globals.css @theme ---- */
+  var PALETTE = [
+    {hex:"#e6e6e6",name:"background-light"},{hex:"#8e8e8e",name:"background-dark"},
+    {hex:"#444443",name:"foreground-light"},{hex:"#ffffff",name:"foreground-dark"},
+    {hex:"#b75c11",name:"accent"},{hex:"#727272",name:"surface-dark"},
+    {hex:"#c0392b",name:"danger"},{hex:"#4d0808",name:"danger-strong-dark"},
+    {hex:"#4caf7d",name:"success"},{hex:"#1b6b44",name:"success-strong-light"},
+    {hex:"#062915",name:"success-strong-dark"},{hex:"#c05252",name:"danger-trend"},
+    {hex:"#79010f",name:"wordmark-burgundy"},{hex:"#a79f90",name:"logo-tan"},
+    {hex:"#d0e5cc",name:"status-online-fill"},{hex:"#576d26",name:"status-online-text"},
+    {hex:"#ead6d9",name:"status-offline-fill"},{hex:"#933444",name:"status-offline-text"},
+    {hex:"#e6e4e1",name:"status-unknown-fill"},{hex:"#5c5b58",name:"status-unknown-text"},
+    {hex:"#ead9ce",name:"orange-extra-light"},{hex:"#f7e9e2",name:"orange-extra-extra-light"},
+    {hex:"#846a63",name:"orange-greyish-dark"},{hex:"#938580",name:"orange-greyish-light"},
+    {hex:"#f8f8f8",name:"chart-plot-light"},{hex:"#dddbb6",name:"avatar-butter"},
+    {hex:"#dcbcdd",name:"avatar-blush"},{hex:"#bfcfdd",name:"avatar-sky"},
+    {hex:"#7c7c63",name:"avatar-text-butter"},{hex:"#7a627a",name:"avatar-text-blush"},
+    {hex:"#616c77",name:"avatar-text-sky"},{hex:"#e0c1ad",name:"pill-primary-light"},
+    {hex:"#dcdcdc",name:"button-ring-dark"},{hex:"#f2f0df",name:"wine-sparkling-light"},
+    {hex:"#a8a791",name:"wine-sparkling-dark"},{hex:"#e5d0cc",name:"wine-rose-light"},
+    {hex:"#967977",name:"wine-rose-dark"},{hex:"#e2d6c3",name:"wine-white-light"},
+    {hex:"#847669",name:"wine-white-dark"},{hex:"#b7a3a3",name:"wine-red-light"},
+    {hex:"#5b4141",name:"wine-red-dark"},{hex:"#d1863b",name:"checkout-orange"},
+    {hex:"#e5a87a",name:"orange-type-dark"},{hex:"#bababa",name:"grey-bababa"},
+    {hex:"#f4f2d9",name:"tender-account-bg"},{hex:"#dfebf4",name:"tender-card-bg"},
+    {hex:"#8e4f8c",name:"tender-in-person-dark"},{hex:"#708e4f",name:"tender-account-dark"},
+    {hex:"#43779b",name:"tender-card-dark"},{hex:"#737373",name:"tender-modal-bg-dark"},
+    {hex:"#fae8e1",name:"payment-in-person-light"},{hex:"#984b8f",name:"payment-in-person-dark"},
+    {hex:"#cbe6ca",name:"payment-balances-light"},{hex:"#688f46",name:"payment-balances-dark"},
+    {hex:"#dcebf5",name:"payment-on-file-light"},{hex:"#2e799f",name:"payment-on-file-dark"},
+    {hex:"#f4f2d6",name:"payment-split-light"},{hex:"#96847f",name:"payment-split-dark"},
+    {hex:"#c55500",name:"payment-label-in-person"},{hex:"#516e15",name:"payment-label-balances"},
+    {hex:"#5e6c78",name:"payment-label-on-file"},{hex:"#7c7c60",name:"payment-label-split"},
+    {hex:"#eed8cc",name:"payment-tile-bg-dark"},{hex:"#f0a572",name:"payment-default-pill-dark"},
+    {hex:"#896962",name:"quick-add-section-dark"},{hex:"#d44c00",name:"quick-add-checkbox"},
+    {hex:"#dedede",name:"onb-sidebar"},{hex:"#e4dad2",name:"onb-chip"},
+    {hex:"#d3bdab",name:"onb-active-step"},{hex:"#303030",name:"onb-border"},
+    {hex:"#000000",name:"onb-text"},{hex:"#1c1c1c",name:"onb-muted"},
+    {hex:"#549254",name:"onb-step-done"},{hex:"#a40e1a",name:"onb-burgundy"},
+    {hex:"#f2dcdf",name:"tone-wine-bg"},{hex:"#f6e8c4",name:"tone-butter-bg"},
+    {hex:"#876d1a",name:"tone-butter-fg"},{hex:"#dde6f5",name:"tone-email-bg"},
+    {hex:"#2a4f8c",name:"tone-email-fg"},{hex:"#d4ebd9",name:"tone-sms-bg"},
+    {hex:"#2c6f3a",name:"tone-sms-fg"},{hex:"#e1e6ed",name:"tone-payments-bg"},
+    {hex:"#364a63",name:"tone-payments-fg"},{hex:"#e4dbef",name:"tone-club-bg"},
+    {hex:"#4e2e7a",name:"tone-club-fg"},{hex:"#ecd9dd",name:"tone-allocation-bg"},
+    {hex:"#6b2030",name:"tone-allocation-fg"},{hex:"#d7ebe9",name:"tone-reservations-bg"},
+    {hex:"#1f5e58",name:"tone-reservations-fg"},{hex:"#f7e0c3",name:"tone-events-bg"},
+    {hex:"#8b4a14",name:"tone-events-fg"},{hex:"#e3e3e3",name:"tone-engagement-bg"},
+    {hex:"#555555",name:"tone-engagement-fg"},{hex:"#e9e6e1",name:"tone-profile-bg"},
+    {hex:"#f3e3a8",name:"tone-gold-bg"},{hex:"#7a5a0a",name:"tone-gold-fg"}
+  ];
+
+  /* name lookups; sort the swatch grid by hue then lightness so like colours sit together */
+  var BY_HEX = {};
+  PALETTE.forEach(function (p) { BY_HEX[p.hex.toLowerCase()] = p.name; });
+
+  function hsl(hex) {
+    var r = parseInt(hex.substr(1,2),16)/255, g = parseInt(hex.substr(3,2),16)/255, b = parseInt(hex.substr(5,2),16)/255;
+    var mx = Math.max(r,g,b), mn = Math.min(r,g,b), h = 0, s = 0, l = (mx+mn)/2, d = mx-mn;
+    if (d) { s = l>0.5 ? d/(2-mx-mn) : d/(mx+mn);
+      h = mx===r ? (g-b)/d+(g<b?6:0) : mx===g ? (b-r)/d+2 : (r-g)/d+4; h*=60; }
+    return { h: s<0.08 ? -1 : h, s: s, l: l };
+  }
+  var PSORT = PALETTE.slice().sort(function (a,b) {
+    var A = hsl(a.hex), B = hsl(b.hex);
+    if (A.h !== B.h) return A.h - B.h;
+    return A.l - B.l;
+  });
+
+  /* ---- roles = the surfaces the five screens paint with (dark-mode defaults) ---- */
+  var GROUPS = [
+    { title:'App shell', roles:[
+      { key:'canvas', label:'App background', def:'#727272' },
+      { key:'panel',  label:'Panels — sidebar, top bar, cards', def:'#8e8e8e' }
+    ]},
+    { title:'Text', roles:[
+      { key:'text', label:'Primary text (muted text is 70% of this)', def:'#ffffff' }
+    ]},
+    { title:'Accent & buttons', roles:[
+      { key:'accent',     label:'Orange accent — links, totals, active', def:'#b75c11' },
+      { key:'cta',        label:'Charge / primary button fill', def:'#d1863b' },
+      { key:'ctaText',    label:'Primary button text', def:'#ffffff' },
+      { key:'surface',    label:'Keypad & input fields', def:'#727272' },
+      { key:'buttonRing', label:'Keypad ring & PIN dots', def:'#dcdcdc' }
+    ]},
+    { title:'Navigation', roles:[
+      { key:'navActive', label:'Active nav item fill', def:'#846a63' }
+    ]},
+    { title:'Status pills', roles:[
+      { key:'paidFill',    label:'Paid / online — fill', def:'#d0e5cc' },
+      { key:'paidText',    label:'Paid / online — text', def:'#576d26' },
+      { key:'fulfillFill', label:'Needs-fulfillment — fill', def:'#ead9ce' },
+      { key:'fulfillText', label:'Needs-fulfillment — text', def:'#846a63' }
+    ]},
+    { title:'Wine category cards (Sell)', roles:[
+      { key:'wineRed',       label:'Red wine card', def:'#5b4141' },
+      { key:'wineWhite',     label:'White wine card', def:'#847669' },
+      { key:'wineSparkling', label:'Sparkling card', def:'#a8a791' },
+      { key:'wineRose',      label:'Rosé card', def:'#967977' }
+    ]},
+    { title:'Brand — logo asset (reference only)', roles:[
+      { key:'burgundy', label:'Wordmark burgundy (the logo is a fixed SVG)', def:'#79010f' }
+    ]}
+  ];
+
+  var ROLES = [];
+  GROUPS.forEach(function (g) { g.roles.forEach(function (r) { ROLES.push(r); }); });
+  var ROLE_BY_KEY = {};
+  ROLES.forEach(function (r) { ROLE_BY_KEY[r.key] = r; });
+
+  /* current chosen value per role */
+  var chosen = {};
+  ROLES.forEach(function (r) { chosen[r.key] = r.def; });
+
+  /* ---- WCAG pairs worth watching ---- */
+  var PAIRS = [
+    ['text','panel','Text on panels'],
+    ['text','canvas','Text on app background'],
+    ['accent','panel','Orange on panels'],
+    ['ctaText','cta','Button text on fill'],
+    ['paidText','paidFill','Paid pill'],
+    ['fulfillText','fulfillFill','Needs-fulfillment pill'],
+    ['text','wineRed','Text on red card'],
+    ['text','navActive','Text on active nav']
+  ];
+
+  var fieldsEl = document.getElementById('fields');
+  var statusEl = document.getElementById('status');
+  var contrastEl = document.getElementById('contrast');
+  var exchangeEl = document.getElementById('exchange');
+
+  function normalize(v) {
+    if (!v) return null;
+    var s = v.trim().toLowerCase();
+    if (s.charAt(0) !== '#') s = '#' + s;
+    if (/^#[0-9a-f]{3}$/.test(s)) s = '#'+s[1]+s[1]+s[2]+s[2]+s[3]+s[3];
+    return /^#[0-9a-f]{6}$/.test(s) ? s : null;
+  }
+  function paletteName(hex) { return BY_HEX[hex] || null; }
+  function inPalette(hex) { return !!BY_HEX[hex]; }
+
+  /* ---- build the control rows ---- */
+  GROUPS.forEach(function (g) {
+    var wrap = document.createElement('div');
+    wrap.className = 'group';
+    var h = document.createElement('h2'); h.textContent = g.title; wrap.appendChild(h);
+    g.roles.forEach(function (r) {
+      var row = document.createElement('div'); row.className = 'row';
+      var lab = document.createElement('div'); lab.className = 'rlabel'; lab.textContent = r.label;
+      lab.title = 'Find this colour on the preview';
+      lab.addEventListener('click', function () { locate(r.key); });
+      var btn = document.createElement('button');
+      btn.type = 'button'; btn.className = 'pick'; btn.id = 'pick-' + r.key;
+      btn.addEventListener('click', function (e) { openPop(r.key, btn); e.stopPropagation(); });
+      row.appendChild(lab); row.appendChild(btn);
+      wrap.appendChild(row);
+    });
+    fieldsEl.appendChild(wrap);
+  });
+
+  function refreshPick(key) {
+    var btn = document.getElementById('pick-' + key);
+    var hex = chosen[key];
+    var name = paletteName(hex);
+    btn.className = 'pick' + (name ? '' : ' override');
+    btn.innerHTML = '';
+    var sw = document.createElement('span'); sw.className = 'sw'; sw.style.background = hex;
+    var nm = document.createElement('span'); nm.className = 'nm';
+    nm.textContent = name ? name : hex + ' ⚠';
+    btn.title = name ? (name + '  ' + hex) : ('OVERRIDE — ' + hex + ' is not in the palette');
+    btn.appendChild(sw); btn.appendChild(nm);
+  }
+
+  /* ---- paint onto :root so the preview updates ---- */
+  function paint() {
+    var root = document.documentElement;
+    ROLES.forEach(function (r) { root.style.setProperty('--' + r.key, chosen[r.key]); });
+  }
+
+  /* ---- WCAG ---- */
+  function lum(hex) {
+    function ch(c){ c/=255; return c<=0.03928 ? c/12.92 : Math.pow((c+0.055)/1.055,2.4); }
+    return 0.2126*ch(parseInt(hex.substr(1,2),16))+0.7152*ch(parseInt(hex.substr(3,2),16))+0.0722*ch(parseInt(hex.substr(5,2),16));
+  }
+  function ratio(a,b){ var la=lum(a),lb=lum(b); return (Math.max(la,lb)+0.05)/(Math.min(la,lb)+0.05); }
+  function renderContrast() {
+    contrastEl.innerHTML = '';
+    PAIRS.forEach(function (p) {
+      var fg = chosen[p[0]], bg = chosen[p[1]];
+      if (!fg || !bg) return;
+      var r = ratio(fg,bg), cls = r>=4.5?'pass':(r>=3?'warn':'fail'), v = r>=4.5?'AA':(r>=3?'UI':'fail');
+      var tr = document.createElement('tr');
+      var a = document.createElement('td'); a.textContent = p[2];
+      var b = document.createElement('td'); b.className='n'; b.textContent = r.toFixed(2);
+      var c = document.createElement('td'); c.className='v '+cls; c.textContent = v;
+      tr.appendChild(a); tr.appendChild(b); tr.appendChild(c); contrastEl.appendChild(tr);
+    });
+  }
+
+  /* ---- hand-off text ---- */
+  function two(n){ return (n<10?'0':'')+n; }
+  function pad(s,n){ s=String(s); while(s.length<n) s+=' '; return s; }
+  function exportText() {
+    var d = new Date();
+    var stamp = d.getFullYear()+'-'+two(d.getMonth()+1)+'-'+two(d.getDate());
+    var overrides = ROLES.filter(function(r){ return !inPalette(chosen[r.key]); });
+    var lines = ['# Heavy Pour — POS colour set (dark theme)','# saved '+stamp, ''];
+    if (overrides.length) {
+      lines.push('# ⚠ '+overrides.length+' OVERRIDE(S) BELOW ARE NOT IN THE HPW PALETTE.');
+      lines.push('#   Brad: these are new colours the designer is asking to add.');
+      lines.push('');
+    }
+    GROUPS.forEach(function (g) {
+      lines.push('# '+g.title);
+      g.roles.forEach(function (r) {
+        var hex = chosen[r.key], name = paletteName(hex);
+        var tail = name ? name : '⚠ OVERRIDE — NOT IN PALETTE, please add';
+        lines.push(pad(r.key,13)+pad(hex,10)+tail);
+      });
+      lines.push('');
+    });
+    return lines.join('\n').replace(/\n+$/,'\n');
+  }
+  function refreshExchange() { exchangeEl.value = exportText(); }
+
+  /* ---- import: "key #hex ..." lines; unknown hexes become flagged overrides ---- */
+  function importText(text) {
+    var found = {}, count = 0;
+    text.split(/\r?\n/).forEach(function (line) {
+      var m = line.match(/^\s*([A-Za-z][A-Za-z0-9]*)\s+(#?[0-9a-fA-F]{3,6})\b/);
+      if (!m || !ROLE_BY_KEY[m[1]]) return;
+      var n = normalize(m[2]); if (!n) return;
+      found[m[1]] = n; count++;
+    });
+    return { values: found, count: count };
+  }
+
+  function apply(quiet) {
+    ROLES.forEach(function (r) { refreshPick(r.key); });
+    paint(); renderContrast(); refreshExchange();
+    if (!quiet) say('Applied.');
+  }
+  function say(msg, err) { statusEl.textContent = msg; statusEl.className = 'status' + (err?' err':''); }
+
+  /* ---- persistence ---- */
+  function saveSet() { try { window.localStorage.setItem(STORE, JSON.stringify(chosen)); return true; } catch(e){ return false; } }
+  function loadSet() { try { var r = window.localStorage.getItem(STORE); return r?JSON.parse(r):null; } catch(e){ return null; } }
+
+  /* ---- palette popover ---- */
+  var pop = document.getElementById('pop');
+  var swatchesEl = document.getElementById('swatches');
+  var popTitle = document.getElementById('popTitle');
+  var popCur = document.getElementById('popCur');
+  var ovrHex = document.getElementById('ovrHex');
+  var activeKey = null;
+
+  PSORT.forEach(function (p) {
+    var b = document.createElement('button');
+    b.style.background = p.hex; b.title = p.name + '  ' + p.hex;
+    b.setAttribute('data-hex', p.hex);
+    b.addEventListener('click', function (e) {
+      e.stopPropagation();
+      chosen[activeKey] = p.hex;
+      afterChoose();
+    });
+    swatchesEl.appendChild(b);
+  });
+
+  function openPop(key, btn) {
+    activeKey = key;
+    popTitle.textContent = 'Colour for “' + ROLE_BY_KEY[key].label + '”';
+    var cur = chosen[key], nm = paletteName(cur);
+    popCur.textContent = 'Current: ' + cur + (nm ? '  ('+nm+')' : '  (⚠ override — not in palette)');
+    ovrHex.value = ''; ovrHex.classList.remove('bad');
+    // mark the selected swatch
+    Array.prototype.forEach.call(swatchesEl.children, function (c) {
+      c.className = c.getAttribute('data-hex') === cur ? 'sel' : '';
+    });
+    pop.classList.add('on');
+    var rect = btn.getBoundingClientRect();
+    var top = Math.min(rect.top, window.innerHeight - pop.offsetHeight - 12);
+    pop.style.top = Math.max(12, top) + 'px';
+    pop.style.left = Math.min(rect.right + 10, window.innerWidth - pop.offsetWidth - 12) + 'px';
+  }
+  function closePop() { pop.classList.remove('on'); activeKey = null; }
+  function afterChoose() {
+    refreshPick(activeKey); paint(); renderContrast(); refreshExchange();
+    say('Set “' + ROLE_BY_KEY[activeKey].label + '”.');
+    closePop();
+  }
+
+  document.getElementById('ovrApply').addEventListener('click', function (e) {
+    e.stopPropagation();
+    var n = normalize(ovrHex.value);
+    if (!n) { ovrHex.classList.add('bad'); return; }
+    chosen[activeKey] = n;
+    afterChoose();
+  });
+  ovrHex.addEventListener('keydown', function (e) { if (e.key === 'Enter') document.getElementById('ovrApply').click(); });
+  pop.addEventListener('click', function (e) { e.stopPropagation(); });
+  document.addEventListener('click', function () { if (pop.classList.contains('on')) closePop(); });
+
+  /* ---- action buttons ---- */
+  document.getElementById('save').addEventListener('click', function () {
+    say(saveSet() ? 'Saved to this browser.' : 'Could not save here. Copy the text instead.', !saveSet());
+  });
+  document.getElementById('revert').addEventListener('click', function () {
+    var m = loadSet(); if (!m) { say('Nothing saved yet.', true); return; }
+    ROLES.forEach(function (r) { chosen[r.key] = normalize(m[r.key]) || r.def; });
+    apply(true); say('Reverted to saved colours.');
+  });
+  document.getElementById('reset').addEventListener('click', function () {
+    ROLES.forEach(function (r) { chosen[r.key] = r.def; });
+    apply(true); say('Reset to the current app colours. Not saved.');
+  });
+  document.getElementById('copy').addEventListener('click', function () {
+    exchangeEl.focus(); exchangeEl.select();
+    var done = false; try { done = document.execCommand('copy'); } catch(e){}
+    if (done) { say('Copied. Paste it into a message to Brad.'); return; }
+    if (navigator.clipboard) { navigator.clipboard.writeText(exchangeEl.value).then(
+      function(){ say('Copied. Paste it into a message to Brad.'); },
+      function(){ say('Copy blocked — text is selected, press Cmd+C.', true); }); return; }
+    say('Copy blocked — text is selected, press Cmd+C.', true);
+  });
+  document.getElementById('load').addEventListener('click', function () {
+    var parsed = importText(exchangeEl.value);
+    if (!parsed.count) { say('No colours found in that text.', true); return; }
+    ROLES.forEach(function (r) { if (parsed.values[r.key]) chosen[r.key] = parsed.values[r.key]; });
+    apply(true);
+    var ovr = ROLES.filter(function(r){ return !inPalette(chosen[r.key]); }).length;
+    say('Loaded ' + parsed.count + ' colours.' + (ovr ? ' ' + ovr + ' are overrides (not in palette).' : ''), ovr>0);
+  });
+
+  /* ---- panel collapse ---- */
+  var controlsEl = document.getElementById('controls');
+  var panelToggle = document.getElementById('panelToggle');
+  var chevEl = panelToggle.querySelector('.chev');
+  panelToggle.addEventListener('click', function () {
+    var collapsed = controlsEl.className.indexOf('collapsed') !== -1;
+    controlsEl.className = collapsed ? 'controls' : 'controls collapsed';
+    chevEl.innerHTML = collapsed ? '&lsaquo;' : '&rsaquo;';
+    panelToggle.setAttribute('title', collapsed ? 'Hide colour lab' : 'Show colour lab');
+  });
+
+  /* ---- screen switching ---- */
+  var frame = document.getElementById('frame');
+  var railToggleWrap = document.getElementById('railToggleWrap');
+  var screensEl = document.getElementById('screens');
+
+  function switchScreen(s) {
+    frame.setAttribute('data-screen', s);
+    Array.prototype.forEach.call(screensEl.children, function (c) {
+      c.className = c.getAttribute('data-s') === s ? 'on' : '';
+    });
+    railToggleWrap.style.display = (s === 'login') ? 'none' : '';
+  }
+  screensEl.addEventListener('click', function (e) {
+    var btn = e.target.closest('button'); if (!btn) return;
+    switchScreen(btn.getAttribute('data-s'));
+  });
+
+  /* ---- sidebar collapse (topbar burger + toolbar button) ---- */
+  function toggleRail() {
+    var collapsed = frame.className.indexOf('railcollapsed') !== -1;
+    frame.className = collapsed ? 'frame' : 'frame railcollapsed';
+    document.getElementById('railToggle').textContent = collapsed ? 'Collapse sidebar' : 'Expand sidebar';
+  }
+  document.getElementById('railToggle').addEventListener('click', toggleRail);
+  document.getElementById('burger').addEventListener('click', toggleRail);
+
+  /* ---- sidebar nav with expandable submenus (matches the live app) ---- */
+  var NAV = [
+    { label:'Home', icon:'M3 11l9-8 9 8M5 10v10h14V10', screen:'home' },
+    { label:'AI Assistant', icon:'M12 3l1.9 5.8H20l-4.9 3.6 1.9 5.8L12 14.6 7 18.2l1.9-5.8L4 8.8h6.1z' },
+    { label:'Point of Sale', icon:'M9 21a1 1 0 1 0 0-2 1 1 0 0 0 0 2Zm11 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2ZM1 1h4l2.7 13.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L23 6H6', screen:'sell',
+      submenu:[{label:'Sell',screen:'sell'},{label:'Open tabs'},{label:'Tasting flights'},{label:'Gift Cards'},{label:'Payment links'},{label:'Cash drawer'},{label:'Refund & voids'},{label:'Settings'}] },
+    { label:'Orders', icon:'M9 3h6v3H9zM6 3h12v18H6z', screen:'orders' },
+    { label:'Customers', icon:'M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z' },
+    { label:'Wine Club', icon:'M8 22h8M12 11v11M5 3h14l-1 6a6 6 0 0 1-12 0z', submenu:[{label:'Club'},{label:'Allocations'},{label:'Members'},{label:'Settings'}] },
+    { label:'Products', icon:'M9 3v6l-3 9a2 2 0 0 0 2 3h8a2 2 0 0 0 2-3l-3-9V3' },
+    { label:'Reservations', icon:'M3 4h18v18H3zM3 9h18M8 2v4M16 2v4', submenu:[{label:'Floor View'},{label:'Bookings'},{label:'Experiences'}] },
+    { label:'Marketing', icon:'M3 11l18-6v14l-18-6zM3 11v5', submenu:[{label:'Campaigns'},{label:'Automations'},{label:'Segments'},{label:'Templates'},{label:'Reports'},{label:'Settings'}] },
+    { label:'Reports', icon:'M3 3v18h18M7 15l3-4 3 2 4-6', screen:'reports' },
+    { label:'Website', icon:'M4 9h16M4 21V9l8-6 8 6v12z', submenu:[{label:'Content'},{label:'Brand'},{label:'SEO'},{label:'Settings'}] },
+    { label:'Compliance', icon:'M9 3h6v3H9zM6 3h12v18H6zM9 12l2 2 4-4', submenu:[{label:'Reporting'},{label:'Tax Reporting'},{label:'Settings'},{label:'Integrations'}] }
+  ];
+  var SCREEN_PARENT = { home:'Home', sell:'Point of Sale', orders:'Orders', reports:'Reports' };
+  var navEl = document.getElementById('nav');
+
+  function closeAllSubmenus() {
+    Array.prototype.forEach.call(navEl.querySelectorAll('.submenu.open'), function (o) { o.className = 'submenu'; });
+    Array.prototype.forEach.call(navEl.querySelectorAll('.navitem.open'), function (o) { o.classList.remove('open'); });
+  }
+  function openSubmenu(label) {
+    var sub = navEl.querySelector('.submenu[data-sub="' + label + '"]');
+    var it = navEl.querySelector('.navitem[data-name="' + label + '"]');
+    if (sub && sub.className.indexOf('open') === -1) {
+      closeAllSubmenus(); sub.className = 'submenu open'; if (it) it.classList.add('open');
+    }
+  }
+
+  NAV.forEach(function (n) {
+    var it = document.createElement('div'); it.className = 'navitem'; it.setAttribute('data-name', n.label);
+    it.innerHTML = '<svg viewBox="0 0 24 24"><path d="' + n.icon + '"/></svg><span class="lbl">' + n.label + '</span>' +
+                   (n.submenu ? '<span class="chev">&rsaquo;</span>' : '');
+    navEl.appendChild(it);
+
+    var sub = null;
+    if (n.submenu) {
+      sub = document.createElement('div'); sub.className = 'submenu'; sub.setAttribute('data-sub', n.label);
+      n.submenu.forEach(function (s) {
+        var si = document.createElement('div'); si.className = 'subitem'; si.textContent = s.label;
+        si.setAttribute('data-sublabel', s.label);
+        if (s.screen) { si.addEventListener('click', function (e) { e.stopPropagation(); switchScreen(s.screen); }); }
+        sub.appendChild(si);
+      });
+      navEl.appendChild(sub);
+    }
+
+    it.addEventListener('click', function () {
+      if (n.submenu) {
+        var wasOpen = sub.className.indexOf('open') !== -1;
+        closeAllSubmenus();
+        if (!wasOpen) { sub.className = 'submenu open'; it.classList.add('open'); }
+      }
+      if (n.screen) switchScreen(n.screen);
+    });
+  });
+
+  var footEl = document.getElementById('navfoot');
+  [['Settings','M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z'],['Log Out','M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9']].forEach(function (n) {
+    var it = document.createElement('div'); it.className = 'navitem';
+    it.innerHTML = '<svg viewBox="0 0 24 24"><path d="' + n[1] + '"/></svg><span class="lbl">' + n[0] + '</span>';
+    footEl.appendChild(it);
+  });
+
+  function highlightNav() {
+    var cur = frame.getAttribute('data-screen');
+    var want = SCREEN_PARENT[cur];
+    Array.prototype.forEach.call(navEl.querySelectorAll('.navitem'), function (el) {
+      el.classList.toggle('active', el.getAttribute('data-name') === want);
+    });
+    Array.prototype.forEach.call(navEl.querySelectorAll('.subitem'), function (si) {
+      si.classList.toggle('active', cur === 'sell' && si.getAttribute('data-sublabel') === 'Sell');
+    });
+  }
+  new MutationObserver(highlightNav).observe(frame, { attributes:true, attributeFilter:['data-screen'] });
+
+  /* ---- locate: flash where a role's colour appears; switch screen / open menu if needed ---- */
+  var SCREEN_LABEL = { home:'Home', sell:'Sell', orders:'Orders', reports:'Reports', login:'Login' };
+  var APP_SCREENS = { home:1, sell:1, orders:1, reports:1 };
+  var LOCATE = {
+    canvas:        { screen:'app',    sel:'.main' },
+    panel:         { screen:'app',    sel:'.topbar, .side, .card, .sellmain, .table, .repkpi, .trendcard, .rtable' },
+    text:          { screen:'app',    sel:'.h1, .wmark .wn' },
+    accent:        { screen:'home',   sel:'.chartbox i, .rowtitle a' },
+    cta:           { screen:'sell',   sel:'.ctot .pay .charge, .seg .a' },
+    ctaText:       { screen:'sell',   sel:'.ctot .pay .charge' },
+    surface:       { screen:'login',  sel:'.key' },
+    buttonRing:    { screen:'login',  sel:'.dots i, .key' },
+    navActive:     { screen:'app',    sel:'.navitem.active' },
+    paidFill:      { screen:'orders', sel:'.tpill.paid' },
+    paidText:      { screen:'orders', sel:'.tpill.paid' },
+    fulfillFill:   { screen:'orders', sel:'.tpill.fulfill' },
+    fulfillText:   { screen:'orders', sel:'.tpill.fulfill' },
+    wineRed:       { screen:'sell',   sel:'.prod.red' },
+    wineWhite:     { screen:'sell',   sel:'.prod.white' },
+    wineSparkling: { screen:'sell',   sel:'.prod.spark' },
+    wineRose:      { screen:'sell',   sel:'.prod.rose' },
+    burgundy:      { screen:'none',   note:'it is the fixed logo artwork — the wordmark is a locked SVG, shown for hand-off reference only.' }
+  };
+
+  function locate(key) {
+    var L = LOCATE[key];
+    var name = ROLE_BY_KEY[key] ? ROLE_BY_KEY[key].label : key;
+    if (!L || L.screen === 'none') {
+      say('“' + name + '” isn’t shown on any screen — ' + ((L && L.note) || 'reference only.'));
+      return;
+    }
+    var target = L.screen;
+    if (target === 'app') {
+      var curr = frame.getAttribute('data-screen');
+      target = APP_SCREENS[curr] ? curr : 'home';
+    }
+    if (frame.getAttribute('data-screen') !== target) switchScreen(target);
+    if (L.openSubmenu) openSubmenu(L.openSubmenu);
+    window.setTimeout(function () {
+      var els = frame.querySelectorAll(L.sel);
+      if (!els.length) { say('Couldn’t find that on screen.', true); return; }
+      Array.prototype.forEach.call(els, function (el) { el.classList.add('hpw-locate'); });
+      say('Flashing “' + name + '” on the ' + SCREEN_LABEL[target] + ' screen.');
+      window.setTimeout(function () {
+        Array.prototype.forEach.call(els, function (el) { el.classList.remove('hpw-locate'); });
+      }, 1300);
+    }, 70);
+  }
+
+  /* ---- orders table rows ---- */
+  var ORDERS = [
+    ['#POS1785013932032','Jul 25, 2026 · 2:12 PM','Anna Krishnan','$185.24'],
+    ['#POS1785013919246','Jul 25, 2026 · 2:31 PM','Anna Krishnan','$156.24'],
+    ['#POS1784942912476','Jul 24, 2026 · 6:28 PM','Marcus Lee','$185.24'],
+    ['#POS1784942898171','Jul 24, 2026 · 6:28 PM','Marcus Lee','$156.24'],
+    ['#POS1784911212311','Jul 24, 2026 · 9:40 AM','Priya Shah','$185.24'],
+    ['#POS1784911199219','Jul 24, 2026 · 9:39 AM','Priya Shah','$156.24']
+  ];
+  var ordersTable = document.getElementById('ordersTable');
+  var head = document.createElement('div'); head.className = 'thead';
+  head.innerHTML = '<span>Order #</span><span>Date / Time</span><span>Customer</span><span class="right">Total</span><span>Source</span><span>Status</span><span class="right">Actions</span>';
+  ordersTable.appendChild(head);
+  ORDERS.forEach(function (o) {
+    var init = o[2].split(' ').map(function(w){return w[0];}).join('').slice(0,2);
+    var row = document.createElement('div'); row.className = 'trow';
+    row.innerHTML =
+      '<span class="onum">'+o[0]+'</span>'+
+      '<span>'+o[1]+'</span>'+
+      '<span class="cust"><span class="av">'+init+'</span>'+o[2]+'</span>'+
+      '<span class="right">'+o[3]+'</span>'+
+      '<span><span class="tpill src">POS</span></span>'+
+      '<span><span class="tpill fulfill">Needs fulfillment</span> <span class="tpill paid"><span class="dot"></span>Paid</span></span>'+
+      '<span class="actbtns"><i><svg viewBox="0 0 24 24"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z"/><circle cx="12" cy="12" r="3"/></svg></i>'+
+      '<i><svg viewBox="0 0 24 24"><path d="M4 4h16v14H5.2L4 20z"/></svg></i></span>';
+    ordersTable.appendChild(row);
+  });
+
+  /* ---- boot ---- */
+  var stored = loadSet();
+  if (stored) { ROLES.forEach(function (r) { if (stored[r.key]) chosen[r.key] = normalize(stored[r.key]) || r.def; }); }
+  apply(true); highlightNav();
+  if (stored) say('Loaded your saved colours.');
+})();
+</script>
+</body>
+</html>
