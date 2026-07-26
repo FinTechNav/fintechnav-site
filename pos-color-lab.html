@@ -25,6 +25,8 @@
     --paidFill:#d0e5cc; --paidText:#576d26;
     --fulfillFill:#ead9ce; --fulfillText:#846a63;
     --wineRed:#5b4141; --wineWhite:#847669; --wineSparkling:#a8a791; --wineRose:#967977;
+    --tenderBg:#737373; --tenderAccent:#e5a87a;
+    --payInPerson:#8e4f8c; --payAccount:#708e4f; --payOnFile:#43779b;
     --burgundy:#79010f;
   }
 
@@ -144,7 +146,8 @@
            box-shadow:0 10px 34px rgba(0,0,0,.45); background:var(--canvas); display:flex;
            --muted: color-mix(in srgb, var(--text) 70%, transparent);
            /* fixed platform dark-mode trend deltas (status fills), not editable roles */
-           --trend-up:#d0e5cc; --trend-down:#ead6d9; }
+           --trend-up:#d0e5cc; --trend-down:#ead6d9;
+           --scrim:rgba(68,68,67,.8); }
 
   /* ----- sidebar ----- */
   .side { width:214px; flex:none; background:var(--panel); display:flex; flex-direction:column;
@@ -317,6 +320,60 @@
   .ctot .pay button { flex:1; height:44px; border-radius:999px; border:0; font:inherit; font-size:14px; font-weight:600; cursor:pointer; }
   .ctot .pay .disc { background:#bababa; color:var(--text); }     /* --color-grey-bababa + --foreground */
   .ctot .pay .charge { background:var(--cta); color:var(--ctaText); }
+
+  /* cart customer header (shown once a customer is attached) */
+  .ccust { display:flex; align-items:center; gap:11px; padding:12px 16px;
+           border-bottom:1px solid color-mix(in srgb, var(--text) 18%, transparent); }
+  .ccust .cav { width:44px; height:44px; flex:none; border-radius:50%; background:#a79f90; color:#fff;
+                display:flex; align-items:center; justify-content:center; font-size:15px; font-weight:700; } /* --color-logo-tan */
+  .ccust .cnm { flex:1; min-width:0; font-size:14px; font-weight:600; color:#fff; display:flex; align-items:center; gap:7px; }
+  .ccust .ckebab { color:#fff; font-size:18px; line-height:1; }
+
+  /* ----- CHARGE pop-up: payment-method / tender modal ----- */
+  .modal { display:none; position:absolute; inset:0; z-index:60; background:var(--scrim);
+           align-items:center; justify-content:center; padding:16px; }
+  .frame.modalopen .modal { display:flex; }
+  .tender { width:740px; max-width:96%; max-height:96%; overflow-y:auto; border-radius:33px;
+            background:var(--tenderBg); color:var(--text); position:relative; box-shadow:0 20px 60px rgba(0,0,0,.5); }
+  .tender::-webkit-scrollbar { width:0; }
+  .tclose { position:absolute; right:24px; top:20px; width:25px; height:25px; border-radius:50%;
+            background:#bababa; border:0; color:#fff; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:11px; }
+  .tmhead { padding:24px 36px 8px; }
+  .teyebrow { font-size:13px; font-weight:600; letter-spacing:.10em; text-transform:uppercase; color:var(--tenderAccent); }
+  .ttitle { margin:3px 0 0; font-size:23px; font-weight:600; color:var(--text); }
+  .tcust { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:0 36px 20px; }
+  .tcust .l { display:flex; align-items:center; gap:12px; min-width:0; }
+  .tcust .av { width:48px; height:48px; flex:none; border-radius:50%; background:#938580; border:1px solid #e0c1ad;
+               color:var(--text); display:flex; align-items:center; justify-content:center; font-size:20px; font-weight:700; }
+  .tcust .nm { font-size:16px; font-weight:600; color:var(--text); display:flex; align-items:center; gap:7px; }
+  .tbadge { background:#f7e9e2; color:#444443; font-size:9px; font-weight:700; padding:2px 7px; border-radius:999px;
+            text-transform:uppercase; letter-spacing:.03em; }
+  .tcust .sub { font-size:12px; color:var(--text); margin-top:3px; }
+  .tcust .tot { text-align:right; flex:none; }
+  .tcust .tot .lbl { font-size:12px; font-weight:600; letter-spacing:.10em; text-transform:uppercase; color:var(--text); }
+  .tcust .tot .amt { font-size:25px; font-weight:600; color:var(--tenderAccent); }
+  .tsecrow { display:flex; gap:12px; padding:0 16px 12px; }
+  .tsec { border-radius:24px; padding:38px 20px 20px; position:relative; }
+  .tsec > .lbl { position:absolute; left:20px; top:12px; font-size:12px; text-transform:uppercase; letter-spacing:.08em; color:var(--text); }
+  .tsec.inperson { background:var(--payInPerson); }
+  .tsec.account  { background:var(--payAccount); }
+  .tsec.onfile   { background:var(--payOnFile); margin:0 16px 12px; }
+  .ttiles { display:flex; gap:10px; }
+  .ttile { border-radius:20px; background:var(--panel); padding:13px 14px; position:relative; }
+  .ttile.s1 { width:180px; height:90px; } .ttile.s2 { width:118px; height:90px; } .ttile.s3 { flex:1; height:98px; }
+  .ttile.dis { opacity:.6; }
+  .ttile .tt { font-size:15px; font-weight:600; color:var(--text); }
+  .ttile .td { font-size:11px; color:var(--muted); margin-top:2px; line-height:1.3; }
+  .tpill2 { position:absolute; right:8px; top:8px; font-size:9px; font-weight:700; text-transform:uppercase;
+            letter-spacing:.03em; padding:2px 7px; border-radius:999px; }
+  .tpill2.soon { background:var(--canvas); color:var(--muted); }     /* --app-page + --app-muted */
+  .tpill2.def  { background:var(--paidFill); color:var(--paidText); } /* --status-online */
+  .tsplit { margin:0 16px 14px; border-radius:24px; background:var(--panel); padding:16px 20px; } /* --tender-section-split-bg = background-dark */
+  .tsplit .st { font-size:15px; font-weight:600; color:#ead9ce; }     /* --tender-split-title = orange-extra-light */
+  .tsplit .ss { font-size:14px; color:#e6e6e6; margin-top:4px; }      /* --tender-split-subcopy = background-light */
+  .tfoot { display:flex; justify-content:flex-end; padding:2px 36px 24px; }
+  .tcancel { height:34px; padding:0 26px; border-radius:999px; background:none; border:1px solid #e6e6e6; /* --tender-cancel-outline */
+             color:var(--text); font:inherit; font-size:14px; font-weight:600; cursor:pointer; }
 
   /* ----- ORDERS / REPORTS tables ----- */
   .toolbar { display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin:18px 0 14px; }
@@ -562,13 +619,16 @@
               </div>
               <div class="cartwrap">
                 <div class="cartspine">
-                  <div class="spinetile on">Cart 1</div>
+                  <div class="spinetile on">Cart 1<div style="font-size:9px;opacity:.85;margin-top:3px">M. Anderson</div></div>
                   <div class="spineadd">+ Add Cart</div>
                 </div>
                 <div class="cart">
                   <div class="ct">Cart 1</div>
-                  <div class="cbtn"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4"/><path d="M19 8v6M22 11h-6"/></svg>Add New Customer</div>
-                  <div class="csearch"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:8px"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>Search Customer by Name, Phone, Email&hellip;</div>
+                  <div class="ccust">
+                    <div class="cav">MA</div>
+                    <div class="cnm">Mike Anderson <span class="tbadge">21+</span></div>
+                    <div class="ckebab">&#8942;</div>
+                  </div>
                   <div class="citems">
                     <div class="citem"><div class="top"><span>2023 Reserve Cabernet</span><span>$145.00</span></div>
                       <div class="ctl"><div class="seg"><span class="a">Carry-out</span><span class="b">Ship</span></div><div class="qty"><b>−</b>1<b>+</b></div></div></div>
@@ -579,7 +639,7 @@
                     <div class="tl"><span>SUBTOTAL</span><span>$200.00</span></div>
                     <div class="tl"><span>TAX (CA TASTING ROOM)</span><span>$15.50</span></div>
                     <div class="grand"><span>TOTAL</span><span class="amt">$215.50</span></div>
-                    <div class="pay"><button class="disc">Discount</button><button class="charge">Charge $215.50</button></div>
+                    <div class="pay"><button class="disc">Discount</button><button class="charge" id="chargeBtn">Charge $215.50</button></div>
                   </div>
                 </div>
               </div>
@@ -671,6 +731,56 @@
             </div>
           </div>
           <a class="loginlink">Manager / Owner login ›</a>
+        </div>
+      </div>
+
+      <!-- CHARGE pop-up: payment-method / tender modal (opens from the Sell cart) -->
+      <div class="modal" id="modal">
+        <div class="tender">
+          <button class="tclose" id="tclose" aria-label="Close">&#10005;</button>
+          <div class="tmhead">
+            <div class="teyebrow">Cart 1 · Charge</div>
+            <div class="ttitle">How will Mike pay?</div>
+          </div>
+          <div class="tcust">
+            <div class="l">
+              <div class="av">MA</div>
+              <div>
+                <div class="nm">Mike Anderson <span class="tbadge">21+</span></div>
+                <div class="sub">1 2023 Reserve Cabernet, 1 Brut</div>
+              </div>
+            </div>
+            <div class="tot"><div class="lbl">Total</div><div class="amt">$215.50</div></div>
+          </div>
+          <div class="tsecrow">
+            <div class="tsec inperson">
+              <span class="lbl">Take payment in person</span>
+              <div class="ttiles">
+                <div class="ttile s1"><span class="tpill2 def">Default</span><div class="tt">Payment Terminal</div><div class="td">Send the charge to Terminal Simulator</div></div>
+                <div class="ttile s1"><div class="tt">Cash</div><div class="td">Capture tendered amount · compute change due</div></div>
+              </div>
+            </div>
+            <div class="tsec account">
+              <span class="lbl">Account balances &amp; gift cards</span>
+              <div class="ttiles">
+                <div class="ttile s2 dis"><span class="tpill2 soon">Coming soon</span><div class="tt">Gift Card</div><div class="td">Redeem a gift card balance</div></div>
+                <div class="ttile s2 dis"><span class="tpill2 soon">Coming soon</span><div class="tt">Store Credit</div><div class="td">Apply credit from a return</div></div>
+              </div>
+            </div>
+          </div>
+          <div class="tsec onfile">
+            <span class="lbl">Charge a card on file</span>
+            <div class="ttiles">
+              <div class="ttile s3 dis"><span class="tpill2 soon">Coming soon</span><div class="tt">Saved Card</div><div class="td">Card on file</div></div>
+              <div class="ttile s3 dis"><span class="tpill2 soon">Coming soon</span><div class="tt">Saved Card</div><div class="td">Card on file</div></div>
+              <div class="ttile s3 dis"><span class="tpill2 soon">Coming soon</span><div class="tt">Add New Card</div><div class="td">Capture a new card on this device</div></div>
+            </div>
+          </div>
+          <div class="tsplit">
+            <div class="st">SPLIT THIS PAYMENT ACROSS TWO OR MORE TENDERS ›</div>
+            <div class="ss">Pay part on a card and the rest in cash, split between two cards, etc.</div>
+          </div>
+          <div class="tfoot"><button class="tcancel" id="tcancel">Cancel</button></div>
         </div>
       </div>
 
@@ -805,6 +915,13 @@
       { key:'wineSparkling', label:'Sparkling card', def:'#a8a791' },
       { key:'wineRose',      label:'Rosé card', def:'#967977' }
     ]},
+    { title:'Payment pop-up (Charge)', roles:[
+      { key:'tenderBg',     label:'Pop-up background', def:'#737373' },
+      { key:'tenderAccent', label:'Pop-up accent — eyebrow & total', def:'#e5a87a' },
+      { key:'payInPerson',  label:'“In person” section', def:'#8e4f8c' },
+      { key:'payAccount',   label:'“Account balances” section', def:'#708e4f' },
+      { key:'payOnFile',    label:'“Card on file” section', def:'#43779b' }
+    ]},
     { title:'Brand — logo asset (reference only)', roles:[
       { key:'burgundy', label:'Wordmark burgundy (the logo is a fixed SVG)', def:'#79010f' }
     ]}
@@ -828,7 +945,11 @@
     ['paidText','paidFill','Paid pill'],
     ['fulfillText','fulfillFill','Needs-fulfillment pill'],
     ['text','wineRed','Text on red card'],
-    ['text','navActive','Text on active nav']
+    ['text','navActive','Text on active nav'],
+    ['text','payInPerson','Label on in-person section'],
+    ['text','payAccount','Label on account section'],
+    ['text','payOnFile','Label on card-on-file section'],
+    ['tenderAccent','tenderBg','Pop-up accent on background']
   ];
 
   var fieldsEl = document.getElementById('fields');
@@ -1055,6 +1176,7 @@
   var screensEl = document.getElementById('screens');
 
   function switchScreen(s) {
+    frame.classList.remove('modalopen');
     frame.setAttribute('data-screen', s);
     Array.prototype.forEach.call(screensEl.children, function (c) {
       c.className = c.getAttribute('data-s') === s ? 'on' : '';
@@ -1174,6 +1296,11 @@
     wineWhite:     { screen:'sell',   sel:'.prod.white' },
     wineSparkling: { screen:'sell',   sel:'.prod.spark' },
     wineRose:      { screen:'sell',   sel:'.prod.rose' },
+    tenderBg:      { screen:'sell', modal:true, sel:'.tender' },
+    tenderAccent:  { screen:'sell', modal:true, sel:'.teyebrow, .tcust .tot .amt' },
+    payInPerson:   { screen:'sell', modal:true, sel:'.tsec.inperson' },
+    payAccount:    { screen:'sell', modal:true, sel:'.tsec.account' },
+    payOnFile:     { screen:'sell', modal:true, sel:'.tsec.onfile' },
     burgundy:      { screen:'none',   note:'it is the fixed logo artwork — the wordmark is a locked SVG, shown for hand-off reference only.' }
   };
 
@@ -1190,17 +1317,27 @@
       target = APP_SCREENS[curr] ? curr : 'home';
     }
     if (frame.getAttribute('data-screen') !== target) switchScreen(target);
+    if (L.modal) { frame.classList.add('modalopen'); } else { frame.classList.remove('modalopen'); }
     if (L.openSubmenu) openSubmenu(L.openSubmenu);
     window.setTimeout(function () {
       var els = frame.querySelectorAll(L.sel);
       if (!els.length) { say('Couldn’t find that on screen.', true); return; }
       Array.prototype.forEach.call(els, function (el) { el.classList.add('hpw-locate'); });
-      say('Flashing “' + name + '” on the ' + SCREEN_LABEL[target] + ' screen.');
+      say('Flashing “' + name + '” ' + (L.modal ? 'in the Charge pop-up.' : 'on the ' + SCREEN_LABEL[target] + ' screen.'));
       window.setTimeout(function () {
         Array.prototype.forEach.call(els, function (el) { el.classList.remove('hpw-locate'); });
       }, 1300);
     }, 70);
   }
+
+  /* ---- Charge pop-up (tender modal) open / close ---- */
+  var modalEl = document.getElementById('modal');
+  document.getElementById('chargeBtn').addEventListener('click', function (e) {
+    e.stopPropagation(); frame.classList.add('modalopen');
+  });
+  document.getElementById('tclose').addEventListener('click', function () { frame.classList.remove('modalopen'); });
+  document.getElementById('tcancel').addEventListener('click', function () { frame.classList.remove('modalopen'); });
+  modalEl.addEventListener('click', function (e) { if (e.target === modalEl) frame.classList.remove('modalopen'); });
 
   /* ---- orders table rows ---- */
   var ORDERS = [
