@@ -19,13 +19,15 @@
   :root {
     --canvas:#444443; --panel:#303030;
     --text:#ffffff;
-    --accent:#b75c11; --cta:#d1863b; --ctaText:#ffffff;
+    --accent:#b75c11; --cta:#d1863b; --ctaText:#ffffff; --reportChip:#b75c11;
     --surface:#444443; --buttonRing:#dcdcdc;
     --navActive:#896962;
-    --paidFill:#516e15; --paidText:#cbe6ca;
-    --fulfillFill:#b75c11; --fulfillText:#e0c1ad; --pillBorder:#dcdcdc;
+    --posOnlineFill:#516e15; --posOnlineText:#cbe6ca;
     --wineRed:#5b4141; --wineWhite:#847669; --wineSparkling:#a8a791; --wineRose:#967977;
-    --cartRail:#ffffff; --cartPanel:#b75c11; --cartFooter:#896962;
+    --cartRail:#303030; --cartPanel:#846a63; --cartFooter:#896962;
+    /* data-column status pills: black fill + white text; each status's border colour
+       is a separate role painted from JS (see STATUS_ROLES) */
+    --pillFill:#000000; --pillText:#ffffff;
     --tenderBg:#1c1c1c; --tenderAccent:#e5a87a;
     --payInPerson:#7a627a; --payAccount:#576d26; --payOnFile:#43779b;
     --burgundy:#79010f;
@@ -198,9 +200,11 @@
   .search { flex:1; min-width:0; height:38px; border-radius:12px; background:var(--canvas);
             display:flex; align-items:center; gap:8px; padding:0 14px; color:var(--muted); font-size:13px; }
   .search svg { width:15px; height:15px; stroke:var(--muted); fill:none; stroke-width:2; }
+  /* top-bar POS status pills (Online / Terminal Sim) — NOT the data-column status pills;
+     the designer wants these left as filled pills, unaffected by data-pill styling. */
   .pill { display:inline-flex; align-items:center; gap:6px; padding:7px 13px; border-radius:999px;
-          font-size:12px; font-weight:600; border:1px solid var(--pillBorder); }
-  .pill.ok { background:var(--paidFill); color:var(--paidText); }
+          font-size:12px; font-weight:600; }
+  .pill.ok { background:var(--posOnlineFill); color:var(--posOnlineText); }
   .pill .dot { width:7px; height:7px; border-radius:50%; background:currentColor; }
   .tbicon { width:34px; height:34px; border-radius:50%; flex:none; position:relative; border:1px solid color-mix(in srgb,var(--text) 26%,transparent);
             display:flex; align-items:center; justify-content:center; }
@@ -224,7 +228,8 @@
   .frame[data-screen="home"]  #s-home,
   .frame[data-screen="sell"]  #s-sell,
   .frame[data-screen="orders"] #s-orders,
-  .frame[data-screen="reports"] #s-reports { display:block; }
+  .frame[data-screen="reports"] #s-reports,
+  .frame[data-screen="statuses"] #s-statuses { display:block; }
   /* login replaces the whole shell — hide the sidebar and the entire main
      column so the centred PIN panel fills the frame edge to edge. */
   .frame[data-screen="login"] .side,
@@ -273,23 +278,21 @@
   .prod.spark { background:var(--wineSparkling); } .prod.rose { background:var(--wineRose); }
   .prod.other { background:var(--canvas); color:var(--text); }
 
-  /* Cart = a 64px spine (Cart 1 / + Add Cart) + the cart card. The live app
-     draws these as translucent tints (spine rail = --foreground/8, active tile +
-     card body = accent @35%, totals footer = orange-greyish-dark @35%). Here each
-     tint hangs off its OWN pickable role (cartRail / cartPanel / cartFooter) so the
-     designer can restyle the whole cart; the roles default to the same base tokens
-     the platform derives from, so a reset reproduces the live look exactly. The
-     35% translucency is kept so the cart matches how it renders over the canvas. */
+  /* Cart = a 64px spine (Cart 1 / + Add Cart) + the cart card. Each surface hangs off
+     its OWN pickable role (cartRail / cartPanel / cartFooter) drawn at FULL opacity —
+     the live app tints these (rail = --foreground/8, panel = accent @35%, footer =
+     orange-greyish-dark @35%), but the designer wants solid fills so the colours she
+     picks come through at 100%. Defaults are solid palette colours, not the live tints. */
   .cartwrap { width:340px; flex:none; display:flex; border-radius:18px; overflow:hidden; }
   .cbord { border-color:color-mix(in srgb, var(--text) 18%, transparent); }
-  .cartspine { width:64px; flex:none; background:color-mix(in srgb, var(--cartRail) 8%, transparent);
+  .cartspine { width:64px; flex:none; background:var(--cartRail);
                padding:8px; display:flex; flex-direction:column; gap:8px; }
   .spinetile { min-height:64px; border-radius:14px; padding:8px; font-size:11px; font-weight:600;
                color:var(--text); line-height:1.25; }
-  .spinetile.on { background:color-mix(in srgb, var(--cartPanel) 35%, transparent); color:#e5a87a; }
+  .spinetile.on { background:var(--cartPanel); color:#e5a87a; }
   .spineadd { border:1px dashed color-mix(in srgb, var(--text) 30%, transparent); border-radius:14px;
               padding:10px 6px; font-size:11px; font-weight:600; color:var(--muted); text-align:center; }
-  .cart { flex:1; min-width:0; background:color-mix(in srgb, var(--cartPanel) 35%, transparent);
+  .cart { flex:1; min-width:0; background:var(--cartPanel);
           display:flex; flex-direction:column; color:#fff; }
   .cart .ct { text-align:center; font-size:15px; font-weight:600; padding:13px;
               border-bottom:1px solid color-mix(in srgb, var(--text) 18%, transparent); }
@@ -313,8 +316,8 @@
   .qty b { width:28px; height:28px; border-radius:50%; font-weight:400;
            border:1px solid color-mix(in srgb, var(--text) 18%, transparent);
            display:flex; align-items:center; justify-content:center; }
-  /* totals footer = --cart-card-bg (orange-greyish-dark @35%), now its own role */
-  .ctot { padding:12px 16px; background:color-mix(in srgb, var(--cartFooter) 35%, transparent);
+  /* totals footer — its own role, solid full-opacity (designer wants the cart at 100%) */
+  .ctot { padding:12px 16px; background:var(--cartFooter);
           border-top:1px solid color-mix(in srgb, var(--text) 18%, transparent); }
   .ctot .tl { display:flex; justify-content:space-between; font-size:12px; color:var(--muted); padding:2px 0; }
   .ctot .grand { display:flex; justify-content:space-between; align-items:baseline; font-size:16px; font-weight:700; padding-top:4px; }
@@ -370,7 +373,7 @@
   .tpill2 { position:absolute; right:8px; top:8px; font-size:9px; font-weight:700; text-transform:uppercase;
             letter-spacing:.03em; padding:2px 7px; border-radius:999px; }
   .tpill2.soon { background:var(--canvas); color:var(--muted); }     /* --app-page + --app-muted */
-  .tpill2.def  { background:var(--paidFill); color:var(--paidText); } /* --status-online */
+  .tpill2.def  { background:var(--posOnlineFill); color:var(--posOnlineText); } /* positive/default badge */
   .tsplit { margin:0 16px 14px; border-radius:24px; background:var(--panel); padding:16px 20px; } /* --tender-section-split-bg = background-dark */
   .tsplit .st { font-size:15px; font-weight:600; color:#ead9ce; }     /* --tender-split-title = orange-extra-light */
   .tsplit .ss { font-size:14px; color:#e6e6e6; margin-top:4px; }      /* --tender-split-subcopy = background-light */
@@ -398,13 +401,15 @@
   .cust { display:flex; align-items:center; gap:9px; }
   .cust .av { width:26px; height:26px; border-radius:50%; background:#dddbb6; color:#7c7c63;
               display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:700; }
-  /* thin ring around the status pills — a NEW element the designer is prototyping (not yet in the live app) */
-  .tpill { display:inline-flex; align-items:center; gap:5px; padding:4px 10px; border-radius:999px; font-size:10.5px; font-weight:600; border:1px solid var(--pillBorder); }
-  /* Source pill = --foreground/10 fill + --app-muted text (derived, per platform) */
-  .tpill.src { background:color-mix(in srgb, var(--text) 10%, transparent); color:var(--muted); }
-  .tpill.fulfill { background:var(--fulfillFill); color:var(--fulfillText); }
-  .tpill.paid { background:var(--paidFill); color:var(--paidText); }
-  .tpill.paid .dot { width:6px; height:6px; border-radius:50%; background:currentColor; }
+  /* Data-column status pills (Orders / Customers / Club / …). The designer's new
+     treatment: NOT colour-filled — a solid black fill + white text, with a THIN
+     BORDER whose colour is picked PER STATUS. Each variant sets --pb to its own
+     status-border role; the base falls back to the text colour. */
+  .tpill { display:inline-flex; align-items:center; gap:5px; padding:4px 10px; border-radius:999px;
+           font-size:10.5px; font-weight:600; background:var(--pillFill); color:var(--pillText);
+           border:1px solid var(--pb, var(--pillText)); }
+  .tpill .dot { width:6px; height:6px; border-radius:50%; background:var(--pb, currentColor); }
+  /* each pill sets --pb inline to its own status-border role (see STATUS_ROLES) */
   .right { text-align:right; }
   .actbtns { display:flex; gap:6px; justify-content:flex-end; }
   .actbtns i { width:26px; height:26px; border-radius:7px; background:var(--canvas);
@@ -418,7 +423,8 @@
   /* ----- REPORTS ----- */
   .chips { display:flex; flex-wrap:wrap; gap:8px; margin:16px 0 10px; }
   .chip { padding:7px 14px; border-radius:999px; font-size:12px; color:var(--text); background:var(--panel); cursor:pointer; }
-  .chip.on { background:var(--accent); color:#fff; font-weight:600; }
+  /* Reports filter pills — own role so the designer can recolour them independently of the graph (--accent) */
+  .chip.on { background:var(--reportChip); color:#fff; font-weight:600; }
   .tabs { display:flex; flex-wrap:wrap; gap:6px; border-bottom:1px solid color-mix(in srgb,var(--text) 12%,transparent);
           margin-bottom:16px; padding-bottom:4px; }
   .tab { font-size:12px; color:var(--muted); padding:8px 12px; border-radius:8px 8px 0 0; cursor:pointer; }
@@ -443,6 +449,12 @@
   .rtable .rr.head { color:var(--muted); font-size:10px; letter-spacing:.06em; text-transform:uppercase; font-weight:600; }
   .rtable .rr + .rr { border-top:1px solid color-mix(in srgb, var(--text) 12%, transparent); }
   .rtable .rr .num { text-align:right; }
+
+  /* ----- STATUSES reference board (every data-column status pill, grouped) ----- */
+  .stboard { margin-top:18px; display:flex; flex-direction:column; gap:20px; }
+  .stgroup h3 { margin:0 0 10px; font-size:13px; font-weight:600; color:var(--text); }
+  .stgroup .stpills { display:flex; flex-wrap:wrap; gap:10px; }
+  .stnote { margin:4px 0 0; font-size:11px; color:var(--muted); }
 
   /* ----- LOGIN ----- */
   #s-login { flex:1; align-items:center; justify-content:center; background:var(--panel); }
@@ -520,6 +532,7 @@
         <button data-s="sell">Sell</button>
         <button data-s="orders">Orders</button>
         <button data-s="reports">Reports</button>
+        <button data-s="statuses">Statuses</button>
       </div>
       <div class="spacer"></div>
       <div class="modeToggle" id="railToggleWrap">
@@ -716,6 +729,14 @@
             </div>
           </div>
 
+          <!-- STATUSES reference board -->
+          <div class="screen" id="s-statuses">
+            <h1 class="h1">Statuses</h1>
+            <p class="sub">Every data-column status pill, grouped by area. The fill (black) and text (white) are shared;
+              pick the <b>border colour</b> for each status. Reservations &amp; Marketing colour their pills by shared tone.</p>
+            <div class="stboard" id="statusBoard"></div>
+          </div>
+
         </div><!-- /content -->
       </div><!-- /main -->
 
@@ -888,6 +909,46 @@
     return A.l - B.l;
   });
 
+  /* ---- data-column status pills: one border-colour role per status, grouped by
+     area (enumerated from the live frontend: Orders fulfillment/payment/source,
+     Customer badges, Wine Club membership/tier). Reservations & Marketing colour
+     their pills by a shared TONE map in code, so those are five tone roles, not
+     one-per-status. Defaults are each status's current semantic colour. ---- */
+  var STATUS_ROLES = [
+    {key:'stFulNeeds',     domain:'Order — fulfillment', label:'Fulfillment · Needs Fulfillment', def:'#d1863b'},
+    {key:'stFulScheduled', domain:'Order — fulfillment', label:'Fulfillment · Scheduled',         def:'#bfcfdd'},
+    {key:'stFulShipped',   domain:'Order — fulfillment', label:'Fulfillment · Shipped',           def:'#dcbcdd'},
+    {key:'stFulCompleted', domain:'Order — fulfillment', label:'Fulfillment · Completed',         def:'#4caf7d'},
+    {key:'stFulCancelled', domain:'Order — fulfillment', label:'Fulfillment · Cancelled',         def:'#c05252'},
+    {key:'stPayPaid',      domain:'Order — payment', label:'Payment · Paid',           def:'#4caf7d'},
+    {key:'stPayBalance',   domain:'Order — payment', label:'Payment · Balance Due',    def:'#d1863b'},
+    {key:'stPayPartial',   domain:'Order — payment', label:'Payment · Partial Refund', def:'#e5a87a'},
+    {key:'stPayRefunded',  domain:'Order — payment', label:'Payment · Refunded',       def:'#dddbb6'},
+    {key:'stPayFailed',    domain:'Order — payment', label:'Payment · Failed',         def:'#c05252'},
+    {key:'stSrcPOS',   domain:'Order — source', label:'Source · POS',        def:'#bababa'},
+    {key:'stSrcEcom',  domain:'Order — source', label:'Source · E-Commerce', def:'#bababa'},
+    {key:'stSrcPhone', domain:'Order — source', label:'Source · Phone',      def:'#bababa'},
+    {key:'stSrcClub',  domain:'Order — source', label:'Source · Wine Club',  def:'#bababa'},
+    {key:'stSrcEmail', domain:'Order — source', label:'Source · Email',      def:'#bababa'},
+    {key:'stCustVIP',        domain:'Customer', label:'Customer · VIP',         def:'#dcbcdd'},
+    {key:'stCustClub',       domain:'Customer', label:'Customer · Wine Club',   def:'#4caf7d'},
+    {key:'stCustAllocation', domain:'Customer', label:'Customer · Allocation',  def:'#b75c11'},
+    {key:'stCustBronze',     domain:'Customer', label:'Customer · Bronze tier', def:'#e5a87a'},
+    {key:'stCustSilver',     domain:'Customer', label:'Customer · Silver tier', def:'#bababa'},
+    {key:'stCustGold',       domain:'Customer', label:'Customer · Gold tier',   def:'#dddbb6'},
+    {key:'stMemActive',    domain:'Wine Club — membership', label:'Membership · Active',    def:'#4caf7d'},
+    {key:'stMemPaused',    domain:'Wine Club — membership', label:'Membership · Paused',    def:'#b75c11'},
+    {key:'stMemCancelled', domain:'Wine Club — membership', label:'Membership · Cancelled', def:'#bababa'},
+    {key:'stTierClassic',   domain:'Wine Club — tier', label:'Tier · Classic',   def:'#bababa'},
+    {key:'stTierReserve',   domain:'Wine Club — tier', label:'Tier · Reserve',   def:'#b75c11'},
+    {key:'stTierCollector', domain:'Wine Club — tier', label:'Tier · Collector', def:'#d1863b'},
+    {key:'toneSuccess', domain:'Shared tones — Reservations & Marketing', label:'Tone · Positive / success',  def:'#4caf7d'},
+    {key:'toneWarning', domain:'Shared tones — Reservations & Marketing', label:'Tone · Attention / warning', def:'#d1863b'},
+    {key:'toneDanger',  domain:'Shared tones — Reservations & Marketing', label:'Tone · Negative / danger',   def:'#c05252'},
+    {key:'toneInfo',    domain:'Shared tones — Reservations & Marketing', label:'Tone · Info',                def:'#bfcfdd'},
+    {key:'toneNeutral', domain:'Shared tones — Reservations & Marketing', label:'Tone · Neutral',             def:'#bababa'}
+  ];
+
   /* ---- roles = the surfaces the five screens paint with (dark-mode defaults) ---- */
   var GROUPS = [
     { title:'App shell', roles:[
@@ -907,13 +968,15 @@
     { title:'Navigation', roles:[
       { key:'navActive', label:'Active nav item fill', def:'#896962' }
     ]},
-    { title:'Status pills', roles:[
-      { key:'paidFill',    label:'Paid / online — fill', def:'#516e15' },
-      { key:'paidText',    label:'Paid / online — text', def:'#cbe6ca' },
-      { key:'fulfillFill', label:'Needs-fulfillment — fill', def:'#b75c11' },
-      { key:'fulfillText', label:'Needs-fulfillment — text', def:'#e0c1ad' },
-      { key:'pillBorder',  label:'Pill border — thin ring around status pills (NEW element)', def:'#dcdcdc' }
+    { title:'Top-bar POS pills (Online / Terminal Sim)', roles:[
+      { key:'posOnlineFill', label:'Connection pill — fill', def:'#516e15' },
+      { key:'posOnlineText', label:'Connection pill — text', def:'#cbe6ca' }
     ]},
+    { title:'Data-column status pills — shared base', roles:[
+      { key:'pillFill', label:'Pill fill — every status shares this (“black”)', def:'#000000' },
+      { key:'pillText', label:'Pill text — every status shares this (“white”)', def:'#ffffff' }
+    ]},
+    { title:'Status pill borders — one colour per status', roles: STATUS_ROLES },
     { title:'Wine category cards (Sell)', roles:[
       { key:'wineRed',       label:'Red wine card', def:'#5b4141' },
       { key:'wineWhite',     label:'White wine card', def:'#847669' },
@@ -921,9 +984,12 @@
       { key:'wineRose',      label:'Rosé card', def:'#967977' }
     ]},
     { title:'Cart (Sell)', roles:[
-      { key:'cartRail',   label:'Cart rail — Cart 1 / Add Cart column', def:'#ffffff' },
-      { key:'cartPanel',  label:'Cart panel & active tab (shown as a 35% tint)', def:'#b75c11' },
-      { key:'cartFooter', label:'Cart totals footer (shown as a 35% tint)', def:'#896962' }
+      { key:'cartRail',   label:'Cart rail — Cart 1 / Add Cart column', def:'#303030' },
+      { key:'cartPanel',  label:'Cart panel & active tab', def:'#846a63' },
+      { key:'cartFooter', label:'Cart totals footer', def:'#896962' }
+    ]},
+    { title:'Reports', roles:[
+      { key:'reportChip', label:'Filter pills (date range & source) — independent of the graph', def:'#b75c11' }
     ]},
     { title:'Payment pop-up (Charge)', roles:[
       { key:'tenderBg',     label:'Pop-up background', def:'#1c1c1c' },
@@ -952,8 +1018,9 @@
     ['text','canvas','Text on app background'],
     ['accent','panel','Orange on panels'],
     ['ctaText','cta','Button text on fill'],
-    ['paidText','paidFill','Paid pill'],
-    ['fulfillText','fulfillFill','Needs-fulfillment pill'],
+    ['posOnlineText','posOnlineFill','Online / Terminal Sim pill'],
+    ['pillText','pillFill','Status pill text on fill'],
+    ['text','cartPanel','Text on cart panel'],
     ['text','wineRed','Text on red card'],
     ['text','navActive','Text on active nav'],
     ['text','payInPerson','Label on in-person section'],
@@ -1286,8 +1353,8 @@
   new MutationObserver(highlightNav).observe(frame, { attributes:true, attributeFilter:['data-screen'] });
 
   /* ---- locate: flash where a role's colour appears; switch screen / open menu if needed ---- */
-  var SCREEN_LABEL = { home:'Home', sell:'Sell', orders:'Orders', reports:'Reports', login:'Login' };
-  var APP_SCREENS = { home:1, sell:1, orders:1, reports:1 };
+  var SCREEN_LABEL = { home:'Home', sell:'Sell', orders:'Orders', reports:'Reports', statuses:'Statuses', login:'Login' };
+  var APP_SCREENS = { home:1, sell:1, orders:1, reports:1, statuses:1 };
   var LOCATE = {
     canvas:        { screen:'app',    sel:'.main' },
     panel:         { screen:'app',    sel:'.topbar, .side, .card, .sellmain, .table, .repkpi, .trendcard, .rtable' },
@@ -1298,11 +1365,11 @@
     surface:       { screen:'login',  sel:'.key' },
     buttonRing:    { screen:'login',  sel:'.dots i, .key' },
     navActive:     { screen:'app',    sel:'.navitem.active' },
-    paidFill:      { screen:'orders', sel:'.tpill.paid' },
-    paidText:      { screen:'orders', sel:'.tpill.paid' },
-    fulfillFill:   { screen:'orders', sel:'.tpill.fulfill' },
-    fulfillText:   { screen:'orders', sel:'.tpill.fulfill' },
-    pillBorder:    { screen:'orders', sel:'.tpill, .pill' },
+    posOnlineFill: { screen:'app',    sel:'.pill.ok' },
+    posOnlineText: { screen:'app',    sel:'.pill.ok' },
+    pillFill:      { screen:'orders', sel:'.tpill' },
+    pillText:      { screen:'orders', sel:'.tpill' },
+    reportChip:    { screen:'reports', sel:'.chip.on' },
     wineRed:       { screen:'sell',   sel:'.prod.red' },
     wineWhite:     { screen:'sell',   sel:'.prod.white' },
     wineSparkling: { screen:'sell',   sel:'.prod.spark' },
@@ -1317,6 +1384,8 @@
     payOnFile:     { screen:'sell', modal:true, sel:'.tsec.onfile' },
     burgundy:      { screen:'none',   note:'it is the fixed logo artwork — the wordmark is a locked SVG, shown for hand-off reference only.' }
   };
+  /* every status border role flashes its pill on the Statuses board */
+  STATUS_ROLES.forEach(function (r) { LOCATE[r.key] = { screen:'statuses', sel:'[data-strole="' + r.key + '"]' }; });
 
   function locate(key) {
     var L = LOCATE[key];
@@ -1374,12 +1443,42 @@
       '<span>'+o[1]+'</span>'+
       '<span class="cust"><span class="av">'+init+'</span>'+o[2]+'</span>'+
       '<span class="right">'+o[3]+'</span>'+
-      '<span><span class="tpill src">POS</span></span>'+
-      '<span><span class="tpill fulfill">Needs fulfillment</span> <span class="tpill paid"><span class="dot"></span>Paid</span></span>'+
+      '<span><span class="tpill" data-strole="stSrcPOS" style="--pb:var(--stSrcPOS)">POS</span></span>'+
+      '<span><span class="tpill" data-strole="stFulNeeds" style="--pb:var(--stFulNeeds)">Needs fulfillment</span> <span class="tpill" data-strole="stPayPaid" style="--pb:var(--stPayPaid)"><span class="dot"></span>Paid</span></span>'+
       '<span class="actbtns"><i><svg viewBox="0 0 24 24"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z"/><circle cx="12" cy="12" r="3"/></svg></i>'+
       '<i><svg viewBox="0 0 24 24"><path d="M4 4h16v14H5.2L4 20z"/></svg></i></span>';
     ordersTable.appendChild(row);
   });
+
+  /* ---- statuses reference board: every data-column status pill, grouped by area ---- */
+  (function () {
+    var board = document.getElementById('statusBoard');
+    var order = [], byDom = {};
+    STATUS_ROLES.forEach(function (r) {
+      if (!byDom[r.domain]) { byDom[r.domain] = []; order.push(r.domain); }
+      byDom[r.domain].push(r);
+    });
+    order.forEach(function (dom) {
+      var g = document.createElement('div'); g.className = 'stgroup';
+      var h = document.createElement('h3'); h.textContent = dom; g.appendChild(h);
+      var pills = document.createElement('div'); pills.className = 'stpills';
+      byDom[dom].forEach(function (r) {
+        var txt = r.label.indexOf('· ') !== -1 ? r.label.split('· ')[1] : r.label;
+        var p = document.createElement('span'); p.className = 'tpill';
+        p.setAttribute('data-strole', r.key);
+        p.style.setProperty('--pb', 'var(--' + r.key + ')');
+        p.textContent = txt;
+        pills.appendChild(p);
+      });
+      g.appendChild(pills);
+      if (dom.indexOf('Shared tones') === 0) {
+        var n = document.createElement('p'); n.className = 'stnote';
+        n.textContent = 'Reservations (Reserved, Arrived, No-show, …) and Marketing campaigns (Draft, Sent, Failed, …) map every pill to one of these tones in code — colour a tone and all its statuses follow.';
+        g.appendChild(n);
+      }
+      board.appendChild(g);
+    });
+  })();
 
   /* ---- boot ---- */
   var stored = loadSet();
