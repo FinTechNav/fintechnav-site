@@ -17,16 +17,17 @@
      separately-pickable role.
      ========================================================================== */
   :root {
-    --canvas:#727272; --panel:#8e8e8e;
+    --canvas:#444443; --panel:#303030;
     --text:#ffffff;
     --accent:#b75c11; --cta:#d1863b; --ctaText:#ffffff;
-    --surface:#727272; --buttonRing:#dcdcdc;
-    --navActive:#846a63;
-    --paidFill:#d0e5cc; --paidText:#576d26;
-    --fulfillFill:#ead9ce; --fulfillText:#846a63;
+    --surface:#444443; --buttonRing:#dcdcdc;
+    --navActive:#896962;
+    --paidFill:#516e15; --paidText:#cbe6ca;
+    --fulfillFill:#b75c11; --fulfillText:#e0c1ad; --pillBorder:#dcdcdc;
     --wineRed:#5b4141; --wineWhite:#847669; --wineSparkling:#a8a791; --wineRose:#967977;
-    --tenderBg:#737373; --tenderAccent:#e5a87a;
-    --payInPerson:#8e4f8c; --payAccount:#708e4f; --payOnFile:#43779b;
+    --cartRail:#ffffff; --cartPanel:#b75c11; --cartFooter:#896962;
+    --tenderBg:#1c1c1c; --tenderAccent:#e5a87a;
+    --payInPerson:#7a627a; --payAccount:#576d26; --payOnFile:#43779b;
     --burgundy:#79010f;
   }
 
@@ -198,7 +199,7 @@
             display:flex; align-items:center; gap:8px; padding:0 14px; color:var(--muted); font-size:13px; }
   .search svg { width:15px; height:15px; stroke:var(--muted); fill:none; stroke-width:2; }
   .pill { display:inline-flex; align-items:center; gap:6px; padding:7px 13px; border-radius:999px;
-          font-size:12px; font-weight:600; }
+          font-size:12px; font-weight:600; border:1px solid var(--pillBorder); }
   .pill.ok { background:var(--paidFill); color:var(--paidText); }
   .pill .dot { width:7px; height:7px; border-radius:50%; background:currentColor; }
   .tbicon { width:34px; height:34px; border-radius:50%; flex:none; position:relative; border:1px solid color-mix(in srgb,var(--text) 26%,transparent);
@@ -272,21 +273,23 @@
   .prod.spark { background:var(--wineSparkling); } .prod.rose { background:var(--wineRose); }
   .prod.other { background:var(--canvas); color:var(--text); }
 
-  /* Cart = a 64px spine (Cart 1 / + Add Cart) + the cart card. Both tints are
-     derived exactly as the app does: spine = --foreground/8, active tile +
-     card body = --cart-spine-active-bg (accent @35%), totals footer =
-     --cart-card-bg (orange-greyish-dark/navActive @35%). No solid "cart panel"
-     colour exists in the platform, so none is a pickable role. */
+  /* Cart = a 64px spine (Cart 1 / + Add Cart) + the cart card. The live app
+     draws these as translucent tints (spine rail = --foreground/8, active tile +
+     card body = accent @35%, totals footer = orange-greyish-dark @35%). Here each
+     tint hangs off its OWN pickable role (cartRail / cartPanel / cartFooter) so the
+     designer can restyle the whole cart; the roles default to the same base tokens
+     the platform derives from, so a reset reproduces the live look exactly. The
+     35% translucency is kept so the cart matches how it renders over the canvas. */
   .cartwrap { width:340px; flex:none; display:flex; border-radius:18px; overflow:hidden; }
   .cbord { border-color:color-mix(in srgb, var(--text) 18%, transparent); }
-  .cartspine { width:64px; flex:none; background:color-mix(in srgb, var(--text) 8%, transparent);
+  .cartspine { width:64px; flex:none; background:color-mix(in srgb, var(--cartRail) 8%, transparent);
                padding:8px; display:flex; flex-direction:column; gap:8px; }
   .spinetile { min-height:64px; border-radius:14px; padding:8px; font-size:11px; font-weight:600;
                color:var(--text); line-height:1.25; }
-  .spinetile.on { background:color-mix(in srgb, var(--accent) 35%, transparent); color:#e5a87a; }
+  .spinetile.on { background:color-mix(in srgb, var(--cartPanel) 35%, transparent); color:#e5a87a; }
   .spineadd { border:1px dashed color-mix(in srgb, var(--text) 30%, transparent); border-radius:14px;
               padding:10px 6px; font-size:11px; font-weight:600; color:var(--muted); text-align:center; }
-  .cart { flex:1; min-width:0; background:color-mix(in srgb, var(--accent) 35%, transparent);
+  .cart { flex:1; min-width:0; background:color-mix(in srgb, var(--cartPanel) 35%, transparent);
           display:flex; flex-direction:column; color:#fff; }
   .cart .ct { text-align:center; font-size:15px; font-weight:600; padding:13px;
               border-bottom:1px solid color-mix(in srgb, var(--text) 18%, transparent); }
@@ -310,8 +313,8 @@
   .qty b { width:28px; height:28px; border-radius:50%; font-weight:400;
            border:1px solid color-mix(in srgb, var(--text) 18%, transparent);
            display:flex; align-items:center; justify-content:center; }
-  /* totals footer = --cart-card-bg (orange-greyish-dark @35%, = navActive) */
-  .ctot { padding:12px 16px; background:color-mix(in srgb, var(--navActive) 35%, transparent);
+  /* totals footer = --cart-card-bg (orange-greyish-dark @35%), now its own role */
+  .ctot { padding:12px 16px; background:color-mix(in srgb, var(--cartFooter) 35%, transparent);
           border-top:1px solid color-mix(in srgb, var(--text) 18%, transparent); }
   .ctot .tl { display:flex; justify-content:space-between; font-size:12px; color:var(--muted); padding:2px 0; }
   .ctot .grand { display:flex; justify-content:space-between; align-items:baseline; font-size:16px; font-weight:700; padding-top:4px; }
@@ -395,7 +398,8 @@
   .cust { display:flex; align-items:center; gap:9px; }
   .cust .av { width:26px; height:26px; border-radius:50%; background:#dddbb6; color:#7c7c63;
               display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:700; }
-  .tpill { display:inline-flex; align-items:center; gap:5px; padding:4px 10px; border-radius:999px; font-size:10.5px; font-weight:600; }
+  /* thin ring around the status pills — a NEW element the designer is prototyping (not yet in the live app) */
+  .tpill { display:inline-flex; align-items:center; gap:5px; padding:4px 10px; border-radius:999px; font-size:10.5px; font-weight:600; border:1px solid var(--pillBorder); }
   /* Source pill = --foreground/10 fill + --app-muted text (derived, per platform) */
   .tpill.src { background:color-mix(in srgb, var(--text) 10%, transparent); color:var(--muted); }
   .tpill.fulfill { background:var(--fulfillFill); color:var(--fulfillText); }
@@ -887,8 +891,8 @@
   /* ---- roles = the surfaces the five screens paint with (dark-mode defaults) ---- */
   var GROUPS = [
     { title:'App shell', roles:[
-      { key:'canvas', label:'App background', def:'#727272' },
-      { key:'panel',  label:'Panels — sidebar, top bar, cards', def:'#8e8e8e' }
+      { key:'canvas', label:'App background', def:'#444443' },
+      { key:'panel',  label:'Panels — sidebar, top bar, cards', def:'#303030' }
     ]},
     { title:'Text', roles:[
       { key:'text', label:'Primary text (muted text is 70% of this)', def:'#ffffff' }
@@ -897,17 +901,18 @@
       { key:'accent',     label:'Orange accent — links, totals, active', def:'#b75c11' },
       { key:'cta',        label:'Charge / primary button fill', def:'#d1863b' },
       { key:'ctaText',    label:'Primary button text', def:'#ffffff' },
-      { key:'surface',    label:'Keypad & input fields', def:'#727272' },
+      { key:'surface',    label:'Keypad & input fields', def:'#444443' },
       { key:'buttonRing', label:'Keypad ring & PIN dots', def:'#dcdcdc' }
     ]},
     { title:'Navigation', roles:[
-      { key:'navActive', label:'Active nav item fill', def:'#846a63' }
+      { key:'navActive', label:'Active nav item fill', def:'#896962' }
     ]},
     { title:'Status pills', roles:[
-      { key:'paidFill',    label:'Paid / online — fill', def:'#d0e5cc' },
-      { key:'paidText',    label:'Paid / online — text', def:'#576d26' },
-      { key:'fulfillFill', label:'Needs-fulfillment — fill', def:'#ead9ce' },
-      { key:'fulfillText', label:'Needs-fulfillment — text', def:'#846a63' }
+      { key:'paidFill',    label:'Paid / online — fill', def:'#516e15' },
+      { key:'paidText',    label:'Paid / online — text', def:'#cbe6ca' },
+      { key:'fulfillFill', label:'Needs-fulfillment — fill', def:'#b75c11' },
+      { key:'fulfillText', label:'Needs-fulfillment — text', def:'#e0c1ad' },
+      { key:'pillBorder',  label:'Pill border — thin ring around status pills (NEW element)', def:'#dcdcdc' }
     ]},
     { title:'Wine category cards (Sell)', roles:[
       { key:'wineRed',       label:'Red wine card', def:'#5b4141' },
@@ -915,11 +920,16 @@
       { key:'wineSparkling', label:'Sparkling card', def:'#a8a791' },
       { key:'wineRose',      label:'Rosé card', def:'#967977' }
     ]},
+    { title:'Cart (Sell)', roles:[
+      { key:'cartRail',   label:'Cart rail — Cart 1 / Add Cart column', def:'#ffffff' },
+      { key:'cartPanel',  label:'Cart panel & active tab (shown as a 35% tint)', def:'#b75c11' },
+      { key:'cartFooter', label:'Cart totals footer (shown as a 35% tint)', def:'#896962' }
+    ]},
     { title:'Payment pop-up (Charge)', roles:[
-      { key:'tenderBg',     label:'Pop-up background', def:'#737373' },
+      { key:'tenderBg',     label:'Pop-up background', def:'#1c1c1c' },
       { key:'tenderAccent', label:'Pop-up accent — eyebrow & total', def:'#e5a87a' },
-      { key:'payInPerson',  label:'“In person” section', def:'#8e4f8c' },
-      { key:'payAccount',   label:'“Account balances” section', def:'#708e4f' },
+      { key:'payInPerson',  label:'“In person” section', def:'#7a627a' },
+      { key:'payAccount',   label:'“Account balances” section', def:'#576d26' },
       { key:'payOnFile',    label:'“Card on file” section', def:'#43779b' }
     ]},
     { title:'Brand — logo asset (reference only)', roles:[
@@ -1292,10 +1302,14 @@
     paidText:      { screen:'orders', sel:'.tpill.paid' },
     fulfillFill:   { screen:'orders', sel:'.tpill.fulfill' },
     fulfillText:   { screen:'orders', sel:'.tpill.fulfill' },
+    pillBorder:    { screen:'orders', sel:'.tpill, .pill' },
     wineRed:       { screen:'sell',   sel:'.prod.red' },
     wineWhite:     { screen:'sell',   sel:'.prod.white' },
     wineSparkling: { screen:'sell',   sel:'.prod.spark' },
     wineRose:      { screen:'sell',   sel:'.prod.rose' },
+    cartRail:      { screen:'sell',   sel:'.cartspine' },
+    cartPanel:     { screen:'sell',   sel:'.cart, .spinetile.on' },
+    cartFooter:    { screen:'sell',   sel:'.ctot' },
     tenderBg:      { screen:'sell', modal:true, sel:'.tender' },
     tenderAccent:  { screen:'sell', modal:true, sel:'.teyebrow, .tcust .tot .amt' },
     payInPerson:   { screen:'sell', modal:true, sel:'.tsec.inperson' },
