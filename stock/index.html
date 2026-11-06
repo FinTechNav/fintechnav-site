@@ -47,6 +47,20 @@
     };
   </script>
   <style>
+    .table-sort-button {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      min-height: 32px;
+      color: inherit;
+      text-align: inherit;
+      cursor: pointer;
+    }
+    .table-sort-button:hover, th[aria-sort="ascending"] .table-sort-button, th[aria-sort="descending"] .table-sort-button { color: #f5f5f5; }
+    .table-sort-button:focus-visible { outline: 2px solid #5491f6; outline-offset: 4px; border-radius: 2px; }
+    .table-sort-indicator { color: #a1a1a1; flex-shrink: 0; }
+    th[aria-sort="ascending"] .table-sort-indicator,
+    th[aria-sort="descending"] .table-sort-indicator { color: #50a2ff; }
     #stock-dashboard[hidden] { display: none !important; }
     @media (min-width: 768px) {
       #stock-dashboard {
@@ -561,16 +575,18 @@
 
           <div class="kumo-card overflow-hidden">
             <div class="overflow-x-auto">
-              <table class="w-full text-left border-collapse text-[13px]">
+              <p id="companies-sort-status" class="sr-only" role="status" aria-live="polite">Activate a column header to sort; activate it again to reverse direction.</p>
+              <table aria-describedby="companies-sort-status" class="w-full text-left border-collapse text-[13px]">
                 <thead>
                   <tr class="bg-[#030303] border-b border-[#333333] text-[#a1a1a1] font-medium h-11">
-                    <th class="py-2 px-4">Company</th>
-                    <th class="py-2 px-3">Category</th>
-                    <th class="py-2 px-3">Size &amp; Revenue</th>
-                    <th class="py-2 px-3 text-right">Price Today</th>
-                    <th class="py-2 px-3 text-right">1-Yr Target</th>
-                    <th class="py-2 px-3">Plain-English Status</th>
-                    <th class="py-2 px-4 text-right">Action</th>
+                    <th scope="col" class="py-2 px-4" aria-sort="none"><button type="button" class="table-sort-button" data-sort-table="companies" data-sort-key="symbol" title="Sort by ticker symbol">Company<span class="table-sort-indicator" aria-hidden="true">↕</span></button></th>
+                    <th scope="col" class="py-2 px-3" aria-sort="none"><button type="button" class="table-sort-button" data-sort-table="companies" data-sort-key="category" title="Sort by category">Category<span class="table-sort-indicator" aria-hidden="true">↕</span></button></th>
+                    <th scope="col" class="py-2 px-3" aria-sort="none"><button type="button" class="table-sort-button" data-sort-table="companies" data-sort-key="size" title="Sort by market capitalization">Company Size<span class="table-sort-indicator" aria-hidden="true">↕</span></button></th>
+                    <th scope="col" class="py-2 px-3" aria-sort="none"><button type="button" class="table-sort-button" data-sort-table="companies" data-sort-key="revenue" title="Sort by annual revenue">Annual Revenue<span class="table-sort-indicator" aria-hidden="true">↕</span></button></th>
+                    <th scope="col" class="py-2 px-3 text-right" aria-sort="none"><button type="button" class="table-sort-button" data-sort-table="companies" data-sort-key="price" title="Sort by price today">Price Today<span class="table-sort-indicator" aria-hidden="true">↕</span></button></th>
+                    <th scope="col" class="py-2 px-3 text-right" aria-sort="none"><button type="button" class="table-sort-button" data-sort-table="companies" data-sort-key="target" title="Sort by 1-yr target">1-Yr Target<span class="table-sort-indicator" aria-hidden="true">↕</span></button></th>
+                    <th scope="col" class="py-2 px-3" aria-sort="none"><button type="button" class="table-sort-button" data-sort-table="companies" data-sort-key="status" title="Sort by plain-english status">Plain-English Status<span class="table-sort-indicator" aria-hidden="true">↕</span></button></th>
+                    <th scope="col" class="py-2 px-4 text-right">Action</th>
                   </tr>
                 </thead>
                 <tbody id="companies-table-tbody" class="divide-y divide-[#333333]"></tbody>
@@ -595,17 +611,18 @@
 
           <div class="kumo-card overflow-hidden">
             <div class="overflow-x-auto">
-              <table class="w-full text-left border-collapse text-[13px]">
+              <p id="portfolio-sort-status" class="sr-only" role="status" aria-live="polite">Activate a column header to sort; activate it again to reverse direction.</p>
+              <table aria-describedby="portfolio-sort-status" class="w-full text-left border-collapse text-[13px]">
                 <thead>
                   <tr class="bg-[#030303] border-b border-[#333333] text-[#a1a1a1] font-medium h-11">
-                    <th class="py-2 px-4">Company</th>
-                    <th class="py-2 px-3">What They Do</th>
-                    <th class="py-2 px-3 text-right">Shares</th>
-                    <th class="py-2 px-3 text-right">Paid</th>
-                    <th class="py-2 px-3 text-right">Price Now</th>
-                    <th class="py-2 px-3 text-right">Value</th>
-                    <th class="py-2 px-3 text-right">Profit / Loss</th>
-                    <th class="py-2 px-4">Progress to +35% Sell Goal</th>
+                    <th scope="col" class="py-2 px-4" aria-sort="none"><button type="button" class="table-sort-button" data-sort-table="portfolio" data-sort-key="symbol" title="Sort by ticker symbol">Company<span class="table-sort-indicator" aria-hidden="true">↕</span></button></th>
+                    <th scope="col" class="py-2 px-3" aria-sort="none"><button type="button" class="table-sort-button" data-sort-table="portfolio" data-sort-key="role" title="Sort by what they do">What They Do<span class="table-sort-indicator" aria-hidden="true">↕</span></button></th>
+                    <th scope="col" class="py-2 px-3 text-right" aria-sort="none"><button type="button" class="table-sort-button" data-sort-table="portfolio" data-sort-key="shares" title="Sort by shares">Shares<span class="table-sort-indicator" aria-hidden="true">↕</span></button></th>
+                    <th scope="col" class="py-2 px-3 text-right" aria-sort="none"><button type="button" class="table-sort-button" data-sort-table="portfolio" data-sort-key="paid" title="Sort by paid">Paid<span class="table-sort-indicator" aria-hidden="true">↕</span></button></th>
+                    <th scope="col" class="py-2 px-3 text-right" aria-sort="none"><button type="button" class="table-sort-button" data-sort-table="portfolio" data-sort-key="price" title="Sort by price now">Price Now<span class="table-sort-indicator" aria-hidden="true">↕</span></button></th>
+                    <th scope="col" class="py-2 px-3 text-right" aria-sort="none"><button type="button" class="table-sort-button" data-sort-table="portfolio" data-sort-key="value" title="Sort by value">Value<span class="table-sort-indicator" aria-hidden="true">↕</span></button></th>
+                    <th scope="col" class="py-2 px-3 text-right" aria-sort="none"><button type="button" class="table-sort-button" data-sort-table="portfolio" data-sort-key="pnl" title="Sort by unrealized dollar profit or loss">Profit / Loss<span class="table-sort-indicator" aria-hidden="true">↕</span></button></th>
+                    <th scope="col" class="py-2 px-4" aria-sort="none"><button type="button" class="table-sort-button" data-sort-table="portfolio" data-sort-key="progress" title="Sort by percentage gain toward the sell goal">Progress to +35% Sell Goal<span class="table-sort-indicator" aria-hidden="true">↕</span></button></th>
                   </tr>
                 </thead>
                 <tbody id="portfolio-tbody" class="divide-y divide-[#333333]"></tbody>
@@ -698,17 +715,18 @@
 
           <div class="kumo-card overflow-hidden">
             <div class="overflow-x-auto">
-              <table class="w-full text-left border-collapse text-[13px]">
+              <p id="journal-sort-status" class="sr-only" role="status" aria-live="polite">Activate a column header to sort; activate it again to reverse direction.</p>
+              <table aria-describedby="journal-sort-status" class="w-full text-left border-collapse text-[13px]">
                 <thead>
                   <tr class="bg-[#030303] border-b border-[#333333] text-[#a1a1a1] font-medium h-11">
-                    <th class="py-2 px-4">Date &amp; Time</th>
-                    <th class="py-2 px-3">Type</th>
-                    <th class="py-2 px-3">Company</th>
-                    <th class="py-2 px-3 text-right">Shares</th>
-                    <th class="py-2 px-3 text-right">Fill Price</th>
-                    <th class="py-2 px-3 text-right">Total</th>
-                    <th class="py-2 px-3">Order ID</th>
-                    <th class="py-2 px-4">Plain-English Note</th>
+                    <th scope="col" class="py-2 px-4" aria-sort="none"><button type="button" class="table-sort-button" data-sort-table="journal" data-sort-key="date" title="Sort by date & time">Date &amp; Time<span class="table-sort-indicator" aria-hidden="true">↕</span></button></th>
+                    <th scope="col" class="py-2 px-3" aria-sort="none"><button type="button" class="table-sort-button" data-sort-table="journal" data-sort-key="type" title="Sort by type">Type<span class="table-sort-indicator" aria-hidden="true">↕</span></button></th>
+                    <th scope="col" class="py-2 px-3" aria-sort="none"><button type="button" class="table-sort-button" data-sort-table="journal" data-sort-key="symbol" title="Sort by ticker symbol">Company<span class="table-sort-indicator" aria-hidden="true">↕</span></button></th>
+                    <th scope="col" class="py-2 px-3 text-right" aria-sort="none"><button type="button" class="table-sort-button" data-sort-table="journal" data-sort-key="shares" title="Sort by shares">Shares<span class="table-sort-indicator" aria-hidden="true">↕</span></button></th>
+                    <th scope="col" class="py-2 px-3 text-right" aria-sort="none"><button type="button" class="table-sort-button" data-sort-table="journal" data-sort-key="price" title="Sort by fill price">Fill Price<span class="table-sort-indicator" aria-hidden="true">↕</span></button></th>
+                    <th scope="col" class="py-2 px-3 text-right" aria-sort="none"><button type="button" class="table-sort-button" data-sort-table="journal" data-sort-key="total" title="Sort by total">Total<span class="table-sort-indicator" aria-hidden="true">↕</span></button></th>
+                    <th scope="col" class="py-2 px-3" aria-sort="none"><button type="button" class="table-sort-button" data-sort-table="journal" data-sort-key="orderId" title="Sort by order id">Order ID<span class="table-sort-indicator" aria-hidden="true">↕</span></button></th>
+                    <th scope="col" class="py-2 px-4" aria-sort="none"><button type="button" class="table-sort-button" data-sort-table="journal" data-sort-key="note" title="Sort by plain-english note">Plain-English Note<span class="table-sort-indicator" aria-hidden="true">↕</span></button></th>
                   </tr>
                 </thead>
                 <tbody id="journal-tbody" class="divide-y divide-[#333333]"></tbody>
