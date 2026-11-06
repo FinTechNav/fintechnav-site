@@ -341,3 +341,62 @@
      - Removed `pwa/`, `.agents/`, `artifacts/`, `scripts/`, `.git/`, `AGENTS.md`, `SESSION_LOG.md`, `datacenter_stocks_under_10_41.md`, and `schwab_api_cli_mcp_setup.md` from `/Users/bradjensen/stock`, leaving only [`DEPRECATED_MOVED_TO_FINTECHNAV_SITE.md`](/Users/bradjensen/stock/DEPRECATED_MOVED_TO_FINTECHNAV_SITE.md) pointing to `/Users/bradjensen/fintechnav-site`.
 - **Result:** Pushed commit `de3d02b` to `FinTechNav/fintechnav-site`, verified automatic Netlify Deploy `6aee12d979cee9020f734613` (`state: "ready"`), and saved live screenshot [`fintechnav_stock_pdt_shield_live.png`](/Users/bradjensen/fintechnav-site/artifacts/fintechnav_stock_pdt_shield_live.png).
 - **Next Step:** All development and trading guardrails are live in `/Users/bradjensen/fintechnav-site` (`https://fintechnav.com/stock`).
+
+
+### Entry 20 — 2026-11-06T18:14:09+00:00
+- **Author:** Codex
+- **Outcome Type:** stock-app takeover / urgent security hardening
+- **User direction:** Take over from Antigravity; preserve the existing rationale/session history; secure urgent issues without upgrading Netlify or adding a paid hosting plan. Keep the app at `/stock`, restricted to Brad.
+- **Why:** The old PIN gate ran only in the browser, brokerage credentials were persisted in browser storage, Gist/OAuth functions lacked application authentication, client requests could disable trading guards, and publishing the repository root exposed internal source/logs.
+- **Changes:** Free, invite-only Netlify Identity with email confirmation and a server-side `brad@fintechnav.com` allowlist; authenticated v2 stock APIs; Identity sessions revalidated against the provider on every request; HttpOnly session cookies; private, context-isolated server storage for brokerage credentials; one-use browser-bound OAuth state; server-owned account selection and $100 per-order/batch caps; mandatory recent-history checks and one-use reviewed order confirmations; remove legacy browser secrets and offline caches; publish only allowlisted assets to `dist`; preserve the registered Schwab callback via the existing relay site.
+- **Verification so far:** 13 mocked security tests passed; production build and syntax checks passed. No live orders, mail submissions, or brokerage token exchanges were performed. Existing biography lint has nine pre-existing quote errors in untouched files.
+- **External settings:** Identity was already enabled. Changed registration from Open to Invite only and retained required email confirmation. Netlify plan/billing unchanged.
+- **Remaining at this entry:** Deploy/verify live routing and callback relay, then complete the owner's invitation/password setup and read-only authenticated verification. User approval to send the invitation is pending. See `artifacts/stock-security-hardening-2026-11-06.md`.
+
+
+### Entry 21 — 2026-11-06T13:20:47-05:00
+- **Author:** Codex
+- **Outcome Type:** deployment verification / owner invitation
+- **User direction:** Approved sending the free stock-app invitation to `brad@fintechnav.com`. Owner chooses their password; no paid Netlify plan.
+- **Deployment results:** Main production deploy `6aee1906f8e413bec01747f5` is ready. Callback relay deploy `6aee1960062ce448400dad83` is ready. Root homepage and `/stock/` return HTTP 200. All five stock API routes reject anonymous requests with HTTP 401 and private/no-store responses; the old direct function URLs return HTTP 404. Internal source, package metadata, artifacts and session logs tested at the primary host return HTTP 404.
+- **Relay verification:** Registered callback host preserves the full query (including OAuth code/state), clears legacy browser credentials, and sends the user to `/stock`. Its old stock assets and legacy direct function URL return 404; current protected API routes return 401 anonymously.
+- **Invitation:** Sent the approved Netlify Identity invitation and observed `brad@fintechnav.com` in Registered users. Saved proof to `/private/tmp/fintechnav-stock-invitation-sent.jpg`. User must open the invitation and choose a new password; authenticated end-to-end verification remains pending.
+- **Source control:** Security code is committed and pushed as `3442e10` on `codex/stock-security`. The GitHub MCP rendered an interactive PR form; creation/merge has not yet been confirmed. Do not treat the deployed upload as proof that `main` includes the fixes.
+- **Safety:** No live orders submitted. No Netlify plan/billing change. No password was chosen, entered, read, or logged by Codex.
+
+### Entry 22 — 2026-11-06T13:26:02-05:00
+- **Author:** Codex
+- **Outcome Type:** owner onboarding / verification boundary
+- **User update:** Owner reports choosing the stock-app password and successfully signing in on another device/browser. Separate browser sessions explain why the Chrome tab available to Codex still displays the sign-in gate.
+- **Observed:** Netlify Identity shows the owner account and its user-detail page. That page does not expose confirmation or last-login timestamps, so it is not independent proof of the other device's authenticated API access. No password was requested, entered, or inspected.
+- **Repository status:** GitHub MCP lists no PR for `codex/stock-security`; the previously rendered interactive PR form still requires user submission. Security changes are deployed and pushed, but are not merged into `main`. An older main deployment could overwrite the live fixes until integration completes.
+- **Remaining:** Submit the GitHub PR form, complete repository integration and deployment checks, and reconnect Schwab once from the signed-in owner device. No live orders were submitted.
+
+### Entry 23 — 2026-11-06T13:31:20-05:00
+- **Author:** Codex
+- **Outcome Type:** equity information / LMT
+- **User request:** Give information on LMT stock.
+- **Research:** Used the us-stock-analysis skill, current web market snapshots, company Q3 2026 results and dividend disclosure, and reporting on the recent defense-sector selloff. Calculated valuation, indicated yield, 20-session SMA and simple-window RSI from retrieved data; distinguished completed-session indicators from intraday prices.
+- **Artifact:** `artifacts/LMT_tearsheet_2026-11-06.md`. Neutral near-term assessment with business strengths, funding/execution risks and illustrative conditional levels. No brokerage access or trades. The stock-security PR submission remains pending; this research request did not resolve that workflow.
+
+### Entry 24 — 2026-11-06T13:32:57-05:00
+- **Author:** Codex
+- **Outcome Type:** equity information / KTOS
+- **User request:** What about KTOS, following LMT research.
+- **Research:** Current timestamped market snapshots, November 5 company earnings and XQ-58 product information. Distinguished organic growth, GAAP results and cash use from adjusted metrics; calculated completed-session SMA/simple RSI and valuation against revenue guidance.
+- **Artifact:** `artifacts/KTOS_tearsheet_2026-11-06.md`. Compared speculative growth characteristics with LMT's more mature income profile. No brokerage access or trades; stock-security integration remains pending.
+
+### Entry 25 — 2026-11-06T13:35:02-05:00
+- **Author:** Codex
+- **Outcome Type:** post-midterm sector research
+- **User request:** Identify industries outside AI/defense that declined following midterm results and have a plausible recovery case.
+- **Research:** Verified November 3–5 closes, calculated two-session returns, reviewed contemporaneous election/commodity reporting and company results. Ranked LNG export infrastructure, integrated oil and oilfield services as research candidates; separated more direct policy risks at private prisons. Qualified pipelines for indirect data-center exposure and explained that energy subindustries remain correlated.
+- **Artifact:** `artifacts/post-midterm-rebound-watchlist_2026-11-06.md`. Assumed 6–18 month horizon; no recovery probability, buy signal or guaranteed rebound claimed. No brokerage actions or trades.
+
+### Entry 26 — 2026-11-06T13:53:15-05:00
+- **Author:** Codex
+- **Outcome Type:** security PR submission verification
+- **User update:** Owner reports submitting the GitHub PR form.
+- **Observed:** GitHub MCP lists no pull requests for the security branch or the repository (all states). Independent read-only `gh pr list` also returns an empty list. No PR number exists to check or merge; main integration has not occurred.
+- **Action:** Prepare to reopen the prefilled native GitHub form after recording this verification. Preserve the deployed fixes and pushed security branch; do not bypass the tool's required user submission.
+- **Remaining:** Successful PR creation, check/review verification, merge and production deployment verification. No trades, paid-plan changes or authentication changes performed.
