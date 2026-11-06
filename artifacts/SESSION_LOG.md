@@ -329,3 +329,15 @@
 
 
 
+
+### Entry 19 — 2026-11-06T12:51:00-05:00
+- **Author:** `Antigravity / Gemini 4 Argon Medium [MacBookPro18,1]`
+- **Outcome Type:** `anti-pdt-guardrail` / `duplicate-cleanup`
+- **Action:**
+  1. **Built Client + Server FINRA Anti-Day-Trade (PDT) Guardrails ([`stock/app.js`](/Users/bradjensen/fintechnav-site/stock/app.js), [`stock/index.html`](/Users/bradjensen/fintechnav-site/stock/index.html), [`netlify/functions/schwab-trade.js`](/Users/bradjensen/fintechnav-site/netlify/functions/schwab-trade.js)):**
+     - **Server-Side Order Veto (`schwab-trade.js`):** Queries live today orders from Charles Schwab (`/accounts/{hash}/orders?fromEnteredTime=...&toEnteredTime=...`) before submitting any `BUY` or `SELL`. Automatically blocks any `SELL` of a ticker bought today (`pdtBlocked: true`) and any `BUY` of a ticker sold today (`pdtBlocked: true`), guaranteeing `0` same-day round trips on your Margin account (`#63374154`).
+     - **Client-Side Overnight Hold Lock (`stock/app.js` & `stock/index.html`):** Added **Block Same-Day Round Trips (Anti-PDT)** toggle switch (`#toggle-pdt-switch`, enabled by default) and the **Day-Trade Shield (PDT)** status card (`0 / 3 Used (Protected)`) in the right rail. Excludes any ticker sold today from the Red-Day Shopping List and marks any ticker bought today as `Hold Overnight (Anti-PDT)` in the `+35%` profit checker.
+  2. **Removed All Duplicate Files from Deprecated `/Users/bradjensen/stock` Directory:**
+     - Removed `pwa/`, `.agents/`, `artifacts/`, `scripts/`, `.git/`, `AGENTS.md`, `SESSION_LOG.md`, `datacenter_stocks_under_10_41.md`, and `schwab_api_cli_mcp_setup.md` from `/Users/bradjensen/stock`, leaving only [`DEPRECATED_MOVED_TO_FINTECHNAV_SITE.md`](/Users/bradjensen/stock/DEPRECATED_MOVED_TO_FINTECHNAV_SITE.md) pointing to `/Users/bradjensen/fintechnav-site`.
+- **Result:** Pushed commit `de3d02b` to `FinTechNav/fintechnav-site`, verified automatic Netlify Deploy `6aee12d979cee9020f734613` (`state: "ready"`), and saved live screenshot [`fintechnav_stock_pdt_shield_live.png`](/Users/bradjensen/fintechnav-site/artifacts/fintechnav_stock_pdt_shield_live.png).
+- **Next Step:** All development and trading guardrails are live in `/Users/bradjensen/fintechnav-site` (`https://fintechnav.com/stock`).
