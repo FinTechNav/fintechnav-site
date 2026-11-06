@@ -371,3 +371,24 @@
 - **Observed:** Netlify Identity shows the owner account and its user-detail page. That page does not expose confirmation or last-login timestamps, so it is not independent proof of the other device's authenticated API access. No password was requested, entered, or inspected.
 - **Repository status:** GitHub MCP lists no PR for `codex/stock-security`; the previously rendered interactive PR form still requires user submission. Security changes are deployed and pushed, but are not merged into `main`. An older main deployment could overwrite the live fixes until integration completes.
 - **Remaining:** Submit the GitHub PR form, complete repository integration and deployment checks, and reconnect Schwab once from the signed-in owner device. No live orders were submitted.
+
+### Entry 23 — 2026-11-06T13:31:20-05:00
+- **Author:** Codex
+- **Outcome Type:** equity information / LMT
+- **User request:** Give information on LMT stock.
+- **Research:** Used the us-stock-analysis skill, current web market snapshots, company Q3 2026 results and dividend disclosure, and reporting on the recent defense-sector selloff. Calculated valuation, indicated yield, 20-session SMA and simple-window RSI from retrieved data; distinguished completed-session indicators from intraday prices.
+- **Artifact:** `artifacts/LMT_tearsheet_2026-11-06.md`. Neutral near-term assessment with business strengths, funding/execution risks and illustrative conditional levels. No brokerage access or trades. The stock-security PR submission remains pending; this research request did not resolve that workflow.
+
+### Entry 24 — 2026-11-06T13:32:57-05:00
+- **Author:** Codex
+- **Outcome Type:** equity information / KTOS
+- **User request:** What about KTOS, following LMT research.
+- **Research:** Current timestamped market snapshots, November 5 company earnings and XQ-58 product information. Distinguished organic growth, GAAP results and cash use from adjusted metrics; calculated completed-session SMA/simple RSI and valuation against revenue guidance.
+- **Artifact:** `artifacts/KTOS_tearsheet_2026-11-06.md`. Compared speculative growth characteristics with LMT's more mature income profile. No brokerage access or trades; stock-security integration remains pending.
+
+### Entry 25 — 2026-11-06T13:35:02-05:00
+- **Author:** Codex
+- **Outcome Type:** post-midterm sector research
+- **User request:** Identify industries outside AI/defense that declined following midterm results and have a plausible recovery case.
+- **Research:** Verified November 3–5 closes, calculated two-session returns, reviewed contemporaneous election/commodity reporting and company results. Ranked LNG export infrastructure, integrated oil and oilfield services as research candidates; separated more direct policy risks at private prisons. Qualified pipelines for indirect data-center exposure and explained that energy subindustries remain correlated.
+- **Artifact:** `artifacts/post-midterm-rebound-watchlist_2026-11-06.md`. Assumed 6–18 month horizon; no recovery probability, buy signal or guaranteed rebound claimed. No brokerage actions or trades.
