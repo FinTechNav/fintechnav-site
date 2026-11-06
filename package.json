@@ -33,6 +33,6 @@
   "dependencies": {
     "@netlify/blobs": "^11.1.7",
     "@netlify/identity": "^2.0.0",
-    "nodemailer": "^7.0.3"
+    "nodemailer": "^10.1.4"
   }
 }
