@@ -2,7 +2,7 @@
 
 Total Skills Installed: **119**
 
-This catalog lists all installed agent skills available in the `.agents/skills/` directory of `/Users/bradjensen/stock`.
+This catalog lists all installed agent skills available in the `.agents/skills/` directory of `the repository root`.
 
 ## Stock Research & Analysis (2 skills)
 

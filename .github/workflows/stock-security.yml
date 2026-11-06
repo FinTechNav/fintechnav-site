@@ -27,6 +27,7 @@ jobs:
         timeout-minutes: 5
       - run: npm run build
       - run: npm run test:security
+      - run: npm run check:privacy
   lint:
     if: github.event_name != 'pull_request' || !github.event.pull_request.draft
     runs-on: ubuntu-latest

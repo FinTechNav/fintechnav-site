@@ -68,5 +68,5 @@ window.StockAuth = {
   },
   refresh: () => request({ action: 'refresh' }),
   logout: () => request({ action: 'logout' }),
-  recover: () => requestPasswordRecovery('brad@fintechnav.com'),
+  recover: (email) => requestPasswordRecovery(email.trim()),
 };

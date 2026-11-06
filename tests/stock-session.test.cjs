@@ -1,3 +1,4 @@
+process.env.STOCK_OWNER_EMAIL = 'owner@example.test';
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
@@ -5,7 +6,7 @@ const vm = require('node:vm');
 
 const user = {
   id: 'owner-test',
-  email: 'brad@fintechnav.com',
+  email: 'owner@example.test',
   confirmed_at: '2026-11-06T12:00:00Z',
 };
 

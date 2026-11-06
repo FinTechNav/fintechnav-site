@@ -173,7 +173,7 @@
         <p id="login-instructions" class="text-xs text-[#a1a1a1]">Sign in with your private stock account.</p>
         <div>
           <label for="login-username" class="text-[#a1a1a1] block mb-1.5 text-xs">Email</label>
-          <input id="login-username" type="email" autocomplete="username" value="brad@fintechnav.com" required class="kumo-input w-full px-3 py-2 text-sm" />
+          <input id="login-username" type="email" autocomplete="username" placeholder="Your stock-account email" required class="kumo-input w-full px-3 py-2 text-sm" />
         </div>
         <div>
           <label for="login-password" class="text-[#a1a1a1] block mb-1.5 text-xs">Password</label>
@@ -200,7 +200,7 @@
         </div>
         <label for="portfolio-view-select" class="sr-only">Portfolio view</label>
         <select id="portfolio-view-select" class="kumo-input text-[13px] font-medium px-3 py-2 min-w-28" disabled>
-          <option value="brad">Brad</option><option value="dio">Dio</option><option value="all">All</option>
+          <option value="primary">Primary</option><option value="partner">Partner</option><option value="all">All</option>
         </select>
       </div>
 
@@ -399,7 +399,7 @@
 
         <div class="kumo-card p-4 mb-6 space-y-2" aria-live="polite">
           <div class="flex flex-wrap items-center justify-between gap-3">
-            <h2 id="view-heading" class="font-semibold">Brad · Personal plan</h2>
+            <h2 id="view-heading" class="font-semibold">Primary · Personal plan</h2>
             <div class="flex gap-3 text-xs"><button type="button" data-jump-tab="allocations" class="text-[#50a2ff]">Split shared shares</button><button type="button" id="btn-reload-views" class="text-[#50a2ff]">Reload shared views</button></div>
           </div>
           <p id="view-description" class="text-xs text-[#a1a1a1]"></p>
@@ -414,9 +414,9 @@
         </section>
         <section id="tab-allocations" class="tab-panel hidden space-y-5">
           <h1 class="text-2xl font-semibold">Split shared shares</h1>
-          <p class="text-sm text-[#a1a1a1]">Give each view its share count, including purchases made directly in Schwab. For example: Brad 1, Dio 2, account total 3. The remainder stays unassigned in All. This updates app attribution only.</p>
-          <p class="text-xs text-[#a1a1a1]">Existing long stock shares initially go to Brad on the first sync. New confirmed app fills use the view chosen when the order was reviewed. Cost and profit/loss use the brokerage’s blended average cost. Other asset types remain in All.</p>
-          <form id="form-share-allocations" class="space-y-4"><div class="kumo-card overflow-x-auto"><table class="account-table w-full"><thead><tr><th scope="col">Stock</th><th scope="col">Schwab total</th><th scope="col">Brad shares</th><th scope="col">Dio shares</th><th scope="col">Unassigned / review</th></tr></thead><tbody id="allocation-rows"></tbody></table></div><button id="btn-save-allocations" class="kumo-btn-primary px-4 py-2" disabled>Save share split</button></form>
+          <p class="text-sm text-[#a1a1a1]">Give each view its share count, including purchases made directly in Schwab. For example: one share in the first view and two in the second make three in All. The remainder stays unassigned in All. This updates app attribution only.</p>
+          <p class="text-xs text-[#a1a1a1]">Existing long stock shares initially go to the primary view on the first sync. New confirmed app fills use the view chosen when the order was reviewed. Cost and profit/loss use the brokerage’s blended average cost. Other asset types remain in All.</p>
+          <form id="form-share-allocations" class="space-y-4"><div class="kumo-card overflow-x-auto"><table class="account-table w-full"><thead><tr><th scope="col">Stock</th><th scope="col">Schwab total</th><th scope="col"><span data-profile-label="primary">Primary</span> shares</th><th scope="col"><span data-profile-label="partner">Partner</span> shares</th><th scope="col">Unassigned / review</th></tr></thead><tbody id="allocation-rows"></tbody></table></div><button id="btn-save-allocations" class="kumo-btn-primary px-4 py-2" disabled>Save share split</button></form>
         </section>
         <!-- ==================== TAB 1: ACCOUNT HOME (CLOUDFLARE HOME + ZONE OVERVIEW STYLE) ==================== -->
         <section id="tab-radar" class="tab-panel space-y-8">
@@ -894,7 +894,7 @@
           </div>
           <div class="border-t border-[#262626] pt-2.5">
             <span class="text-[#a1a1a1] block text-[11px]">Client ID</span>
-            <span class="font-mono text-[#d9d9d9] text-[11px] truncate block">dDGOfkYTf73UDWetFsYXgAZ7...</span>
+            <span class="text-[#d9d9d9] text-[11px]">Stored privately on the server</span>
           </div>
           <div class="border-t border-[#262626] pt-2.5 flex items-center justify-between">
             <button id="btn-rail-open-auth" class="text-[#50a2ff] hover:underline font-medium">

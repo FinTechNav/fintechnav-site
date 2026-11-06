@@ -8,6 +8,8 @@
 - [Repository cleanup](repository-cleanup-2026-11-06.md): branch audit, local archives, current-tree cleanup and validation.
 - [Engineering session log](SESSION_LOG.md): decisions, rationale and observed verification boundaries.
 
+- [Public repository privacy cleanup](public-repository-privacy-2026-11-06.md): runtime configuration, local-only workspace files and historical-remediation boundaries.
+
 ## Security implementation history
 
 - [Stock security hardening](stock-security-hardening-2026-11-06.md).

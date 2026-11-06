@@ -1,8 +1,9 @@
+process.env.STOCK_OWNER_EMAIL = 'owner@example.test';
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 
-const user = { id: 'owner-id', email: 'brad@fintechnav.com', confirmed_at: '2026-11-06T12:00:00Z' };
+const user = { id: 'owner-id', email: 'owner@example.test', confirmed_at: '2026-11-06T12:00:00Z' };
 const modules = Promise.all([
   import('../server/stock/security.mjs'),
   import('../server/stock/brokerage.mjs'),

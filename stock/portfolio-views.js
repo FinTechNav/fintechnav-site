@@ -4,7 +4,7 @@
   if (typeof module === 'object' && module.exports) module.exports = api;
   else root.PortfolioViews = api;
 })(typeof globalThis === 'object' ? globalThis : this, function () {
-  const PERSONAL = ['brad', 'dio'];
+  const PERSONAL = ['primary', 'partner'];
   const DEFENSE = [
     ['LMT', 'Lockheed Martin', 'Aircraft, space and defense systems'],
     ['RTX', 'RTX', 'Aerospace engines, air defense and defense systems'],
@@ -19,20 +19,12 @@
       /[&<>"']/g,
       (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]
     );
-  function defaults(brad) {
+  function defaults(primary, partner) {
     return {
       version: 1,
       profiles: {
-        brad: structuredClone(brad),
-        dio: {
-          ...structuredClone(brad),
-          watchlist: DEFENSE.map(([symbol, , role]) => ({
-            symbol,
-            role,
-            bucket: 'Bucket 1: Defense placeholder',
-            sp500Slice: false,
-          })),
-        },
+        primary: structuredClone(primary),
+        partner: structuredClone(partner || { ...primary, watchlist: [] }),
       },
       assignment: { allocations: {}, baselineFills: {} },
     };
@@ -45,19 +37,19 @@
       if (!PERSONAL.includes(order.profile) || !order.symbol) continue;
       const delta = Math.max(0, number(order.filledQuantity) - number(baseline[order.orderId]));
       if (!delta) continue;
-      const entry = (allocations[order.symbol] ||= { brad: 0, dio: 0 });
+      const entry = (allocations[order.symbol] ||= { primary: 0, partner: 0 });
       entry[order.profile] = round(
         number(entry[order.profile]) + (order.instruction === 'BUY' ? delta : -delta)
       );
     }
-    const holdings = { brad: {}, dio: {} };
+    const holdings = { primary: {}, partner: {} };
     const issues = [];
     const unassigned = {};
     const bySymbol = new Map(positions.filter((p) => p.assignable).map((p) => [p.symbol, p]));
     for (const [symbol, entry] of Object.entries(allocations)) {
-      const total = number(entry.brad) + number(entry.dio);
+      const total = number(entry.primary) + number(entry.partner);
       const available = number(bySymbol.get(symbol)?.longQuantity);
-      if (number(entry.brad) < -1e-8 || number(entry.dio) < -1e-8 || total > available + 1e-8)
+      if (number(entry.primary) < -1e-8 || number(entry.partner) < -1e-8 || total > available + 1e-8)
         issues.push(symbol);
     }
     for (const position of positions.filter((p) => p.assignable)) {
@@ -65,7 +57,7 @@
       const invalid = issues.includes(position.symbol);
       unassigned[position.symbol] = invalid
         ? position.longQuantity
-        : round(position.longQuantity - number(entry.brad) - number(entry.dio));
+        : round(position.longQuantity - number(entry.primary) - number(entry.partner));
       for (const profile of PERSONAL) {
         const shares = invalid ? 0 : number(entry[profile]);
         if (shares > 1e-8)

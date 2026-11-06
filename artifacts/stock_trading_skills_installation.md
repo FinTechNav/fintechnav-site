@@ -2,16 +2,16 @@
 
 ## Overview
 
-A suite of **119 specialized skills** for stock trading, quantitative finance, algorithmic backtesting, and portfolio risk management has been installed into your workspace at `/Users/bradjensen/stock`. 
+A suite of **119 specialized skills** for stock trading, quantitative finance, algorithmic backtesting, and portfolio risk management has been installed into your workspace at `the repository root`.
 
-In accordance with your preferences, all workspace deliverables, tearsheets, reports, and persistent artifacts are configured to be retained directly within `/Users/bradjensen/stock/artifacts/`.
+In accordance with your preferences, all workspace deliverables, tearsheets, reports, and persistent artifacts are configured to be retained directly within `artifacts/`.
 
 ---
 
 ## Workspace Structure
 
 ```
-/Users/bradjensen/stock/
+./
 ├── .git/                      # Initialized Git repository for workspace root discovery
 ├── .agents/
 │   ├── rules/
@@ -85,6 +85,6 @@ The installed skills combine the modular workflows from the **Claude Trading Ski
 ## Artifact Storage Configuration
 
 All artifacts produced during our sessions are preserved in:
-**`/Users/bradjensen/stock/artifacts/`**
+**`artifacts/`**
 
 Whenever a research report, strategy proposal, or tearsheet is created, it will be placed in that directory and registered in [`INDEX.md`](./INDEX.md).

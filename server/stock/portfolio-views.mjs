@@ -2,6 +2,14 @@ import views from '../../stock/portfolio-views.js';
 import { protect, json, readBody, hash, HttpError, cleanState } from './security.mjs';
 import { getCredentials, selectedAccount, brokerGet } from './brokerage.mjs';
 
+import {
+  normalizeViewDocument,
+  canonicalProfile,
+  profileLabels,
+  legacyProfileIds,
+  privateDefaults,
+} from './private-config.mjs';
+
 const keyFor = (user) => `view-configuration/${hash(user.id)}`;
 export const tagPrefix = (user, account) => `view-order-labels/${hash(user.id + ':' + account)}/`;
 export async function initializeExistingShares(store, user, current, snapshot) {
@@ -11,7 +19,7 @@ export async function initializeExistingShares(store, user, current, snapshot) {
     allocations: Object.fromEntries(
       snapshot.positions
         .filter((p) => p.assignable)
-        .map((p) => [p.symbol, { brad: p.longQuantity, dio: 0 }])
+        .map((p) => [p.symbol, { primary: p.longQuantity, partner: 0 }])
     ),
     baselineFills: Object.fromEntries(
       snapshot.allocationOrders.map((o) => [o.orderId, o.filledQuantity])
@@ -25,7 +33,7 @@ export async function initializeExistingShares(store, user, current, snapshot) {
 }
 export async function readViews(store, user) {
   const entry = await store.getWithMetadata(keyFor(user), { type: 'json' });
-  return { document: entry?.data || null, revision: entry?.etag || null };
+  return { document: normalizeViewDocument(entry?.data), revision: entry?.etag || null };
 }
 export function normalizeAccount(accounts, history, labels = {}) {
   if (!Array.isArray(accounts) || accounts.length !== 1 || !accounts[0]?.securitiesAccount)
@@ -98,8 +106,8 @@ export function normalizeAccount(accounts, history, labels = {}) {
       enteredTime: order.enteredTime || null,
       limitPrice: Number.isFinite(order.price) ? order.price : null,
       profile:
-        single && views.PERSONAL.includes(labels[orderId]?.profile)
-          ? labels[orderId].profile
+        single && canonicalProfile(labels[orderId]?.profile)
+          ? canonicalProfile(labels[orderId].profile)
           : null,
       executions,
     };
@@ -141,7 +149,9 @@ export async function labeledSnapshot(store, user, account, accounts, history) {
   const facts = await store.list({ prefix: factsPrefix });
   snapshot.allocationOrders = (
     await Promise.all(facts.blobs.map((blob) => store.get(blob.key, { type: 'json' })))
-  ).filter(Boolean);
+  )
+    .filter(Boolean)
+    .map((fact) => ({ ...fact, profile: canonicalProfile(fact.profile) }));
   return snapshot;
 }
 export const historyPath = (account) =>
@@ -179,13 +189,21 @@ export const createHandler = (dependencies = {}) =>
   protect(async (request, context, user, store) => {
     if (!['GET', 'POST'].includes(request.method)) throw new HttpError(405, 'Method not allowed.');
     const current = await readViews(store, user);
-    if (request.method === 'GET') return json({ ok: true, ...current });
+    const configuration = {
+      labels: profileLabels(),
+      legacyIds: legacyProfileIds(),
+      defaults: privateDefaults(),
+    };
+    if (request.method === 'GET') return json({ ok: true, ...current, ...configuration });
     const body = await readBody(request);
     let document;
     if (body.action === 'initialize') {
-      if (current.document) return json({ ok: true, ...current });
-      document = views.defaults(preferences(body.preferences));
-      document.assignment.initialOwner = 'brad';
+      if (current.document) return json({ ok: true, ...current, ...configuration });
+      document = views.defaults(
+        preferences(body.preferences),
+        configuration.defaults?.profiles.partner
+      );
+      document.assignment.initialOwner = 'primary';
     } else {
       if (!current.document || body.revision !== current.revision)
         throw new HttpError(
@@ -213,16 +231,19 @@ export const createHandler = (dependencies = {}) =>
             !/^[A-Z][A-Z0-9.]{0,9}$/.test(symbol) ||
             !available.has(symbol) ||
             !entry ||
-            !['brad', 'dio'].every(
+            !['primary', 'partner'].every(
               (p) => typeof entry[p] === 'number' && Number.isFinite(entry[p]) && entry[p] >= 0
             ) ||
-            entry.brad + entry.dio > available.get(symbol) + 1e-8
+            entry.primary + entry.partner > available.get(symbol) + 1e-8
           )
             throw new HttpError(
               400,
-              'Brad and Dio shares must be nonnegative and cannot exceed the latest Schwab quantity.'
+              'Primary and Partner shares must be nonnegative and cannot exceed the latest Schwab quantity.'
             );
-          allocations[symbol] = { brad: views.round(entry.brad), dio: views.round(entry.dio) };
+          allocations[symbol] = {
+            primary: views.round(entry.primary),
+            partner: views.round(entry.partner),
+          };
         }
         document.assignment = {
           allocations,
@@ -242,6 +263,6 @@ export const createHandler = (dependencies = {}) =>
     );
     if (!result.modified)
       throw new HttpError(409, 'Shared views changed on another device. Reload before saving.');
-    return json({ ok: true, document, revision: result.etag });
+    return json({ ok: true, document, revision: result.etag, ...configuration });
   }, dependencies);
 export default createHandler();

@@ -1,11 +1,14 @@
 // One authenticated brokerage account; three presentation views.
-let activeView = ['brad', 'dio', 'all'].includes(localStorage.getItem('stock_active_view'))
+let activeView = ['primary', 'partner', 'all'].includes(localStorage.getItem('stock_active_view'))
   ? localStorage.getItem('stock_active_view')
-  : 'brad';
+  : 'primary';
+let profileLabels = { primary: 'Primary', partner: 'Partner', all: 'All' };
+let privateViewDefaults = null;
+const viewLabel = (id) => profileLabels[id] || 'Personal view';
 let sharedViews = null;
 let sharedRevision = null;
 let viewsReady = false;
-let legacyBradHoldings = null;
+let legacyPrimaryHoldings = null;
 let brokerSnapshot = { positions: [], balances: {}, orders: [], allocationOrders: [] };
 let viewWriteQueue = Promise.resolve();
 let viewWriteError = false;
@@ -48,14 +51,30 @@ async function viewRequest(body) {
 }
 async function initializeSharedViews() {
   viewsReady = false;
-  if (legacyBradHoldings === null) legacyBradHoldings = structuredClone(state.holdings);
+  if (legacyPrimaryHoldings === null) legacyPrimaryHoldings = structuredClone(state.holdings);
   try {
     await viewWriteQueue;
     let data = await viewRequest();
+    profileLabels = { ...profileLabels, ...data.labels };
+    privateViewDefaults = data.defaults;
+    const oldActive = localStorage.getItem('stock_active_view');
+    const mappedActive = Object.entries(data.legacyIds || {}).find(
+      ([, old]) => old === oldActive
+    )?.[0];
+    if (mappedActive) {
+      activeView = mappedActive;
+      localStorage.setItem('stock_active_view', activeView);
+    }
+    const legacyPreferences = state.savedViewPreferences?.[data.legacyIds?.primary];
     if (!data.document)
       data = await viewRequest({
         action: 'initialize',
-        preferences: state.savedViewPreferences?.brad || personalPreferences(),
+        preferences:
+          state.savedViewPreferences?.primary ||
+          legacyPreferences ||
+          (localStorage.getItem(STORAGE_KEY)
+            ? personalPreferences()
+            : data.defaults?.profiles.primary || personalPreferences()),
       });
     sharedViews = data.document;
     sharedRevision = data.revision;
@@ -111,13 +130,13 @@ function currentOwnership() {
 }
 function applyActiveView() {
   if (!sharedViews) return;
-  const preferences = sharedViews.profiles[activeView === 'all' ? 'brad' : activeView];
+  const preferences = sharedViews.profiles[activeView === 'all' ? 'primary' : activeView];
   Object.assign(state, structuredClone(preferences));
   state.holdings =
     activeView === 'all'
       ? {}
-      : activeView === 'brad' && !brokerSnapshot.syncedAt && sharedViews.assignment.initialOwner
-        ? structuredClone(legacyBradHoldings || {})
+      : activeView === 'primary' && !brokerSnapshot.syncedAt && sharedViews.assignment.initialOwner
+        ? structuredClone(legacyPrimaryHoldings || {})
         : currentOwnership().holdings[activeView];
   state.cash = Number(brokerSnapshot.balances.cashAvailableForTrading || 0);
   state.journal = PortfolioViews.receipts(brokerSnapshot.orders, activeView);
@@ -125,7 +144,7 @@ function applyActiveView() {
   document.getElementById('select-order-session').value = state.sessionTiming;
 }
 function selectPortfolioView(view) {
-  if (!['brad', 'dio', 'all'].includes(view)) return;
+  if (!['primary', 'partner', 'all'].includes(view)) return;
   captureViewPreferences();
   activeView = view;
   localStorage.setItem('stock_active_view', view);
@@ -144,18 +163,22 @@ function renderViewChrome() {
   const all = activeView === 'all';
   document.getElementById('stock-dashboard').dataset.activeView = activeView;
   const selector = document.getElementById('portfolio-view-select');
+  for (const option of selector.options) option.textContent = viewLabel(option.value);
+  document.querySelectorAll('[data-profile-label]').forEach((el) => {
+    el.textContent = viewLabel(el.dataset.profileLabel);
+  });
   selector.value = activeView;
   selector.disabled = !viewsReady;
   document.getElementById('view-heading').textContent = all
     ? 'All · Shared Schwab portfolio'
-    : `${activeView === 'dio' ? 'Dio' : 'Brad'} · Personal plan`;
+    : `${viewLabel(activeView)} · Personal plan`;
   const issues = sharedViews ? currentOwnership().issues : [];
   document.getElementById('view-description').textContent = all
     ? 'Account balances, all holdings and recent executions from Schwab. No personal strategy or buy/sell recommendations.'
-    : `${activeView === 'dio' ? 'Defense stocks are editable placeholders using Brad’s rules.' : 'Your existing watchlist and red-day approach.'} Shares reflect this view’s allocation; cost and P/L use Schwab’s blended average cost. Cash and trade protections apply to the whole account.`;
+    : `Your private watchlist and approach. Shares reflect this view’s allocation; cost and P/L use Schwab’s blended average cost. Cash and trade protections apply to the whole account.`;
   document.getElementById('view-sync-status').textContent = brokerSnapshot.syncedAt
     ? `Last Schwab sync: ${new Date(brokerSnapshot.syncedAt).toLocaleString()}${issues.length ? ' · Allocations need review: ' + issues.join(', ') : ''}`
-    : 'Awaiting Schwab sync. Existing shares will be assigned to Brad once the connection is available.';
+    : `Awaiting Schwab sync. Existing shares will be assigned to ${viewLabel('primary')} once the connection is available.`;
   document.querySelectorAll('.tab-btn').forEach((button) => {
     button.hidden = all && ['companies', 'studio'].includes(button.dataset.tab);
     const label = button.querySelector('[data-view-nav-label]');
@@ -172,7 +195,7 @@ function renderViewChrome() {
   document.querySelector('[data-filter="owned"]').textContent =
     `Owned (${Object.keys(state.holdings).length})`;
   document.querySelector('[data-filter="landlord"]').textContent =
-    activeView === 'dio' ? 'Defense placeholders' : 'Landlords';
+    activeView === 'partner' ? 'Defense placeholders' : 'Landlords';
   document.getElementById('quick-owned-label').textContent =
     `Stocks you own (${Object.keys(state.holdings).length})`;
   document.getElementById('quick-owned-shares').textContent =
@@ -189,10 +212,10 @@ function renderViewChrome() {
   document.querySelector('#tab-companies h1').textContent =
     `All ${state.watchlist.length} companies on your watchlist`;
   document.querySelector('#tab-portfolio h1').textContent =
-    `What ${activeView === 'dio' ? 'Dio' : 'Brad'} owns right now`;
+    `What ${viewLabel(activeView)} owns right now`;
   document.querySelector('#tab-journal h1').textContent = all
     ? 'Schwab receipts & trade history'
-    : `${activeView === 'dio' ? 'Dio' : 'Brad'} · Receipts & trade history`;
+    : `${viewLabel(activeView)} · Receipts & trade history`;
   document.querySelector('#tab-journal p').textContent =
     'Confirmed executions from the last 60 days. Personal views include only orders labeled for that view; outside-app orders remain in All.';
   document.getElementById('kpi-value-label').textContent = all ? 'Account:' : 'Allocated holdings:';
@@ -200,7 +223,7 @@ function renderViewChrome() {
   document.getElementById('btn-execute-schwab').disabled =
     all || !viewsReady || Boolean(sharedViews?.assignment.initialOwner) || viewWriteError;
   const bucketLabels =
-    activeView === 'dio'
+    activeView === 'partner'
       ? ['Defense placeholders', 'Slice candidates', 'Other watchlist stocks']
       : ['Data center landlords', 'Tech giants ($5 Slices)', 'Under-$5 bargains'];
   ['landlord', 'slice', 'sweeper'].forEach((key, i) => {
@@ -261,10 +284,10 @@ function renderAllocationEditor() {
     positions
       .map(
         (p) =>
-          `<tr><td>${viewEscape(p.symbol)}<span class="block text-xs text-[#a1a1a1]">${viewEscape(p.description)}</span></td><td>${p.longQuantity}</td>${PortfolioViews.PERSONAL.map((profile) => `<td><input class="kumo-input w-28 p-2" aria-label="${viewEscape(p.symbol)} ${profile === 'brad' ? 'Brad' : 'Dio'} shares" data-allocation-symbol="${viewEscape(p.symbol)}" data-allocation-profile="${profile}" type="number" min="0" max="${p.longQuantity}" step="0.00000001" value="${ownership.issues.includes(p.symbol) ? 0 : Number(ownership.allocations[p.symbol]?.[profile] || 0)}" required></td>`).join('')}<td>${ownership.unassigned[p.symbol] || 0}${ownership.issues.includes(p.symbol) ? ' · Review required' : ''}</td></tr>`
+          `<tr><td>${viewEscape(p.symbol)}<span class="block text-xs text-[#a1a1a1]">${viewEscape(p.description)}</span></td><td>${p.longQuantity}</td>${PortfolioViews.PERSONAL.map((profile) => `<td><input class="kumo-input w-28 p-2" aria-label="${viewEscape(p.symbol)} ${viewLabel(profile)} shares" data-allocation-symbol="${viewEscape(p.symbol)}" data-allocation-profile="${profile}" type="number" min="0" max="${p.longQuantity}" step="0.00000001" value="${ownership.issues.includes(p.symbol) ? 0 : Number(ownership.allocations[p.symbol]?.[profile] || 0)}" required></td>`).join('')}<td>${ownership.unassigned[p.symbol] || 0}${ownership.issues.includes(p.symbol) ? ' · Review required' : ''}</td></tr>`
       )
       .join('') ||
-    '<tr><td colspan="5">Sync Schwab before splitting shares. All existing eligible shares will initially belong to Brad.</td></tr>';
+    '<tr><td colspan="5">Sync Schwab before splitting shares. All existing eligible shares will initially belong to the primary view.</td></tr>';
   document.getElementById('btn-save-allocations').disabled = !positions.length || !viewsReady;
 }
 async function syncSharedPortfolio() {
@@ -329,7 +352,7 @@ function initSharedViewEvents() {
       if (viewWriteError) throw new Error('Reload shared views before changing allocations.');
       const allocations = {};
       document.querySelectorAll('[data-allocation-symbol]').forEach((input) => {
-        (allocations[input.dataset.allocationSymbol] ||= { brad: 0, dio: 0 })[
+        (allocations[input.dataset.allocationSymbol] ||= { primary: 0, partner: 0 })[
           input.dataset.allocationProfile
         ] = Number(input.value);
       });
@@ -338,7 +361,7 @@ function initSharedViewEvents() {
       sharedRevision = data.revision;
       allocationEditorDirty = false;
       await syncSharedPortfolio();
-      showToast('Saved Brad / Dio share split');
+      showToast('Saved share split');
     } catch (error) {
       setViewStatus(error.message, true);
       showToast(error.message);

@@ -133,24 +133,26 @@ async function fixture() {
   };
 }
 
-test('Dio starts with defense placeholders and independent copies of Brad preferences', () => {
-  const doc = views.defaults(prefs);
-  assert.deepEqual(doc.profiles.brad, prefs);
+test('independent private preferences have no personal watchlist in public defaults', () => {
+  const partner = { ...prefs, watchlist: [{symbol:'LMT',role:'Synthetic',bucket:'Bucket 1',sp500Slice:false}] };
+  const doc = views.defaults(prefs, partner);
+  assert.deepEqual(views.defaults(prefs).profiles.partner.watchlist, []);
+  assert.deepEqual(doc.profiles.primary, prefs);
   assert.deepEqual(
-    doc.profiles.dio.watchlist.map((w) => w.symbol),
-    ['LMT', 'RTX', 'NOC', 'GD', 'KTOS']
+    doc.profiles.partner.watchlist.map((w) => w.symbol),
+    ['LMT']
   );
-  doc.profiles.dio.rules.harvestGainPct = 20;
-  assert.equal(doc.profiles.brad.rules.harvestGainPct, 35);
+  doc.profiles.partner.rules.harvestGainPct = 20;
+  assert.equal(doc.profiles.primary.rules.harvestGainPct, 35);
   assert.equal(prefs.rules.harvestGainPct, 35);
 });
-test('one Brad share plus two Dio shares reconcile to three in All, even for a shared ticker', () => {
+test('one Primary share plus two Partner shares reconcile to three in All, even for a shared ticker', () => {
   const doc = views.defaults(prefs);
-  doc.assignment.allocations = { LMT: { brad: 1, dio: 2 } };
+  doc.assignment.allocations = { LMT: { primary: 1, partner: 2 } };
   const positions = [pos('LMT', 3), pos('OTHER', 4)];
   const result = views.ownership(doc, positions);
-  assert.equal(result.holdings.brad.LMT.shares, 1);
-  assert.equal(result.holdings.dio.LMT.shares, 2);
+  assert.equal(result.holdings.primary.LMT.shares, 1);
+  assert.equal(result.holdings.partner.LMT.shares, 2);
   assert.equal(result.unassigned.LMT, 0);
   assert.equal(result.unassigned.OTHER, 4);
   assert.equal(positions[0].longQuantity, 3);
@@ -158,61 +160,61 @@ test('one Brad share plus two Dio shares reconcile to three in All, even for a s
 });
 test('only confirmed fills change attribution; partial buys, sells and baseline facts are applied once', () => {
   const doc = views.defaults(prefs);
-  doc.assignment.allocations = { LMT: { brad: 1, dio: 0 } };
+  doc.assignment.allocations = { LMT: { primary: 1, partner: 0 } };
   const facts = [
-    { orderId: 'fill-1', profile: 'dio', symbol: 'LMT', instruction: 'BUY', filledQuantity: 0.5 },
+    { orderId: 'fill-1', profile: 'partner', symbol: 'LMT', instruction: 'BUY', filledQuantity: 0.5 },
   ];
-  assert.equal(views.ownership(doc, [pos('LMT', 1.5)], facts).holdings.dio.LMT.shares, 0.5);
-  assert.equal(views.ownership(doc, [pos('LMT', 1.5)], facts).holdings.dio.LMT.shares, 0.5);
+  assert.equal(views.ownership(doc, [pos('LMT', 1.5)], facts).holdings.partner.LMT.shares, 0.5);
+  assert.equal(views.ownership(doc, [pos('LMT', 1.5)], facts).holdings.partner.LMT.shares, 0.5);
   doc.assignment = {
-    allocations: { LMT: { brad: 1, dio: 0.5 } },
+    allocations: { LMT: { primary: 1, partner: 0.5 } },
     baselineFills: { 'fill-1': 0.5 },
   };
   facts.push({
     orderId: 'fill-2',
-    profile: 'dio',
+    profile: 'partner',
     symbol: 'LMT',
     instruction: 'BUY',
     filledQuantity: 1.5,
   });
-  assert.equal(views.ownership(doc, [pos('LMT', 3)], facts).holdings.dio.LMT.shares, 2);
+  assert.equal(views.ownership(doc, [pos('LMT', 3)], facts).holdings.partner.LMT.shares, 2);
   facts.push({
     orderId: 'sale',
-    profile: 'dio',
+    profile: 'partner',
     symbol: 'LMT',
     instruction: 'SELL',
     filledQuantity: 1,
   });
-  assert.equal(views.ownership(doc, [pos('LMT', 2)], facts).holdings.dio.LMT.shares, 1);
+  assert.equal(views.ownership(doc, [pos('LMT', 2)], facts).holdings.partner.LMT.shares, 1);
   assert.deepEqual(
     views.ownership(
       doc,
       [pos('LMT', 1)],
-      [{ orderId: 'working', profile: 'dio', symbol: 'LMT', instruction: 'BUY', filledQuantity: 0 }]
-    ).holdings.dio,
+      [{ orderId: 'working', profile: 'partner', symbol: 'LMT', instruction: 'BUY', filledQuantity: 0 }]
+    ).holdings.partner,
     {}
   );
 });
 test('outside-app reduction flags a conflicting split instead of showing overlapping ownership', () => {
   const doc = views.defaults(prefs);
-  doc.assignment.allocations = { LMT: { brad: 1, dio: 2 } };
+  doc.assignment.allocations = { LMT: { primary: 1, partner: 2 } };
   const result = views.ownership(doc, [pos('LMT', 2)]);
   assert.deepEqual(result.issues, ['LMT']);
-  assert.deepEqual(result.holdings.brad, {});
-  assert.deepEqual(result.holdings.dio, {});
+  assert.deepEqual(result.holdings.primary, {});
+  assert.deepEqual(result.holdings.partner, {});
   assert.equal(result.unassigned.LMT, 2);
 });
-test('first successful brokerage sync assigns existing shares to Brad exactly once', async () => {
+test('first successful brokerage sync assigns existing shares to Primary exactly once', async () => {
   const f = await fixture();
-  assert.equal(f.initial.document.assignment.initialOwner, 'brad');
+  assert.equal(f.initial.document.assignment.initialOwner, 'primary');
   const snapshot = { positions: [pos('LMT', 3)], allocationOrders: [] };
   const ready = await f.api.initializeExistingShares(f.store, owner, f.initial, snapshot);
-  assert.deepEqual(ready.document.assignment.allocations.LMT, { brad: 3, dio: 0 });
+  assert.deepEqual(ready.document.assignment.allocations.LMT, { primary: 3, partner: 0 });
   const again = await f.api.initializeExistingShares(f.store, owner, ready, {
     positions: [pos('LMT', 9)],
     allocationOrders: [],
   });
-  assert.deepEqual(again.document.assignment.allocations.LMT, { brad: 3, dio: 0 });
+  assert.deepEqual(again.document.assignment.allocations.LMT, { primary: 3, partner: 0 });
 });
 test('shared config survives another session and stale-device or oversized allocations are rejected server-side', async () => {
   const f = await fixture();
@@ -224,21 +226,21 @@ test('shared config survives another session and stale-device or oversized alloc
     request({
       action: 'assign',
       revision: current.revision,
-      allocations: { LMT: { brad: 1, dio: 2 } },
+      allocations: { LMT: { primary: 1, partner: 2 } },
     }),
     ctx
   );
   assert.equal(response.status, 200);
   current = await response.json();
   const otherSession = await (await f.handler(request(), ctx)).json();
-  assert.deepEqual(otherSession.document.assignment.allocations.LMT, { brad: 1, dio: 2 });
+  assert.deepEqual(otherSession.document.assignment.allocations.LMT, { primary: 1, partner: 2 });
   assert.equal(
     (
       await f.handler(
         request({
           action: 'assign',
           revision: f.initial.revision,
-          allocations: { LMT: { brad: 0, dio: 3 } },
+          allocations: { LMT: { primary: 0, partner: 3 } },
         }),
         ctx
       )
@@ -246,9 +248,9 @@ test('shared config survives another session and stale-device or oversized alloc
     409
   );
   for (const allocations of [
-    { LMT: { brad: 2, dio: 2 } },
-    { LMT: { brad: -1, dio: 2 } },
-    { UNKNOWN: { brad: 1, dio: 0 } },
+    { LMT: { primary: 2, partner: 2 } },
+    { LMT: { primary: -1, partner: 2 } },
+    { UNKNOWN: { primary: 1, partner: 0 } },
   ]) {
     assert.equal(
       (await f.handler(request({ action: 'assign', revision: current.revision, allocations }), ctx))
@@ -257,13 +259,13 @@ test('shared config survives another session and stale-device or oversized alloc
     );
   }
   assert.deepEqual((await f.api.readViews(f.store, owner)).document.assignment.allocations.LMT, {
-    brad: 1,
-    dio: 2,
+    primary: 1,
+    partner: 2,
   });
 });
 test('concurrent profile edits have a single winner without silent overwrite', async () => {
   const f = await fixture();
-  const bodies = ['brad', 'dio'].map((profile) =>
+  const bodies = ['primary', 'partner'].map((profile) =>
     request({
       action: 'preferences',
       profile,
@@ -284,16 +286,16 @@ test('server-owned order profile is pinned through confirmation, accepted orders
   const handler = createHandler(f.dependencies);
   const order = { symbol: 'LMT', qty: 1, limitPrice: 10 };
   const prepared = await (
-    await handler(request({ action: 'prepare', profile: 'dio', orders: [order] }), ctx)
+    await handler(request({ action: 'prepare', profile: 'partner', orders: [order] }), ctx)
   ).json();
-  assert.equal(prepared.profile, 'dio');
+  assert.equal(prepared.profile, 'partner');
   const submitted = await (
     await handler(
-      request({ action: 'submit', profile: 'brad', confirmationId: prepared.confirmationId }),
+      request({ action: 'submit', profile: 'primary', confirmationId: prepared.confirmationId }),
       ctx
     )
   ).json();
-  assert.equal(submitted.results[0].profile, 'dio');
+  assert.equal(submitted.results[0].profile, 'partner');
   assert.equal(submitted.results[0].labelSaved, true);
   const synced = await (await handler(request(), ctx)).json();
   assert.deepEqual(
@@ -301,7 +303,7 @@ test('server-owned order profile is pinned through confirmation, accepted orders
       synced.views.document,
       synced.snapshot.positions,
       synced.snapshot.allocationOrders
-    ).holdings.dio,
+    ).holdings.partner,
     {}
   );
   assert.equal(
@@ -313,7 +315,7 @@ test('server-owned order profile is pinned through confirmation, accepted orders
 test('confirmed execution facts survive repeat sync and aging out of recent order history', async () => {
   const f = await fixture();
   const prefix = f.api.tagPrefix(owner, 'test-account');
-  await f.store.setJSON(prefix + '1234', { profile: 'dio' });
+  await f.store.setJSON(prefix + '1234', { profile: 'partner' });
   const history = [
     {
       orderId: 1234,
@@ -341,13 +343,13 @@ test('confirmed execution facts survive repeat sync and aging out of recent orde
   assert.equal(aged.allocationOrders.length, 1);
   const doc = views.defaults(prefs);
   assert.equal(
-    views.ownership(doc, [pos('LMT', 2)], aged.allocationOrders).holdings.dio.LMT.shares,
+    views.ownership(doc, [pos('LMT', 2)], aged.allocationOrders).holdings.partner.LMT.shares,
     2
   );
-  const receipts = views.receipts(first.orders, 'dio');
+  const receipts = views.receipts(first.orders, 'partner');
   assert.equal(receipts[0].total, 20);
   assert.equal(receipts[0].qty, 2);
-  assert.equal(views.receipts(first.orders, 'brad').length, 0);
+  assert.equal(views.receipts(first.orders, 'primary').length, 0);
 });
 test('shared APIs retain owner auth and same-origin protection; rendering escapes brokerage descriptions', async () => {
   const { createHandler } = await import('../server/stock/portfolio-views.mjs');
@@ -385,7 +387,7 @@ test('view-label storage failure never retries an accepted brokerage order', asy
     await handler(
       request({
         action: 'prepare',
-        profile: 'dio',
+        profile: 'partner',
         orders: [{ symbol: 'LMT', qty: 1, limitPrice: 10 }],
       }),
       ctx
@@ -431,7 +433,7 @@ test('opposite-side account executions block orders regardless of the selected p
       await handler(
         request({
           action: 'prepare',
-          profile: 'dio',
+          profile: 'partner',
           orders: [{ symbol: 'LMT', qty: 1, limitPrice: 10 }],
         }),
         ctx
