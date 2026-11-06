@@ -32,6 +32,7 @@ export const createHandler = (dependencies = {}) =>
       await store.setJSON(`oauth/${hash(state)}`, {
         userId: user.id,
         expiresAt: Date.now() + 600000,
+        callback,
       });
       context.cookies.set({
         name: '__Host-stock-oauth',
@@ -67,11 +68,21 @@ export const createHandler = (dependencies = {}) =>
     if (!claim.modified) throw new HttpError(409, 'This sign-in has already been used.');
     context.cookies.delete('__Host-stock-oauth');
     const record = await issueToken(
-      { grant_type: 'authorization_code', code: body.code, redirect_uri: callback },
+      {
+        grant_type: 'authorization_code',
+        code: body.code,
+        redirect_uri: pending.callback || callback,
+      },
       null,
       dependencies.fetcher
     );
     await store.setJSON(credentialKey(user), record);
-    return json({ ok: true, ...credentialStatus(record) });
+    const saved = await store.get(credentialKey(user), { type: 'json' });
+    if (!saved || saved.generation !== record.generation || !credentialStatus(saved).connected)
+      throw new HttpError(
+        503,
+        'Schwab authorized the connection, but it could not be saved. Please report this error before trying again.'
+      );
+    return json({ ok: true, ...credentialStatus(saved) });
   }, dependencies);
 export default createHandler();

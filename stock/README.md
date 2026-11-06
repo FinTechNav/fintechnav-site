@@ -10,7 +10,7 @@ All stock requests use same-origin HttpOnly sessions. Brokerage OAuth tokens sta
 
 ## Build and verification
 
-- `npm install` installs dependencies. Node 22.12 or newer is required.
+- `npm install` installs dependencies. Node 22.13 or newer is required.
 - `npm run build` creates only intended web assets in `dist`. Never publish the repository root.
 - `npm run test:security` runs mocked authorization, OAuth and order-safety tests without calling a real broker. Run the build first.
 - `npm run dev:stock` serves the built assets locally. Identity needs a deployed Netlify runtime; local preview does not bypass authentication.

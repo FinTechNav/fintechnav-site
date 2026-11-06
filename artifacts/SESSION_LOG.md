@@ -436,3 +436,28 @@
 - **User request:** Resolve conflicts on https://github.com/FinTechNav/fintechnav-site/pull/7.
 - **Action and race:** Prepared a local lockfile merge retaining main's updated dependencies and minimatch 3.1.5. Clean build and 13 existing security tests passed. Dependabot rebased its branch concurrently; Git rejected Codex's push rather than overwriting that update. Codex did not force-push or publish the temporary resolution commit.
 - **Observed outcome:** Dependabot head c358c2f02c7ef4a9a7e70fc35280151550ff9c9c passed GitHub's security check. FinTechNav merged PR #7 at 14:17:56 Eastern. Confirmed the PR is closed/merged and its source branch is deleted. Temporary local resolution branch removed after comparing its tree with merged main.
+
+### Entry 31 — 2026-11-06T14:33:20-05:00
+- **Author:** Codex
+- **Outcome Type:** security merge/deploy verification / Schwab sync diagnosis
+- **User update:** Security PR merged; asks why Sync shares from Schwab repeatedly asks for sign-in. Clarified that the in-app Connect Charles Schwab dialog appears, rather than the stock-account password screen or Schwab website itself.
+- **Merge verified:** PR #9 is merged at 14:30:55 Eastern. Production deploy 6aee2af1dba4fc908b43d1dd is ready for main commit a1f67d4cb55deffdcef468ce2e07f1c9d5ef53eb, published 14:31:13 Eastern.
+- **Diagnosis:** The authenticated browser's read-only /api/schwab-auth endpoint returns ok=true, credentialsConfigured=true, connected=false, accessTokenExpiresAt=0 and refreshTokenExpiresAt=0. The sync handler opens the dialog whenever its in-memory connected flag is false. Stock-account authentication works; no usable brokerage token record is returned from the active server store. This does not establish whether the brokerage callback was never completed, failed, or used an older app/storage scope.
+- **Next:** Complete Schwab authorization once, then verify status persistence and a read-only sync. If already completed, investigate the callback/storage path rather than repeatedly authorizing. No broker credentials were read, no OAuth consent was submitted, and no brokerage orders were placed. No application code changed this turn.
+
+### Entry 32 — 2026-11-06T14:52:00-05:00
+- **Author:** Codex
+- **Outcome Type:** dependency PR repair and retirement audit
+- **User requests:** Resolve #14, fix #12/#13/#15, then re-resolve #13/#15 after other merges; remove or retire unused dependencies.
+- **Changes:** #12 removes unused direct @eslint/js; #14 rebased concurrently and was verified clean/passing, then both were merged by the owner. Pushed conflict resolutions to #13/#15 preserving current main. #13 removes unused Babel React preset/direct globals. #15 includes #13 and removes unused Babel ESLint parser. The owner merged #13/#15 at 14:48:30/14:48:47 Eastern. A later commit retiring unsupported ESLint 8 for 10.14.0 with the same rules/config renamed .mjs is carried separately in codex/fix-schwab-connection, not in the merged #15. Node minimum 22.13. Scoped patched minimatch override fixes the newer ESLint tree's advisory without bypassing package-age protection.
+- **Validation:** Final #15 clean install/build and 17 existing tests pass, full npm audit zero, npm ls valid. Structured ESLint findings/file coverage identical to the old version: nine existing quote errors. #13 and #15 initially rechecked clean with all checks passing; the later ESLint commit is awaiting checks on the upcoming fix PR. Active runtime/build/lint/hook packages retained in their proper dependency scopes.
+- **Record:** artifacts/dependency-cleanup-2026-11-06.md. Titles/descriptions on #13/#15 updated to describe the work actually merged; #15 metadata was corrected after the merge race. No brokerage actions performed.
+
+### Entry 33 — 2026-11-06T14:52:00-05:00
+- **Author:** Codex
+- **Outcome Type:** Schwab connection code repair / awaiting deployment verification
+- **User request:** Owner has already completed Schwab authorization; find and fix why the connection is not saved.
+- **Findings:** Confirmed callback retry/status-code confusion, unreliable storage context selection and stale incoming-cookie verification during SDK login/refresh. Metadata alone cannot establish Schwab's original rejection reason; new diagnostics classify only safe upstream machine codes.
+- **Changes:** Dedicated codex/fix-schwab-connection branch; stable runtime production storage, isolated previews, save readback, original redirect snapshot, broker-specific errors, correct HttpOnly cookie renewal, persistent callback feedback and fresh status check on sync.
+- **Validation:** Clean install/build, syntax and 24 security tests pass with mocked brokerage calls. Existing owner/auth/order guards retained. Real callback/read-only sync and production status are not yet verified. See artifacts/schwab-connection-fix-2026-11-06.md.
+- **Access boundary:** Automatic approval review rejected broad Netlify environment-value retrieval because it could expose brokerage and unrelated secrets. Continued with code/status diagnostics; did not retrieve secrets or bypass the rejection.

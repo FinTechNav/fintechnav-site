@@ -81,17 +81,23 @@ export async function verifyOwner(request, context, fetcher = fetch) {
   hardenCookies(context);
   return { id: user.id, email: user.email };
 }
-export function privateStore() {
+export function privateStore(request, context, storeFactory = getStore) {
   // Preview credentials and approvals must never touch production objects.
+  // CONTEXT/DEPLOY_ID are build variables, not guaranteed function variables.
   const scope =
-    env('CONTEXT') === 'production' ? 'production' : `preview-${env('DEPLOY_ID') || 'local'}`;
-  return getStore({ name: `stock-private-${scope}`, consistency: 'strong' });
+    context?.deploy?.context === 'production'
+      ? 'production'
+      : context?.deploy?.id
+        ? `preview-${context.deploy.id}`
+        : null;
+  if (!scope) throw new HttpError(503, 'Private storage deployment context is unavailable.');
+  return storeFactory({ name: `stock-private-${scope}`, consistency: 'strong' });
 }
 export function protect(handler, { owner = verifyOwner, store = privateStore } = {}) {
   return async (request, context) => {
     try {
       const user = await owner(request, context);
-      return await handler(request, context, user, store());
+      return await handler(request, context, user, store(request, context));
     } catch (error) {
       if (!(error instanceof HttpError)) console.error('Stock request failed', error.name);
       return json(

@@ -252,11 +252,27 @@ async function startStockApp() {
   }
   renderAll();
   await checkAutoOAuthCallback();
-  const response = await stockFetch('/api/schwab-auth');
-  const data = await response.json();
-  if (data.ok) { state.schwabAuth = data; renderAuthStatus(); }
-  if (data.connected) document.getElementById('btn-sync-schwab-positions')?.click();
+  try {
+    const data = await refreshSchwabStatus();
+    if (data.connected) document.getElementById('btn-sync-schwab-positions')?.click();
+  } catch (error) { showSchwabError(error.message); }
   refreshLiveQuotes();
+}
+async function refreshSchwabStatus() {
+  const response = await stockFetch('/api/schwab-auth');
+  const data = await safeReadJson(response, '/api/schwab-auth');
+  if (!response.ok || !data.ok) throw new Error(data.error || 'Could not check the saved Schwab connection.');
+  state.schwabAuth = data;
+  renderAuthStatus();
+  return data;
+}
+function showSchwabError(message) {
+  const feedback = document.getElementById('auth-modal-feedback');
+  feedback.textContent = message;
+  feedback.classList.remove('hidden');
+  document.getElementById('modal-auth')?.classList.remove('hidden');
+  addSystemLog('ERROR', '/api/schwab-auth', message);
+  showToast(message);
 }
 async function initLoginGate() {
   const form = document.getElementById('form-login-gate');
@@ -1379,13 +1395,20 @@ function renderAuthStatus() {
   const now = Date.now();
   const exp = state.schwabAuth?.refreshTokenExpiresAt || 0;
 
-  if (exp > now) {
+  if (state.schwabAuth?.connected && exp > now) {
     const daysLeft = ((exp - now) / (1000 * 60 * 60 * 24)).toFixed(1);
     if (dot) dot.className = 'w-2 h-2 rounded-full bg-[#10b981]';
     if (txt) txt.textContent = `Schwab (${daysLeft}d)`;
     if (badge) {
       badge.textContent = `Active — ${daysLeft} Days Remaining`;
       badge.className = 'px-2 py-0.5 rounded bg-[#10b981]/20 text-[#a4f4cf] font-semibold';
+    }
+  } else {
+    if (dot) dot.className = 'w-2 h-2 rounded-full bg-[#a1a1a1]';
+    if (txt) txt.textContent = 'Schwab disconnected';
+    if (badge) {
+      badge.textContent = 'Not connected';
+      badge.className = 'px-2 py-0.5 rounded bg-[#333333] text-[#d9d9d9] font-semibold';
     }
   }
 }
@@ -1727,10 +1750,11 @@ function initEvents() {
     try {
       const res = await stockFetch('/api/schwab-auth');
       const data = await safeReadJson(res, '/api/schwab-auth');
+      if (res.ok && data.ok) { state.schwabAuth = data; renderAuthStatus(); }
       addSystemLog(
         data.ok ? 'OK' : 'ERROR',
         '/api/schwab-auth',
-        `HTTP ${res.status} — credentialsConfigured=${data.credentialsConfigured}, callbackUrl=${data.callbackUrl}`
+        `HTTP ${res.status} — credentialsConfigured=${data.credentialsConfigured}, connected=${data.connected}, callbackUrl=${data.callbackUrl}`
       );
       showToast(data.credentialsConfigured ? 'Schwab serverless function healthy & credentials ready!' : 'Function active, check credentials');
     } catch (err) {
@@ -1746,17 +1770,20 @@ function initEvents() {
       const data = await response.json();
       if (!response.ok) throw new Error(data.error);
       window.location.href = data.authUrl;
-    } catch (error) { showToast(error.message); }
+    } catch (error) { showSchwabError(error.message); }
   });
 
   document.getElementById('btn-sync-schwab-positions')?.addEventListener('click', async () => {
-    if (!state.schwabAuth?.connected) {
-      document.getElementById('modal-auth')?.classList.remove('hidden');
-      showToast('Sign in with Charles Schwab first to sync positions.');
-      return;
-    }
-    addSystemLog('INFO', '/api/schwab-trade', 'Fetching live account balances & positions from Charles Schwab...');
     try {
+      // Recheck server storage before prompting: another tab or device may
+      // have completed the connection since this page was opened.
+      const connection = await refreshSchwabStatus();
+      if (!connection.connected) {
+        document.getElementById('modal-auth')?.classList.remove('hidden');
+        showToast('Connect Charles Schwab to sync positions.');
+        return;
+      }
+      addSystemLog('INFO', '/api/schwab-trade', 'Fetching live account balances & positions from Charles Schwab...');
       const res = await stockFetch('/api/schwab-trade');
       const data = await safeReadJson(res, '/api/schwab-trade');
       if (data.ok) {
@@ -1806,18 +1833,21 @@ async function checkAutoOAuthCallback() {
   const parameters = new URLSearchParams(window.location.search);
   if (!parameters.has('code') && !parameters.has('error')) return;
   window.history.replaceState({}, document.title, window.location.pathname);
-  if (parameters.has('error')) { showToast('Charles Schwab sign-in was not completed.'); return; }
+  if (parameters.has('error')) { showSchwabError('Charles Schwab sign-in was not completed.'); return; }
   try {
     const response = await stockFetch('/api/schwab-auth', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'exchange', code: parameters.get('code'), state: parameters.get('state') })
     });
     const data = await response.json();
-    if (!response.ok) throw new Error(data.error);
+    if (!response.ok || !data.connected) throw new Error(data.error || 'The Schwab connection was not saved.');
     state.schwabAuth = data;
     renderAuthStatus();
+    document.getElementById('auth-modal-feedback')?.classList.add('hidden');
+    document.getElementById('modal-auth')?.classList.add('hidden');
+    addSystemLog('OK', '/api/schwab-auth', 'Schwab authorization exchanged and saved on the server.');
     showToast('Charles Schwab connected securely.');
-  } catch (error) { showToast(error.message); }
+  } catch (error) { showSchwabError(error.message); }
 }
 
 if ('serviceWorker' in navigator) {

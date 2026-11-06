@@ -21,8 +21,8 @@ This repository contains the source code for my professional portfolio website a
 - **Frontend**: HTML5, CSS3, JavaScript, React
 - **Backend**: Netlify Functions, Zoho Mail API
 - **Deployment**: Netlify
-- **Code Quality**: ESLint (v8.56+), Prettier, Husky, lint-staged
-- **Other**: Babel (for JSX), Google Fonts, nodemailer
+- **Code Quality**: ESLint (v10.14+, Node 22.13+), Prettier, Husky, lint-staged
+- **Other**: browser Babel standalone (for biography JSX), Google Fonts, nodemailer
 
 ## Project Structure
 
@@ -82,7 +82,8 @@ project/
 
 This project uses several tools to maintain code quality:
 
-- **ESLint**: Configured with a modern flat config system for JavaScript linting
+- **ESLint**: Uses `eslint.config.mjs` with the existing lint rules. Unused Babel parser/preset and direct globals/@eslint/js packages are retired. The build uses esbuild; browser Babel standalone remains active for biography JSX.
+- **Security override**: ESLint and its config-array dependency use patched minimatch 11 via a scoped override for GHSA-g3hv-75wg-m249. Remove the override once their supported dependency ranges include a patched release. Lint file coverage and findings were compared against the prior ESLint 8 baseline.
 - **Prettier**: Ensures consistent code formatting
 - **Husky**: Manages Git hooks for pre-commit validation
 - **lint-staged**: Runs linters only on staged files for efficient pre-commit checks
