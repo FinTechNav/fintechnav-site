@@ -331,6 +331,104 @@ let expandedTableSymbol = 'IREN';
 let latestComputedRows = [];
 let latestBasket = [];
 
+// Table ordering is presentation-only: never sort holdings, journal or scan rows in place.
+const tableSorts = { portfolio: null, companies: null, journal: null };
+const tableTextCollator = new Intl.Collator('en', { numeric: true, sensitivity: 'base' });
+
+function sortNumber(value) {
+  if (value == null || value === '') return null;
+  const number = Number(value);
+  return Number.isFinite(number) ? number : null;
+}
+
+function companyAmount(value) {
+  const match = String(value || '').match(/^~?\$([\d,.]+)\s*(Million|Billion|Trillion)\b/i);
+  if (!match) return null;
+  return Number(match[1].replaceAll(',', '')) * ({ million: 1e6, billion: 1e9, trillion: 1e12 }[match[2].toLowerCase()]);
+}
+
+function journalIsBuy(entry) {
+  return /BUY|BOUGHT/i.test(String(entry.action));
+}
+
+function journalTime(entry) {
+  // New receipts carry an ISO timestamp; keep older saved display dates sortable too.
+  const time = Date.parse(entry.createdAt || entry.date);
+  return Number.isFinite(time) ? time : null;
+}
+
+function holdingSortValue([symbol, position], key) {
+  const profile = COMPANY_PROFILES[symbol] || {};
+  const shares = sortNumber(position.shares);
+  const paid = sortNumber(position.avgCost);
+  const price = sortNumber(state.quotes[symbol]?.activePrice || position.avgCost);
+  const basis = shares == null || paid == null ? null : shares * paid;
+  const value = shares == null || price == null ? null : shares * price;
+  return {
+    symbol, role: position.role || profile.plainWhatTheyDo,
+    shares, paid, price, value,
+    pnl: value == null || basis == null ? null : value - basis,
+    progress: value == null || basis == null ? null : basis > 0 ? (value - basis) / basis : 0
+  }[key];
+}
+
+const tableSortValues = {
+  portfolio: holdingSortValue,
+  companies: (row, key) => ({
+    symbol: row.symbol, category: row.profile.categoryLabel,
+    size: companyAmount(row.profile.marketCap), revenue: companyAmount(row.profile.annualRevenue),
+    price: sortNumber(row.price), target: sortNumber(row.target12m), status: row.verdictText
+  })[key],
+  journal: (entry, key) => ({
+    date: journalTime(entry), type: journalIsBuy(entry) ? 'BOUGHT' : 'SOLD', symbol: entry.symbol,
+    shares: sortNumber(entry.qty), price: sortNumber(entry.price), total: sortNumber(entry.total),
+    orderId: entry.orderId, note: entry.note
+  })[key]
+};
+
+function sortedTableRows(table, rows) {
+  const sort = tableSorts[table];
+  if (!sort) return [...rows];
+  return rows.map((row, index) => ({ row, index, value: tableSortValues[table](row, sort.key) }))
+    .sort((a, b) => {
+      const missingA = a.value == null || a.value === '';
+      const missingB = b.value == null || b.value === '';
+      // Missing values stay at the end in both directions; equal rows stay stable.
+      if (missingA !== missingB) return missingA ? 1 : -1;
+      if (missingA) return a.index - b.index;
+      const comparison = typeof a.value === 'number' && typeof b.value === 'number'
+        ? a.value - b.value : tableTextCollator.compare(String(a.value), String(b.value));
+      return comparison === 0 ? a.index - b.index : comparison * (sort.direction === 'ascending' ? 1 : -1);
+    }).map(({ row }) => row);
+}
+
+function updateTableSortHeaders(table) {
+  const sort = tableSorts[table];
+  document.querySelectorAll(`[data-sort-table="${table}"]`).forEach((button) => {
+    const active = sort?.key === button.dataset.sortKey;
+    button.closest('th').setAttribute('aria-sort', active ? sort.direction : 'none');
+    button.querySelector('.table-sort-indicator').textContent = active ? (sort.direction === 'ascending' ? '↑' : '↓') : '↕';
+    const label = button.textContent.replace(/[↕↑↓]/g, '').trim();
+    const next = active && sort.direction === 'ascending' ? 'descending' : 'ascending';
+    button.setAttribute('aria-label', `${label}: sort ${next}`);
+    if (active) document.getElementById(`${table}-sort-status`).textContent = `${label}, sorted ${sort.direction}. Activate the header to reverse direction.`;
+  });
+}
+
+function initTableSorting() {
+  document.querySelectorAll('[data-sort-table]').forEach((button) => {
+    button.addEventListener('click', () => {
+      const table = button.dataset.sortTable;
+      const key = button.dataset.sortKey;
+      const current = tableSorts[table];
+      tableSorts[table] = { key, direction: current?.key === key && current.direction === 'ascending' ? 'descending' : 'ascending' };
+      if (table === 'portfolio') { renderKPIsAndPortfolio(); bindCompanyDetailButtons(); }
+      if (table === 'companies') renderCompaniesTableWithInlineDrawer(latestComputedRows);
+      if (table === 'journal') renderJournal();
+    });
+  });
+}
+
 function saveState() {
   const { schwabAuth, ...preferences } = state;
   localStorage.setItem(STORAGE_KEY, JSON.stringify(preferences));
@@ -853,7 +951,8 @@ function renderKPIsAndPortfolio() {
 
   const { boughtToday, soldToday } = getSameDayTradeLocks();
   const blockDayTrades = state.blockDayTrades !== false;
-  const entries = Object.entries(state.holdings);
+  updateTableSortHeaders('portfolio');
+  const entries = sortedTableRows('portfolio', Object.entries(state.holdings));
   const rowsHtml = entries.map(([sym, pos]) => {
     const profile = COMPANY_PROFILES[sym] || { name: sym, plainWhatTheyDo: pos.role };
     const q = state.quotes[sym] || { activePrice: pos.avgCost };
@@ -1175,8 +1274,9 @@ function renderCompaniesTableWithInlineDrawer(rows) {
   const tbody = document.getElementById('companies-table-tbody');
   if (!tbody) return;
 
+  updateTableSortHeaders('companies');
   const html = [];
-  rows.forEach((r) => {
+  sortedTableRows('companies', rows).forEach((r) => {
     const isExpanded = expandedTableSymbol === r.symbol;
     const dayColor = r.dayPct < 0 ? 'text-[#ff6467]' : 'text-[#a4f4cf]';
     const daySign = r.dayPct > 0 ? '+' : '';
@@ -1190,7 +1290,8 @@ function renderCompaniesTableWithInlineDrawer(rows) {
           </div>
         </td>
         <td class="py-2.5 px-3 text-xs text-[#d9d9d9]">${r.profile.categoryLabel}</td>
-        <td class="py-2.5 px-3 text-xs text-[#a1a1a1]">${r.profile.marketCap} &bull; ${r.profile.annualRevenue}</td>
+        <td class="py-2.5 px-3 text-xs text-[#a1a1a1]">${r.profile.marketCap}</td>
+        <td class="py-2.5 px-3 text-xs text-[#a1a1a1]">${r.profile.annualRevenue}</td>
         <td class="py-2.5 px-3 text-right">
           <span class="font-medium text-[#f5f5f5]">$${r.price.toFixed(r.price < 1 ? 4 : 2)}</span>
           <span class="text-xs ${dayColor} ml-1">(${daySign}${r.dayPct.toFixed(1)}%)</span>
@@ -1213,7 +1314,7 @@ function renderCompaniesTableWithInlineDrawer(rows) {
       const chartSvg = buildPriceAndProjectionSvg(r.closes, r.price, r.target12m, r.isRedToday, 105);
       html.push(`
         <tr class="bg-[#0b0b0b]">
-          <td colspan="7" class="p-5 border-b border-[#333333]">
+          <td colspan="8" class="p-5 border-b border-[#333333]">
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
               <div class="lg:col-span-7 space-y-3 text-xs leading-relaxed">
                 <div class="flex items-center gap-2">
@@ -1363,8 +1464,9 @@ function renderStrategyStudio() {
 function renderJournal() {
   const tbody = document.getElementById('journal-tbody');
   if (!tbody) return;
-  tbody.innerHTML = state.journal.map((j) => {
-    const isBuy = String(j.action).toUpperCase().includes('BUY') || String(j.action).toUpperCase().includes('BOUGHT');
+  updateTableSortHeaders('journal');
+  tbody.innerHTML = sortedTableRows('journal', state.journal).map((j) => {
+    const isBuy = journalIsBuy(j);
     const prof = COMPANY_PROFILES[j.symbol];
     return `
       <tr class="bg-[#0f0f0f] hover:bg-[#171717] h-11">
@@ -1487,6 +1589,7 @@ async function refreshLiveQuotes() {
 }
 
 function initEvents() {
+  initTableSorting();
   // Primary Tab Buttons
   document.querySelectorAll('.tab-btn').forEach((btn) => {
     btn.addEventListener('click', () => {
@@ -1625,6 +1728,7 @@ function initEvents() {
         role: existing.role
       };
       state.journal.unshift({
+        createdAt: new Date().toISOString(),
         date: new Date().toLocaleDateString(),
         action: 'BOUGHT',
         symbol: ord.symbol,
