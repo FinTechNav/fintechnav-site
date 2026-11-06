@@ -35,15 +35,21 @@ const context = () => {
 async function fixture(options = {}) {
   const [security, brokerage, , trade, auth, gist] = await modules;
   const objects = new Map();
+  let revision = 0;
+  const etags = new Map();
   const store = {
+    async getWithMetadata(key) { return objects.has(key) ? {data:structuredClone(objects.get(key)),etag:etags.get(key)} : null; },
+    async list({prefix}) { return {blobs:[...objects.keys()].filter(key=>key.startsWith(prefix)).map(key=>({key}))}; },
     async get(key) {
       return structuredClone(objects.get(key) || null);
     },
     async setJSON(key, value, condition = {}) {
       if (condition.onlyIfNew && objects.has(key)) return { modified: false };
       if (options.dropCredentials && key.startsWith('credentials/')) return { modified: false };
+      if (condition.onlyIfMatch && condition.onlyIfMatch !== etags.get(key)) return {modified:false};
       objects.set(key, structuredClone(value));
-      return { modified: true };
+      const etag = String(++revision); etags.set(key,etag);
+      return { modified: true, etag };
     },
     async delete(key) {
       objects.delete(key);

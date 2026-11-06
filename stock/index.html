@@ -61,6 +61,11 @@
     .table-sort-indicator { color: #a1a1a1; flex-shrink: 0; }
     th[aria-sort="ascending"] .table-sort-indicator,
     th[aria-sort="descending"] .table-sort-indicator { color: #50a2ff; }
+    [hidden] { display: none !important; }
+    #stock-dashboard[data-active-view="all"] #stock-strategy-rail { display: none; }
+    .account-table th, .account-table td { padding: 12px; text-align: left; border-bottom: 1px solid #262626; }
+    .account-table th { color: #a1a1a1; font-size: 12px; }
+    .account-table td { font-size: 13px; }
     #stock-dashboard[hidden] { display: none !important; }
     @media (min-width: 768px) {
       #stock-dashboard {
@@ -193,10 +198,10 @@
             <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/>
           </svg>
         </div>
-        <span class="text-[13px] font-medium text-[#f5f5f5] truncate">Brad@schwab-ai...</span>
-        <svg class="w-3.5 h-3.5 text-[#a1a1a1] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="m7 15 5 5 5-5"/><path d="m7 9 5-5 5 5"/>
-        </svg>
+        <label for="portfolio-view-select" class="sr-only">Portfolio view</label>
+        <select id="portfolio-view-select" class="kumo-input text-[13px] font-medium px-3 py-2 min-w-28" disabled>
+          <option value="brad">Brad</option><option value="dio">Dio</option><option value="all">All</option>
+        </select>
       </div>
 
       <div class="hidden md:block h-5 w-[1px] bg-[#333333]"></div>
@@ -215,7 +220,7 @@
     <div class="flex items-center gap-2.5 text-[13px]">
       <div class="hidden lg:flex items-center gap-4 mr-2 text-xs">
         <div class="flex items-center gap-1.5">
-          <span class="text-[#a1a1a1]">Account:</span>
+          <span id="kpi-value-label" class="text-[#a1a1a1]">Allocated holdings:</span>
           <span id="kpi-account-val" class="font-semibold text-[#f5f5f5]">$0.00</span>
         </div>
         <div class="h-3.5 w-[1px] bg-[#262626]"></div>
@@ -225,7 +230,7 @@
         </div>
         <div class="h-3.5 w-[1px] bg-[#262626]"></div>
         <div class="flex items-center gap-1.5">
-          <span class="text-[#a1a1a1]">Cash:</span>
+          <span class="text-[#a1a1a1]">Shared cash:</span>
           <span id="kpi-cash-val" class="font-semibold text-[#50a2ff]">$0.00</span>
         </div>
       </div>
@@ -273,7 +278,7 @@
               <svg class="w-4 h-4 text-[#5491f6]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
               </svg>
-              <span>Account home</span>
+              <span data-view-nav-label>Account home</span>
             </span>
           </button>
 
@@ -282,7 +287,7 @@
               <svg class="w-4 h-4 text-[#a1a1a1]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
               </svg>
-              <span>All 15 companies</span>
+              <span data-view-nav-label>All 15 companies</span>
             </span>
             <span class="kumo-badge-dashed text-[#50a2ff]">Guide</span>
           </button>
@@ -292,7 +297,7 @@
               <svg class="w-4 h-4 text-[#a1a1a1]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <rect width="20" height="14" x="2" y="7" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
               </svg>
-              <span>What I own (0)</span>
+              <span data-view-nav-label>What I own (0)</span>
             </span>
             <span class="text-[11px] text-[#a1a1a1]">›</span>
           </button>
@@ -364,7 +369,7 @@
               </svg>
               <span>Receipts &amp; history</span>
             </span>
-            <span class="text-[11px] text-[#a1a1a1]">9</span>
+            <span class="text-[11px] text-[#a1a1a1]" id="sidebar-receipt-count">0</span>
           </button>
 
           <button data-tab="logs" class="tab-btn w-full h-[34px] px-3 rounded-lg flex items-center justify-between text-[13px] font-medium text-[#d9d9d9] hover:bg-[#171717]/60 transition">
@@ -392,6 +397,27 @@
       <!-- Center Main Column -->
       <main class="flex-1 min-w-0 px-4 sm:px-8 py-7 max-w-[1060px] mx-auto space-y-8">
 
+        <div class="kumo-card p-4 mb-6 space-y-2" aria-live="polite">
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <h2 id="view-heading" class="font-semibold">Brad · Personal plan</h2>
+            <div class="flex gap-3 text-xs"><button type="button" data-jump-tab="allocations" class="text-[#50a2ff]">Split shared shares</button><button type="button" id="btn-reload-views" class="text-[#50a2ff]">Reload shared views</button></div>
+          </div>
+          <p id="view-description" class="text-xs text-[#a1a1a1]"></p>
+          <p id="view-sync-status" class="text-xs text-[#a1a1a1]"></p>
+          <p id="view-save-status" role="status" class="text-xs text-[#a1a1a1]">Loading shared views…</p>
+        </div>
+        <section id="tab-account" class="tab-panel hidden space-y-6">
+          <div class="flex flex-wrap gap-3 justify-between"><div><h1 class="text-2xl font-semibold">Shared Schwab account</h1><p class="text-sm text-[#a1a1a1]">Brokerage totals, including unassigned shares and holdings outside both personal watchlists.</p></div><button id="btn-sync-account" class="kumo-btn-primary px-4 py-2">Sync Schwab account</button></div>
+          <div id="account-balances" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3"></div>
+          <div><h2 class="font-semibold mb-3">Entire portfolio</h2><p id="account-sort-status" class="sr-only" role="status" aria-live="polite">Activate a column header to sort.</p><div class="kumo-card overflow-x-auto"><table class="account-table w-full" aria-describedby="account-sort-status"><thead><tr><th scope="col" aria-sort="none"><button type="button" class="table-sort-button" data-sort-table="account" data-sort-key="symbol">Holding<span class="table-sort-indicator" aria-hidden="true">↕</span></button></th><th scope="col" aria-sort="none"><button type="button" class="table-sort-button" data-sort-table="account" data-sort-key="assetType">Asset type<span class="table-sort-indicator" aria-hidden="true">↕</span></button></th><th scope="col" aria-sort="none"><button type="button" class="table-sort-button" data-sort-table="account" data-sort-key="longQuantity">Long shares / units<span class="table-sort-indicator" aria-hidden="true">↕</span></button></th><th scope="col" aria-sort="none"><button type="button" class="table-sort-button" data-sort-table="account" data-sort-key="shortQuantity">Short shares / units<span class="table-sort-indicator" aria-hidden="true">↕</span></button></th><th scope="col" aria-sort="none"><button type="button" class="table-sort-button" data-sort-table="account" data-sort-key="averagePrice">Schwab average price<span class="table-sort-indicator" aria-hidden="true">↕</span></button></th><th scope="col" aria-sort="none"><button type="button" class="table-sort-button" data-sort-table="account" data-sort-key="marketValue">Market value<span class="table-sort-indicator" aria-hidden="true">↕</span></button></th></tr></thead><tbody id="account-positions"></tbody></table></div></div>
+          <div><h2 class="font-semibold mb-3">Recent orders · Last 60 days</h2><p class="text-xs text-[#a1a1a1] mb-3">Order acceptance and limit prices are separate from confirmed execution receipts.</p><div class="kumo-card overflow-x-auto"><table class="account-table w-full"><thead><tr><th scope="col">Order ID</th><th scope="col">Holding</th><th scope="col">Instruction</th><th scope="col">Status</th><th scope="col">Filled / ordered</th><th scope="col">Limit price</th></tr></thead><tbody id="account-orders"></tbody></table></div></div>
+        </section>
+        <section id="tab-allocations" class="tab-panel hidden space-y-5">
+          <h1 class="text-2xl font-semibold">Split shared shares</h1>
+          <p class="text-sm text-[#a1a1a1]">Give each view its share count, including purchases made directly in Schwab. For example: Brad 1, Dio 2, account total 3. The remainder stays unassigned in All. This updates app attribution only.</p>
+          <p class="text-xs text-[#a1a1a1]">Existing long stock shares initially go to Brad on the first sync. New confirmed app fills use the view chosen when the order was reviewed. Cost and profit/loss use the brokerage’s blended average cost. Other asset types remain in All.</p>
+          <form id="form-share-allocations" class="space-y-4"><div class="kumo-card overflow-x-auto"><table class="account-table w-full"><thead><tr><th scope="col">Stock</th><th scope="col">Schwab total</th><th scope="col">Brad shares</th><th scope="col">Dio shares</th><th scope="col">Unassigned / review</th></tr></thead><tbody id="allocation-rows"></tbody></table></div><button id="btn-save-allocations" class="kumo-btn-primary px-4 py-2" disabled>Save share split</button></form>
+        </section>
         <!-- ==================== TAB 1: ACCOUNT HOME (CLOUDFLARE HOME + ZONE OVERVIEW STYLE) ==================== -->
         <section id="tab-radar" class="tab-panel space-y-8">
 
@@ -400,7 +426,7 @@
             <div class="flex flex-col items-center text-center space-y-3 pt-1">
               <div class="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#0f0f0f] ring-1 ring-[#333333] text-xs text-[#d9d9d9]">
                 <span class="w-2 h-2 rounded-full bg-[#5491f6]"></span>
-                <span>Checkers, Not Chess: Buy on Red Days &bull; Sell 1 Share at +35% Profit</span>
+                <span id="strategy-summary">Checkers, Not Chess: Buy on Red Days &bull; Sell 1 Share at +35% Profit</span>
               </div>
               <h1 class="text-2xl sm:text-[30px] font-semibold text-[#f5f5f5] tracking-tight leading-9">
                 Time to grow your portfolio on red days.
@@ -424,9 +450,9 @@
               <div>
                 <div class="flex items-center justify-between text-[13px] font-medium text-[#a1a1a1] mb-2">
                   <button data-jump-tab="portfolio" class="hover:text-[#f5f5f5] flex items-center gap-1">
-                    <span>Stocks you own (0)</span><span>›</span>
+                    <span id="quick-owned-label">Stocks you own (0)</span><span>›</span>
                   </button>
-                  <span class="text-xs text-[#50a2ff]">0 shares</span>
+                  <span id="quick-owned-shares" class="text-xs text-[#50a2ff]">0 shares</span>
                 </div>
                 <div id="quick-col-owned" class="divide-y divide-[#262626] border-t border-b border-[#262626] text-[13px]"></div>
               </div>
@@ -520,7 +546,7 @@
                   Copy shopping list
                 </button>
                 <button id="btn-simulate-fill" class="kumo-btn-secondary h-8 px-3 text-xs text-[#a4f4cf]">
-                  ✓ Mark as bought
+                  Assign synced shares
                 </button>
               </div>
             </div>
@@ -622,7 +648,7 @@
                     <th scope="col" class="py-2 px-3 text-right" aria-sort="none"><button type="button" class="table-sort-button" data-sort-table="portfolio" data-sort-key="price" title="Sort by price now">Price Now<span class="table-sort-indicator" aria-hidden="true">↕</span></button></th>
                     <th scope="col" class="py-2 px-3 text-right" aria-sort="none"><button type="button" class="table-sort-button" data-sort-table="portfolio" data-sort-key="value" title="Sort by value">Value<span class="table-sort-indicator" aria-hidden="true">↕</span></button></th>
                     <th scope="col" class="py-2 px-3 text-right" aria-sort="none"><button type="button" class="table-sort-button" data-sort-table="portfolio" data-sort-key="pnl" title="Sort by unrealized dollar profit or loss">Profit / Loss<span class="table-sort-indicator" aria-hidden="true">↕</span></button></th>
-                    <th scope="col" class="py-2 px-4" aria-sort="none"><button type="button" class="table-sort-button" data-sort-table="portfolio" data-sort-key="progress" title="Sort by percentage gain toward the sell goal">Progress to +35% Sell Goal<span class="table-sort-indicator" aria-hidden="true">↕</span></button></th>
+                    <th scope="col" class="py-2 px-4" aria-sort="none"><button type="button" class="table-sort-button" data-sort-table="portfolio" data-sort-key="progress" title="Sort by percentage gain toward the sell goal"><span data-harvest-progress-label>Progress to +35% Sell Goal</span><span class="table-sort-indicator" aria-hidden="true">↕</span></button></th>
                   </tr>
                 </thead>
                 <tbody id="portfolio-tbody" class="divide-y divide-[#333333]"></tbody>
@@ -774,7 +800,7 @@
       </main>
 
       <!-- ==================== RIGHT RAIL (336PX CLOUDFLARE ZONE OVERVIEW STYLE) ==================== -->
-      <aside class="w-full lg:w-[336px] shrink-0 border-t lg:border-t-0 lg:border-l border-[#333333] p-5 space-y-6 bg-[#030303]">
+      <aside id="stock-strategy-rail" class="w-full lg:w-[336px] shrink-0 border-t lg:border-t-0 lg:border-l border-[#333333] p-5 space-y-6 bg-[#030303]">
 
         <!-- Portfolio Snapshot Card -->
         <div class="space-y-2">
@@ -784,7 +810,7 @@
           </div>
           <div class="kumo-card p-4 space-y-3 text-xs">
             <div class="flex items-center justify-between">
-              <span class="text-[#a1a1a1]">Total Account Value</span>
+              <span class="text-[#a1a1a1]" id="rail-value-label">Allocated Holdings Value</span>
               <span id="rail-account-val" class="font-semibold text-sm text-[#f5f5f5]">$0.00</span>
             </div>
             <div class="flex items-center justify-between border-t border-[#262626] pt-2.5">
@@ -792,7 +818,7 @@
               <span id="rail-unrealized-pnl" class="font-semibold text-[#a4f4cf]">—</span>
             </div>
             <div class="flex items-center justify-between border-t border-[#262626] pt-2.5">
-              <span class="text-[#a1a1a1]">Cash Ready to Spend</span>
+              <span class="text-[#a1a1a1]">Shared Cash Available</span>
               <span id="rail-cash-val" class="font-semibold text-[#50a2ff]">$0.00</span>
             </div>
           </div>
@@ -802,7 +828,7 @@
         <div class="space-y-2">
           <h3 class="text-sm font-semibold text-[#f5f5f5]">Should I Sell Anything Today?</h3>
           <p class="text-xs text-[#a1a1a1] leading-relaxed">
-            When any stock you own climbs <strong class="text-[#f5f5f5]">+35%</strong> above what you paid, we sell 1 share to lock in cash.
+            When any stock you own climbs <strong data-harvest-goal class="text-[#f5f5f5]">+35%</strong> above what you paid, we sell 1 share to lock in cash.
           </p>
           <div id="harvest-alerts-box" class="text-xs"></div>
         </div>
@@ -979,6 +1005,8 @@
   <div id="toast" class="fixed bottom-20 md:bottom-6 right-6 z-50 hidden px-4 py-2.5 rounded-lg bg-[#171717] ring-1 ring-[#5491f6] text-xs font-medium text-[#f5f5f5] shadow-2xl"></div>
 
   <script src="/stock/auth-client.js"></script>
+  <script src="/stock/portfolio-views.js"></script>
+  <script src="/stock/view-controller.js"></script>
   <script src="/stock/app.js"></script>
 </body>
 </html>

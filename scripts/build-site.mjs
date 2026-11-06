@@ -51,6 +51,8 @@ await mkdir(path.join(output, 'stock'), { recursive: true });
 for (const name of [
   'index.html',
   'app.js',
+  'portfolio-views.js',
+  'view-controller.js',
   'manifest.json',
   'sw.js',
   'icon.svg',
