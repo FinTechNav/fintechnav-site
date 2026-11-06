@@ -12,4 +12,11 @@ The production build publishes `dist`, with an explicit asset allowlist. Backend
 
 Verification: build successful; 13 mocked security tests passed; changed-source syntax checks passed. Existing `npm run validate` fails on nine pre-existing quote errors in untouched biography files. Dependency audit found an existing high-severity Nodemailer advisory; its major-version upgrade is outside this first stock-access change. No live trades or payment/mail transactions tested.
 
-Deployment and owner onboarding status will be appended after verification.
+## Verified deployment and owner setup — 2026-11-06T13:20:47-05:00
+
+- Primary deploy: `6aee1906f8e413bec01747f5`, ready. Public homepage and stock login: HTTP 200. Five stock API routes: anonymous HTTP 401 with private/no-store responses. Legacy function URLs and tested internal source/log URLs: HTTP 404.
+- Relay deploy: `6aee1960062ce448400dad83`, ready. Query parameters are preserved. Old stock assets and legacy direct function URL return 404; protected API paths reject anonymous requests with 401.
+- Identity configuration independently checked: signup disabled/invite only; email confirmation required.
+- Owner approved the invitation to brad@fintechnav.com. Netlify accepted it and shows that user in Registered users. Password setup and authenticated verification remain owner actions; no password has been handled by Codex.
+- Code: committed/pushed `3442e10` on `codex/stock-security`. PR creation/merge awaits confirmation from the GitHub interactive form; `main` must include these changes before subsequent production deployments.
+- Screenshots: `/private/tmp/fintechnav-stock-secure-login-live.jpg` and `/private/tmp/fintechnav-stock-invitation-sent.jpg`.

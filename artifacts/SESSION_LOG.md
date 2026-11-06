@@ -352,3 +352,14 @@
 - **Verification so far:** 13 mocked security tests passed; production build and syntax checks passed. No live orders, mail submissions, or brokerage token exchanges were performed. Existing biography lint has nine pre-existing quote errors in untouched files.
 - **External settings:** Identity was already enabled. Changed registration from Open to Invite only and retained required email confirmation. Netlify plan/billing unchanged.
 - **Remaining at this entry:** Deploy/verify live routing and callback relay, then complete the owner's invitation/password setup and read-only authenticated verification. User approval to send the invitation is pending. See `artifacts/stock-security-hardening-2026-11-06.md`.
+
+
+### Entry 21 — 2026-11-06T13:20:47-05:00
+- **Author:** Codex
+- **Outcome Type:** deployment verification / owner invitation
+- **User direction:** Approved sending the free stock-app invitation to `brad@fintechnav.com`. Owner chooses their password; no paid Netlify plan.
+- **Deployment results:** Main production deploy `6aee1906f8e413bec01747f5` is ready. Callback relay deploy `6aee1960062ce448400dad83` is ready. Root homepage and `/stock/` return HTTP 200. All five stock API routes reject anonymous requests with HTTP 401 and private/no-store responses; the old direct function URLs return HTTP 404. Internal source, package metadata, artifacts and session logs tested at the primary host return HTTP 404.
+- **Relay verification:** Registered callback host preserves the full query (including OAuth code/state), clears legacy browser credentials, and sends the user to `/stock`. Its old stock assets and legacy direct function URL return 404; current protected API routes return 401 anonymously.
+- **Invitation:** Sent the approved Netlify Identity invitation and observed `brad@fintechnav.com` in Registered users. Saved proof to `/private/tmp/fintechnav-stock-invitation-sent.jpg`. User must open the invitation and choose a new password; authenticated end-to-end verification remains pending.
+- **Source control:** Security code is committed and pushed as `3442e10` on `codex/stock-security`. The GitHub MCP rendered an interactive PR form; creation/merge has not yet been confirmed. Do not treat the deployed upload as proof that `main` includes the fixes.
+- **Safety:** No live orders submitted. No Netlify plan/billing change. No password was chosen, entered, read, or logged by Codex.
