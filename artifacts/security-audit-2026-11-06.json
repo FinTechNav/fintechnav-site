@@ -273,7 +273,11 @@
   "after": {
     "npmAuditVulnerabilities": 0,
     "securityTestsPassed": 17,
-    "githubAlertsRescanPending": true
+    "githubAlertsRescanPending": false,
+    "githubOpenDependabotAlerts": 0,
+    "mergedDependencyPullRequests": [2, 3, 4, 5, 6, 7, 8],
+    "broaderSecurityQuickWinsMerged": false,
+    "followUpAt": "2026-11-06T14:20:07-05:00"
   },
   "settings": {
     "dependabotSecurityUpdates": true,

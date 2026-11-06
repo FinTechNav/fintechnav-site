@@ -420,3 +420,19 @@
 - **Settings verified:** Dependabot automated security PRs and private vulnerability reporting enabled, with no auto-merge or paid upgrade.
 - **Validation:** Clean install/build/function bundle succeeded; 17 security tests passed; full npm audit now zero. Existing biography validate command still fails on the same 9 quote errors.
 - **Remaining:** GitHub key alert is historical but revocation/restrictions are unverified; leave open. PR creation/checks, preview and merge/deploy verification remain pending. No live email, payment or brokerage transaction was sent. See artifacts/security-review-2026-11-06.md.
+
+### Entry 29 — 2026-11-06T14:20:07-05:00
+- **Author:** Codex
+- **Outcome Type:** merged-dependency verification / stale branch cleanup
+- **User request:** PRs merged; clean up stale/old branches.
+- **Observed:** Dependency PRs #2–#8 reached main, now at 124e8b1bfb9893215217db06051adb8463c7143d. GitHub reports zero open Dependabot alerts. Production deploy 6aee27e6dadbe27a21b140d4 is ready for that exact main commit, published 14:18:29 Eastern.
+- **Cleanup:** Deleted remote codex/security-headers, feature/netlify-cms and the merged dependabot/npm_and_yarn/browserslist-4.29.5 branch. Verified and published archive/codex-security-headers-2026-11-06 at fcf70bdf8594c6b5b4315f3eff4122df01139084 and archive/feature-netlify-cms-2026-11-06 at 9e63e0ec05973aab7cb92ce83e17da96aa5665f1 first. The latter preserves seven unmerged legacy CMS commits. Deleted the local legacy CMS branch and the temporary PR-resolution branch after verifying its tree matched main. Other merged Dependabot branches had already been removed and their tracking refs were pruned.
+- **Recovery:** The larger quick-wins branch had been removed without a PR/merge, but commit 72a70d6 remained in local history. Restored codex/security-quick-wins and reconciled its package files with current main, retaining newer merged Babel versions. Remaining package changes versus main are ajv 6.15.0, yaml 2.9.1 and Nodemailer 10.3.1, plus the existing tested application/CI hardening.
+- **Verification:** Reconciled clean install/build and 17 security tests pass; full npm audit zero. Broader quick-wins changes remain unmerged; historical Google key restrictions/revocation remain unverified.
+
+### Entry 30 — 2026-11-06T14:20:07-05:00
+- **Author:** Codex
+- **Outcome Type:** PR #7 conflict resolution verification
+- **User request:** Resolve conflicts on https://github.com/FinTechNav/fintechnav-site/pull/7.
+- **Action and race:** Prepared a local lockfile merge retaining main's updated dependencies and minimatch 3.1.5. Clean build and 13 existing security tests passed. Dependabot rebased its branch concurrently; Git rejected Codex's push rather than overwriting that update. Codex did not force-push or publish the temporary resolution commit.
+- **Observed outcome:** Dependabot head c358c2f02c7ef4a9a7e70fc35280151550ff9c9c passed GitHub's security check. FinTechNav merged PR #7 at 14:17:56 Eastern. Confirmed the PR is closed/merged and its source branch is deleted. Temporary local resolution branch removed after comparing its tree with merged main.

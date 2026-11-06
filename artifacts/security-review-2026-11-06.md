@@ -47,3 +47,11 @@ ESLint/Babel major migrations, full CSP enforcement and browser-CDN bundling are
 
 The source changes are prepared and tested on a branch, **not yet merged or deployed**. GitHub Dependabot alerts will remain open until a fixed lockfile reaches main and GitHub rescans it. A local clean audit is not proof that GitHub has closed the alerts. CodeQL findings and a Netlify deploy preview must be checked after PR creation, followed by production verification after merge.
 
+## Follow-up: dependency PRs, branch cleanup and recovered work — 2:20 PM Eastern
+
+Owner merged dependency PRs #2–#8, including PR #7 after Dependabot completed its rebase. GitHub's PR #7 security check passed; Codex's concurrent local resolution was not pushed because Git correctly rejected the stale update. GitHub now reports **zero open Dependabot alerts**. Production deploy `6aee27e6dadbe27a21b140d4` is ready for main commit `124e8b1bfb9893215217db06051adb8463c7143d`.
+
+Deleted stale remote branches `codex/security-headers`, `feature/netlify-cms` and the merged browserslist Dependabot branch. Before deletion, verified remote archive tags `archive/codex-security-headers-2026-11-06` and `archive/feature-netlify-cms-2026-11-06`; the CMS tag preserves seven unmerged commits. Removed the local CMS branch and temporary PR-resolution branch; pruned tracking refs for other already-deleted branches.
+
+The broader quick-wins commit `72a70d6` had not been merged and its branch was absent. Recovered it from local history as the active `codex/security-quick-wins` branch and reconciled it with updated main, preserving the merged dependency versions. Additional package changes against main are ajv 6.15.0, yaml 2.9.1 and Nodemailer 10.3.1. Clean install/build and **17 security tests** pass; full npm audit reports **zero vulnerabilities**. These broader application and CI changes still need a PR/merge. The historical Google API key alert remains a separate open issue.
+
