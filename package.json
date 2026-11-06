@@ -6,7 +6,6 @@
   },
   "description": "Professional biography website (fintechnav.com) & RedDay AI Stock Portfolio PWA (fintechnav.com/stock)",
   "devDependencies": {
-    "@babel/eslint-parser": "^8.0.7",
     "@babel/preset-react": "^7.27.1",
     "@eslint/js": "^8.57.0",
     "esbuild": "^0.28.2",
