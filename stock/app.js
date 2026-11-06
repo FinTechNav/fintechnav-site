@@ -2,18 +2,6 @@
 // Plain-English ("Checkers, Not Chess") Stock Dip Finder & Charles Schwab Portfolio Companion
 
 const STORAGE_KEY = 'redday_ai_pwa_state_v2';
-const AUTH_SESSION_KEY = 'redday_ai_auth_session_v1';
-const CUSTOM_PASS_HASH_KEY = 'redday_ai_custom_pass_sha256';
-
-const VALID_USER_HASHES = new Set([
-  '322f965a2919f46725dece842eb487fc569656d59bf3e1d35cc33cf8a9dcdfec', // brad
-  '2bf1a74b846d18cf93f19c2c51421547a0aa3c4232b67b691207e682dd899e1f'  // bradnjensen@gmail.com
-]);
-const DEFAULT_PASS_HASHES = new Set([
-  'ecf5d3626124c783bddcaba5822be41610bdd696691e62d4a132818d80837a64', // RedDay2026!
-  '158a323a7ba44870f23d96f1516dd70aa48e9a72db4ebb026b0a89e212a208ab'  // 2026
-]);
-
 // Rich, Plain-English Encyclopedia of all 15 Watchlist Companies
 const COMPANY_PROFILES = {
   IREN: {
@@ -184,7 +172,7 @@ const COMPANY_PROFILES = {
 };
 
 const DEFAULT_STATE = {
-  cash: 1.40,
+  cash: 0,
   deployBudget: 50.00,
   unsettledCash: true,
   blockDayTrades: true,
@@ -198,15 +186,7 @@ const DEFAULT_STATE = {
     harvestGainPct: 35.0,
     maxSingleStockWeightPct: 25.0
   },
-  holdings: {
-    IREN: { shares: 1, avgCost: 17.6585, role: 'Rents liquid-cooled Texas AI buildings to Microsoft' },
-    APLD: { shares: 1, avgCost: 14.0300, role: 'Builds North Dakota AI campuses ($36B+ in signed leases)' },
-    WULF: { shares: 1, avgCost: 10.0000, role: '20-year, $19B lease hosting Claude AI for Anthropic' },
-    CIFR: { shares: 1, avgCost: 6.3900,  role: 'West Texas AI data center landlord (700 MW of power)' },
-    CLSK: { shares: 1, avgCost: 5.6590,  role: 'Signed 20-year, $6.6B+ AI data center lease in Georgia' },
-    HIVE: { shares: 2, avgCost: 1.7380,  role: 'Hydroelectric data centers + NVIDIA GPU cloud rental' },
-    BTBT: { shares: 2, avgCost: 0.8434,  role: 'Owns Montreal AI data centers (Enovum) + GPU cloud' }
-  },
+  holdings: {},
   watchlist: [
     { symbol: 'IREN', bucket: 'Bucket 1: Landlord', role: 'Microsoft 200MW + 480MW AI Cloud', sp500Slice: false },
     { symbol: 'APLD', bucket: 'Bucket 1: Landlord', role: '$36B-$86B Hyperscaler Leases (1,410MW)', sp500Slice: false },
@@ -241,91 +221,72 @@ const DEFAULT_STATE = {
     HIVE: { activePrice: 1.66,  prevClose: 1.83,  high20d: 2.12,  rsi14: 36.8, zScore20d: -1.55, closes: COMPANY_PROFILES.HIVE.sampleHistory30d },
     BTBT: { activePrice: 0.704, prevClose: 0.845, high20d: 0.98,  rsi14: 34.2, zScore20d: -1.78, closes: COMPANY_PROFILES.BTBT.sampleHistory30d }
   },
-  journal: [
-    { date: 'Nov 5, 2026 (4:15 PM)', action: 'BOUGHT', symbol: 'HIVE', qty: 1, price: 1.6600, total: 1.66, orderId: '759493708600', note: 'Used leftover $1.66 change to add 1 share of HIVE' },
-    { date: 'Nov 5, 2026 (4:12 PM)', action: 'BOUGHT', symbol: 'WULF', qty: 1, price: 10.0000, total: 10.00, orderId: '589914708600', note: 'Bought on a -13% red-day dip (Anthropic AI landlord)' },
-    { date: 'Nov 5, 2026 (4:11 PM)', action: 'BOUGHT', symbol: 'CLSK', qty: 1, price: 5.6590, total: 5.66, orderId: '780024708600', note: 'Bought on a -24% red-day dip (Georgia AI data center lease)' },
-    { date: 'Nov 5, 2026 (4:06 PM)', action: 'BOUGHT', symbol: 'APLD', qty: 1, price: 14.0300, total: 14.03, orderId: '499553708600', note: 'Bought on a -15% red-day dip (North Dakota AI landlord)' },
-    { date: 'Nov 5, 2026 (4:04 PM)', action: 'BOUGHT', symbol: 'IREN', qty: 1, price: 17.6585, total: 17.66, orderId: '605324708600', note: 'Bought on a -22% dip — immediately bounced to $19.67!' },
-    { date: 'Nov 4, 2026 (3:18 PM)', action: 'BOUGHT', symbol: 'BTBT', qty: 2, price: 0.8434, total: 1.69, orderId: '562234308600', note: 'Spent leftover change on 2 shares of Montreal AI data centers' },
-    { date: 'Nov 4, 2026 (3:14 PM)', action: 'BOUGHT', symbol: 'HIVE', qty: 1, price: 1.8200, total: 1.82, orderId: '675404308600', note: 'First share in HIVE green-power GPU cloud' },
-    { date: 'Nov 4, 2026 (3:12 PM)', action: 'BOUGHT', symbol: 'CIFR', qty: 1, price: 6.3900, total: 6.39, orderId: '621204308600', note: 'First AI data center landlord share (West Texas)' },
-    { date: 'Nov 4, 2026 (3:09 PM)', action: 'SOLD',   symbol: 'IMPP', qty: 2, price: 4.6100, total: 9.22, orderId: '328783308600', note: 'Locked in +$2.88 (+45.4%) profit to fund our AI stocks!' }
-  ],
-  schwabAuth: {
-    accessToken: '',
-    refreshToken: '',
-    accessTokenExpiresAt: 0,
-    refreshTokenExpiresAt: 0,
-    accountHash: ''
-  }
+  journal: [],
+  schwabAuth: { connected: false, accessTokenExpiresAt: 0, refreshTokenExpiresAt: 0, accountHash: '' }
 };
 
-async function sha256Hex(str) {
-  const bytes = new TextEncoder().encode(str);
-  const digest = await crypto.subtle.digest('SHA-256', bytes);
-  return Array.from(new Uint8Array(digest))
-    .map((b) => b.toString(16).padStart(2, '0'))
-    .join('');
+let appStarted = false;
+function lockDashboard(message = 'Please sign in to your stock account.') {
+  document.getElementById('stock-dashboard').hidden = true;
+  document.getElementById('login-gate')?.classList.remove('hidden');
+  const error = document.getElementById('login-error-msg');
+  error.textContent = message;
+  error.classList.remove('hidden');
 }
-
-function checkExistingLoginSession() {
-  try {
-    const raw = localStorage.getItem(AUTH_SESSION_KEY) || sessionStorage.getItem(AUTH_SESSION_KEY);
-    if (!raw) return false;
-    const parsed = JSON.parse(raw);
-    if (parsed && parsed.expiresAt > Date.now()) return true;
-  } catch {
-    // ignore
+async function stockFetch(url, options = {}) {
+  let response = await fetch(url, { ...options, cache: 'no-store' });
+  if (response.status === 401) {
+    try {
+      await window.StockAuth.refresh();
+      response = await fetch(url, { ...options, cache: 'no-store' });
+    } catch { lockDashboard(); }
   }
-  return false;
+  return response;
 }
-
-function initLoginGate() {
-  const gate = document.getElementById('login-gate');
+async function startStockApp() {
+  document.getElementById('stock-dashboard').hidden = false;
+  document.getElementById('login-gate')?.classList.add('hidden');
+  if (!appStarted) {
+    appStarted = true;
+    initEvents();
+  }
+  renderAll();
+  await checkAutoOAuthCallback();
+  const response = await stockFetch('/api/schwab-auth');
+  const data = await response.json();
+  if (data.ok) { state.schwabAuth = data; renderAuthStatus(); }
+  if (data.connected) document.getElementById('btn-sync-schwab-positions')?.click();
+  refreshLiveQuotes();
+}
+async function initLoginGate() {
   const form = document.getElementById('form-login-gate');
-  const errEl = document.getElementById('login-error-msg');
-  const lockBtn = document.getElementById('btn-lock-app');
-
-  if (checkExistingLoginSession()) {
-    gate?.classList.add('hidden');
-  } else {
-    gate?.classList.remove('hidden');
-  }
-
-  form?.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const userRaw = (document.getElementById('login-username')?.value || '').trim().toLowerCase();
-    const passRaw = (document.getElementById('login-password')?.value || '').trim();
-    const remember = document.getElementById('login-remember')?.checked;
-
-    const [userHash, passHash] = await Promise.all([sha256Hex(userRaw), sha256Hex(passRaw)]);
-    const customPassHash = localStorage.getItem(CUSTOM_PASS_HASH_KEY);
-    const passValid = customPassHash ? passHash === customPassHash : DEFAULT_PASS_HASHES.has(passHash);
-
-    if (VALID_USER_HASHES.has(userHash) && passValid) {
-      errEl?.classList.add('hidden');
-      const sessionPayload = JSON.stringify({
-        user: userRaw,
-        expiresAt: Date.now() + (remember ? 30 * 24 * 60 * 60 * 1000 : 12 * 60 * 60 * 1000)
-      });
-      if (remember) localStorage.setItem(AUTH_SESSION_KEY, sessionPayload);
-      else sessionStorage.setItem(AUTH_SESSION_KEY, sessionPayload);
-      gate?.classList.add('hidden');
-      showToast('Signed in to RedDay AI');
-    } else {
-      errEl?.classList.remove('hidden');
-    }
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const button = form.querySelector('button[type="submit"]');
+    button.disabled = true;
+    try {
+      await window.StockAuth.login(document.getElementById('login-username').value.trim(), document.getElementById('login-password').value);
+      document.getElementById('login-password').value = '';
+      await startStockApp();
+    } catch (error) { lockDashboard(error.message); }
+    finally { button.disabled = false; }
   });
-
-  lockBtn?.addEventListener('click', () => {
-    localStorage.removeItem(AUTH_SESSION_KEY);
-    sessionStorage.removeItem(AUTH_SESSION_KEY);
-    const passInp = document.getElementById('login-password');
-    if (passInp) passInp.value = '';
-    gate?.classList.remove('hidden');
-    showToast('Session locked.');
+  document.getElementById('btn-lock-app')?.addEventListener('click', async () => {
+    try { await window.StockAuth.logout(); window.location.reload(); }
+    catch { lockDashboard('Sign-out could not be confirmed. Please try again.'); }
   });
+  document.getElementById('btn-recover-account')?.addEventListener('click', async () => {
+    try { await window.StockAuth.recover(); lockDashboard('Check your email for a password reset link.'); }
+    catch { lockDashboard('Could not request a reset. Please try again.'); }
+  });
+  try {
+    const session = await window.StockAuth.initialize();
+    if (session.setup) {
+      document.getElementById('login-instructions').textContent = 'Choose a password of at least 12 characters for your private stock account.';
+      document.getElementById('login-password').autocomplete = 'new-password';
+      form.querySelector('button[type="submit"]').textContent = 'Set password and sign in';
+    } else if (session.ok) await startStockApp();
+  } catch (error) { lockDashboard(error.message); }
 }
 
 function loadState() {
@@ -336,6 +297,8 @@ function loadState() {
     return {
       ...structuredClone(DEFAULT_STATE),
       ...parsed,
+      schwabAuth: structuredClone(DEFAULT_STATE.schwabAuth),
+      blockDayTrades: true,
       rules: { ...DEFAULT_STATE.rules, ...(parsed.rules || {}) },
       holdings: { ...DEFAULT_STATE.holdings, ...(parsed.holdings || {}) },
       quotes: { ...DEFAULT_STATE.quotes, ...(parsed.quotes || {}) }
@@ -353,7 +316,8 @@ let latestComputedRows = [];
 let latestBasket = [];
 
 function saveState() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  const { schwabAuth, ...preferences } = state;
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(preferences));
 }
 
 function showToast(msg) {
@@ -502,20 +466,9 @@ function getSameDayTradeLocks() {
     }
   }
 
-  // Also check live Schwab todayOrders if synced
-  if (Array.isArray(state.todayOrders)) {
-    for (const o of state.todayOrders) {
-      const status = String(o.status || '').toUpperCase();
-      if (['CANCELED', 'REJECTED', 'EXPIRED'].includes(status)) continue;
-      const legs = o.orderLegCollection || [];
-      for (const leg of legs) {
-        const sym = String(leg.instrument?.symbol || '').toUpperCase();
-        const inst = String(leg.instruction || '').toUpperCase();
-        if (sym && inst.includes('BUY')) boughtToday.add(sym);
-        if (sym && inst.includes('SELL')) soldToday.add(sym);
-      }
-    }
-  }
+  // Server-computed locks include executions today of older GTC orders.
+  for (const symbol of state.dayTradeLocks?.boughtToday || []) boughtToday.add(symbol);
+  for (const symbol of state.dayTradeLocks?.soldToday || []) soldToday.add(symbol);
 
   return { boughtToday, soldToday };
 }
@@ -988,7 +941,7 @@ function renderKPIsAndPortfolio() {
   const pdtLocksEl = document.getElementById('pdt-today-locks');
   const pdtBadgeEl = document.getElementById('pdt-status-badge');
   if (pdtBadgeEl) {
-    pdtBadgeEl.textContent = blockDayTrades ? '0 / 3 Used (Protected)' : 'Shield Paused';
+    pdtBadgeEl.textContent = blockDayTrades ? 'Server protection active' : 'Shield Paused';
     pdtBadgeEl.className = blockDayTrades
       ? 'px-2 py-0.5 rounded bg-[#10b981]/20 text-[#a4f4cf] font-semibold text-[11px]'
       : 'px-2 py-0.5 rounded bg-[#ff6467]/20 text-[#ff6467] font-semibold text-[11px]';
@@ -997,7 +950,7 @@ function renderKPIsAndPortfolio() {
     const lockedBought = Array.from(boughtToday);
     const lockedSold = Array.from(soldToday);
     if (lockedBought.length === 0 && lockedSold.length === 0) {
-      pdtLocksEl.innerHTML = '✓ <strong class="text-[#a4f4cf]">0 trades today</strong> — All 7 holdings were bought on prior days and are 100% safe to sell anytime without counting as a day trade.';
+      pdtLocksEl.textContent = 'No opposite-side locks in the loaded history. The server checks again before submission.';
     } else {
       const parts = [];
       if (lockedBought.length > 0) parts.push(`Bought today (locked from selling until tomorrow): <strong class="text-[#50a2ff]">${lockedBought.join(', ')}</strong>`);
@@ -1466,7 +1419,7 @@ async function fetchYahooSymbolClientFallback(symbol) {
 async function refreshLiveQuotes() {
   const symbols = state.watchlist.map((w) => w.symbol).join(',');
   try {
-    const res = await fetch(`/api/market-scan?symbols=${encodeURIComponent(symbols)}`);
+    const res = await stockFetch(`/api/market-scan?symbols=${encodeURIComponent(symbols)}`);
     const contentType = res.headers.get('content-type') || '';
     if (!res.ok || !contentType.includes('application/json')) {
       throw new Error('Fallback to client fetch');
@@ -1562,16 +1515,8 @@ function initEvents() {
     });
   });
 
-  // Right-Rail Anti-PDT Day-Trade Shield Toggle Switch
-  document.getElementById('toggle-pdt-switch')?.addEventListener('click', (e) => {
-    state.blockDayTrades = state.blockDayTrades === false ? true : false;
-    const btn = e.currentTarget;
-    btn.className = state.blockDayTrades
-      ? 'w-9 h-5 rounded-full bg-[#155dfc] flex items-center justify-end px-0.5 shrink-0 mt-0.5 transition'
-      : 'w-9 h-5 rounded-full bg-[#404040] flex items-center justify-start px-0.5 shrink-0 mt-0.5 transition';
-    saveState();
-    renderAll();
-    showToast(state.blockDayTrades ? 'Anti-Day-Trade Shield enabled (0 day trades allowed)' : 'Anti-Day-Trade Shield paused');
+  document.getElementById('toggle-pdt-switch')?.addEventListener('click', () => {
+    showToast('Same-day trading protection is always enforced by the server.');
   });
 
   // Right-Rail Unsettled Cash Toggle Switch
@@ -1672,33 +1617,34 @@ function initEvents() {
     showToast('Added shares to What I Own & Receipts');
   });
 
-  // Buy via Schwab API
-  document.getElementById('btn-execute-schwab')?.addEventListener('click', async () => {
-    if (!state.schwabAuth?.accessToken) {
+  // The server stores the reviewed basket and accepts its one-use confirmation.
+  document.getElementById('btn-execute-schwab')?.addEventListener('click', async (event) => {
+    if (!state.schwabAuth?.connected) {
       document.getElementById('modal-auth')?.classList.remove('hidden');
-      showToast('Sign in with Charles Schwab first to place orders.');
+      showToast('Connect Charles Schwab first.');
       return;
     }
+    const button = event.currentTarget;
+    button.disabled = true;
     try {
-      const res = await fetch('/api/schwab-trade', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${state.schwabAuth.accessToken}`
-        },
-        body: JSON.stringify({
-          accountHash: state.schwabAuth.accountHash,
-          orders: latestBasket.filter((b) => !b.isSlice),
-          unsettledCash: state.unsettledCash,
-          blockDayTrades: state.blockDayTrades !== false
-        })
+      const preview = await stockFetch('/api/schwab-trade', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'prepare', orders: latestBasket.filter((order) => !order.isSlice) })
       });
-      const data = await res.json();
-      if (data.ok) showToast('Submitted limit orders to Charles Schwab');
-      else showToast(`Schwab: ${data.error}`);
-    } catch (err) {
-      showToast(`Error: ${err.message}`);
-    }
+      const plan = await preview.json();
+      if (!preview.ok) throw new Error(plan.error);
+      const summary = plan.orders.map((order) => `${order.instruction} ${order.quantity} ${order.symbol} at a $${order.limitPrice.toFixed(2)} limit (${order.session})`).join('\n');
+      if (!window.confirm(`Submit these live orders to Charles Schwab?\n\n${summary}\n\nTotal limit value: $${plan.total.toFixed(2)}`)) return;
+      const response = await stockFetch('/api/schwab-trade', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'submit', confirmationId: plan.confirmationId })
+      });
+      const result = await response.json();
+      if (!result.ok) throw new Error(result.error || result.results?.find((order) => !order.ok)?.error || 'Check Schwab for the status of these orders.');
+      showToast('Limit orders submitted. Check Schwab for execution status.');
+      document.getElementById('btn-sync-schwab-positions')?.click();
+    } catch (error) { showToast(error.message); }
+    finally { button.disabled = false; }
   });
 
   // Save Game Plan Rules
@@ -1725,7 +1671,7 @@ function initEvents() {
   });
 
   document.getElementById('btn-export-json')?.addEventListener('click', () => {
-    const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+    const blob = new Blob([JSON.stringify({ ...state, schwabAuth: undefined }, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -1779,7 +1725,7 @@ function initEvents() {
   document.getElementById('btn-test-schwab-health')?.addEventListener('click', async () => {
     addSystemLog('INFO', '/api/schwab-auth', 'Testing serverless function health & Netlify env vars...');
     try {
-      const res = await fetch('/api/schwab-auth');
+      const res = await stockFetch('/api/schwab-auth');
       const data = await safeReadJson(res, '/api/schwab-auth');
       addSystemLog(
         data.ok ? 'OK' : 'ERROR',
@@ -1793,91 +1739,36 @@ function initEvents() {
   });
 
   document.getElementById('btn-launch-schwab-oauth')?.addEventListener('click', async () => {
-    const customKey = document.getElementById('input-schwab-key')?.value.trim() || 'dDGOfkYTf73UDWetFsYXgAZ70jGkO9dYNCryLW0AtFSG8vVY';
-    const callback = (document.getElementById('select-oauth-callback')?.value || 'https://redday-ai-schwab.netlify.app').trim().replace(/\/+$/, '');
-    const oauthUrl = `https://api.schwabapi.com/v1/oauth/authorize?response_type=code&client_id=${encodeURIComponent(customKey)}&redirect_uri=${encodeURIComponent(callback)}`;
-    addSystemLog('INFO', 'OAuth Launch', `Redirecting to Charles Schwab OAuth (callback=${callback})`);
-    // Navigate in the same tab so returning to https://redday-ai-schwab.netlify.app/?code=... exchanges automatically!
-    window.location.href = oauthUrl;
-  });
-
-  document.getElementById('btn-exchange-code')?.addEventListener('click', async () => {
-    const redirectUrlOrCode = document.getElementById('input-redirect-url')?.value.trim();
-    const clientId = document.getElementById('input-schwab-key')?.value.trim();
-    const clientSecret = document.getElementById('input-schwab-secret')?.value.trim();
-    const callbackUrl = (document.getElementById('select-oauth-callback')?.value || 'https://redday-ai-schwab.netlify.app').trim().replace(/\/+$/, '');
-    const feedback = document.getElementById('auth-modal-feedback');
-
-    if (!redirectUrlOrCode) {
-      showToast('Paste the redirect URL or authorization code first.');
-      return;
-    }
-
-    addSystemLog('INFO', '/api/schwab-auth', `Exchanging authorization code (callbackUrl=${callbackUrl})...`);
     try {
-      const res = await fetch('/api/schwab-auth', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'exchange', redirectUrlOrCode, clientId, clientSecret, callbackUrl })
+      const response = await stockFetch('/api/schwab-auth', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'begin' })
       });
-      const data = await safeReadJson(res, '/api/schwab-auth');
-      if (data.ok) {
-        state.schwabAuth = {
-          ...state.schwabAuth,
-          accessToken: data.accessToken,
-          refreshToken: data.refreshToken,
-          accessTokenExpiresAt: data.accessTokenExpiresAt,
-          refreshTokenExpiresAt: data.refreshTokenExpiresAt
-        };
-        saveState();
-        renderAuthStatus();
-        addSystemLog('OK', '/api/schwab-auth', '7-day Charles Schwab refresh token + 30-min access token activated!');
-        if (feedback) {
-          feedback.textContent = '✓ Connected! Your 7-day Charles Schwab token is active. Syncing live positions...';
-          feedback.className = 'text-xs text-[#a4f4cf] p-2.5 rounded-lg bg-[#10b981]/15 ring-1 ring-[#10b981]/40';
-          feedback.classList.remove('hidden');
-        }
-        showToast('Charles Schwab connected for 7 days!');
-        document.getElementById('btn-sync-schwab-positions')?.click();
-      } else {
-        const errMsg = data.error || 'Token exchange failed';
-        addSystemLog('ERROR', '/api/schwab-auth', `HTTP ${res.status}: ${errMsg}`);
-        if (feedback) {
-          feedback.textContent = `Schwab OAuth Error: ${errMsg}`;
-          feedback.className = 'text-xs text-[#ff6467] p-2.5 rounded-lg bg-[#ff6467]/15 ring-1 ring-[#ff6467]/40';
-          feedback.classList.remove('hidden');
-        }
-      }
-    } catch (err) {
-      if (feedback) {
-        feedback.textContent = err.message;
-        feedback.className = 'text-xs text-[#ff6467] p-2.5 rounded-lg bg-[#ff6467]/15 ring-1 ring-[#ff6467]/40';
-        feedback.classList.remove('hidden');
-      }
-    }
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error);
+      window.location.href = data.authUrl;
+    } catch (error) { showToast(error.message); }
   });
 
   document.getElementById('btn-sync-schwab-positions')?.addEventListener('click', async () => {
-    if (!state.schwabAuth?.accessToken) {
+    if (!state.schwabAuth?.connected) {
       document.getElementById('modal-auth')?.classList.remove('hidden');
       showToast('Sign in with Charles Schwab first to sync positions.');
       return;
     }
     addSystemLog('INFO', '/api/schwab-trade', 'Fetching live account balances & positions from Charles Schwab...');
     try {
-      const res = await fetch('/api/schwab-trade', {
-        headers: { Authorization: `Bearer ${state.schwabAuth.accessToken}` }
-      });
+      const res = await stockFetch('/api/schwab-trade');
       const data = await safeReadJson(res, '/api/schwab-trade');
       if (data.ok) {
         const firstHash = data.accountNumbers?.[0]?.hashValue;
         if (firstHash) state.schwabAuth.accountHash = firstHash;
-        if (Array.isArray(data.todayOrders)) state.todayOrders = data.todayOrders;
+        state.dayTradeLocks = data.dayTradeLocks;
         const secAcct = data.accounts?.[0]?.securitiesAccount;
         if (secAcct?.currentBalances?.cashAvailableForTrading !== undefined) {
           state.cash = Number(secAcct.currentBalances.cashAvailableForTrading);
         }
         let posCount = 0;
+        state.holdings = {};
         if (Array.isArray(secAcct?.positions)) {
           secAcct.positions.forEach((p) => {
             const sym = p.instrument?.symbol;
@@ -1912,82 +1803,29 @@ function initEvents() {
 }
 
 async function checkAutoOAuthCallback() {
-  const params = new URLSearchParams(window.location.search);
-  const code = params.get('code');
-  if (!code) {
-    // If someone visits redday-ai-schwab.netlify.app directly without ?code=, redirect to fintechnav.com/stock
-    if (window.location.hostname === 'redday-ai-schwab.netlify.app') {
-      window.location.replace('https://fintechnav.com/stock');
-    }
-    return;
-  }
-
-  // If Charles Schwab redirected back to redday-ai-schwab.netlify.app/?code=..., immediately relay to https://fintechnav.com/stock?code=...
-  if (window.location.hostname === 'redday-ai-schwab.netlify.app') {
-    window.location.replace(`https://fintechnav.com/stock${window.location.search}`);
-    return;
-  }
-
-  const fullRedirectUrl = window.location.href;
-  const callbackUsed = document.getElementById('select-oauth-callback')?.value || 'https://redday-ai-schwab.netlify.app';
-  const cleanCallbackOrigin = callbackUsed.replace(/\/+$/, '');
+  const parameters = new URLSearchParams(window.location.search);
+  if (!parameters.has('code') && !parameters.has('error')) return;
   window.history.replaceState({}, document.title, window.location.pathname);
-
-  const inp = document.getElementById('input-redirect-url');
-  if (inp) inp.value = fullRedirectUrl;
-
-  addSystemLog('INFO', 'OAuth Callback', `Detected ?code= in return URL from Charles Schwab. Exchanging for 7-day token...`);
-  showToast('Completing Charles Schwab sign-in...');
-
+  if (parameters.has('error')) { showToast('Charles Schwab sign-in was not completed.'); return; }
   try {
-    const res = await fetch('/api/schwab-auth', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        action: 'exchange',
-        redirectUrlOrCode: fullRedirectUrl,
-        callbackUrl: cleanCallbackOrigin
-      })
+    const response = await stockFetch('/api/schwab-auth', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'exchange', code: parameters.get('code'), state: parameters.get('state') })
     });
-    const data = await safeReadJson(res, '/api/schwab-auth');
-    if (data.ok) {
-      state.schwabAuth = {
-        ...state.schwabAuth,
-        accessToken: data.accessToken,
-        refreshToken: data.refreshToken,
-        accessTokenExpiresAt: data.accessTokenExpiresAt,
-        refreshTokenExpiresAt: data.refreshTokenExpiresAt
-      };
-      saveState();
-      renderAuthStatus();
-      addSystemLog('OK', 'OAuth Callback', '7-day Charles Schwab token activated automatically! Syncing positions...');
-      showToast('Connected to Charles Schwab for 7 days!');
-      document.getElementById('btn-sync-schwab-positions')?.click();
-    } else {
-      addSystemLog('ERROR', 'OAuth Callback', data.error || 'Automatic token exchange failed');
-      const feedback = document.getElementById('auth-modal-feedback');
-      if (feedback) {
-        feedback.textContent = `Schwab OAuth Error: ${data.error || 'Token exchange failed'}`;
-        feedback.className = 'text-xs text-[#ff6467] p-2.5 rounded-lg bg-[#ff6467]/15 ring-1 ring-[#ff6467]/40';
-        feedback.classList.remove('hidden');
-      }
-      document.getElementById('modal-auth')?.classList.remove('hidden');
-    }
-  } catch (err) {
-    addSystemLog('ERROR', 'OAuth Callback', err.message);
-    document.getElementById('modal-auth')?.classList.remove('hidden');
-  }
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error);
+    state.schwabAuth = data;
+    renderAuthStatus();
+    showToast('Charles Schwab connected securely.');
+  } catch (error) { showToast(error.message); }
 }
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    const swPath = window.location.pathname.startsWith('/stock') ? '/stock/sw.js' : '/sw.js';
-    navigator.serviceWorker.register(swPath).catch(() => {});
+    navigator.serviceWorker.register('/stock/sw.js').catch(() => {});
   });
 }
-
 initLoginGate();
-renderAll();
-initEvents();
-checkAutoOAuthCallback();
-refreshLiveQuotes();
+setInterval(() => {
+  if (appStarted) window.StockAuth.refresh().catch(() => lockDashboard());
+}, 25 * 60 * 1000);

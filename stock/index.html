@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en" class="dark">
 <head>
+  <script src="/stock/clear-legacy-auth.js"></script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>RedDay AI — Portfolio &amp; Stock Dip Finder</title>
@@ -46,6 +47,7 @@
     };
   </script>
   <style>
+    #stock-dashboard[hidden] { display: none !important; }
     body {
       background-color: #030303;
       color: #f5f5f5;
@@ -132,38 +134,23 @@
       </div>
 
       <form id="form-login-gate" class="space-y-4 text-sm">
+        <p id="login-instructions" class="text-xs text-[#a1a1a1]">Sign in with your private stock account.</p>
         <div>
-          <label class="text-[#a1a1a1] font-medium block mb-1.5 text-xs">Username or Email</label>
-          <input id="login-username" type="text" autocomplete="username" value="brad" required
-            placeholder="brad"
-            class="kumo-input w-full px-3 py-2 text-sm" />
+          <label for="login-username" class="text-[#a1a1a1] block mb-1.5 text-xs">Email</label>
+          <input id="login-username" type="email" autocomplete="username" value="brad@fintechnav.com" required class="kumo-input w-full px-3 py-2 text-sm" />
         </div>
-
         <div>
-          <label class="text-[#a1a1a1] font-medium block mb-1.5 text-xs">Password or 4-Digit PIN</label>
-          <input id="login-password" type="password" autocomplete="current-password" required autofocus
-            placeholder="Enter password or 2026"
-            class="kumo-input w-full px-3 py-2 text-sm" />
+          <label for="login-password" class="text-[#a1a1a1] block mb-1.5 text-xs">Password</label>
+          <input id="login-password" type="password" autocomplete="current-password" required minlength="12" class="kumo-input w-full px-3 py-2 text-sm" />
         </div>
-
-        <div class="flex items-center justify-between pt-0.5 text-xs">
-          <label class="flex items-center gap-2 text-[#d9d9d9] cursor-pointer select-none">
-            <input id="login-remember" type="checkbox" checked class="rounded border-[#333333] bg-[#171717] text-[#155dfc]" />
-            <span>Keep me signed in on this device (30 days)</span>
-          </label>
-        </div>
-
-        <div id="login-error-msg" class="hidden p-2.5 rounded-lg bg-[#ff6467]/10 ring-1 ring-[#ff6467]/40 text-[#ff6467] text-xs font-medium text-center">
-          Invalid credentials. Try username "brad" and PIN "2026" (or "RedDay2026!").
-        </div>
-
-        <button type="submit" class="kumo-btn-primary w-full h-9 text-sm">
-          Sign in to dashboard
-        </button>
+        <div id="login-error-msg" role="alert" class="hidden text-[#ff6467] text-xs"></div>
+        <button type="submit" class="kumo-btn-primary w-full h-9 text-sm">Sign in to dashboard</button>
+        <button id="btn-recover-account" type="button" class="text-[#50a2ff] text-xs">Reset my password</button>
       </form>
     </div>
   </div>
 
+  <div id="stock-dashboard" class="min-h-screen flex flex-col" hidden>
   <!-- ==================== TOP 58PX CLOUDFLARE KUMO HEADER BAR ==================== -->
   <header class="sticky top-0 z-30 h-[58px] bg-[#030303] border-b border-[#333333] flex items-center justify-between px-4 shrink-0">
     <!-- Left: Brand + Account Switcher + Context Breadcrumb -->
@@ -198,17 +185,17 @@
       <div class="hidden lg:flex items-center gap-4 mr-2 text-xs">
         <div class="flex items-center gap-1.5">
           <span class="text-[#a1a1a1]">Account:</span>
-          <span id="kpi-account-val" class="font-semibold text-[#f5f5f5]">$61.34</span>
+          <span id="kpi-account-val" class="font-semibold text-[#f5f5f5]">$0.00</span>
         </div>
         <div class="h-3.5 w-[1px] bg-[#262626]"></div>
         <div class="flex items-center gap-1.5">
           <span class="text-[#a1a1a1]">Profit/Loss:</span>
-          <span id="kpi-unrealized-pnl" class="font-semibold text-[#a4f4cf]">+$1.03 (+1.8%)</span>
+          <span id="kpi-unrealized-pnl" class="font-semibold text-[#a4f4cf]">—</span>
         </div>
         <div class="h-3.5 w-[1px] bg-[#262626]"></div>
         <div class="flex items-center gap-1.5">
           <span class="text-[#a1a1a1]">Cash:</span>
-          <span id="kpi-cash-val" class="font-semibold text-[#50a2ff]">$1.40</span>
+          <span id="kpi-cash-val" class="font-semibold text-[#50a2ff]">$0.00</span>
         </div>
       </div>
 
@@ -274,7 +261,7 @@
               <svg class="w-4 h-4 text-[#a1a1a1]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <rect width="20" height="14" x="2" y="7" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
               </svg>
-              <span>What I own (7)</span>
+              <span>What I own (0)</span>
             </span>
             <span class="text-[11px] text-[#a1a1a1]">›</span>
           </button>
@@ -406,9 +393,9 @@
               <div>
                 <div class="flex items-center justify-between text-[13px] font-medium text-[#a1a1a1] mb-2">
                   <button data-jump-tab="portfolio" class="hover:text-[#f5f5f5] flex items-center gap-1">
-                    <span>Stocks you own (7)</span><span>›</span>
+                    <span>Stocks you own (0)</span><span>›</span>
                   </button>
-                  <span class="text-xs text-[#50a2ff]">9 shares</span>
+                  <span class="text-xs text-[#50a2ff]">0 shares</span>
                 </div>
                 <div id="quick-col-owned" class="divide-y divide-[#262626] border-t border-b border-[#262626] text-[13px]"></div>
               </div>
@@ -478,7 +465,7 @@
                     class="w-16 bg-transparent text-[#f5f5f5] font-semibold focus:outline-none" />
                 </div>
                 <button id="btn-use-acct-cash" class="kumo-btn-secondary h-9 px-3 text-xs">
-                  Use Schwab cash ($1.40)
+                  Use Schwab cash ($0.00)
                 </button>
                 <select id="select-cash-settlement" class="kumo-input h-9 px-2.5 text-xs">
                   <option value="unsettled" selected>New bank transfer (&gt;$1.00 stocks)</option>
@@ -527,7 +514,7 @@
                   On Sale
                 </button>
                 <button data-filter="owned" class="scan-filter-btn px-2.5 py-1 rounded-md font-medium text-[#a1a1a1] hover:text-[#f5f5f5]">
-                  Owned (7)
+                  Owned (0)
                 </button>
                 <button data-filter="landlord" class="scan-filter-btn px-2.5 py-1 rounded-md font-medium text-[#a1a1a1] hover:text-[#f5f5f5]">
                   Landlords
@@ -581,7 +568,7 @@
             <div>
               <h1 class="text-2xl sm:text-[28px] font-semibold text-[#f5f5f5]">What I own right now</h1>
               <p class="text-sm text-[#a1a1a1]">
-                Your 9 whole shares across 7 AI &amp; data center companies in Charles Schwab, plus $1.40 cash.
+                Sign in and sync Charles Schwab to load your current holdings and cash.
               </p>
             </div>
             <button id="btn-sync-schwab-positions" class="kumo-btn-primary h-9 px-3.5 text-xs flex items-center gap-2">
@@ -763,15 +750,15 @@
           <div class="kumo-card p-4 space-y-3 text-xs">
             <div class="flex items-center justify-between">
               <span class="text-[#a1a1a1]">Total Account Value</span>
-              <span id="rail-account-val" class="font-semibold text-sm text-[#f5f5f5]">$61.34</span>
+              <span id="rail-account-val" class="font-semibold text-sm text-[#f5f5f5]">$0.00</span>
             </div>
             <div class="flex items-center justify-between border-t border-[#262626] pt-2.5">
               <span class="text-[#a1a1a1]">Total Profit / Loss</span>
-              <span id="rail-unrealized-pnl" class="font-semibold text-[#a4f4cf]">+$1.03 (+1.8%)</span>
+              <span id="rail-unrealized-pnl" class="font-semibold text-[#a4f4cf]">—</span>
             </div>
             <div class="flex items-center justify-between border-t border-[#262626] pt-2.5">
               <span class="text-[#a1a1a1]">Cash Ready to Spend</span>
-              <span id="rail-cash-val" class="font-semibold text-[#50a2ff]">$1.40</span>
+              <span id="rail-cash-val" class="font-semibold text-[#50a2ff]">$0.00</span>
             </div>
           </div>
         </div>
@@ -802,7 +789,7 @@
           <div class="flex items-start justify-between gap-3 pt-2">
             <div>
               <span class="text-xs font-medium text-[#f5f5f5] block">Block Same-Day Round Trips (Anti-PDT)</span>
-              <span class="text-[11px] text-[#a1a1a1] block">Never buys &amp; sells the same stock on the same day (0 day trades).</span>
+              <span class="text-[11px] text-[#a1a1a1] block">Blocks opposite-side orders when recent brokerage history shows a same-day trade.</span>
             </div>
             <button id="toggle-pdt-switch" type="button" class="w-9 h-5 rounded-full bg-[#155dfc] flex items-center justify-end px-0.5 shrink-0 mt-0.5 transition">
               <span class="w-4 h-4 rounded-full bg-white"></span>
@@ -824,13 +811,13 @@
         <div class="kumo-card p-4 space-y-2.5 text-xs">
           <div class="flex items-center justify-between">
             <h4 class="font-semibold text-[#f5f5f5]">Day-Trade Shield (PDT)</h4>
-            <span id="pdt-status-badge" class="px-2 py-0.5 rounded bg-[#10b981]/20 text-[#a4f4cf] font-semibold text-[11px]">0 / 3 Used (Safe)</span>
+            <span id="pdt-status-badge" class="px-2 py-0.5 rounded bg-[#10b981]/20 text-[#a4f4cf] font-semibold text-[11px]">History required</span>
           </div>
           <p class="text-[11px] text-[#a1a1a1] leading-relaxed">
             Schwab flags Margin accounts under $25,000 if you buy &amp; sell the same stock on the same day 4 times in 5 business days.
           </p>
           <div id="pdt-today-locks" class="text-[11px] text-[#d9d9d9] pt-1 border-t border-[#262626]">
-            Overnight hold rule active — 0 same-day round trips in last 5 business days.
+            Brokerage history is checked before every submitted order.
           </div>
         </div>
 
@@ -934,16 +921,7 @@
         Sign in with Charles Schwab (1-Click) &rarr;
       </button>
 
-      <details class="text-[#a1a1a1] pt-1">
-        <summary class="cursor-pointer hover:text-[#f5f5f5] font-medium">Manual fallback (paste redirect URL or code)</summary>
-        <div class="space-y-2 pt-2">
-          <input id="input-redirect-url" type="text" placeholder="Paste https://redday-ai-schwab.netlify.app/?code=... or https://127.0.0.1:8182/?code=..."
-            class="kumo-input w-full px-3 py-2" />
-          <button id="btn-exchange-code" class="kumo-btn-secondary w-full h-9">
-            Activate 7-Day Connection
-          </button>
-        </div>
-      </details>
+
 
       <div id="auth-modal-feedback" class="text-xs text-[#d9d9d9] hidden p-2.5 rounded-lg bg-[#171717] ring-1 ring-[#333333]"></div>
 
@@ -960,9 +938,12 @@
     </div>
   </div>
 
+  </div>
+
   <!-- Toast Notification -->
   <div id="toast" class="fixed bottom-20 md:bottom-6 right-6 z-50 hidden px-4 py-2.5 rounded-lg bg-[#171717] ring-1 ring-[#5491f6] text-xs font-medium text-[#f5f5f5] shadow-2xl"></div>
 
-  <script type="module" src="/stock/app.js"></script>
+  <script src="/stock/auth-client.js"></script>
+  <script src="/stock/app.js"></script>
 </body>
 </html>

@@ -1,10 +1,10 @@
 [build]
   functions = "netlify/functions"
-  publish = "."
-  command = "npm install"
+  publish = "dist"
+  command = "npm run build"
 
 [build.environment]
-  NODE_ENV = "production"
+  NODE_VERSION = "22"
 
 # Apply these headers to static files served by Netlify. Functions and proxy
 # responses must supply their own headers.
@@ -50,30 +50,7 @@
   status = 200
   force = true
 
-# RedDay AI Stock App Serverless Function Routes (/api/* -> /.netlify/functions/*)
-[[redirects]]
-  from = "/api/schwab-auth"
-  to = "/.netlify/functions/schwab-auth"
-  status = 200
-  force = true
-
-[[redirects]]
-  from = "/api/schwab-trade"
-  to = "/.netlify/functions/schwab-trade"
-  status = 200
-  force = true
-
-[[redirects]]
-  from = "/api/market-scan"
-  to = "/.netlify/functions/market-scan"
-  status = 200
-  force = true
-
-[[redirects]]
-  from = "/api/gist-sync"
-  to = "/.netlify/functions/gist-sync"
-  status = 200
-  force = true
+# Stock API routes and free-plan rate limits are defined in v2 function config.
 
 # RedDay AI Stock App Subpath Routing (https://fintechnav.com/stock)
 [[redirects]]

@@ -10,7 +10,7 @@ import { createRequire } from 'node:module';
 
 const require = createRequire(import.meta.url);
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const ROOT_DIR = path.resolve(__dirname, '..');
+const ROOT_DIR = path.resolve(__dirname, '../dist');
 const FUNCTIONS_DIR = path.join(ROOT_DIR, 'netlify', 'functions');
 const PORT = process.env.PORT || 4173;
 
@@ -36,11 +36,13 @@ const server = http.createServer(async (req, res) => {
       .replace(/^\/api\//, '')
       .replace(/^\/\.netlify\/functions\//, '')
       .split('/')[0];
-    const fnPath = path.join(FUNCTIONS_DIR, `${fnName}.js`);
-
-    if (!fs.existsSync(fnPath)) {
-      res.writeHead(404, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ ok: false, error: `Function ${fnName} not found` }));
+    const legacyName = fnName === 'send-email' ? fnName : null;
+    const fnPath = legacyName ? path.resolve(__dirname, '../netlify/functions/send-email.js') : null;
+    // Identity requires the deployed Netlify runtime. Never add a development
+    // bypass that might accidentally ship to production.
+    if (!fnPath || !fs.existsSync(fnPath)) {
+      res.writeHead(401, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' });
+      res.end(JSON.stringify({ ok: false, error: 'Stock sign-in is available on the deployed site. Run npm run test:security for mocked API tests.' }));
       return;
     }
 
@@ -66,13 +68,13 @@ const server = http.createServer(async (req, res) => {
   if (relPath === '/') relPath = '/index.html';
   else if (relPath === '/stock' || relPath === '/stock/') relPath = '/stock/index.html';
 
-  const safePath = path.normalize(relPath).replace(/^(\.\.[/\\])+/, '');
-  let filePath = path.join(ROOT_DIR, safePath);
-
+  const safePath = path.resolve(ROOT_DIR, '.' + relPath);
+  if (!safePath.startsWith(ROOT_DIR + path.sep) || relPath.split('/').some((part) => part.startsWith('.'))) {
+    res.writeHead(404); res.end('Not found'); return;
+  }
+  let filePath = safePath;
   if (!fs.existsSync(filePath) || fs.statSync(filePath).isDirectory()) {
-    filePath = pathname.startsWith('/stock')
-      ? path.join(ROOT_DIR, 'stock', 'index.html')
-      : path.join(ROOT_DIR, 'index.html');
+    res.writeHead(404); res.end('Not found'); return;
   }
 
   const ext = path.extname(filePath);
@@ -81,5 +83,5 @@ const server = http.createServer(async (req, res) => {
 });
 
 server.listen(PORT, '127.0.0.1', () => {
-  console.log(`FinTechNav Bio (http://127.0.0.1:${PORT}/) & Stock App (http://127.0.0.1:${PORT}/stock) running`);
+  console.log(`Serve built assets only (run npm run build first). FinTechNav Bio (http://127.0.0.1:${PORT}/) & Stock App (http://127.0.0.1:${PORT}/stock) running`);
 });

@@ -6,6 +6,7 @@
     "@babel/eslint-parser": "^7.27.1",
     "@babel/preset-react": "^7.27.1",
     "@eslint/js": "^8.57.0",
+    "esbuild": "^0.28.2",
     "eslint": "^8.56.0",
     "globals": "^13.24.0",
     "husky": "^9.1.7",
@@ -14,7 +15,8 @@
   },
   "scripts": {
     "prepare": "node -e \"if(process.env.CI !== 'true') { try { require('husky'); } catch(e) { console.log('Husky not found, skipping'); } }\"",
-    "build": "echo 'Static bio site (/) and RedDay AI stock PWA (/stock) ready'",
+    "build": "node scripts/build-site.mjs",
+    "test:security": "node --test tests/*.test.cjs",
     "dev:stock": "node stock/dev-server.mjs",
     "lint": "eslint js/",
     "lint:fix": "eslint js/ --fix",
@@ -29,6 +31,8 @@
     ]
   },
   "dependencies": {
+    "@netlify/blobs": "^11.1.7",
+    "@netlify/identity": "^2.0.0",
     "nodemailer": "^7.0.3"
   }
 }

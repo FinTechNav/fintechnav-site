@@ -341,3 +341,14 @@
      - Removed `pwa/`, `.agents/`, `artifacts/`, `scripts/`, `.git/`, `AGENTS.md`, `SESSION_LOG.md`, `datacenter_stocks_under_10_41.md`, and `schwab_api_cli_mcp_setup.md` from `/Users/bradjensen/stock`, leaving only [`DEPRECATED_MOVED_TO_FINTECHNAV_SITE.md`](/Users/bradjensen/stock/DEPRECATED_MOVED_TO_FINTECHNAV_SITE.md) pointing to `/Users/bradjensen/fintechnav-site`.
 - **Result:** Pushed commit `de3d02b` to `FinTechNav/fintechnav-site`, verified automatic Netlify Deploy `6aee12d979cee9020f734613` (`state: "ready"`), and saved live screenshot [`fintechnav_stock_pdt_shield_live.png`](/Users/bradjensen/fintechnav-site/artifacts/fintechnav_stock_pdt_shield_live.png).
 - **Next Step:** All development and trading guardrails are live in `/Users/bradjensen/fintechnav-site` (`https://fintechnav.com/stock`).
+
+
+### Entry 20 — 2026-11-06T18:14:09+00:00
+- **Author:** Codex
+- **Outcome Type:** stock-app takeover / urgent security hardening
+- **User direction:** Take over from Antigravity; preserve the existing rationale/session history; secure urgent issues without upgrading Netlify or adding a paid hosting plan. Keep the app at `/stock`, restricted to Brad.
+- **Why:** The old PIN gate ran only in the browser, brokerage credentials were persisted in browser storage, Gist/OAuth functions lacked application authentication, client requests could disable trading guards, and publishing the repository root exposed internal source/logs.
+- **Changes:** Free, invite-only Netlify Identity with email confirmation and a server-side `brad@fintechnav.com` allowlist; authenticated v2 stock APIs; Identity sessions revalidated against the provider on every request; HttpOnly session cookies; private, context-isolated server storage for brokerage credentials; one-use browser-bound OAuth state; server-owned account selection and $100 per-order/batch caps; mandatory recent-history checks and one-use reviewed order confirmations; remove legacy browser secrets and offline caches; publish only allowlisted assets to `dist`; preserve the registered Schwab callback via the existing relay site.
+- **Verification so far:** 13 mocked security tests passed; production build and syntax checks passed. No live orders, mail submissions, or brokerage token exchanges were performed. Existing biography lint has nine pre-existing quote errors in untouched files.
+- **External settings:** Identity was already enabled. Changed registration from Open to Invite only and retained required email confirmation. Netlify plan/billing unchanged.
+- **Remaining at this entry:** Deploy/verify live routing and callback relay, then complete the owner's invitation/password setup and read-only authenticated verification. User approval to send the invitation is pending. See `artifacts/stock-security-hardening-2026-11-06.md`.
