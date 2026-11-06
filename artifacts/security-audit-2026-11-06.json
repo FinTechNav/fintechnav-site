@@ -1,0 +1,296 @@
+{
+  "reviewedAt": "2026-11-06 19:05:41 UTC",
+  "repository": "FinTechNav/fintechnav-site",
+  "baseline": {
+    "githubOpenDependabotAlerts": 33,
+    "advisories": [
+      {
+        "number": 54,
+        "package": "nodemailer",
+        "scope": "runtime",
+        "severity": "medium",
+        "ghsa": "GHSA-4ffr-jq9g-5ffx",
+        "firstPatchedVersion": "10.0.13"
+      },
+      {
+        "number": 53,
+        "package": "nodemailer",
+        "scope": "runtime",
+        "severity": "medium",
+        "ghsa": "GHSA-g73g-hqqh-jr95",
+        "firstPatchedVersion": "10.0.13"
+      },
+      {
+        "number": 52,
+        "package": "nodemailer",
+        "scope": "runtime",
+        "severity": "medium",
+        "ghsa": "GHSA-4g23-2xm8-66gc",
+        "firstPatchedVersion": "10.0.10"
+      },
+      {
+        "number": 51,
+        "package": "nodemailer",
+        "scope": "runtime",
+        "severity": "medium",
+        "ghsa": "GHSA-85x2-q946-cp5h",
+        "firstPatchedVersion": "10.1.4"
+      },
+      {
+        "number": 50,
+        "package": "brace-expansion",
+        "scope": "development",
+        "severity": "medium",
+        "ghsa": "GHSA-q2hr-2g5m-vwhr",
+        "firstPatchedVersion": "1.1.21"
+      },
+      {
+        "number": 47,
+        "package": "nodemailer",
+        "scope": "runtime",
+        "severity": "high",
+        "ghsa": "GHSA-v53p-9fqp-m79j",
+        "firstPatchedVersion": "10.0.6"
+      },
+      {
+        "number": 46,
+        "package": "nodemailer",
+        "scope": "runtime",
+        "severity": "medium",
+        "ghsa": "GHSA-8vvx-rff5-p5rq",
+        "firstPatchedVersion": "10.0.2"
+      },
+      {
+        "number": 45,
+        "package": "nodemailer",
+        "scope": "runtime",
+        "severity": "medium",
+        "ghsa": "GHSA-m943-m63m-w62w",
+        "firstPatchedVersion": "10.1.4"
+      },
+      {
+        "number": 44,
+        "package": "nodemailer",
+        "scope": "runtime",
+        "severity": "medium",
+        "ghsa": "GHSA-8c8m-p3m8-cjg8",
+        "firstPatchedVersion": "10.1.4"
+      },
+      {
+        "number": 41,
+        "package": "nodemailer",
+        "scope": "runtime",
+        "severity": "medium",
+        "ghsa": "GHSA-39m8-27wv-hr27",
+        "firstPatchedVersion": "10.0.10"
+      },
+      {
+        "number": 38,
+        "package": "nodemailer",
+        "scope": "runtime",
+        "severity": "medium",
+        "ghsa": "GHSA-6vj9-mwq6-2f5v",
+        "firstPatchedVersion": "10.0.2"
+      },
+      {
+        "number": 36,
+        "package": "js-yaml",
+        "scope": "development",
+        "severity": "high",
+        "ghsa": "GHSA-2883-xcg3-v3hh",
+        "firstPatchedVersion": "4.3.2"
+      },
+      {
+        "number": 35,
+        "package": "nodemailer",
+        "scope": "runtime",
+        "severity": "high",
+        "ghsa": "GHSA-2x7j-588g-ccc2",
+        "firstPatchedVersion": "9.1.0"
+      },
+      {
+        "number": 34,
+        "package": "nodemailer",
+        "scope": "runtime",
+        "severity": "medium",
+        "ghsa": "GHSA-wmmp-3585-3rmp",
+        "firstPatchedVersion": "9.1.0"
+      },
+      {
+        "number": 33,
+        "package": "nodemailer",
+        "scope": "runtime",
+        "severity": "medium",
+        "ghsa": "GHSA-8m3c-c648-2xjj",
+        "firstPatchedVersion": "9.1.1"
+      },
+      {
+        "number": 29,
+        "package": "nodemailer",
+        "scope": "runtime",
+        "severity": "medium",
+        "ghsa": "GHSA-cc9r-2j5m-2m83",
+        "firstPatchedVersion": "9.1.0"
+      },
+      {
+        "number": 27,
+        "package": "browserslist",
+        "scope": "development",
+        "severity": "high",
+        "ghsa": "GHSA-73wf-gq98-2v4g",
+        "firstPatchedVersion": "4.28.7"
+      },
+      {
+        "number": 25,
+        "package": "js-yaml",
+        "scope": "development",
+        "severity": "high",
+        "ghsa": "GHSA-5p4m-2wfm-xmqj",
+        "firstPatchedVersion": "4.3.1"
+      },
+      {
+        "number": 22,
+        "package": "js-yaml",
+        "scope": "development",
+        "severity": "high",
+        "ghsa": "GHSA-52cp-r559-cp3m",
+        "firstPatchedVersion": "4.3.0"
+      },
+      {
+        "number": 21,
+        "package": "brace-expansion",
+        "scope": "development",
+        "severity": "high",
+        "ghsa": "GHSA-3jxr-9vmj-r5cp",
+        "firstPatchedVersion": "1.1.16"
+      },
+      {
+        "number": 20,
+        "package": "nodemailer",
+        "scope": "runtime",
+        "severity": "high",
+        "ghsa": "GHSA-rcmh-qjqh-p98v",
+        "firstPatchedVersion": "7.0.11"
+      },
+      {
+        "number": 19,
+        "package": "js-yaml",
+        "scope": "development",
+        "severity": "medium",
+        "ghsa": "GHSA-h67p-54hq-rp68",
+        "firstPatchedVersion": "4.2.0"
+      },
+      {
+        "number": 18,
+        "package": "nodemailer",
+        "scope": "runtime",
+        "severity": "high",
+        "ghsa": "GHSA-p6gq-j5cr-w38f",
+        "firstPatchedVersion": "9.0.1"
+      },
+      {
+        "number": 17,
+        "package": "nodemailer",
+        "scope": "runtime",
+        "severity": "medium",
+        "ghsa": "GHSA-268h-hp4c-crq3",
+        "firstPatchedVersion": "8.0.9"
+      },
+      {
+        "number": 16,
+        "package": "nodemailer",
+        "scope": "runtime",
+        "severity": "medium",
+        "ghsa": "GHSA-wqvq-jvpq-h66f",
+        "firstPatchedVersion": "8.0.9"
+      },
+      {
+        "number": 15,
+        "package": "nodemailer",
+        "scope": "runtime",
+        "severity": "high",
+        "ghsa": "GHSA-r7g4-qg5f-qqm2",
+        "firstPatchedVersion": "8.0.8"
+      },
+      {
+        "number": 14,
+        "package": "@babel/core",
+        "scope": "development",
+        "severity": "low",
+        "ghsa": "GHSA-4x5r-pxfx-6jf8",
+        "firstPatchedVersion": "7.29.6"
+      },
+      {
+        "number": 13,
+        "package": "nodemailer",
+        "scope": "runtime",
+        "severity": "medium",
+        "ghsa": "GHSA-vvjj-xcjg-gr5g",
+        "firstPatchedVersion": "8.0.5"
+      },
+      {
+        "number": 11,
+        "package": "nodemailer",
+        "scope": "runtime",
+        "severity": "low",
+        "ghsa": "GHSA-c7w3-x93f-qmm8",
+        "firstPatchedVersion": "8.0.4"
+      },
+      {
+        "number": 9,
+        "package": "flatted",
+        "scope": "development",
+        "severity": "high",
+        "ghsa": "GHSA-rf6f-7fwh-wjgh",
+        "firstPatchedVersion": "3.4.2"
+      },
+      {
+        "number": 7,
+        "package": "minimatch",
+        "scope": "development",
+        "severity": "high",
+        "ghsa": "GHSA-7r86-cg39-jmmj",
+        "firstPatchedVersion": "3.1.3"
+      },
+      {
+        "number": 3,
+        "package": "js-yaml",
+        "scope": "development",
+        "severity": "medium",
+        "ghsa": "GHSA-mh29-5h37-fv8m",
+        "firstPatchedVersion": "4.1.1"
+      },
+      {
+        "number": 2,
+        "package": "nodemailer",
+        "scope": "runtime",
+        "severity": "medium",
+        "ghsa": "GHSA-mm7p-fcc7-pg87",
+        "firstPatchedVersion": "7.0.7"
+      }
+    ]
+  },
+  "after": {
+    "npmAuditVulnerabilities": 0,
+    "securityTestsPassed": 17,
+    "githubAlertsRescanPending": false,
+    "githubOpenDependabotAlerts": 0,
+    "mergedDependencyPullRequests": [2, 3, 4, 5, 6, 7, 8],
+    "broaderSecurityQuickWinsMerged": false,
+    "followUpAt": "2026-11-06T14:20:07-05:00"
+  },
+  "settings": {
+    "dependabotSecurityUpdates": true,
+    "privateVulnerabilityReporting": true,
+    "secretScanning": true,
+    "secretScanningPushProtection": true
+  },
+  "remaining": [
+    {
+      "secretScanningAlert": 1,
+      "type": "Google API Key",
+      "currentSourceMatch": false,
+      "revocationOrRestrictionsVerified": false
+    }
+  ]
+}

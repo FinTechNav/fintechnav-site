@@ -26,3 +26,11 @@ Verification: build successful; 13 mocked security tests passed; changed-source 
 Owner reports completing password setup and signing in on another device/browser. The Chrome session available to Codex remains signed out, as expected for a separate browser. Netlify Identity's owner detail confirms the account exists but does not show confirmation or last-login timestamps; authenticated brokerage/API behavior on the other device has not been independently observed. Owner must reconnect Schwab once because legacy browser credentials were discarded. No live orders were submitted.
 
 GitHub MCP still lists no pull request for the security branch. The interactive PR form requires user submission before integration can continue. The deployed fixes are not yet merged into `main`; a subsequent deployment from old main could overwrite them.
+
+## Integration completed — 2026-11-06T13:57:56-05:00
+
+The owner created and merged [PR #1](https://github.com/FinTechNav/fintechnav-site/pull/1). Merge commit `31128c82584e66f324d2aa2cd8d83506b4c8c524` is on main. The PR security check and main security workflow both passed. Local main matched origin/main when checked.
+
+Automatic production deploy `6aee223ee0e3c0a5067c72b9` is ready, with production context, main branch and the exact merge commit; published November 6 at 1:54:25 PM Eastern. The earlier deploy-preview ID is not the production deployment. This supersedes the pending-integration status above.
+
+Post-merge live checks passed: homepage, stock sign-in and auth bundle return 200; all five stock APIs reject anonymous access with 401/private-no-store and no wildcard CORS; tested legacy function, internal source, log and package metadata URLs return 404. Owner sign-in is reported complete, but fresh Schwab connection and authenticated read-only account sync remain unverified by Codex. No trades were placed.
