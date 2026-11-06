@@ -2,12 +2,12 @@
   "name": "brad-jensen-site",
   "version": "1.0.0",
   "engines": {
-    "node": ">=22.12.0"
+    "node": ">=22.13.0"
   },
   "description": "Professional biography website (fintechnav.com) & RedDay AI Stock Portfolio PWA (fintechnav.com/stock)",
   "devDependencies": {
     "esbuild": "^0.28.2",
-    "eslint": "^8.56.0",
+    "eslint": "^10.14.0",
     "husky": "^9.1.7",
     "lint-staged": "^17.6.0",
     "prettier": "^3.9.10"
@@ -33,5 +33,13 @@
     "@netlify/blobs": "^11.1.7",
     "@netlify/identity": "^2.0.0",
     "nodemailer": "^10.3.1"
+  },
+  "overrides": {
+    "eslint": {
+      "minimatch": "^11.0.1",
+      "@eslint/config-array": {
+        "minimatch": "^11.0.1"
+      }
+    }
   }
 }
