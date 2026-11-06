@@ -17,11 +17,38 @@ export async function issueToken(params, previous, fetcher = fetch) {
     headers: {
       Authorization: `Basic ${Buffer.from(`${clientId.trim()}:${secret.trim()}`).toString('base64')}`,
       'Content-Type': 'application/x-www-form-urlencoded',
+      Accept: 'application/json',
     },
     body: new URLSearchParams(params).toString(),
     signal: AbortSignal.timeout(15000),
   });
-  if (!response.ok) throw new HttpError(401, 'Please reconnect your Charles Schwab account.');
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    // Only classify known machine codes. Never log provider bodies, which can
+    // contain authorization codes, credentials or account information.
+    const reason = ['invalid_client', 'invalid_grant', 'invalid_request'].includes(data.error)
+      ? data.error
+      : 'upstream_rejection';
+    console.warn('Schwab token request rejected', { status: response.status, reason });
+    if (reason === 'invalid_client')
+      throw new HttpError(
+        503,
+        'Schwab rejected the app credentials. The app connection settings need repair; signing in again will not fix this.'
+      );
+    if (reason === 'invalid_grant')
+      throw new HttpError(
+        409,
+        previous
+          ? 'Your Schwab authorization has expired or been revoked. Reconnect Charles Schwab.'
+          : 'Schwab rejected the authorization code. Start a new Schwab connection and complete it promptly.'
+      );
+    // A broker rejection is not an expired stock-app session. Returning 401
+    // would make the browser replay this single-use authorization exchange.
+    throw new HttpError(
+      502,
+      'Schwab could not complete the connection. Please try a new connection; if it repeats, the app settings need review.'
+    );
+  }
   const data = await response.json();
   if (!data.access_token || !(data.refresh_token || previous?.refreshToken))
     throw new HttpError(502, 'The brokerage returned an incomplete connection.');
@@ -37,7 +64,7 @@ export async function issueToken(params, previous, fetcher = fetch) {
 export async function getCredentials(store, user, fetcher = fetch) {
   let record = await store.get(credentialKey(user), { type: 'json' });
   if (!credentialStatus(record).connected)
-    throw new HttpError(401, 'Connect your Charles Schwab account.');
+    throw new HttpError(409, 'Connect your Charles Schwab account.');
   if (record.accessTokenExpiresAt < Date.now() + 60000) {
     record = await issueToken(
       { grant_type: 'refresh_token', refresh_token: record.refreshToken },
@@ -55,8 +82,10 @@ export async function brokerGet(path, record, fetcher = fetch) {
   });
   if (!response.ok)
     throw new HttpError(
-      response.status === 401 ? 401 : 502,
-      'Could not verify brokerage data. No new orders were submitted by this check.'
+      response.status === 401 ? 409 : 502,
+      response.status === 401
+        ? 'Schwab rejected the saved connection. Reconnect Charles Schwab.'
+        : 'Could not verify brokerage data. No new orders were submitted by this check.'
     );
   return response.json();
 }

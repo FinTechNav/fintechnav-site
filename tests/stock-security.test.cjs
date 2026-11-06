@@ -41,6 +41,7 @@ async function fixture(options = {}) {
     },
     async setJSON(key, value, condition = {}) {
       if (condition.onlyIfNew && objects.has(key)) return { modified: false };
+      if (options.dropCredentials && key.startsWith('credentials/')) return { modified: false };
       objects.set(key, structuredClone(value));
       return { modified: true };
     },
@@ -63,12 +64,25 @@ async function fixture(options = {}) {
       return Response.json(options.identity || user, { status: options.identityStatus || 200 });
     if (String(url).endsWith('/accounts/accountNumbers'))
       return Response.json([{ hashValue: 'server-selected-account' }]);
+    if (String(url).endsWith('/accounts?fields=positions'))
+      return Response.json([
+        { securitiesAccount: { positions: [], currentBalances: { cashAvailableForTrading: 5 } } },
+      ]);
     if (String(url).includes('/orders?'))
       return options.historyError
         ? new Response('', { status: 503 })
         : Response.json(options.history || []);
     if (String(url).endsWith('/orders') && init.method === 'POST')
       return new Response(null, { status: 201, headers: { Location: '/orders/mock-order-id' } });
+    if (String(url).endsWith('/oauth/token') && options.tokenError)
+      return Response.json(
+        {
+          error: options.tokenError,
+          error_description: 'private-provider-details',
+          access_token: 'never-expose-this',
+        },
+        { status: 401 }
+      );
     if (String(url).endsWith('/oauth/token'))
       return Response.json({
         access_token: 'new-access-test-only',
@@ -290,6 +304,109 @@ test('Gist authentication happens before configuration or data access', async ()
   const f = await fixture();
   assert.equal((await f.gist(request(), { cookies: { get: () => undefined } })).status, 401);
   assert.equal(f.calls.length, 0);
+});
+
+test('runtime deployment metadata keeps production storage stable and previews separate', async () => {
+  const [security] = await modules;
+  const options = (deploy) => security.privateStore(request(), { deploy }, (value) => value);
+  assert.equal(options({ context: 'production', id: 'deploy-a' }).name, 'stock-private-production');
+  assert.equal(options({ context: 'production', id: 'deploy-b' }).name, 'stock-private-production');
+  assert.equal(
+    options({ context: 'deploy-preview', id: 'deploy-a' }).name,
+    'stock-private-preview-deploy-a'
+  );
+  assert.notEqual(
+    options({ context: 'branch-deploy', id: 'deploy-b' }).name,
+    options({ context: 'deploy-preview', id: 'deploy-a' }).name
+  );
+  assert.throws(() => options({}), { status: 503 });
+});
+
+test('Schwab callback rejection preserves a useful error instead of a replay-triggering stock-session 401', async () => {
+  process.env.SCHWAB_CLIENT_ID = 'mock-client';
+  process.env.SCHWAB_CLIENT_SECRET = 'mock-secret';
+  try {
+    for (const [reason, status, message] of [
+      ['invalid_client', 503, /app credentials/],
+      ['invalid_grant', 409, /authorization code/],
+      ['unknown-provider-body', 502, /could not complete/],
+    ]) {
+      const f = await fixture({ tokenError: reason });
+      await f.store.delete(f.brokerage.credentialKey(user));
+      const ctx = context();
+      const begin = await (await f.auth(request({ action: 'begin' }), ctx)).json();
+      const state = new URL(begin.authUrl).searchParams.get('state');
+      const response = await f.auth(request({ action: 'exchange', code: 'fake', state }), ctx);
+      assert.equal(response.status, status);
+      const data = await response.json();
+      assert.match(data.error, message);
+      assert.ok(!JSON.stringify(data).includes('private-provider-details'));
+      assert.ok(!JSON.stringify(data).includes('never-expose-this'));
+      assert.equal((await (await f.auth(request(), ctx)).json()).connected, false);
+      assert.equal(f.calls.filter((call) => call.url.endsWith('/oauth/token')).length, 1);
+    }
+  } finally {
+    delete process.env.SCHWAB_CLIENT_ID;
+    delete process.env.SCHWAB_CLIENT_SECRET;
+  }
+});
+
+test('a saved callback connection survives later requests and silently refreshes the access token', async () => {
+  const f = await fixture();
+  process.env.SCHWAB_CLIENT_ID = 'mock-client';
+  process.env.SCHWAB_CLIENT_SECRET = 'mock-secret';
+  try {
+    await f.store.delete(f.brokerage.credentialKey(user));
+    const ctx = context();
+    const begin = await (await f.auth(request({ action: 'begin' }), ctx)).json();
+    const state = new URL(begin.authUrl).searchParams.get('state');
+    process.env.SCHWAB_CALLBACK_URL = 'https://fintechnav.com/stock';
+    assert.equal(
+      (await f.auth(request({ action: 'exchange', code: 'fake', state }), ctx)).status,
+      200
+    );
+    // A fresh browser context reads server storage rather than browser state.
+    assert.equal((await (await f.auth(request(), context())).json()).connected, true);
+    const saved = await f.store.get(f.brokerage.credentialKey(user));
+    saved.accessTokenExpiresAt = Date.now() - 1;
+    await f.store.setJSON(f.brokerage.credentialKey(user), saved);
+    const sync = await f.handler(request(), context());
+    assert.equal(sync.status, 200);
+    const calls = f.calls.filter((call) => call.url.endsWith('/oauth/token'));
+    assert.equal(calls.length, 2);
+    assert.equal(new URLSearchParams(calls[1].body).get('grant_type'), 'refresh_token');
+    assert.equal(calls[0].headers.Accept, 'application/json');
+    assert.equal(
+      new URLSearchParams(calls[0].body).get('redirect_uri'),
+      'https://redday-ai-schwab.netlify.app'
+    );
+    const renewed = await f.store.get(f.brokerage.credentialKey(user));
+    assert.equal(renewed.refreshTokenExpiresAt, saved.refreshTokenExpiresAt);
+    assert.ok(renewed.accessTokenExpiresAt > Date.now());
+    assert.equal(brokerPosts(f).length, 0);
+  } finally {
+    delete process.env.SCHWAB_CLIENT_ID;
+    delete process.env.SCHWAB_CLIENT_SECRET;
+    delete process.env.SCHWAB_CALLBACK_URL;
+  }
+});
+
+test('callback never reports connected when credential storage did not retain the tokens', async () => {
+  const f = await fixture({ dropCredentials: true });
+  process.env.SCHWAB_CLIENT_ID = 'mock-client';
+  process.env.SCHWAB_CLIENT_SECRET = 'mock-secret';
+  try {
+    await f.store.delete(f.brokerage.credentialKey(user));
+    const ctx = context();
+    const begin = await (await f.auth(request({ action: 'begin' }), ctx)).json();
+    const state = new URL(begin.authUrl).searchParams.get('state');
+    const response = await f.auth(request({ action: 'exchange', code: 'fake', state }), ctx);
+    assert.equal(response.status, 503);
+    assert.match((await response.json()).error, /could not be saved/);
+  } finally {
+    delete process.env.SCHWAB_CLIENT_ID;
+    delete process.env.SCHWAB_CLIENT_SECRET;
+  }
 });
 test('preference sync excludes credentials, accounts and personal execution history', async () => {
   const [security] = await modules;

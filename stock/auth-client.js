@@ -18,7 +18,10 @@ async function request(body) {
       : { cache: 'no-store' }
   );
   const data = await response.json();
-  if (!response.ok) throw new Error(data.error || 'Please sign in again.');
+  if (!response.ok)
+    throw Object.assign(new Error(data.error || 'Please sign in again.'), {
+      status: response.status,
+    });
   return data;
 }
 window.StockAuth = {
@@ -29,7 +32,14 @@ window.StockAuth = {
     if (pending?.type === 'recovery') return { setup: true };
     try {
       return await request();
-    } catch {
+    } catch (error) {
+      if (error.status === 401) {
+        try {
+          return await request({ action: 'refresh' });
+        } catch {
+          /* Show sign-in below. */
+        }
+      }
       return { ok: false };
     }
   },
