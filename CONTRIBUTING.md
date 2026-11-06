@@ -12,7 +12,7 @@ Legacy biography scripts in `js/` execute directly in the browser, including JSX
 
 Create a `codex/` or descriptive feature branch and a pull request into `main`. Use a concise title describing the resulting behavior. Required checks must pass on an up-to-date branch and review conversations must be resolved; solo-owner PRs need no extra reviewer. Squash merging main deploys production through Netlify. Merged branches are removed automatically.
 
-The build publishes an explicit list of site pages and asset directories into `dist/`. Add a new site deliberately in `scripts/build-site.mjs`; never publish the repository root or research/log directories. The callback relay has a separate, minimal build selected by Netlify `SITE_ID`. Retired HPW demos, root checkout assets, and payment proxies are not part of this deployment.
+The build publishes an explicit list of site pages and asset directories into `dist/`. Add a new site deliberately in `scripts/build-site.mjs`; never publish the repository root or research/log directories. The callback relay has a separate, minimal build selected by Netlify `SITE_ID`. Retired HPW demos, root checkout assets, and payment proxies are archived locally and are not part of this deployment.
 
 ## Security and dependencies
 
@@ -26,4 +26,4 @@ Dependabot groups npm minor/patch updates weekly on Monday at 08:00 America/New_
 
 Keep the scoped patched minimatch override until ESLint's dependency ranges include a fixed release. Do not remove it solely because an upstream version was published; confirm the resolved tree and audit result.
 
-Session notes are maintained in `SESSION_LOG.md` and `artifacts/SESSION_LOG.md`; persistent reports belong in `artifacts/`. Keep notes factual and free of credentials or account balances.
+Session notes are maintained in `SESSION_LOG.md` and `artifacts/SESSION_LOG.md`; reviewed engineering reports belong in `artifacts/`. Keep notes factual and free of credentials or account balances. Save personal research, raw screenshots, support correspondence, supplied input files, generated SBOMs, preview fixtures, PR drafts and recovery bundles under ignored `artifacts/local/`. Review individual files before staging; do not force-add this archive. CI publishes the current SBOM as a short-lived workflow artifact.

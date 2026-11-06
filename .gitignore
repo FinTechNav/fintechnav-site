@@ -6,3 +6,6 @@ dist/
 !.env.example
 coverage/
 *.log
+
+# Private research, screenshots, support correspondence, generated reports and backups.
+/artifacts/local/

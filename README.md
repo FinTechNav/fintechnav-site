@@ -1,132 +1,37 @@
-# Brad Jensen - Professional Portfolio
+# FinTechNav sites and apps
 
-![Website Screenshot](https://fintechnav.com/site-preview.png)
+Source for the [FinTechNav biography site](https://fintechnav.com/) and [RedDay AI stock dashboard](https://fintechnav.com/stock/), hosted on Netlify. Heavy Pour Wine applications live in separate repositories.
 
-## Overview
+## Supported source
 
-This repository contains the source code for my professional portfolio website at [fintechnav.com](https://fintechnav.com). The site showcases my experience in FinTech and payment processing over the past 25+ years, along with my personal interests in music, wine, and travel.
+- `index.html`, `privacy-policy.html`, `js/`, `styles/`, `sections/`, `content/`, `logos/`: public biography site and contact form.
+- `stock/`: private stock dashboard shell, bundled Identity client and local preview server.
+- `server/stock/`, `netlify/functions/`: server-enforced owner authentication, private brokerage storage and guarded APIs; contact mail uses Nodemailer with Zoho SMTP.
+- `scripts/build-site.mjs`, `netlify.toml`: explicit public asset allowlist and hosting configuration. The registered Schwab callback project uses a separate minimal relay build.
+- `.github/`: pinned security/build/dependency workflows and protected PR delivery.
+- `artifacts/`: reviewed engineering decisions and validation records. Personal research, screenshots, drafts and recovery backups stay in ignored `artifacts/local/`.
 
-## Features
+Legacy HPW demos, unused preview assets, Apache configuration and duplicate research files have been archived locally. Existing career-history references remain part of the biography.
 
-- Responsive design with dark theme
-- Interactive timeline of career history
-- Modular content structure
-- React-based timeline component
-- Server-side email functionality via Netlify Functions
-- Progressive Web App (PWA) capabilities
-- Pre-commit code quality checks with ESLint and Prettier
+## Development
 
-## Technologies Used
+Use the latest Node 22 patch (minimum 22.13):
 
-- **Frontend**: HTML5, CSS3, JavaScript, React
-- **Backend**: Netlify Functions, Zoho Mail API
-- **Deployment**: Netlify
-- **Code Quality**: ESLint (v10.14+, Node 22.13+), Prettier, Husky, lint-staged
-- **Other**: browser Babel standalone (for biography JSX), Google Fonts, nodemailer
-
-## Project Structure
-
-```
-project/
-├── index.html              # Main HTML file
-├── brad-in-vienna.jpg      # Hero image
-├── styles/                 # CSS stylesheets
-│   ├── main.css            # Main styling
-│   ├── interests.css       # Interests section styling
-│   ├── contact.css         # Contact form styling
-│   └── critical.min.css    # Critical rendering path CSS
-├── sections/               # HTML content sections
-│   ├── about.html          # About section
-│   ├── interests.html      # Interests section
-│   └── contact.html        # Contact section
-├── js/                     # JavaScript files
-│   ├── animations.js       # Animation functionality
-│   ├── content-loader.js   # Dynamic content loading
-│   ├── navigation.js       # Navigation functionality
-│   ├── contact-form.js     # Contact form handling
-│   ├── image-loader.js     # Image optimization
-│   └── components/         # React components
-│       └── Timeline/       # Timeline component
-│           ├── Timeline.js # Main component
-│           └── data/       # Timeline data
-│               ├── index.js                # Data aggregator
-│               ├── metadata.js             # Position metadata
-│               └── companies/              # Individual company data
-│                   ├── fiska.js
-│                   ├── vesta.js
-│                   ├── shift4.js
-│                   ├── globalPayments.js
-│                   ├── abanco.js
-│                   ├── goSoftware.js
-│                   └── unionCamp.js
-└── netlify/                # Netlify configuration
-    └── functions/          # Serverless functions
-        └── send-email.js   # Email handling function
+```sh
+nvm use
+npm ci --ignore-scripts
+npm run build
+npm run validate
+npm run test:security
+npm run dev:stock
 ```
 
-## Local Development
+The preview serves built files on loopback. Private stock authentication requires a deployed Netlify runtime; no local authentication bypass is provided. The biography's unbundled JSX/data scripts require their existing load order.
 
-1. Clone this repository
-2. Open index.html in your browser for basic viewing
-3. For email functionality:
-   - Copy `.env.example` to `.env`
-   - Add your Zoho Mail credentials:
-     ```
-     ZOHO_EMAIL=your_email@yourdomain.com
-     ZOHO_APP_PASSWORD=your_zoho_app_password
-     ```
-   - Run `npm install` to install dependencies
-   - Use the Netlify CLI for local function testing: `netlify dev`
+Copy `.env.example` only when needed for local contact testing. Runtime secrets belong in Netlify or the designated secret manager and must never be committed. See [the stock app documentation](stock/README.md) for authentication, callback and order-safety details.
 
-## Code Quality Tools
+## Delivery and contribution
 
-This project uses several tools to maintain code quality:
+Open a PR into protected `main`. Up-to-date branches, resolved conversations and all eight required checks are enforced; squash merging triggers Netlify production deployment. Dependabot minor/patch auto-merge is guarded by the same protections. CI generates the dependency SBOM as a workflow artifact.
 
-- **ESLint**: Uses `eslint.config.mjs` with the existing lint rules. Unused Babel parser/preset and direct globals/@eslint/js packages are retired. The build uses esbuild; browser Babel standalone remains active for biography JSX.
-- **Security override**: ESLint and its config-array dependency use patched minimatch 11 via a scoped override for GHSA-g3hv-75wg-m249. Remove the override once their supported dependency ranges include a patched release. Lint file coverage and findings were compared against the prior ESLint 8 baseline.
-- **Prettier**: Ensures consistent code formatting
-- **Husky**: Manages Git hooks for pre-commit validation
-- **lint-staged**: Runs linters only on staged files for efficient pre-commit checks
-
-These tools automatically format and lint code before each commit, ensuring consistent style and quality.
-
-## Deployment
-
-This site is deployed on Netlify with continuous deployment from the main branch.
-
-Environment variables required for deployment:
-
-- ZOHO_EMAIL
-- ZOHO_APP_PASSWORD
-
-## Special Architecture Notes
-
-This project uses a specific modular architecture for the timeline component:
-
-- Individual company data is stored in separate files for easier maintenance
-- Content is separated from presentation logic
-- Global variable approach is used instead of ES6 modules for direct browser compatibility
-- Specific script loading order must be maintained in index.html
-
-## Performance Optimizations
-
-- Image optimization
-- Critical CSS for faster initial rendering
-- Lazy loading for images
-- Browser caching
-
-## Design Decisions
-
-- Dark theme for a more sophisticated look
-- Gold accent color (#c9a15f)
-- Responsive timeline with overlapping cards on desktop
-- Simplified mobile experience
-- Poiret One and Cormorant Garamond font pairing
-
-## License
-
-All rights reserved. This code is provided for demonstration purposes only.
-
-## Contact
-
-Feel free to reach out at [brad@fintechnav.com](mailto:brad@fintechnav.com) or connect on [LinkedIn](https://www.linkedin.com/in/brad-jensen-0624563).
+See [CONTRIBUTING.md](CONTRIBUTING.md), [SECURITY.md](SECURITY.md), [the engineering records](artifacts/INDEX.md), and [LICENSE](LICENSE).
