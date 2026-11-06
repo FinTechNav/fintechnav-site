@@ -363,3 +363,11 @@
 - **Invitation:** Sent the approved Netlify Identity invitation and observed `brad@fintechnav.com` in Registered users. Saved proof to `/private/tmp/fintechnav-stock-invitation-sent.jpg`. User must open the invitation and choose a new password; authenticated end-to-end verification remains pending.
 - **Source control:** Security code is committed and pushed as `3442e10` on `codex/stock-security`. The GitHub MCP rendered an interactive PR form; creation/merge has not yet been confirmed. Do not treat the deployed upload as proof that `main` includes the fixes.
 - **Safety:** No live orders submitted. No Netlify plan/billing change. No password was chosen, entered, read, or logged by Codex.
+
+### Entry 22 — 2026-11-06T13:26:02-05:00
+- **Author:** Codex
+- **Outcome Type:** owner onboarding / verification boundary
+- **User update:** Owner reports choosing the stock-app password and successfully signing in on another device/browser. Separate browser sessions explain why the Chrome tab available to Codex still displays the sign-in gate.
+- **Observed:** Netlify Identity shows the owner account and its user-detail page. That page does not expose confirmation or last-login timestamps, so it is not independent proof of the other device's authenticated API access. No password was requested, entered, or inspected.
+- **Repository status:** GitHub MCP lists no PR for `codex/stock-security`; the previously rendered interactive PR form still requires user submission. Security changes are deployed and pushed, but are not merged into `main`. An older main deployment could overwrite the live fixes until integration completes.
+- **Remaining:** Submit the GitHub PR form, complete repository integration and deployment checks, and reconnect Schwab once from the signed-in owner device. No live orders were submitted.

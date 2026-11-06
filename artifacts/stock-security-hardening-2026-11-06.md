@@ -20,3 +20,9 @@ Verification: build successful; 13 mocked security tests passed; changed-source 
 - Owner approved the invitation to brad@fintechnav.com. Netlify accepted it and shows that user in Registered users. Password setup and authenticated verification remain owner actions; no password has been handled by Codex.
 - Code: committed/pushed `3442e10` on `codex/stock-security`. PR creation/merge awaits confirmation from the GitHub interactive form; `main` must include these changes before subsequent production deployments.
 - Screenshots: `/private/tmp/fintechnav-stock-secure-login-live.jpg` and `/private/tmp/fintechnav-stock-invitation-sent.jpg`.
+
+## Owner follow-up — 2026-11-06T13:26:02-05:00
+
+Owner reports completing password setup and signing in on another device/browser. The Chrome session available to Codex remains signed out, as expected for a separate browser. Netlify Identity's owner detail confirms the account exists but does not show confirmation or last-login timestamps; authenticated brokerage/API behavior on the other device has not been independently observed. Owner must reconnect Schwab once because legacy browser credentials were discarded. No live orders were submitted.
+
+GitHub MCP still lists no pull request for the security branch. The interactive PR form requires user submission before integration can continue. The deployed fixes are not yet merged into `main`; a subsequent deployment from old main could overwrite them.
