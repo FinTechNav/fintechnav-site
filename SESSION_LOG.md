@@ -400,3 +400,23 @@
 - **Observed:** GitHub MCP lists no pull requests for the security branch or the repository (all states). Independent read-only `gh pr list` also returns an empty list. No PR number exists to check or merge; main integration has not occurred.
 - **Action:** Prepare to reopen the prefilled native GitHub form after recording this verification. Preserve the deployed fixes and pushed security branch; do not bypass the tool's required user submission.
 - **Remaining:** Successful PR creation, check/review verification, merge and production deployment verification. No trades, paid-plan changes or authentication changes performed.
+
+### Entry 27 — 2026-11-06T13:57:56-05:00
+- **Author:** Codex
+- **Outcome Type:** security integration completed / production verified
+- **User update:** Owner reports submitting the reopened PR form.
+- **Observed:** GitHub PR #1 (`https://github.com/FinTechNav/fintechnav-site/pull/1`) was created and merged by FinTechNav at 13:53:48 Eastern. Merge commit: `31128c82584e66f324d2aa2cd8d83506b4c8c524`. The owner completed the merge; Codex did not perform a second merge. Local checkout is now main and matched origin/main when checked.
+- **CI:** PR security check passed. Main Stock security checks run `42274820000` also completed successfully for the merge commit.
+- **Production:** Netlify deploy `6aee223ee0e3c0a5067c72b9` is ready, context production, branch main, commit `31128c82584e66f324d2aa2cd8d83506b4c8c524`, published 13:54:25 Eastern. This is distinct from PR preview deploy `6aee222e272e387e96245899`.
+- **Live verification:** Homepage, stock sign-in and auth bundle returned 200. All five stock APIs returned anonymous 401 with private/no-store and no wildcard CORS. Tested legacy brokerage function, internal source, session log and package metadata URLs returned 404.
+- **Outcome:** Security fixes are now in main and its automatic production deployment; the earlier old-main overwrite gap is resolved. Owner has reported app sign-in; a fresh Schwab connection/read-only sync remains unverified by Codex. No live orders, paid upgrades or credential changes were performed.
+
+### Entry 28 — 2026-11-06T14:05:41-05:00
+- **Author:** Codex
+- **Outcome Type:** repository security review / low-risk dependency and contact fixes
+- **User request:** Review GitHub Security and implement no/low-risk quick wins, including dependency updates.
+- **Baseline:** 33 open Dependabot advisories (12 high/19 medium/2 low), 9 npm-audit affected packages, one Google API key alert, no CodeQL analysis. Existing secret scanning/push protection already enabled.
+- **Changes:** Branch codex/security-quick-wins; compatible lockfile patches and Nodemailer 10.3.1, Node 22.12 minimum, contact validation/HTML escaping/TLS/content-access restrictions and offline tests, pinned CI actions, advisory gate, grouped Dependabot configuration, CodeQL workflow and SECURITY.md. Retained the prior turn's main-integration log updates.
+- **Settings verified:** Dependabot automated security PRs and private vulnerability reporting enabled, with no auto-merge or paid upgrade.
+- **Validation:** Clean install/build/function bundle succeeded; 17 security tests passed; full npm audit now zero. Existing biography validate command still fails on the same 9 quote errors.
+- **Remaining:** GitHub key alert is historical but revocation/restrictions are unverified; leave open. PR creation/checks, preview and merge/deploy verification remain pending. No live email, payment or brokerage transaction was sent. See artifacts/security-review-2026-11-06.md.

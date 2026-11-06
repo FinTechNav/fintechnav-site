@@ -13,6 +13,9 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT_DIR = path.resolve(__dirname, '../dist');
 const FUNCTIONS_DIR = path.join(ROOT_DIR, 'netlify', 'functions');
 const PORT = process.env.PORT || 4173;
+// Preserve same-origin contact-form testing locally; stock authentication remains deployed-only.
+process.env.URL ??= `http://localhost:${PORT}`;
+process.env.DEPLOY_PRIME_URL ??= `http://127.0.0.1:${PORT}`;
 
 const MIME_TYPES = {
   '.html': 'text/html; charset=utf-8',
