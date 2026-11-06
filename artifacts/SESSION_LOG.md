@@ -478,3 +478,12 @@
 - **Verification:** Build, validate, script syntax, actionlint, 26 security tests, online zero-high/critical audit and SBOM passed. Online workflow audit has no known vulnerable action; its target-trigger/bot warnings were reviewed for the isolated no-checkout automation. Desktop/mobile/short-screen layout and minimal callback relay verified. No brokerage order, payment or mail sent.
 - **Schwab:** Narrow production setting checks found both keys present with no obvious formatting mistakes; no raw values logged/saved. Owner signed into the Schwab developer portal; this account has an approved Trader API subscription but zero apps or pending apps. Asked owner to locate the registered app. Live connection remains unresolved; repeating brokerage sign-in is not a repair.
 - **Pending:** PR checks, merge, settings and ruleset activation, production verification. Full record: artifacts/netlify-repo-standard-2026-11-06.md. User-supplied JSON and local fixture/SBOM remain unstaged.
+
+
+### Entry 36 — 2026-11-06T15:27:00-05:00
+- **Author:** Codex
+- **Outcome:** PR #17 merged by owner; source and repository settings verified in production.
+- **Production:** main 308b5ea98ee5e733dd77b67d80fdabb554393968; Netlify 6aee373d0db43cb5575d03e0 ready/published 20:23:38 UTC. Live layout/manifest present, old demo/payment-proxy paths return 404, anonymous stock-auth remains 401. Eight Actions checks passed with verified app ID 15368.
+- **Repository:** Squash-only merges, PR-title/blank message, automatic branch deletion and guarded auto-merge enabled. All external contributors require workflow approval. Active main-protection ruleset 26724392 binds everyone with no bypass: PR/up-to-date/eight checks/resolved threads, no force-push/deletion. Effective rules and settings re-read successfully. Wiki/projects preserved; no paid or HPW infrastructure added.
+- **Schwab follow-up:** Owner says this is the only developer account and app remains linked at brokerage. Historical missing-app and developer-console reports found; no current official incident or exact cause confirmed. Prepared a local research/support draft addressed to Schwab's officially listed API team; not sent. Live connection remains unresolved and no credentials/app registrations/grants were changed.
+- **Record:** artifacts/netlify-repo-standard-2026-11-06.md; target settings/ruleset payloads beside it. Documentation follow-up exercises protected merging; actual bot PR auto-merge remains unobserved.
