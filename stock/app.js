@@ -66,7 +66,7 @@ const COMPANY_PROFILES = {
     annualRevenue: '~$490 Million / yr ($6.6B–$11.6B Georgia lease)',
     targetPrice12m: 11.00,
     plainWhatTheyDo: 'They own a fleet of power-rich data centers in Georgia, Tennessee, and Wyoming that are pivoting into 20-year AI computer hosting.',
-    whyWeLikeIt: 'They just signed a 20-year, $6.6 Billion to $11.6 Billion lease for their 175 MW campus in Sandersville, Georgia. We scooped up 1 share at $5.66 after a 24% single-day dip!',
+    whyWeLikeIt: 'They just signed a 20-year, $6.6 Billion to $11.6 Billion lease for their 175 MW campus in Sandersville, Georgia.',
     projectionNote: 'Analysts target ~$11.00/share (+93% upside) once investors value them as an AI landlord rather than just a crypto miner.',
     sampleHistory30d: [7.4, 7.8, 8.1, 7.9, 7.6, 7.4, 7.7, 7.55, 7.50, 5.68]
   },
@@ -154,7 +154,7 @@ const COMPANY_PROFILES = {
     annualRevenue: '~$135 Million / yr ($350M AI Cloud target)',
     targetPrice12m: 3.25,
     plainWhatTheyDo: 'They run green hydroelectric data centers in Canada and Sweden and rent out NVIDIA Blackwell GPU clusters through their "BUZZ HPC" cloud.',
-    whyWeLikeIt: 'You already own 2 shares! At ~$1.66/share, it\'s above Schwab\'s $1.00 rule so we can always sweep leftover spare change into HIVE on red days.',
+    whyWeLikeIt: 'At ~$1.66/share, it\'s above Schwab\'s $1.00 rule so we can always sweep leftover spare change into HIVE on red days.',
     projectionNote: 'Analysts project ~$3.25/share (+95% upside) as their NVIDIA GPU cloud expands.',
     sampleHistory30d: [1.85, 1.98, 2.12, 2.01, 1.90, 1.83, 1.66]
   },
@@ -165,11 +165,17 @@ const COMPANY_PROFILES = {
     annualRevenue: '~$115 Million / yr (Zero debt, owns Montreal data centers)',
     targetPrice12m: 2.00,
     plainWhatTheyDo: 'They own Tier-3 AI data centers in Montreal (Enovum) and rent out AI supercomputers to corporate customers.',
-    whyWeLikeIt: 'You own 2 shares! Note: Because BTBT trades under $1.00 (~$0.70), Charles Schwab only lets you buy more when your cash has been settled in your account for 2+ business days.',
+    whyWeLikeIt: 'Note: Because BTBT trades under $1.00 (~$0.70), Charles Schwab only lets you buy more when your cash has been settled in your account for 2+ business days.',
     projectionNote: 'Analysts target ~$2.00/share (+180% upside) if they execute on their Montreal data center expansion.',
     sampleHistory30d: [0.88, 0.94, 0.98, 0.91, 0.86, 0.845, 0.704]
   }
 };
+
+for (const [symbol, name, role] of PortfolioViews.DEFENSE) {
+  COMPANY_PROFILES[symbol] = {name, categoryLabel:'Defense placeholder', marketCap:'Not loaded', annualRevenue:'Not loaded', targetPrice12m:0,
+    plainWhatTheyDo:role, whyWeLikeIt:'Editable placeholder for Dio. Uses the same red-day rules as Brad until Dio chooses her industries and approach.',
+    projectionNote:'Placeholder only. No analyst target or forecast is set.',sampleHistory30d:[],placeholder:true};
+}
 
 const DEFAULT_STATE = {
   cash: 0,
@@ -250,6 +256,7 @@ async function startStockApp() {
     appStarted = true;
     initEvents();
   }
+  await initializeSharedViews();
   renderAll();
   await checkAutoOAuthCallback();
   try {
@@ -332,7 +339,7 @@ let latestComputedRows = [];
 let latestBasket = [];
 
 // Table ordering is presentation-only: never sort holdings, journal or scan rows in place.
-const tableSorts = { portfolio: null, companies: null, journal: null };
+const tableSorts = { portfolio: null, companies: null, journal: null, account: null };
 const tableTextCollator = new Intl.Collator('en', { numeric: true, sensitivity: 'base' });
 
 function sortNumber(value) {
@@ -373,11 +380,12 @@ function holdingSortValue([symbol, position], key) {
 }
 
 const tableSortValues = {
+  account: (position, key) => position[key],
   portfolio: holdingSortValue,
   companies: (row, key) => ({
     symbol: row.symbol, category: row.profile.categoryLabel,
     size: companyAmount(row.profile.marketCap), revenue: companyAmount(row.profile.annualRevenue),
-    price: sortNumber(row.price), target: sortNumber(row.target12m), status: row.verdictText
+    price: row.hasQuote === false ? null : sortNumber(row.price), target: row.target12m > 0 ? sortNumber(row.target12m) : null, status: row.verdictText
   })[key],
   journal: (entry, key) => ({
     date: journalTime(entry), type: journalIsBuy(entry) ? 'BOUGHT' : 'SOLD', symbol: entry.symbol,
@@ -425,11 +433,13 @@ function initTableSorting() {
       if (table === 'portfolio') { renderKPIsAndPortfolio(); bindCompanyDetailButtons(); }
       if (table === 'companies') renderCompaniesTableWithInlineDrawer(latestComputedRows);
       if (table === 'journal') renderJournal();
+      if (table === 'account') renderAccountOverview();
     });
   });
 }
 
 function saveState() {
+  captureViewPreferences();
   const { schwabAuth, ...preferences } = state;
   localStorage.setItem(STORAGE_KEY, JSON.stringify(preferences));
 }
@@ -445,6 +455,7 @@ function showToast(msg) {
 
 // Switch active tab across Desktop Sidebar & Mobile Bottom Nav
 function switchTab(targetTab) {
+  if (activeView === 'all' && ['radar','portfolio','companies','studio'].includes(targetTab)) targetTab = 'account';
   document.querySelectorAll('.tab-panel').forEach((p) => p.classList.add('hidden'));
   document.getElementById(`tab-${targetTab}`)?.classList.remove('hidden');
 
@@ -599,21 +610,22 @@ function evaluateWatchlist() {
       marketCap: 'Public Company',
       annualRevenue: 'See Filings',
       targetPrice12m: 0,
-      plainWhatTheyDo: item.role,
+      plainWhatTheyDo: PortfolioViews.escape(item.role),
       whyWeLikeIt: 'Added to your custom watchlist to monitor for red-day dips.',
       projectionNote: 'Monitored for single-day drops below its 20-day average.',
       sampleHistory30d: []
     };
 
     const q = quotes[item.symbol] || {
-      activePrice: 10.0,
-      prevClose: 10.5,
-      high20d: 11.5,
-      rsi14: 45.0,
-      zScore20d: -0.8,
+      activePrice: 0,
+      prevClose: 0,
+      high20d: 0,
+      rsi14: 50,
+      zScore20d: 0,
       closes: profile.sampleHistory30d
     };
 
+    const hasQuote = Number(q.activePrice) > 0;
     const price = Number(q.activePrice);
     const prev = Number(q.prevClose || price);
     const dayPct = prev > 0 ? ((price - prev) / prev) * 100 : 0;
@@ -643,7 +655,7 @@ function evaluateWatchlist() {
     const pdtSellBlocked = blockDayTrades && boughtToday.has(item.symbol);
     const pdtBuyBlocked = blockDayTrades && soldToday.has(item.symbol);
 
-    const target12m = profile.targetPrice12m || Number((high20d * 1.25).toFixed(2));
+    const target12m = profile.placeholder ? 0 : profile.targetPrice12m || Number((high20d * 1.25).toFixed(2));
     const upsidePct = price > 0 ? ((target12m - price) / price) * 100 : 0;
 
     let verdictText = 'Up Today — Wait for Dip';
@@ -694,9 +706,10 @@ function evaluateWatchlist() {
       ac4203Blocked,
       pdtSellBlocked,
       pdtBuyBlocked,
+      hasQuote,
       target12m,
       upsidePct,
-      verdictText,
+      verdictText: hasQuote ? verdictText : 'Waiting for market data',
       verdictBadgeClass
     };
   });
@@ -798,6 +811,10 @@ function computeRedDayBasket(rows, budget) {
 }
 
 function renderAll() {
+  applyActiveView();
+  renderViewChrome();
+  renderAccountOverview();
+  renderAllocationEditor();
   const rows = evaluateWatchlist();
   renderKPIsAndPortfolio();
   renderCloudflareQuickColumns(rows);
@@ -808,6 +825,10 @@ function renderAll() {
   renderJournal();
   renderSystemLogs();
   renderAuthStatus();
+  if (activeView === 'all') {
+    latestBasket = [];
+    renderAccountOverview();
+  }
 }
 
 const LOG_STORAGE_KEY = 'redday_ai_system_logs_v4';
@@ -937,7 +958,7 @@ function renderCloudflareQuickColumns(rows) {
           <span class="font-medium text-[#f5f5f5]">${r.symbol}</span>
           <span class="text-xs text-[#a1a1a1] truncate">${r.profile.name}</span>
         </span>
-        <span class="text-xs text-[#50a2ff] shrink-0 ml-2">$${r.price.toFixed(2)} ›</span>
+        <span class="text-xs text-[#50a2ff] shrink-0 ml-2">${r.hasQuote ? '$'+r.price.toFixed(2) : 'Awaiting quote'} ›</span>
       </button>
     `).join('');
   }
@@ -1005,7 +1026,7 @@ function renderKPIsAndPortfolio() {
             <span class="text-xs text-[#a1a1a1]">${profile.name}</span>
           </button>
         </td>
-        <td class="py-2.5 px-3 text-[#d9d9d9] text-xs max-w-xs">${pos.role || profile.plainWhatTheyDo}</td>
+        <td class="py-2.5 px-3 text-[#d9d9d9] text-xs max-w-xs">${PortfolioViews.escape(pos.role || profile.plainWhatTheyDo)}</td>
         <td class="py-2.5 px-3 text-right font-medium text-[#f5f5f5]">${pos.shares}</td>
         <td class="py-2.5 px-3 text-right text-[#a1a1a1]">$${pos.avgCost.toFixed(pos.avgCost < 1 ? 4 : 2)}</td>
         <td class="py-2.5 px-3 text-right font-medium text-[#f5f5f5]">$${livePrice.toFixed(livePrice < 1 ? 4 : 2)}</td>
@@ -1028,7 +1049,7 @@ function renderKPIsAndPortfolio() {
 
   const netPnl = totalMktVal - totalBasis;
   const netPnlPct = totalBasis > 0 ? (netPnl / totalBasis) * 100 : 0;
-  const totalAcct = totalMktVal + state.cash;
+  const totalAcct = totalMktVal; // Shared cash is shown separately, never credited to both owners.
   const s = netPnl >= 0 ? '+' : '';
   const pnlFormatted = `${s}$${netPnl.toFixed(2)} (${s}${netPnlPct.toFixed(1)}%)`;
   const pnlClass = `font-semibold ${netPnl >= 0 ? 'text-[#a4f4cf]' : 'text-[#ff6467]'}`;
@@ -1078,6 +1099,8 @@ function renderKPIsAndPortfolio() {
   if (harvestBox) {
     if (harvestHtml.length > 0) {
       harvestBox.innerHTML = harvestHtml.join('');
+    } else if (entries.length === 0) {
+      harvestBox.textContent = 'No shares are allocated to this view yet.';
     } else {
       let bestSym = 'IREN';
       let bestPct = -999;
@@ -1185,7 +1208,7 @@ function renderCompanyCards(rows) {
   grid.innerHTML = filtered.map((r) => {
     const dayColor = r.dayPct < 0 ? 'text-[#ff6467]' : 'text-[#a4f4cf]';
     const dayArrow = r.dayPct < 0 ? '↘' : '↗';
-    const svgChart = buildPriceAndProjectionSvg(r.closes, r.price, r.target12m, r.isRedToday);
+    const svgChart = r.hasQuote ? buildPriceAndProjectionSvg(r.closes, r.price, r.target12m, r.isRedToday) : '<p class="text-xs text-[#a1a1a1]">Refresh quotes to load market data.</p>';
 
     const ownedPill = r.ownedShares > 0
       ? `<span class="px-2 py-0.5 rounded-full text-[11px] font-medium bg-[#10b981]/15 text-[#a4f4cf] ring-1 ring-[#10b981]/40">
@@ -1215,13 +1238,13 @@ function renderCompanyCards(rows) {
           <!-- Big 24px Metric Price + Trend (Exact Cloudflare Analytics Card Header!) -->
           <div class="flex items-baseline gap-2.5 pt-1">
             <span class="text-2xl font-semibold text-[#f5f5f5] leading-7">
-              $${r.price.toFixed(r.price < 1 ? 4 : 2)}
+              ${r.hasQuote ? '$'+r.price.toFixed(r.price < 1 ? 4 : 2) : 'Awaiting quote'}
             </span>
             <span class="text-xs font-medium ${dayColor}">
               ${dayArrow} ${Math.abs(r.dayPct).toFixed(2)}% today
             </span>
             <span class="text-xs text-[#a1a1a1] ml-auto">
-              1-Yr Target: <strong class="text-[#a4f4cf]">$${r.target12m.toFixed(2)} (+${r.upsidePct.toFixed(0)}%)</strong>
+              1-Yr Target: <strong class="text-[#a4f4cf]">${r.target12m > 0 ? '$'+r.target12m.toFixed(2)+' ('+r.upsidePct.toFixed(0)+'%)' : 'Not set'}</strong>
             </span>
           </div>
         </div>
@@ -1248,7 +1271,7 @@ function renderCompanyCards(rows) {
         <div class="pt-1">
           <div class="flex items-center justify-between text-[11px] text-[#a1a1a1] mb-1">
             <span>30-day price history (High: $${r.high20d.toFixed(2)})</span>
-            <span class="text-[#a4f4cf]">Dashed = 12-mo target ($${r.target12m.toFixed(2)})</span>
+            <span class="text-[#a4f4cf]">${r.target12m > 0 ? 'Dashed = 12-mo target ($'+r.target12m.toFixed(2)+')' : 'No target set'}</span>
           </div>
           ${svgChart}
         </div>
@@ -1293,11 +1316,11 @@ function renderCompaniesTableWithInlineDrawer(rows) {
         <td class="py-2.5 px-3 text-xs text-[#a1a1a1]">${r.profile.marketCap}</td>
         <td class="py-2.5 px-3 text-xs text-[#a1a1a1]">${r.profile.annualRevenue}</td>
         <td class="py-2.5 px-3 text-right">
-          <span class="font-medium text-[#f5f5f5]">$${r.price.toFixed(r.price < 1 ? 4 : 2)}</span>
-          <span class="text-xs ${dayColor} ml-1">(${daySign}${r.dayPct.toFixed(1)}%)</span>
+          <span class="font-medium text-[#f5f5f5]">${r.hasQuote ? '$'+r.price.toFixed(r.price < 1 ? 4 : 2) : 'Awaiting quote'}</span>
+          <span class="text-xs ${dayColor} ml-1">${r.hasQuote ? '('+daySign+r.dayPct.toFixed(1)+'%)' : ''}</span>
         </td>
         <td class="py-2.5 px-3 text-right font-medium text-[#a4f4cf]">
-          $${r.target12m.toFixed(2)} (+${r.upsidePct.toFixed(0)}%)
+          ${r.target12m > 0 ? '$'+r.target12m.toFixed(2)+' ('+r.upsidePct.toFixed(0)+'%)' : 'Not set'}
         </td>
         <td class="py-2.5 px-3">
           <span class="px-2 py-0.5 rounded-full text-[11px] ${r.verdictBadgeClass}">${r.verdictText}</span>
@@ -1311,7 +1334,7 @@ function renderCompaniesTableWithInlineDrawer(rows) {
     `);
 
     if (isExpanded) {
-      const chartSvg = buildPriceAndProjectionSvg(r.closes, r.price, r.target12m, r.isRedToday, 105);
+      const chartSvg = r.hasQuote ? buildPriceAndProjectionSvg(r.closes, r.price, r.target12m, r.isRedToday, 105) : '<p class="text-xs text-[#a1a1a1]">Market data not loaded.</p>';
       html.push(`
         <tr class="bg-[#0b0b0b]">
           <td colspan="8" class="p-5 border-b border-[#333333]">
@@ -1328,7 +1351,7 @@ function renderCompaniesTableWithInlineDrawer(rows) {
               <div class="lg:col-span-5 kumo-card p-4">
                 <div class="flex items-center justify-between text-[11px] text-[#a1a1a1] mb-1">
                   <span>30-Day Price Curve</span>
-                  <span class="text-[#a4f4cf]">1-Yr Target: $${r.target12m.toFixed(2)} (+${r.upsidePct.toFixed(0)}%)</span>
+                  <span class="text-[#a4f4cf]">1-Yr Target: ${r.target12m > 0 ? '$'+r.target12m.toFixed(2)+' ('+r.upsidePct.toFixed(0)+'%)' : 'Not set'}</span>
                 </div>
                 ${chartSvg}
               </div>
@@ -1400,8 +1423,8 @@ function openCompanyDetailModal(symbol) {
 
     <div class="kumo-card-recessed p-4 space-y-2">
       <div class="flex items-center justify-between text-xs">
-        <span class="text-[#d9d9d9] font-medium">30-Day Price History &amp; 12-Month Analyst Target ($${row.target12m.toFixed(2)})</span>
-        <span class="text-[#a4f4cf] font-semibold">Projected Upside: +${row.upsidePct.toFixed(0)}%</span>
+        <span class="text-[#d9d9d9] font-medium">30-Day Price History · ${row.target12m > 0 ? '12-Month Target $'+row.target12m.toFixed(2) : 'No target set'}</span>
+        <span class="text-[#a4f4cf] font-semibold">Projected Upside: +${row.target12m > 0 ? row.upsidePct.toFixed(0)+'%' : 'Not set'}</span>
       </div>
       ${largeSvg}
       <p class="text-xs text-[#d9d9d9] pt-1">
@@ -1482,7 +1505,7 @@ function renderJournal() {
         </td>
         <td class="py-2.5 px-3 text-right font-medium text-[#f5f5f5]">${j.qty}</td>
         <td class="py-2.5 px-3 text-right text-[#d9d9d9]">$${Number(j.price).toFixed(j.price < 1 ? 4 : 2)}</td>
-        <td class="py-2.5 px-3 text-right font-medium text-[#f5f5f5]">$${Number(j.total).toFixed(2)}</td>
+        <td class="py-2.5 px-3 text-right font-medium text-[#f5f5f5]">${j.total == null ? '—' : '$'+Number(j.total).toFixed(2)}</td>
         <td class="py-2.5 px-3 font-mono text-xs text-[#a1a1a1]">${j.orderId}</td>
         <td class="py-2.5 px-4 text-[#d9d9d9] text-xs">${j.note}</td>
       </tr>
@@ -1542,7 +1565,8 @@ async function fetchYahooSymbolClientFallback(symbol) {
 }
 
 async function refreshLiveQuotes() {
-  const symbols = state.watchlist.map((w) => w.symbol).join(',');
+  if (activeView === 'all') return;
+  const symbols = [...new Set([...state.watchlist.map(w=>w.symbol), ...Object.keys(state.holdings)])].slice(0,30).join(',');
   try {
     const res = await stockFetch(`/api/market-scan?symbols=${encodeURIComponent(symbols)}`);
     const contentType = res.headers.get('content-type') || '';
@@ -1590,6 +1614,7 @@ async function refreshLiveQuotes() {
 
 function initEvents() {
   initTableSorting();
+  initSharedViewEvents();
   // Primary Tab Buttons
   document.querySelectorAll('.tab-btn').forEach((btn) => {
     btn.addEventListener('click', () => {
@@ -1706,46 +1731,19 @@ function initEvents() {
     showToast('Copied shopping list to clipboard');
   });
 
-  // Mark as Bought
+  // Outside-app trades are attributed only after a confirmed brokerage sync.
   document.getElementById('btn-simulate-fill')?.addEventListener('click', () => {
-    if (!latestBasket.length) {
-      showToast('No items in shopping cart.');
-      return;
-    }
-    latestBasket.forEach((ord) => {
-      if (ord.isSlice) return;
-      const prof = COMPANY_PROFILES[ord.symbol];
-      const existing = state.holdings[ord.symbol] || {
-        shares: 0,
-        avgCost: 0,
-        role: prof ? prof.plainWhatTheyDo : ord.plainWhy
-      };
-      const newShares = existing.shares + ord.qty;
-      const newAvg = (existing.shares * existing.avgCost + ord.cost) / newShares;
-      state.holdings[ord.symbol] = {
-        shares: newShares,
-        avgCost: Number(newAvg.toFixed(4)),
-        role: existing.role
-      };
-      state.journal.unshift({
-        createdAt: new Date().toISOString(),
-        date: new Date().toLocaleDateString(),
-        action: 'BOUGHT',
-        symbol: ord.symbol,
-        qty: ord.qty,
-        price: ord.limitPrice,
-        total: ord.cost,
-        orderId: `SAVED-${Math.floor(100000 + Math.random() * 900000)}`,
-        note: ord.plainWhy
-      });
-    });
-    saveState();
-    renderAll();
-    showToast('Added shares to What I Own & Receipts');
+    switchTab('allocations');
+    showToast('Sync confirmed shares, then assign them to Brad or Dio.');
   });
 
   // The server stores the reviewed basket and accepts its one-use confirmation.
   document.getElementById('btn-execute-schwab')?.addEventListener('click', async (event) => {
+    if (!viewsReady || activeView === 'all' || sharedViews?.assignment.initialOwner || viewWriteError) { showToast('Choose a personal view and sync shared allocations before reviewing orders.'); return; }
+    await viewWriteQueue;
+    if (viewWriteError) { showToast('Reload shared views before reviewing orders.'); return; }
+    const orderProfile = activeView;
+    const orderBasket = structuredClone(latestBasket);
     if (!state.schwabAuth?.connected) {
       document.getElementById('modal-auth')?.classList.remove('hidden');
       showToast('Connect Charles Schwab first.');
@@ -1756,19 +1754,20 @@ function initEvents() {
     try {
       const preview = await stockFetch('/api/schwab-trade', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'prepare', orders: latestBasket.filter((order) => !order.isSlice) })
+        body: JSON.stringify({ action: 'prepare', profile:orderProfile, orders: orderBasket.filter((order) => !order.isSlice) })
       });
       const plan = await preview.json();
       if (!preview.ok) throw new Error(plan.error);
       const summary = plan.orders.map((order) => `${order.instruction} ${order.quantity} ${order.symbol} at a $${order.limitPrice.toFixed(2)} limit (${order.session})`).join('\n');
-      if (!window.confirm(`Submit these live orders to Charles Schwab?\n\n${summary}\n\nTotal limit value: $${plan.total.toFixed(2)}`)) return;
+      if (!window.confirm(`Submit these live orders for ${plan.profile === 'dio' ? 'Dio' : 'Brad'} to Charles Schwab?\n\n${summary}\n\nTotal limit value: $${plan.total.toFixed(2)}`)) return;
       const response = await stockFetch('/api/schwab-trade', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'submit', confirmationId: plan.confirmationId })
       });
       const result = await response.json();
       if (!result.ok) throw new Error(result.error || result.results?.find((order) => !order.ok)?.error || 'Check Schwab for the status of these orders.');
-      showToast('Limit orders submitted. Check Schwab for execution status.');
+      showToast(result.results?.some(order=>!order.labelSaved) ? 'Orders accepted; assign confirmed shares after syncing because a view label could not be saved.' : 'Limit orders submitted. Confirmed fills will be assigned to the reviewed view.');
+      if (result.results?.some(order=>!order.labelSaved)) setViewStatus('Order accepted, but its view label was not saved. Use Split shared shares after syncing.',true);
       document.getElementById('btn-sync-schwab-positions')?.click();
     } catch (error) { showToast(error.message); }
     finally { button.disabled = false; }
@@ -1791,7 +1790,7 @@ function initEvents() {
 
   document.getElementById('btn-reset-rules')?.addEventListener('click', () => {
     state.rules = structuredClone(DEFAULT_STATE.rules);
-    state.watchlist = structuredClone(DEFAULT_STATE.watchlist);
+    state.watchlist = activeView === 'dio' ? PortfolioViews.defaults(personalPreferences()).profiles.dio.watchlist : structuredClone(DEFAULT_STATE.watchlist);
     saveState();
     renderAll();
     showToast('Reset settings to defaults');
@@ -1877,57 +1876,8 @@ function initEvents() {
     } catch (error) { showSchwabError(error.message); }
   });
 
-  document.getElementById('btn-sync-schwab-positions')?.addEventListener('click', async () => {
-    try {
-      // Recheck server storage before prompting: another tab or device may
-      // have completed the connection since this page was opened.
-      const connection = await refreshSchwabStatus();
-      if (!connection.connected) {
-        document.getElementById('modal-auth')?.classList.remove('hidden');
-        showToast('Connect Charles Schwab to sync positions.');
-        return;
-      }
-      addSystemLog('INFO', '/api/schwab-trade', 'Fetching live account balances & positions from Charles Schwab...');
-      const res = await stockFetch('/api/schwab-trade');
-      const data = await safeReadJson(res, '/api/schwab-trade');
-      if (data.ok) {
-        const firstHash = data.accountNumbers?.[0]?.hashValue;
-        if (firstHash) state.schwabAuth.accountHash = firstHash;
-        state.dayTradeLocks = data.dayTradeLocks;
-        const secAcct = data.accounts?.[0]?.securitiesAccount;
-        if (secAcct?.currentBalances?.cashAvailableForTrading !== undefined) {
-          state.cash = Number(secAcct.currentBalances.cashAvailableForTrading);
-        }
-        let posCount = 0;
-        state.holdings = {};
-        if (Array.isArray(secAcct?.positions)) {
-          secAcct.positions.forEach((p) => {
-            const sym = p.instrument?.symbol;
-            const qty = Number(p.longQuantity || 0);
-            const avg = Number(p.averagePrice || 0);
-            if (sym && qty > 0) {
-              posCount++;
-              const prof = COMPANY_PROFILES[sym];
-              state.holdings[sym] = {
-                shares: qty,
-                avgCost: avg,
-                role: state.holdings[sym]?.role || (prof ? prof.plainWhatTheyDo : 'Synced from Charles Schwab')
-              };
-            }
-          });
-        }
-        saveState();
-        renderAll();
-        addSystemLog('OK', '/api/schwab-trade', `Synced ${posCount} positions and $${state.cash.toFixed(2)} cash from Charles Schwab.`);
-        showToast('Synced live positions & cash from Charles Schwab');
-      } else {
-        addSystemLog('ERROR', '/api/schwab-trade', data.error || 'Position sync failed');
-        showToast(`Schwab: ${data.error}`);
-      }
-    } catch (err) {
-      addSystemLog('ERROR', '/api/schwab-trade', err.message);
-      showToast(`Sync error: ${err.message}`);
-    }
+  document.getElementById('btn-sync-schwab-positions')?.addEventListener('click', () => {
+    syncSharedPortfolio().catch(error => { showToast(error.message); addSystemLog('ERROR','/api/schwab-trade','Portfolio sync failed.'); });
   });
 
   document.getElementById('btn-refresh-quotes')?.addEventListener('click', refreshLiveQuotes);

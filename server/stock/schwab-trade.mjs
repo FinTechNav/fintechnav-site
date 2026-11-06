@@ -1,5 +1,11 @@
 import { randomBytes } from 'node:crypto';
 import { protect, json, readBody, hash, HttpError } from './security.mjs';
+import {
+  readViews,
+  labeledSnapshot,
+  tagPrefix,
+  initializeExistingShares,
+} from './portfolio-views.mjs';
 import { BROKER, getCredentials, selectedAccount, brokerGet } from './brokerage.mjs';
 import {
   validateOrders,
@@ -18,6 +24,9 @@ export const createHandler = (dependencies = {}) =>
     const orders = body?.action === 'prepare' ? validateOrders(body.orders) : null;
     if (body && !['prepare', 'submit'].includes(body.action))
       throw new HttpError(400, 'Review and confirm the orders before submitting.');
+    const profile = body?.action === 'prepare' ? body.profile || 'brad' : null;
+    if (profile && !['brad', 'dio'].includes(profile))
+      throw new HttpError(400, 'Choose Brad or Dio before preparing orders.');
     const record = await getCredentials(store, user, fetcher);
     const account = await selectedAccount(store, user, record, fetcher);
     const prefix = `/accounts/${encodeURIComponent(account)}`;
@@ -37,10 +46,19 @@ export const createHandler = (dependencies = {}) =>
         brokerGet(historyPath(), record, fetcher),
       ]);
       const locks = inspectHistory(todayOrders);
+      const snapshot = await labeledSnapshot(store, user, account, accounts, todayOrders);
+      const views = await initializeExistingShares(
+        store,
+        user,
+        await readViews(store, user),
+        snapshot
+      );
       return json({
         ok: true,
         accountNumbers: [{ hashValue: account }],
         accounts,
+        snapshot,
+        views,
         dayTradeLocks: { boughtToday: [...locks.buys], soldToday: [...locks.sells] },
         policy: {
           maxOrderDollars: MAX_ORDER_DOLLARS,
@@ -50,18 +68,28 @@ export const createHandler = (dependencies = {}) =>
       });
     }
     if (body.action === 'prepare') {
+      if (body.profile) {
+        const views = await readViews(store, user);
+        if (!views.document || views.document.assignment.initialOwner)
+          throw new HttpError(
+            409,
+            'Sync the shared portfolio to initialize share ownership before trading.'
+          );
+      }
       checkDayTrade(orders, await brokerGet(historyPath(), record, fetcher));
       const confirmationId = randomBytes(32).toString('hex');
       await store.setJSON(`approvals/${hash(confirmationId)}`, {
         userId: user.id,
         generation: record.generation,
         account,
+        profile,
         orders,
         expiresAt: Date.now() + 300000,
       });
       return json({
         ok: true,
         confirmationId,
+        profile,
         orders,
         maxOrderDollars: MAX_ORDER_DOLLARS,
         total: orders.reduce((sum, order) => sum + order.quantity * order.limitPrice, 0),
@@ -116,10 +144,37 @@ export const createHandler = (dependencies = {}) =>
           }),
           signal: AbortSignal.timeout(15000),
         });
+        const orderId = response.headers.get('location')?.split('/').pop() || null;
+        let labelSaved = false;
+        if (response.ok && orderId && /^[A-Za-z0-9_-]{1,100}$/.test(orderId)) {
+          try {
+            const label = await store.setJSON(
+              tagPrefix(user, account) + orderId,
+              {
+                profile: approval.profile || 'brad',
+                symbol: order.symbol,
+                instruction: order.instruction,
+                createdAt: new Date().toISOString(),
+              },
+              { onlyIfNew: true }
+            );
+            labelSaved = label.modified;
+          } catch {
+            /* Never retry an accepted broker order because annotation failed. */
+          }
+        }
         results.push({
           ...order,
+          profile: approval.profile || 'brad',
+          labelSaved,
+          ...(response.ok && !labelSaved
+            ? {
+                warning:
+                  'Order accepted; view label could not be saved. Assign confirmed shares after syncing.',
+              }
+            : {}),
           ok: response.ok,
-          orderId: response.headers.get('location')?.split('/').pop() || null,
+          orderId,
           ...(response.ok
             ? {}
             : { error: 'Schwab did not accept this order. Check your brokerage account.' }),
