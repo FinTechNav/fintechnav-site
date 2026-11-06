@@ -5,9 +5,9 @@
   "theme_color": "#c9a15f",
   "background_color": "#1a1a1a",
   "display": "standalone",
-  "orientation": "landscape",
+  "orientation": "any",
   "scope": "/",
-  "start_url": "/pos.html",
+  "start_url": "/",
   "icons": [
     {
       "src": "/favicon-192.png",
