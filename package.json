@@ -1,7 +1,7 @@
 {
   "name": "brad-jensen-site",
   "version": "1.0.0",
-  "description": "Professional biography website",
+  "description": "Professional biography website (fintechnav.com) & RedDay AI Stock Portfolio PWA (fintechnav.com/stock)",
   "devDependencies": {
     "@babel/eslint-parser": "^7.27.1",
     "@babel/preset-react": "^7.27.1",
@@ -14,7 +14,8 @@
   },
   "scripts": {
     "prepare": "node -e \"if(process.env.CI !== 'true') { try { require('husky'); } catch(e) { console.log('Husky not found, skipping'); } }\"",
-    "build": "echo 'No build step necessary'",
+    "build": "echo 'Static bio site (/) and RedDay AI stock PWA (/stock) ready'",
+    "dev:stock": "node stock/dev-server.mjs",
     "lint": "eslint js/",
     "lint:fix": "eslint js/ --fix",
     "format": "prettier --write 'js/**/*.js'",
@@ -22,7 +23,7 @@
     "validate": "npm run lint && npm run check-format"
   },
   "lint-staged": {
-    "*.js": [
+    "js/**/*.js": [
       "eslint --fix",
       "prettier --write"
     ]

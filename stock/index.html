@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>RedDay AI — Portfolio &amp; Stock Dip Finder</title>
+  <meta name="description" content="Plain-English AI & Data Center Stock Dip Finder for Charles Schwab" />
+  <meta name="theme-color" content="#030303" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="RedDay AI" />
+  <link rel="manifest" href="/stock/manifest.json" />
+  <link rel="icon" type="image/svg+xml" href="/stock/icon.svg" />
+  <link rel="apple-touch-icon" href="/stock/icon.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            kumo: {
+              canvas: '#030303',
+              elevated: '#060606',
+              recessed: '#0b0b0b',
+              base: '#0f0f0f',
+              control: '#171717',
+              tint: '#262626',
+              line: '#333333',
+              interact: '#404040',
+              subtle: '#a1a1a1',
+              body: '#d9d9d9',
+              strong: '#f5f5f5',
+              blue: '#5491f6',
+              brandBlue: '#155dfc',
+              linkBlue: '#50a2ff',
+              danger: '#ff6467',
+              success: '#a4f4cf'
+            }
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    body {
+      background-color: #030303;
+      color: #f5f5f5;
+      font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      letter-spacing: -0.011em;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .kumo-card {
+      background-color: #0f0f0f;
+      border-radius: 8px;
+      box-shadow: 0 0 0 1px #333333;
+    }
+    .kumo-card-recessed {
+      background-color: #0b0b0b;
+      border-radius: 8px;
+      box-shadow: 0 0 0 1px #262626;
+    }
+    .kumo-input {
+      background-color: #171717;
+      border-radius: 8px;
+      box-shadow: 0 0 0 1px #333333;
+      color: #f5f5f5;
+      transition: box-shadow 0.15s ease;
+    }
+    .kumo-input:focus {
+      outline: none;
+      box-shadow: 0 0 0 2px #5491f6;
+    }
+    .kumo-btn-primary {
+      background-color: #155dfc;
+      color: #ffffff;
+      border-radius: 8px;
+      box-shadow: 0 0 0 1px #5491f6;
+      font-weight: 500;
+      transition: background-color 0.15s ease;
+    }
+    .kumo-btn-primary:hover {
+      background-color: #256bfe;
+    }
+    .kumo-btn-secondary {
+      background-color: #0f0f0f;
+      color: #f5f5f5;
+      border-radius: 8px;
+      box-shadow: 0 0 0 1px #333333;
+      font-weight: 500;
+      transition: background-color 0.15s ease;
+    }
+    .kumo-btn-secondary:hover {
+      background-color: #171717;
+    }
+    .kumo-badge-dashed {
+      border: 1px dashed #333333;
+      background-color: #171717;
+      border-radius: 9999px;
+      padding: 2px 8px;
+      font-size: 11px;
+      font-weight: 500;
+      color: #a1a1a1;
+    }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #030303; }
+    ::-webkit-scrollbar-thumb { background: #262626; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #404040; }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col selection:bg-[#155dfc] selection:text-white">
+
+  <!-- ==================== PRIVATE LOGIN GATE (KUMO OBSIDIAN & BLUE) ==================== -->
+  <div id="login-gate" class="fixed inset-0 z-[100] bg-[#030303] flex items-center justify-center p-4">
+    <div class="kumo-card max-w-md w-full p-6 space-y-5">
+      <div class="flex items-center gap-3 pb-4 border-b border-[#262626]">
+        <div class="w-9 h-9 rounded-lg bg-[#155dfc]/15 ring-1 ring-[#5491f6]/40 flex items-center justify-center">
+          <svg class="w-5 h-5 text-[#5491f6]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/>
+          </svg>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h2 class="text-base font-semibold text-[#f5f5f5]">RedDay AI</h2>
+            <span class="kumo-badge-dashed text-[#50a2ff]">Private Account</span>
+          </div>
+          <p class="text-xs text-[#a1a1a1]">Plain-English Stock Dip Finder &bull; Charles Schwab</p>
+        </div>
+      </div>
+
+      <form id="form-login-gate" class="space-y-4 text-sm">
+        <div>
+          <label class="text-[#a1a1a1] font-medium block mb-1.5 text-xs">Username or Email</label>
+          <input id="login-username" type="text" autocomplete="username" value="brad" required
+            placeholder="brad"
+            class="kumo-input w-full px-3 py-2 text-sm" />
+        </div>
+
+        <div>
+          <label class="text-[#a1a1a1] font-medium block mb-1.5 text-xs">Password or 4-Digit PIN</label>
+          <input id="login-password" type="password" autocomplete="current-password" required autofocus
+            placeholder="Enter password or 2026"
+            class="kumo-input w-full px-3 py-2 text-sm" />
+        </div>
+
+        <div class="flex items-center justify-between pt-0.5 text-xs">
+          <label class="flex items-center gap-2 text-[#d9d9d9] cursor-pointer select-none">
+            <input id="login-remember" type="checkbox" checked class="rounded border-[#333333] bg-[#171717] text-[#155dfc]" />
+            <span>Keep me signed in on this device (30 days)</span>
+          </label>
+        </div>
+
+        <div id="login-error-msg" class="hidden p-2.5 rounded-lg bg-[#ff6467]/10 ring-1 ring-[#ff6467]/40 text-[#ff6467] text-xs font-medium text-center">
+          Invalid credentials. Try username "brad" and PIN "2026" (or "RedDay2026!").
+        </div>
+
+        <button type="submit" class="kumo-btn-primary w-full h-9 text-sm">
+          Sign in to dashboard
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==================== TOP 58PX CLOUDFLARE KUMO HEADER BAR ==================== -->
+  <header class="sticky top-0 z-30 h-[58px] bg-[#030303] border-b border-[#333333] flex items-center justify-between px-4 shrink-0">
+    <!-- Left: Brand + Account Switcher + Context Breadcrumb -->
+    <div class="flex items-center gap-3 min-w-0">
+      <!-- Brand / Account Switcher (244px aligned with sidebar on desktop) -->
+      <div class="flex items-center gap-2.5 md:w-[228px] shrink-0">
+        <div class="w-7 h-7 rounded-md bg-[#155dfc]/15 ring-1 ring-[#5491f6]/40 flex items-center justify-center shrink-0">
+          <svg class="w-4 h-4 text-[#5491f6]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/>
+          </svg>
+        </div>
+        <span class="text-[13px] font-medium text-[#f5f5f5] truncate">Brad@schwab-ai...</span>
+        <svg class="w-3.5 h-3.5 text-[#a1a1a1] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="m7 15 5 5 5-5"/><path d="m7 9 5-5 5 5"/>
+        </svg>
+      </div>
+
+      <div class="hidden md:block h-5 w-[1px] bg-[#333333]"></div>
+
+      <!-- Breadcrumb Context Pill (like heavypourwine.com free) -->
+      <div class="hidden sm:flex items-center gap-2 pl-1">
+        <svg class="w-3.5 h-3.5 text-[#a1a1a1]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+        </svg>
+        <span class="text-[13px] font-medium text-[#f5f5f5]">fintechnav.com/stock</span>
+        <span class="kumo-badge-dashed">$0 free plan</span>
+      </div>
+    </div>
+
+    <!-- Right Utility Strip: Live Balances + Schwab Status + Refresh + Lock -->
+    <div class="flex items-center gap-2.5 text-[13px]">
+      <div class="hidden lg:flex items-center gap-4 mr-2 text-xs">
+        <div class="flex items-center gap-1.5">
+          <span class="text-[#a1a1a1]">Account:</span>
+          <span id="kpi-account-val" class="font-semibold text-[#f5f5f5]">$61.34</span>
+        </div>
+        <div class="h-3.5 w-[1px] bg-[#262626]"></div>
+        <div class="flex items-center gap-1.5">
+          <span class="text-[#a1a1a1]">Profit/Loss:</span>
+          <span id="kpi-unrealized-pnl" class="font-semibold text-[#a4f4cf]">+$1.03 (+1.8%)</span>
+        </div>
+        <div class="h-3.5 w-[1px] bg-[#262626]"></div>
+        <div class="flex items-center gap-1.5">
+          <span class="text-[#a1a1a1]">Cash:</span>
+          <span id="kpi-cash-val" class="font-semibold text-[#50a2ff]">$1.40</span>
+        </div>
+      </div>
+
+      <button id="btn-refresh-quotes" class="kumo-btn-secondary h-8 px-2.5 text-xs flex items-center gap-1.5" title="Refresh live stock prices">
+        <svg class="w-3.5 h-3.5 text-[#a1a1a1]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/>
+        </svg>
+        <span class="hidden sm:inline">Refresh</span>
+      </button>
+
+      <button id="btn-open-auth" class="kumo-btn-secondary h-8 px-2.5 text-xs flex items-center gap-2">
+        <span id="token-status-dot" class="w-2 h-2 rounded-full bg-[#5491f6]"></span>
+        <span id="token-status-text">Schwab API</span>
+      </button>
+
+      <button id="btn-lock-app" title="Lock & Sign Out" class="kumo-btn-secondary h-8 w-8 flex items-center justify-center text-[#a1a1a1] hover:text-[#f5f5f5]">
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- ==================== BODY SHELL: 260PX LEFT SIDEBAR + MAIN WORKSPACE ==================== -->
+  <div class="flex-1 flex min-h-0">
+
+    <!-- Left 260px Kumo Sidebar (Desktop) -->
+    <aside class="hidden md:flex flex-col w-[260px] bg-[#030303] border-r border-[#333333] shrink-0 select-none justify-between">
+      <div class="p-3 space-y-1">
+        <!-- Quick Search Input inside Sidebar -->
+        <div class="relative mb-3">
+          <svg class="w-3.5 h-3.5 text-[#a1a1a1] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
+          </svg>
+          <input id="sidebar-quick-search" type="text" placeholder="Quick search..."
+            class="kumo-input w-full h-[34px] pl-8 pr-9 text-[13px] placeholder-[#a1a1a1]" />
+          <span class="absolute right-2.5 top-1/2 -translate-y-1/2 text-[11px] text-[#a1a1a1] font-mono">⌘K</span>
+        </div>
+
+        <!-- Primary Navigation Group -->
+        <nav class="space-y-0.5" id="desktop-nav">
+          <button data-tab="radar" class="tab-btn w-full h-[34px] px-3 rounded-lg flex items-center justify-between text-[13px] font-medium bg-[#171717] text-[#f5f5f5] transition">
+            <span class="flex items-center gap-2.5">
+              <svg class="w-4 h-4 text-[#5491f6]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
+              </svg>
+              <span>Account home</span>
+            </span>
+          </button>
+
+          <button data-tab="companies" class="tab-btn w-full h-[34px] px-3 rounded-lg flex items-center justify-between text-[13px] font-medium text-[#d9d9d9] hover:bg-[#171717]/60 transition">
+            <span class="flex items-center gap-2.5">
+              <svg class="w-4 h-4 text-[#a1a1a1]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+              </svg>
+              <span>All 15 companies</span>
+            </span>
+            <span class="kumo-badge-dashed text-[#50a2ff]">Guide</span>
+          </button>
+
+          <button data-tab="portfolio" class="tab-btn w-full h-[34px] px-3 rounded-lg flex items-center justify-between text-[13px] font-medium text-[#d9d9d9] hover:bg-[#171717]/60 transition">
+            <span class="flex items-center gap-2.5">
+              <svg class="w-4 h-4 text-[#a1a1a1]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect width="20" height="14" x="2" y="7" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
+              </svg>
+              <span>What I own (7)</span>
+            </span>
+            <span class="text-[11px] text-[#a1a1a1]">›</span>
+          </button>
+
+          <!-- Group Label: Build & invest (Sentence case like Cloudflare) -->
+          <div class="pt-4 pb-1 px-3 text-[13px] font-medium text-[#a1a1a1]">
+            Build &amp; invest
+          </div>
+
+          <button data-quick-filter="red" class="sidebar-filter-link w-full h-[34px] px-3 rounded-lg flex items-center justify-between text-[13px] font-medium text-[#d9d9d9] hover:bg-[#171717]/60 transition">
+            <span class="flex items-center gap-2.5">
+              <svg class="w-4 h-4 text-[#ff6467]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="22 17 13.5 8.5 8.5 13.5 2 7"/><polyline points="16 17 22 17 22 11"/>
+              </svg>
+              <span>On sale today (Red)</span>
+            </span>
+            <span id="sidebar-red-count" class="kumo-badge-dashed">15</span>
+          </button>
+
+          <button data-quick-filter="landlord" class="sidebar-filter-link w-full h-[34px] px-3 rounded-lg flex items-center justify-between text-[13px] font-medium text-[#d9d9d9] hover:bg-[#171717]/60 transition">
+            <span class="flex items-center gap-2.5">
+              <svg class="w-4 h-4 text-[#a1a1a1]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect width="16" height="20" x="4" y="2" rx="2"/><path d="M9 22v-4h6v4"/><path d="M8 6h.01"/><path d="M16 6h.01"/><path d="M12 6h.01"/><path d="M12 10h.01"/><path d="M12 14h.01"/><path d="M16 10h.01"/><path d="M16 14h.01"/><path d="M8 10h.01"/><path d="M8 14h.01"/>
+              </svg>
+              <span>Data center landlords</span>
+            </span>
+            <span class="text-[11px] text-[#a1a1a1]">6</span>
+          </button>
+
+          <button data-quick-filter="slice" class="sidebar-filter-link w-full h-[34px] px-3 rounded-lg flex items-center justify-between text-[13px] font-medium text-[#d9d9d9] hover:bg-[#171717]/60 transition">
+            <span class="flex items-center gap-2.5">
+              <svg class="w-4 h-4 text-[#a1a1a1]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect width="16" height="16" x="4" y="4" rx="2"/><rect width="6" height="6" x="9" y="9" rx="1"/><path d="M15 2v2"/><path d="M15 20v2"/><path d="M2 15h2"/><path d="M2 9h2"/><path d="M20 15h2"/><path d="M20 9h2"/><path d="M9 2v2"/><path d="M9 20v2"/>
+              </svg>
+              <span>Tech giants ($5 Slices)</span>
+            </span>
+            <span class="text-[11px] text-[#a1a1a1]">5</span>
+          </button>
+
+          <button data-quick-filter="sweeper" class="sidebar-filter-link w-full h-[34px] px-3 rounded-lg flex items-center justify-between text-[13px] font-medium text-[#d9d9d9] hover:bg-[#171717]/60 transition">
+            <span class="flex items-center gap-2.5">
+              <svg class="w-4 h-4 text-[#a1a1a1]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="8" cy="8" r="6"/><path d="M18.09 10.37A6 6 0 1 1 10.34 18"/><path d="M7 6h1v4"/>
+              </svg>
+              <span>Under-$5 bargains</span>
+            </span>
+            <span class="text-[11px] text-[#a1a1a1]">4</span>
+          </button>
+
+          <!-- Group Label: Protect & manage -->
+          <div class="pt-4 pb-1 px-3 text-[13px] font-medium text-[#a1a1a1]">
+            Protect &amp; manage
+          </div>
+
+          <button data-tab="studio" class="tab-btn w-full h-[34px] px-3 rounded-lg flex items-center justify-between text-[13px] font-medium text-[#d9d9d9] hover:bg-[#171717]/60 transition">
+            <span class="flex items-center gap-2.5">
+              <svg class="w-4 h-4 text-[#a1a1a1]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/>
+              </svg>
+              <span>Game plan &amp; rules</span>
+            </span>
+            <span class="text-[11px] text-[#a1a1a1]">›</span>
+          </button>
+
+          <button data-tab="journal" class="tab-btn w-full h-[34px] px-3 rounded-lg flex items-center justify-between text-[13px] font-medium text-[#d9d9d9] hover:bg-[#171717]/60 transition">
+            <span class="flex items-center gap-2.5">
+              <svg class="w-4 h-4 text-[#a1a1a1]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
+              </svg>
+              <span>Receipts &amp; history</span>
+            </span>
+            <span class="text-[11px] text-[#a1a1a1]">9</span>
+          </button>
+
+          <button data-tab="logs" class="tab-btn w-full h-[34px] px-3 rounded-lg flex items-center justify-between text-[13px] font-medium text-[#d9d9d9] hover:bg-[#171717]/60 transition">
+            <span class="flex items-center gap-2.5">
+              <svg class="w-4 h-4 text-[#5491f6]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+              </svg>
+              <span>API &amp; system logs</span>
+            </span>
+            <span id="sidebar-log-count" class="kumo-badge-dashed text-[#50a2ff]">Live</span>
+          </button>
+        </nav>
+      </div>
+
+      <!-- Bottom Sidebar Footer -->
+      <div class="p-3 border-t border-[#262626] flex items-center justify-between text-xs text-[#a1a1a1]">
+        <span id="last-scan-time" class="truncate">Live quotes active</span>
+        <span class="text-[#50a2ff] font-medium">v4 Kumo</span>
+      </div>
+    </aside>
+
+    <!-- ==================== MAIN CONTENT AREA + RIGHT RAIL ==================== -->
+    <div class="flex-1 flex flex-col lg:flex-row min-w-0 pb-24 md:pb-12">
+
+      <!-- Center Main Column -->
+      <main class="flex-1 min-w-0 px-4 sm:px-8 py-7 max-w-[1060px] mx-auto space-y-8">
+
+        <!-- ==================== TAB 1: ACCOUNT HOME (CLOUDFLARE HOME + ZONE OVERVIEW STYLE) ==================== -->
+        <section id="tab-radar" class="tab-panel space-y-8">
+
+          <!-- Hero Top Section (Exact Cloudflare Home Greeting + Pill + Search + 3-Col Quick Lists) -->
+          <div class="space-y-5">
+            <div class="flex flex-col items-center text-center space-y-3 pt-1">
+              <div class="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#0f0f0f] ring-1 ring-[#333333] text-xs text-[#d9d9d9]">
+                <span class="w-2 h-2 rounded-full bg-[#5491f6]"></span>
+                <span>Checkers, Not Chess: Buy on Red Days &bull; Sell 1 Share at +35% Profit</span>
+              </div>
+              <h1 class="text-2xl sm:text-[30px] font-semibold text-[#f5f5f5] tracking-tight leading-9">
+                Time to grow your portfolio on red days.
+              </h1>
+            </div>
+
+            <!-- Full-Width Command Search Bar (like Cloudflare Home) -->
+            <div class="relative max-w-2xl mx-auto">
+              <svg class="w-4 h-4 text-[#a1a1a1] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
+              </svg>
+              <input id="home-company-search" type="text"
+                placeholder="Search any company by symbol, name, or what they do (e.g., Microsoft, Anthropic, NVIDIA, cooling)..."
+                class="kumo-input w-full h-10 pl-10 pr-12 text-sm placeholder-[#a1a1a1]" />
+              <span class="absolute right-3 top-1/2 -translate-y-1/2 px-1.5 py-0.5 rounded bg-[#262626] text-[11px] text-[#a1a1a1] font-mono">⌘K</span>
+            </div>
+
+            <!-- 3-Column Quick Access Lists (Like Cloudflare's Domains / Workers / Recents) -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2">
+              <!-- Col 1: Stocks You Own -->
+              <div>
+                <div class="flex items-center justify-between text-[13px] font-medium text-[#a1a1a1] mb-2">
+                  <button data-jump-tab="portfolio" class="hover:text-[#f5f5f5] flex items-center gap-1">
+                    <span>Stocks you own (7)</span><span>›</span>
+                  </button>
+                  <span class="text-xs text-[#50a2ff]">9 shares</span>
+                </div>
+                <div id="quick-col-owned" class="divide-y divide-[#262626] border-t border-b border-[#262626] text-[13px]"></div>
+              </div>
+
+              <!-- Col 2: Biggest Red-Day Sales Today -->
+              <div>
+                <div class="flex items-center justify-between text-[13px] font-medium text-[#a1a1a1] mb-2">
+                  <button data-jump-tab="companies" class="hover:text-[#f5f5f5] flex items-center gap-1">
+                    <span>Biggest sales today</span><span>›</span>
+                  </button>
+                  <span id="quick-red-pill" class="text-xs text-[#ff6467]">On sale</span>
+                </div>
+                <div id="quick-col-sales" class="divide-y divide-[#262626] border-t border-b border-[#262626] text-[13px]"></div>
+              </div>
+
+              <!-- Col 3: Next Companies on Your Wish List -->
+              <div>
+                <div class="flex items-center justify-between text-[13px] font-medium text-[#a1a1a1] mb-2">
+                  <button data-jump-tab="companies" class="hover:text-[#f5f5f5] flex items-center gap-1">
+                    <span>Next on wish list</span><span>›</span>
+                  </button>
+                  <span class="text-xs text-[#a1a1a1]">Not owned yet</span>
+                </div>
+                <div id="quick-col-wishlist" class="divide-y divide-[#262626] border-t border-b border-[#262626] text-[13px]"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Blue Feature Banner (Replaces Cloudflare's Orange Connect Banner with Electric Blue!) -->
+          <div class="kumo-card overflow-hidden flex flex-col sm:flex-row items-stretch justify-between">
+            <div class="flex items-center gap-4 p-4 sm:p-5">
+              <div class="w-14 h-14 rounded-lg bg-gradient-to-br from-[#5491f6] to-[#155dfc] flex items-center justify-center shrink-0 shadow-inner">
+                <svg class="w-7 h-7 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                </svg>
+              </div>
+              <div class="space-y-1">
+                <div class="flex items-center gap-2">
+                  <h3 class="text-sm font-semibold text-[#f5f5f5]">What should I buy with my cash today?</h3>
+                  <span id="regime-badge" class="kumo-badge-dashed text-[#50a2ff]">Red-Day Cart Ready</span>
+                </div>
+                <p class="text-xs text-[#a1a1a1] leading-relaxed max-w-xl">
+                  Enter how much money you want to invest below. The app automatically picks the best on-sale stocks that fit your exact budget without leaving cash sitting idle.
+                </p>
+              </div>
+            </div>
+            <div class="p-4 sm:p-5 flex items-center gap-2 border-t sm:border-t-0 border-[#262626] shrink-0">
+              <button id="btn-execute-schwab" class="kumo-btn-primary h-9 px-4 text-xs whitespace-nowrap">
+                Buy basket on Schwab
+              </button>
+            </div>
+          </div>
+
+          <!-- Recommended Today Section (Exact Cloudflare "Recommended" Card Pattern) -->
+          <div class="space-y-3">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <div class="flex items-center gap-2">
+                <h2 class="text-lg font-semibold text-[#f5f5f5]">Recommended shopping list</h2>
+                <span id="basket-count-pill" class="px-2 py-0.5 rounded-full bg-[#171717] ring-1 ring-[#333333] text-xs font-medium text-[#d9d9d9]">5</span>
+              </div>
+
+              <!-- Budget Controls Toolbar -->
+              <div class="flex flex-wrap items-center gap-2 text-xs">
+                <div class="flex items-center bg-[#171717] ring-1 ring-[#333333] rounded-lg h-9 px-2.5 gap-1.5">
+                  <span class="text-[#a1a1a1]">Budget: $</span>
+                  <input id="input-deploy-cash" type="number" step="1" min="1" value="50.00"
+                    class="w-16 bg-transparent text-[#f5f5f5] font-semibold focus:outline-none" />
+                </div>
+                <button id="btn-use-acct-cash" class="kumo-btn-secondary h-9 px-3 text-xs">
+                  Use Schwab cash ($1.40)
+                </button>
+                <select id="select-cash-settlement" class="kumo-input h-9 px-2.5 text-xs">
+                  <option value="unsettled" selected>New bank transfer (&gt;$1.00 stocks)</option>
+                  <option value="settled">Settled cash (Allows &lt;$1.00 BTBT)</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Recommended Shopping List Rows inside Kumo Card -->
+            <div class="kumo-card divide-y divide-[#262626]" id="basket-recommendations"></div>
+
+            <!-- Shopping Cart Summary Footer Bar -->
+            <div class="flex flex-wrap items-center justify-between gap-3 pt-1 text-xs text-[#a1a1a1]">
+              <div>
+                Total estimated cost: <strong id="basket-total-spent" class="text-[#f5f5f5]">$0.00</strong>
+                <span class="mx-1.5">&bull;</span>
+                Cash left over: <strong id="basket-leftover" class="text-[#50a2ff]">$0.00</strong>
+              </div>
+              <div class="flex items-center gap-2">
+                <button id="btn-copy-ticket" class="kumo-btn-secondary h-8 px-3 text-xs">
+                  Copy shopping list
+                </button>
+                <button id="btn-simulate-fill" class="kumo-btn-secondary h-8 px-3 text-xs text-[#a4f4cf]">
+                  ✓ Mark as bought
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Company Guide & Analytics Section (Like Cloudflare's 2-Col Analytics Sparkline Grid) -->
+          <div class="space-y-4">
+            <div class="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h2 class="text-lg font-semibold text-[#f5f5f5]">Company guide, price history &amp; 1-year projections</h2>
+                <p class="text-xs text-[#a1a1a1]">
+                  Plain-English breakdown of what each company does, their size &amp; revenue, 30-day price chart, and Wall Street's 12-month target.
+                </p>
+              </div>
+
+              <!-- Segmented Filter Pill Bar (Like Cloudflare's 24 Hours / 7 Days / 30 Days Recessed Bar) -->
+              <div class="bg-[#0b0b0b] p-1 rounded-lg ring-1 ring-[#262626] flex flex-wrap gap-1 text-xs" id="scanner-filter-buttons">
+                <button data-filter="all" class="scan-filter-btn px-2.5 py-1 rounded-md font-medium bg-[#262626] text-[#f5f5f5]">
+                  All (15)
+                </button>
+                <button data-filter="red" class="scan-filter-btn px-2.5 py-1 rounded-md font-medium text-[#a1a1a1] hover:text-[#f5f5f5]">
+                  On Sale
+                </button>
+                <button data-filter="owned" class="scan-filter-btn px-2.5 py-1 rounded-md font-medium text-[#a1a1a1] hover:text-[#f5f5f5]">
+                  Owned (7)
+                </button>
+                <button data-filter="landlord" class="scan-filter-btn px-2.5 py-1 rounded-md font-medium text-[#a1a1a1] hover:text-[#f5f5f5]">
+                  Landlords
+                </button>
+                <button data-filter="slice" class="scan-filter-btn px-2.5 py-1 rounded-md font-medium text-[#a1a1a1] hover:text-[#f5f5f5]">
+                  $5 Slices
+                </button>
+                <button data-filter="sweeper" class="scan-filter-btn px-2.5 py-1 rounded-md font-medium text-[#a1a1a1] hover:text-[#f5f5f5]">
+                  Under $5
+                </button>
+              </div>
+            </div>
+
+            <!-- 2-Column Kumo Analytics Card Grid -->
+            <div id="company-cards-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+          </div>
+        </section>
+
+        <!-- ==================== TAB 2: ALL 15 COMPANIES TABLE + INLINE EXPANDABLE DRAWER (LIKE CLOUDFLARE DNS) ==================== -->
+        <section id="tab-companies" class="tab-panel hidden space-y-6">
+          <div class="space-y-1">
+            <h1 class="text-2xl sm:text-[28px] font-semibold text-[#f5f5f5]">All 15 companies on your watchlist</h1>
+            <p class="text-sm text-[#a1a1a1]">
+              Click <strong>Details</strong> on any company row to expand its plain-English story, revenue, 30-day price chart, and 1-year target right inline (just like Cloudflare DNS records).
+            </p>
+          </div>
+
+          <div class="kumo-card overflow-hidden">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse text-[13px]">
+                <thead>
+                  <tr class="bg-[#030303] border-b border-[#333333] text-[#a1a1a1] font-medium h-11">
+                    <th class="py-2 px-4">Company</th>
+                    <th class="py-2 px-3">Category</th>
+                    <th class="py-2 px-3">Size &amp; Revenue</th>
+                    <th class="py-2 px-3 text-right">Price Today</th>
+                    <th class="py-2 px-3 text-right">1-Yr Target</th>
+                    <th class="py-2 px-3">Plain-English Status</th>
+                    <th class="py-2 px-4 text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody id="companies-table-tbody" class="divide-y divide-[#333333]"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==================== TAB 3: WHAT I OWN RIGHT NOW (PORTFOLIO) ==================== -->
+        <section id="tab-portfolio" class="tab-panel hidden space-y-6">
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h1 class="text-2xl sm:text-[28px] font-semibold text-[#f5f5f5]">What I own right now</h1>
+              <p class="text-sm text-[#a1a1a1]">
+                Your 9 whole shares across 7 AI &amp; data center companies in Charles Schwab, plus $1.40 cash.
+              </p>
+            </div>
+            <button id="btn-sync-schwab-positions" class="kumo-btn-primary h-9 px-3.5 text-xs flex items-center gap-2">
+              <span>⇄ Sync shares from Schwab</span>
+            </button>
+          </div>
+
+          <div class="kumo-card overflow-hidden">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse text-[13px]">
+                <thead>
+                  <tr class="bg-[#030303] border-b border-[#333333] text-[#a1a1a1] font-medium h-11">
+                    <th class="py-2 px-4">Company</th>
+                    <th class="py-2 px-3">What They Do</th>
+                    <th class="py-2 px-3 text-right">Shares</th>
+                    <th class="py-2 px-3 text-right">Paid</th>
+                    <th class="py-2 px-3 text-right">Price Now</th>
+                    <th class="py-2 px-3 text-right">Value</th>
+                    <th class="py-2 px-3 text-right">Profit / Loss</th>
+                    <th class="py-2 px-4">Progress to +35% Sell Goal</th>
+                  </tr>
+                </thead>
+                <tbody id="portfolio-tbody" class="divide-y divide-[#333333]"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==================== TAB 4: GAME PLAN & SETTINGS ==================== -->
+        <section id="tab-studio" class="tab-panel hidden space-y-6">
+          <div>
+            <h1 class="text-2xl sm:text-[28px] font-semibold text-[#f5f5f5]">Game plan &amp; rules</h1>
+            <p class="text-sm text-[#a1a1a1]">Customize when the app flags a stock as "On Sale" or alerts you to take profit.</p>
+          </div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div class="lg:col-span-6 kumo-card p-5 space-y-4">
+              <div class="flex items-center justify-between border-b border-[#262626] pb-3">
+                <h2 class="text-base font-semibold text-[#f5f5f5]">Buying &amp; selling thresholds</h2>
+                <button id="btn-reset-rules" class="kumo-btn-secondary h-8 px-3 text-xs">
+                  Reset defaults
+                </button>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                <div>
+                  <label class="text-[#a1a1a1] block mb-1.5 font-medium">Data Center "Big Sale" Drop (%)</label>
+                  <input id="rule-landlord-drop" type="number" step="0.5" value="-5.0" class="kumo-input w-full h-9 px-3 text-sm font-semibold" />
+                </div>
+                <div>
+                  <label class="text-[#a1a1a1] block mb-1.5 font-medium">Big Tech ($5 Slice) Sale Drop (%)</label>
+                  <input id="rule-slice-drop" type="number" step="0.5" value="-3.0" class="kumo-input w-full h-9 px-3 text-sm font-semibold" />
+                </div>
+                <div>
+                  <label class="text-[#a1a1a1] block mb-1.5 font-medium">Take-Profit Goal (+%)</label>
+                  <input id="rule-harvest-pct" type="number" step="5" value="35" class="kumo-input w-full h-9 px-3 text-sm font-semibold text-[#a4f4cf]" />
+                </div>
+                <div>
+                  <label class="text-[#a1a1a1] block mb-1.5 font-medium">Schwab Order Session</label>
+                  <select id="select-order-session" class="kumo-input w-full h-9 px-2.5 text-xs">
+                    <option value="SEAMLESS" selected>Day + Extended Hours</option>
+                    <option value="EXTENDED">After-Hours Only (4–8 PM ET)</option>
+                    <option value="NORMAL">Regular Market Hours Only</option>
+                  </select>
+                </div>
+                <input id="rule-rsi-buy" type="hidden" value="40" />
+                <input id="rule-zscore-buy" type="hidden" value="-1.25" />
+                <input id="rule-max-weight" type="hidden" value="25" />
+              </div>
+
+              <div class="pt-2 flex items-center gap-2">
+                <button id="btn-save-rules" class="kumo-btn-primary h-9 px-4 text-xs">
+                  Save changes
+                </button>
+                <button id="btn-export-json" class="kumo-btn-secondary h-9 px-3.5 text-xs">
+                  Export backup JSON
+                </button>
+              </div>
+            </div>
+
+            <div class="lg:col-span-6 kumo-card p-5 space-y-4">
+              <div class="border-b border-[#262626] pb-3">
+                <h2 class="text-base font-semibold text-[#f5f5f5]">Watchlist companies</h2>
+              </div>
+
+              <form id="form-add-ticker" class="grid grid-cols-1 sm:grid-cols-12 gap-2 text-xs">
+                <input id="new-ticker-sym" type="text" placeholder="Symbol (NBIS)" required class="kumo-input sm:col-span-3 h-9 px-3 font-semibold uppercase" />
+                <select id="new-ticker-bucket" class="kumo-input sm:col-span-4 h-9 px-2">
+                  <option value="Bucket 1: Landlord">Data Center Landlord</option>
+                  <option value="Bucket 2: S&P 500 Slice">Big Tech ($5 Slice)</option>
+                  <option value="Bucket 3: Sweeper/Pick">Under-$5 Bargain</option>
+                </select>
+                <input id="new-ticker-role" type="text" placeholder="What do they do?" required class="kumo-input sm:col-span-3 h-9 px-3" />
+                <button type="submit" class="kumo-btn-primary sm:col-span-2 h-9 px-3">
+                  + Add
+                </button>
+              </form>
+
+              <div id="studio-watchlist-items" class="max-h-64 overflow-y-auto divide-y divide-[#262626] text-xs"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==================== TAB 5: RECEIPTS & ORDER HISTORY ==================== -->
+        <section id="tab-journal" class="tab-panel hidden space-y-6">
+          <div>
+            <h1 class="text-2xl sm:text-[28px] font-semibold text-[#f5f5f5]">Receipts &amp; trade history</h1>
+            <p class="text-sm text-[#a1a1a1]">Complete log of your executed Charles Schwab orders.</p>
+          </div>
+
+          <div class="kumo-card overflow-hidden">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse text-[13px]">
+                <thead>
+                  <tr class="bg-[#030303] border-b border-[#333333] text-[#a1a1a1] font-medium h-11">
+                    <th class="py-2 px-4">Date &amp; Time</th>
+                    <th class="py-2 px-3">Type</th>
+                    <th class="py-2 px-3">Company</th>
+                    <th class="py-2 px-3 text-right">Shares</th>
+                    <th class="py-2 px-3 text-right">Fill Price</th>
+                    <th class="py-2 px-3 text-right">Total</th>
+                    <th class="py-2 px-3">Order ID</th>
+                    <th class="py-2 px-4">Plain-English Note</th>
+                  </tr>
+                </thead>
+                <tbody id="journal-tbody" class="divide-y divide-[#333333]"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==================== TAB 6: API & SYSTEM ACTIVITY LOGS ==================== -->
+        <section id="tab-logs" class="tab-panel hidden space-y-6">
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h1 class="text-2xl sm:text-[28px] font-semibold text-[#f5f5f5]">API &amp; system activity logs</h1>
+              <p class="text-sm text-[#a1a1a1]">
+                Real-time diagnostic log of every Charles Schwab OAuth token handshake, position sync, quote scan, and order call.
+              </p>
+            </div>
+            <div class="flex items-center gap-2">
+              <button id="btn-test-schwab-health" class="kumo-btn-primary h-9 px-3.5 text-xs">
+                Test /api/schwab-auth endpoint
+              </button>
+              <button id="btn-clear-logs" class="kumo-btn-secondary h-9 px-3 text-xs">
+                Clear logs
+              </button>
+            </div>
+          </div>
+
+          <div class="kumo-card overflow-hidden">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse text-[13px]">
+                <thead>
+                  <tr class="bg-[#030303] border-b border-[#333333] text-[#a1a1a1] font-medium h-11">
+                    <th class="py-2 px-4">Timestamp</th>
+                    <th class="py-2 px-3">Level</th>
+                    <th class="py-2 px-3">Source / Endpoint</th>
+                    <th class="py-2 px-4">Event Details</th>
+                  </tr>
+                </thead>
+                <tbody id="system-logs-tbody" class="divide-y divide-[#333333] font-mono text-xs"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+      </main>
+
+      <!-- ==================== RIGHT RAIL (336PX CLOUDFLARE ZONE OVERVIEW STYLE) ==================== -->
+      <aside class="w-full lg:w-[336px] shrink-0 border-t lg:border-t-0 lg:border-l border-[#333333] p-5 space-y-6 bg-[#030303]">
+
+        <!-- Portfolio Snapshot Card -->
+        <div class="space-y-2">
+          <div class="flex items-center justify-between">
+            <h3 class="text-sm font-semibold text-[#f5f5f5]">Portfolio Status</h3>
+            <span class="kumo-badge-dashed text-[#a4f4cf]">Active</span>
+          </div>
+          <div class="kumo-card p-4 space-y-3 text-xs">
+            <div class="flex items-center justify-between">
+              <span class="text-[#a1a1a1]">Total Account Value</span>
+              <span id="rail-account-val" class="font-semibold text-sm text-[#f5f5f5]">$61.34</span>
+            </div>
+            <div class="flex items-center justify-between border-t border-[#262626] pt-2.5">
+              <span class="text-[#a1a1a1]">Total Profit / Loss</span>
+              <span id="rail-unrealized-pnl" class="font-semibold text-[#a4f4cf]">+$1.03 (+1.8%)</span>
+            </div>
+            <div class="flex items-center justify-between border-t border-[#262626] pt-2.5">
+              <span class="text-[#a1a1a1]">Cash Ready to Spend</span>
+              <span id="rail-cash-val" class="font-semibold text-[#50a2ff]">$1.40</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Profit Checker (+35% Rule) -->
+        <div class="space-y-2">
+          <h3 class="text-sm font-semibold text-[#f5f5f5]">Should I Sell Anything Today?</h3>
+          <p class="text-xs text-[#a1a1a1] leading-relaxed">
+            When any stock you own climbs <strong class="text-[#f5f5f5]">+35%</strong> above what you paid, we sell 1 share to lock in cash.
+          </p>
+          <div id="harvest-alerts-box" class="text-xs"></div>
+        </div>
+
+        <!-- Quick Actions (With Cloudflare Blue Toggle Switches!) -->
+        <div class="space-y-3 pt-2 border-t border-[#262626]">
+          <h3 class="text-sm font-semibold text-[#f5f5f5]">Quick Controls</h3>
+
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <span class="text-xs font-medium text-[#f5f5f5] block">Only Buy on Red Days</span>
+              <span class="text-[11px] text-[#a1a1a1] block">Automatically hides green stocks from your shopping cart.</span>
+            </div>
+            <div class="w-9 h-5 rounded-full bg-[#155dfc] flex items-center justify-end px-0.5 shrink-0 mt-0.5">
+              <span class="w-4 h-4 rounded-full bg-white"></span>
+            </div>
+          </div>
+
+          <div class="flex items-start justify-between gap-3 pt-2">
+            <div>
+              <span class="text-xs font-medium text-[#f5f5f5] block">Block Under-$1.00 on New Cash</span>
+              <span class="text-[11px] text-[#a1a1a1] block">Prevents Schwab rejection on newly transferred funds.</span>
+            </div>
+            <button id="toggle-unsettled-switch" type="button" class="w-9 h-5 rounded-full bg-[#155dfc] flex items-center justify-end px-0.5 shrink-0 mt-0.5 transition">
+              <span class="w-4 h-4 rounded-full bg-white"></span>
+            </button>
+          </div>
+        </div>
+
+        <!-- API & Account Card (Exact Cloudflare Bottom-Right API Box!) -->
+        <div class="kumo-card p-4 space-y-3 text-xs">
+          <div class="flex items-center justify-between">
+            <h4 class="font-semibold text-[#f5f5f5]">Charles Schwab API</h4>
+            <span class="text-[11px] text-[#50a2ff] font-medium">Production</span>
+          </div>
+          <div>
+            <span class="text-[#a1a1a1] block text-[11px]">App Name</span>
+            <span class="font-mono text-[#d9d9d9] text-[11px]">RedDay AI Portfolio (120/min)</span>
+          </div>
+          <div class="border-t border-[#262626] pt-2.5">
+            <span class="text-[#a1a1a1] block text-[11px]">Client ID</span>
+            <span class="font-mono text-[#d9d9d9] text-[11px] truncate block">dDGOfkYTf73UDWetFsYXgAZ7...</span>
+          </div>
+          <div class="border-t border-[#262626] pt-2.5 flex items-center justify-between">
+            <button id="btn-rail-open-auth" class="text-[#50a2ff] hover:underline font-medium">
+              Manage 7-day token &rarr;
+            </button>
+          </div>
+        </div>
+
+      </aside>
+    </div>
+  </div>
+
+  <!-- ==================== MOBILE BOTTOM NAVIGATION ==================== -->
+  <nav class="md:hidden fixed bottom-0 inset-x-0 z-40 bg-[#030303] border-t border-[#333333] px-2 py-1.5 flex justify-around text-[11px]">
+    <button data-tab="radar" class="tab-btn flex flex-col items-center py-1 px-3 rounded-lg text-[#5491f6] font-semibold">
+      <span>Home</span>
+    </button>
+    <button data-tab="companies" class="tab-btn flex flex-col items-center py-1 px-3 rounded-lg text-[#a1a1a1]">
+      <span>15 Stocks</span>
+    </button>
+    <button data-tab="portfolio" class="tab-btn flex flex-col items-center py-1 px-3 rounded-lg text-[#a1a1a1]">
+      <span>What I Own</span>
+    </button>
+    <button data-tab="studio" class="tab-btn flex flex-col items-center py-1 px-3 rounded-lg text-[#a1a1a1]">
+      <span>Rules</span>
+    </button>
+    <button data-tab="journal" class="tab-btn flex flex-col items-center py-1 px-3 rounded-lg text-[#a1a1a1]">
+      <span>Receipts</span>
+    </button>
+  </nav>
+
+  <!-- ==================== MODAL 1: FULL COMPANY STORY & CHART DEEP DIVE ==================== -->
+  <div id="modal-company-detail" class="fixed inset-0 z-50 hidden bg-black/80 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+    <div class="kumo-card max-w-2xl w-full p-6 space-y-5 text-sm my-8">
+      <div class="flex items-start justify-between gap-4 border-b border-[#262626] pb-4">
+        <div id="detail-modal-header"></div>
+        <button id="btn-close-detail" class="text-[#a1a1a1] hover:text-white text-xl font-bold leading-none px-2">&times;</button>
+      </div>
+      <div id="detail-modal-body" class="space-y-4"></div>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL 2: SCHWAB CONNECTION ==================== -->
+  <div id="modal-auth" class="fixed inset-0 z-50 hidden bg-black/80 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="kumo-card max-w-lg w-full p-6 space-y-4 text-xs">
+      <div class="flex items-center justify-between border-b border-[#262626] pb-3">
+        <div>
+          <h3 class="text-base font-semibold text-[#f5f5f5]">Connect Your Charles Schwab Account</h3>
+          <p class="text-[#a1a1a1]">App: <strong class="text-[#50a2ff]">RedDay AI Portfolio</strong> (Approved &amp; Ready For Use)</p>
+        </div>
+        <button id="btn-close-auth" class="text-[#a1a1a1] hover:text-white text-lg font-bold">&times;</button>
+      </div>
+
+      <div class="kumo-card-recessed p-3.5 space-y-2">
+        <div class="flex items-center justify-between">
+          <span class="text-[#a1a1a1] font-medium">Developer Portal Status:</span>
+          <span id="modal-token-badge" class="px-2 py-0.5 rounded bg-[#155dfc]/20 text-[#50a2ff] font-semibold">
+            ✓ Ready For Use (Production)
+          </span>
+        </div>
+        <p class="text-[#d9d9d9] leading-relaxed">
+          Your Charles Schwab production keys are pre-configured in Netlify. Click the blue button below to sign in with Schwab (lasts 7 days per sign-in).
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div>
+          <label class="text-[#a1a1a1] block mb-1 font-medium">App Key (Client ID)</label>
+          <input id="input-schwab-key" type="text" value="dDGOfkYTf73UDWetFsYXgAZ70jGkO9dYNCryLW0AtFSG8vVY"
+            class="kumo-input w-full px-2.5 py-2 font-mono text-[11px]" />
+        </div>
+        <div>
+          <label class="text-[#a1a1a1] block mb-1 font-medium">Sign-In Return URL</label>
+          <select id="select-oauth-callback" class="kumo-input w-full px-2.5 py-2">
+            <option value="https://redday-ai-schwab.netlify.app" selected>1-Click via Schwab Relay (No Hold → fintechnav.com/stock)</option>
+            <option value="https://fintechnav.com/stock">Direct to fintechnav.com/stock</option>
+            <option value="https://127.0.0.1:8182">Local Loopback (127.0.0.1:8182)</option>
+          </select>
+        </div>
+      </div>
+
+      <input id="input-schwab-secret" type="hidden" value="" />
+
+      <button id="btn-launch-schwab-oauth" class="kumo-btn-primary w-full h-10 text-sm">
+        Sign in with Charles Schwab (1-Click) &rarr;
+      </button>
+
+      <details class="text-[#a1a1a1] pt-1">
+        <summary class="cursor-pointer hover:text-[#f5f5f5] font-medium">Manual fallback (paste redirect URL or code)</summary>
+        <div class="space-y-2 pt-2">
+          <input id="input-redirect-url" type="text" placeholder="Paste https://redday-ai-schwab.netlify.app/?code=... or https://127.0.0.1:8182/?code=..."
+            class="kumo-input w-full px-3 py-2" />
+          <button id="btn-exchange-code" class="kumo-btn-secondary w-full h-9">
+            Activate 7-Day Connection
+          </button>
+        </div>
+      </details>
+
+      <div id="auth-modal-feedback" class="text-xs text-[#d9d9d9] hidden p-2.5 rounded-lg bg-[#171717] ring-1 ring-[#333333]"></div>
+
+      <!-- Live OAuth Handshake Log Inside Modal -->
+      <div class="border-t border-[#262626] pt-3 space-y-1.5">
+        <div class="flex items-center justify-between text-[11px] text-[#a1a1a1]">
+          <span class="font-medium text-[#d9d9d9]">Live OAuth &amp; API Diagnostic Log</span>
+          <button id="btn-modal-view-all-logs" type="button" class="text-[#50a2ff] hover:underline">Open full logs &rarr;</button>
+        </div>
+        <div id="modal-auth-log-preview" class="bg-[#0b0b0b] ring-1 ring-[#262626] rounded-lg p-2.5 max-h-28 overflow-y-auto font-mono text-[11px] space-y-1 text-[#a1a1a1]">
+          <div>Ready — click "Sign in with Charles Schwab (1-Click)" above.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="fixed bottom-20 md:bottom-6 right-6 z-50 hidden px-4 py-2.5 rounded-lg bg-[#171717] ring-1 ring-[#5491f6] text-xs font-medium text-[#f5f5f5] shadow-2xl"></div>
+
+  <script type="module" src="/stock/app.js"></script>
+</body>
+</html>
