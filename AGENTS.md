@@ -3,6 +3,13 @@
 ## Purpose
 This workspace is configured for quantitative research, algorithmic trading, technical & fundamental analysis, backtesting, and portfolio risk management for stocks and equities.
 
+## Repository Scope and Delivery
+
+- This public repo hosts FinTechNav Netlify sites/apps. Heavy Pour Wine application work belongs in separate repos; preserve legitimate biography references.
+- Publish only the explicit build allowlist to `dist/`. Keep logs, research, backend sources and credentials outside the deployed files. Preserve the separate registered Schwab callback relay build.
+- Use a branch and PR for changes. Run build, validate and security checks before requesting a merge; main protections also bind the owner. Do not add paid infrastructure for this repo without authorization.
+- Keep both session logs current, with no credential values, authorization codes, cookies or brokerage account data. Persistent artifacts belong in the directory below.
+
 ## Installed Agent Skills
 Over 115+ specialized trading and quantitative skills are installed in `.agents/skills/`, categorized across:
 - **Technical Analysis & Indicators**: `us-stock-analysis`, `pandas-ta`, `ta-lib`, `custom-indicators`, `trading-visualization`

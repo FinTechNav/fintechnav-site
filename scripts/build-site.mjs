@@ -8,7 +8,9 @@ const output = path.join(root, 'dist');
 // Publish an allowlist, never the repository: logs, research, credentials,
 // backend code, dependencies and workspace configuration are not web assets.
 const directories = ['js', 'styles', 'sections', 'icons', 'logos', 'content'];
-const rootAssets = /\.(?:html|css|png|jpe?g|webp|svg|ico|woff2?|ttf)$/i;
+// New sites must be explicitly added here. Legacy HPW demos remain source-only.
+const pages = ['index.html', 'privacy-policy.html'];
+const rootAssets = /\.(?:png|jpe?g|webp|svg|ico|woff2?|ttf)$/i;
 await rm(output, { recursive: true, force: true });
 await mkdir(output, { recursive: true });
 if (process.env.SITE_ID === '8812c48b-7a67-41dc-b636-5ee0f74d911c') {
@@ -30,7 +32,7 @@ for (const entry of await readdir(root, { withFileTypes: true })) {
   if (
     entry.isFile() &&
     (rootAssets.test(entry.name) ||
-      ['robots.txt', 'sitemap.xml', 'manifest.json'].includes(entry.name))
+      [...pages, 'robots.txt', 'sitemap.xml', 'manifest.json'].includes(entry.name))
   ) {
     await cp(path.join(root, entry.name), path.join(output, entry.name));
   }

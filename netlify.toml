@@ -15,7 +15,7 @@
     X-Frame-Options = "SAMEORIGIN"
     Referrer-Policy = "strict-origin-when-cross-origin"
     Content-Security-Policy = "base-uri 'self'; object-src 'none'; frame-ancestors 'self'"
-    Content-Security-Policy-Report-Only = "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://unpkg.com https://cdn.jsdelivr.net https://www.googletagmanager.com https://static.hotjar.com https://script.hotjar.com https://maps.googleapis.com https://cdn.heavypourwine.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.heavypourwine.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://api.schwabapi.com https://query1.finance.yahoo.com https://corsproxy.io https://api.allorigins.win https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com https://*.hotjar.com https://*.hotjar.io wss://*.hotjar.com https://*.heavypourwine.com https://maps.googleapis.com; frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com https://vars.hotjar.com; media-src 'self' https:; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'"
+    Content-Security-Policy-Report-Only = "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://unpkg.com https://cdn.jsdelivr.net https://www.googletagmanager.com https://static.hotjar.com https://script.hotjar.com https://maps.googleapis.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://api.schwabapi.com https://query1.finance.yahoo.com https://corsproxy.io https://api.allorigins.win https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com https://*.hotjar.com https://*.hotjar.io wss://*.hotjar.com https://maps.googleapis.com; frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com https://vars.hotjar.com; media-src 'self' https:; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'"
 
 [[headers]]
   for = "/stock/sw.js"
@@ -31,24 +31,7 @@
   # Directory for functions
   directory = "netlify/functions"
   
-  # Enable scheduled functions
   node_bundler = "esbuild"
-
-# Scheduled token refresh - runs daily at 11:00 AM UTC (6:00 AM EST)
-[functions."scheduled-token-refresh"]
-
-# Proxy redirects for iPOS Transact API (free tier network workaround)
-[[redirects]]
-  from = "/api/ipos-transact-sandbox/*"
-  to = "https://payment.ipospays.tech/:splat"
-  status = 200
-  force = true
-
-[[redirects]]
-  from = "/api/ipos-transact-prod/*"
-  to = "https://payment.ipospays.com/:splat"
-  status = 200
-  force = true
 
 # Stock API routes and free-plan rate limits are defined in v2 function config.
 

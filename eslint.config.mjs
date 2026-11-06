@@ -1,4 +1,4 @@
-// eslint.config.js
+// Flat config for the unbundled biography scripts and JSX.
 export default [
   {
     ignores: [
@@ -50,7 +50,7 @@ export default [
       }
     },
     rules: {
-      quotes: ['error', 'single'],
+      quotes: ['error', 'single', { avoidEscape: true }],
       semi: ['error', 'always'],
       'no-unused-vars': 'off',
       'no-console': 'off'

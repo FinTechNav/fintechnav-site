@@ -461,3 +461,20 @@
 - **Changes:** Dedicated codex/fix-schwab-connection branch; stable runtime production storage, isolated previews, save readback, original redirect snapshot, broker-specific errors, correct HttpOnly cookie renewal, persistent callback feedback and fresh status check on sync.
 - **Validation:** Clean install/build, syntax and 24 security tests pass with mocked brokerage calls. Existing owner/auth/order guards retained. Real callback/read-only sync and production status are not yet verified. See artifacts/schwab-connection-fix-2026-11-06.md.
 - **Access boundary:** Automatic approval review rejected broad Netlify environment-value retrieval because it could expose brokerage and unrelated secrets. Continued with code/status diagnostics; did not retrieve secrets or bypass the rejection.
+
+### Entry 34 — 2026-11-06T14:59:00-05:00
+- **Author:** Codex
+- **Outcome Type:** PR #16 created / merged / production source verified
+- **User authorization:** Explicitly authorizes opening the PR and creating its title/description. Native connector had only rendered a form and no PR existed. Created the authorized PR using GitHub CLI with the prepared title and template-based description: https://github.com/FinTechNav/fintechnav-site/pull/16.
+- **Verified:** PR #16 was merged by the owner, main ba346bf. Security, both CodeQL language jobs and Netlify preview/header/redirect checks passed; Pages changed check neutral/skipped. Preview live HTTP checks show the repair assets and anonymous 401/private-no-store on session/auth/trade APIs.
+- **Production:** Netlify lists ready production deploy 6aee3152665214227b8438c7. The deployment-detail reader hit API 429, so exact commit/publish metadata was not independently returned. Direct production HTTP checks confirm the new saved-connection label and fresh-status function are live, and private APIs still reject anonymous access with 401/private-no-store. Local main fast-forwarded to ba346bf.
+- **Remaining:** Real owner Schwab callback and read-only sync must still be observed. The old upstream rejection reason is not known; new errors are persistent and safely classified. Do not equate code deployment with a verified live brokerage connection. No real brokerage order, mail or secret retrieval performed.
+
+
+### Entry 35 — 2026-11-06T15:22:00-05:00
+- **Author:** Codex
+- **User requests:** Anchor the stock sidebar; adapt the provided GitHub repo standard for FinTechNav-only Netlify apps. New callback reports Schwab app-credential rejection.
+- **Changes:** codex/netlify-repo-standard adds viewport-contained desktop workspace scrolling, CI lint/secrets/dependency/SBOM/workflow checks, safe Dependabot scheduling/auto-merge guard, version/docs/template/hook cleanup and an explicit published-page allowlist. Retires legacy HPW payment proxies and published demos while retaining their sources and biography references.
+- **Verification:** Build, validate, script syntax, actionlint, 26 security tests, online zero-high/critical audit and SBOM passed. Online workflow audit has no known vulnerable action; its target-trigger/bot warnings were reviewed for the isolated no-checkout automation. Desktop/mobile/short-screen layout and minimal callback relay verified. No brokerage order, payment or mail sent.
+- **Schwab:** Narrow production setting checks found both keys present with no obvious formatting mistakes; no raw values logged/saved. Owner signed into the Schwab developer portal; this account has an approved Trader API subscription but zero apps or pending apps. Asked owner to locate the registered app. Live connection remains unresolved; repeating brokerage sign-in is not a repair.
+- **Pending:** PR checks, merge, settings and ruleset activation, production verification. Full record: artifacts/netlify-repo-standard-2026-11-06.md. User-supplied JSON and local fixture/SBOM remain unstaged.

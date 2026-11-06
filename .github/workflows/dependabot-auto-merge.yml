@@ -1,0 +1,46 @@
+name: Dependabot auto-merge
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened, ready_for_review]
+permissions:
+  contents: read
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+jobs:
+  auto-merge:
+    if: github.actor_id == '49699333' && github.event.pull_request.user.id == 49699333 && github.event.pull_request.head.repo.full_name == github.repository && !github.event.pull_request.draft
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      # No checkout and no PR-controlled code runs with this write token.
+      - name: Fetch verified Dependabot metadata
+        id: metadata
+        uses: dependabot/fetch-metadata@25dd0e34f4fe68f24cc83900b1fe3fe149efef98 # v3.1.0
+        with:
+          github-token: ${{ github.token }}
+      - name: Enable auto-merge for patch and minor updates behind required checks
+        if: steps.metadata.outputs.update-type == 'version-update:semver-patch' || steps.metadata.outputs.update-type == 'version-update:semver-minor'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          # Fail closed until the main ruleset is active; otherwise --auto can
+          # merge immediately without waiting for the intended checks.
+          gh api "repos/$GH_REPO/rules/branches/main" > "$RUNNER_TEMP/main-rules.json"
+          python3 - <<'PYTHON'
+          import json, os
+          with open(os.path.join(os.environ['RUNNER_TEMP'], 'main-rules.json')) as handle:
+              rules = json.load(handle)
+          checks = {c['context'] for r in rules if r['type'] == 'required_status_checks'
+                    for c in r['parameters']['required_status_checks'] if c.get('integration_id') == 15368}
+          expected = {'security', 'lint', 'secret-scan', 'npm-audit', 'zizmor', 'sbom'}
+          if not expected.issubset(checks) or not any(r['type'] == 'pull_request' for r in rules):
+              raise SystemExit('Refusing auto-merge without the expected main protection')
+          PYTHON
+          gh pr merge --auto --squash --match-head-commit "$HEAD_SHA" "$PR_URL"

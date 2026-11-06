@@ -1,61 +1,29 @@
-# Contributing to fintechnav.com
+# Contributing to FinTechNav
 
-Thank you for considering contributing to my personal website project! While this is primarily a personal portfolio site, I welcome suggestions, improvements, and bug fixes.
+This public repository hosts FinTechNav Netlify sites and apps: the biography site, the private stock dashboard, and its registered Schwab callback relay. Heavy Pour Wine application development belongs in its own repositories. Biography references and career history may still mention HPW; old HPW demo sources here are not deployed.
 
-## How to Contribute
+## Development
 
-### Reporting Issues
+Use the latest Node 22 patch (`nvm use`, minimum 22.13) and install with `npm ci --ignore-scripts`. Run `npm run build`, `npm run validate`, and `npm run test:security`. `npm run dev:stock` serves the built public files locally; stock authentication requires the deployed Netlify runtime. Never add a production authentication bypass for local previews.
 
-If you find a bug or have a suggestion for improvement:
+Legacy biography scripts in `js/` execute directly in the browser, including JSX: preserve their loading order and global data dependencies. Server and build `.mjs` files use ES modules. Stock Identity code is bundled by esbuild. ESLint and Prettier agree on quote escaping; `npm run validate` must pass.
 
-1. Check if the issue already exists in the [Issues](https://github.com/FinTechNav/fintechnav-site/issues) section
-2. If not, create a new issue with a clear title and description
-3. Include steps to reproduce the issue if applicable
-4. Add screenshots if they help explain the problem
+## Changes and deployment
 
-### Pull Requests
+Create a `codex/` or descriptive feature branch and a pull request into `main`. Use a concise title describing the resulting behavior. Required checks must pass on an up-to-date branch and review conversations must be resolved; solo-owner PRs need no extra reviewer. Squash merging main deploys production through Netlify. Merged branches are removed automatically.
 
-If you'd like to contribute code:
+The build publishes an explicit list of site pages and asset directories into `dist/`. Add a new site deliberately in `scripts/build-site.mjs`; never publish the repository root or research/log directories. The callback relay has a separate, minimal build selected by Netlify `SITE_ID`. Retired HPW demos, root checkout assets, and payment proxies are not part of this deployment.
 
-1. Fork the repository
-2. Create a new branch (`git checkout -b feature/your-feature-name`)
-3. Make your changes
-4. Test your changes thoroughly
-5. Commit your changes (`git commit -am 'Add some feature'`)
-6. Push to the branch (`git push origin feature/your-feature-name`)
-7. Create a new Pull Request
+## Security and dependencies
 
-### Code Style Guidelines
+Keep all secrets in Netlify or the designated secret manager. `.env*` files are ignored except `.env.example`. Do not put credentials, auth codes, cookies, account data, or token responses in commits, logs, screenshots, or PRs. Report vulnerabilities through the private channel in `SECURITY.md`.
 
-Please follow these guidelines when contributing code:
+PR checks include build/security tests, lint/format plus maintained-script syntax, an introduced-commit Gitleaks scan, online workflow auditing, dependency auditing, CodeQL, and a CycloneDX SBOM. Actions are pinned to commit SHAs; scanner downloads have pinned versions and verified SHA-256 hashes. Jobs use read-only tokens except the isolated CodeQL upload and no-checkout Dependabot automation. Fork PRs receive no added secrets.
 
-- Maintain the current file structure and organization
-- Preserve the modular timeline architecture
-- Follow the existing naming conventions
-- Do not use ES6 module import/export statements (browser compatibility)
-- Maintain the loading order in index.html
-- Keep code simple and well-commented
+The PR dependency gate compares head and base lockfiles and blocks new high/critical advisories or severity escalations. Main and the Monday scheduled audit check all high/critical advisories. Scheduled failures appear in GitHub Actions and normal GitHub notifications; no paid runner or external alert service is required. Gitleaks blocks newly introduced secrets; GitHub's existing secret scanning checks repository history. Historical alerts remain open until the credential owner verifies revocation or restrictions.
 
-### Important Architecture Notes
+Dependabot groups npm minor/patch updates weekly on Monday at 08:00 America/New_York after a seven-day release cooldown. Security updates are separate and do not wait for that version cooldown. GitHub Actions updates are quarterly. npm majors require manual review. Verified Dependabot minor/patch PRs may enable squash auto-merge only after the expected branch protections are active; the automation never checks out PR code.
 
-The timeline component uses a specific architecture:
+Keep the scoped patched minimatch override until ESLint's dependency ranges include a fixed release. Do not remove it solely because an upstream version was published; confirm the resolved tree and audit result.
 
-- Individual company data is stored in separate files for easier maintenance
-- Files are loaded in a specific order: company data files first, then metadata, then aggregator, then the Timeline component
-- Do not use ES6 module imports/exports as the site is designed for direct browser execution without bundling
-
-## Development Setup
-
-1. Clone the repository
-2. Open index.html in your browser for basic viewing
-3. For email functionality:
-   - Copy `.env.example` to `.env`
-   - Add your SendGrid API key
-   - Install dependencies with `npm install`
-   - Use Netlify CLI for local function testing: `netlify dev`
-
-## Questions?
-
-If you have any questions about contributing, feel free to reach out to me at [brad@fintechnav.com](mailto:brad@fintechnav.com).
-
-Thank you for your interest in improving this project!
+Session notes are maintained in `SESSION_LOG.md` and `artifacts/SESSION_LOG.md`; persistent reports belong in `artifacts/`. Keep notes factual and free of credentials or account balances.
