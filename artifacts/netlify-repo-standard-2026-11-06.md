@@ -30,9 +30,9 @@ Repository settings now allow only squash merges, use PR title/blank squash mess
 
 Target payloads are stored alongside this report. A documentation-only follow-up PR exercises the new required checks and squash/auto-merge path. There is no active Dependabot update PR, so end-to-end bot-triggered merging has not been observed. Existing wiki/projects and global action policy were preserved; no usage evidence justified disabling them. The historical Google API key security alert remains unresolved until its owner verifies revocation/restrictions.
 
-## Schwab diagnostic update
+## Brokerage diagnostic boundary
 
-Owner's fresh callback surfaced invalid_client at the token endpoint, explaining why no new tokens are saved. Narrow UI checks verified production SCHWAB_CLIENT_ID/SECRET exist in all scopes with no whitespace, wrapping quotes or obvious placeholders; raw values were not printed or saved. The client ID matches the app's previously observed authorization ID. The currently signed-in developer account shows no apps or pending apps, despite an approved Trader API subscription. Asked the owner to locate the actual app/account; configuration repair and real read-only sync remain pending. The earlier rejected broad environment retrieval was not retried.
+The server safely distinguishes app-credential rejection from an expired user session. A provider-side app configuration repair and a successful authenticated read-only sync remain unverified. Private portal observations and support research are kept only in ignored local records. No credential values or support correspondence belong in this public engineering report.
 
 ## Primary references
 
@@ -41,7 +41,3 @@ Owner's fresh callback surfaced invalid_client at the token endpoint, explaining
 - [zizmor audits](https://docs.zizmor.sh/audits/#known-vulnerable-actions)
 - [Gitleaks 8.30.1 release](https://github.com/gitleaks/gitleaks/releases/tag/v8.30.1)
 - [zizmor 1.32.0 release](https://github.com/zizmorcore/zizmor/releases/tag/v1.32.0)
-
-## Schwab research follow-up
-
-The owner confirms this is their only developer account and reports the app still linked in the brokerage account. Historical first-hand reports describe missing developer apps and broken management; these do not establish a current outage or the exact cause. Schwab's official Trader API product page lists TraderAPI@Schwab.com for support. A local research report/support draft was prepared separately, not sent. No app was replaced, edited or deactivated.
