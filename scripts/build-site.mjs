@@ -7,8 +7,8 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const output = path.join(root, 'dist');
 // Publish an allowlist, never the repository: logs, research, credentials,
 // backend code, dependencies and workspace configuration are not web assets.
-const directories = ['js', 'styles', 'sections', 'icons', 'logos', 'content'];
-// New sites must be explicitly added here. Legacy HPW demos remain source-only.
+const directories = ['js', 'styles', 'sections', 'logos', 'content'];
+// New sites must be explicitly added here. Retired demos are archived locally.
 const pages = ['index.html', 'privacy-policy.html'];
 const rootAssets = /\.(?:png|jpe?g|webp|svg|ico|woff2?|ttf)$/i;
 await rm(output, { recursive: true, force: true });

@@ -9,6 +9,7 @@ This workspace is configured for quantitative research, algorithmic trading, tec
 - Publish only the explicit build allowlist to `dist/`. Keep logs, research, backend sources and credentials outside the deployed files. Preserve the separate registered Schwab callback relay build.
 - Use a branch and PR for changes. Run build, validate and security checks before requesting a merge; main protections also bind the owner. Do not add paid infrastructure for this repo without authorization.
 - Keep both session logs current, with no credential values, authorization codes, cookies or brokerage account data. Persistent artifacts belong in the directory below.
+- Keep personal research, raw screenshots, support correspondence, inputs, temporary previews and generated files under ignored `artifacts/local/`. Commit only reviewed engineering records; never stage the archive or Git bundles.
 
 ## Installed Agent Skills
 Over 115+ specialized trading and quantitative skills are installed in `.agents/skills/`, categorized across:
