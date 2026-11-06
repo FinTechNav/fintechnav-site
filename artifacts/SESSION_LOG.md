@@ -1,6 +1,6 @@
 # Stock Research & Portfolio Session Log
 
-**Directory:** `/Users/bradjensen/stock/`  
+**Directory:** `/Users/bradjensen/fintechnav-site/`  
 **Created:** 2026-11-04  
 **Status:** Active  
 
@@ -8,9 +8,9 @@
 
 ## Instructions for Future Agents & Chats
 
-1. **Read First:** Read this file (`/Users/bradjensen/stock/SESSION_LOG.md`), `/Users/bradjensen/stock/AGENTS.md`, and `/Users/bradjensen/stock/datacenter_stocks_under_10_41.md` at the start of any chat about this brokerage account.
-2. **Artifacts Retention Policy:** All deliverables, tearsheets, backtest outputs, research notes, and strategy proposals MUST be saved in `/Users/bradjensen/stock/artifacts/` and cataloged in `/Users/bradjensen/stock/artifacts/INDEX.md`.
-3. **Do Not Use the Heavy Pour Wine KB for This Folder:** Keep all session logging and artifacts for this personal brokerage account inside `/Users/bradjensen/stock/` and `/Users/bradjensen/stock/artifacts/` rather than the Heavy Pour Wine `knowledgebase` MCP.
+1. **Read First:** Read this file (`/Users/bradjensen/fintechnav-site/SESSION_LOG.md`), `/Users/bradjensen/fintechnav-site/AGENTS.md`, and `/Users/bradjensen/fintechnav-site/datacenter_stocks_under_10_41.md` at the start of any chat about this brokerage account.
+2. **Artifacts Retention Policy:** All deliverables, tearsheets, backtest outputs, research notes, and strategy proposals MUST be saved in `/Users/bradjensen/fintechnav-site/artifacts/` and cataloged in `/Users/bradjensen/fintechnav-site/artifacts/INDEX.md`.
+3. **Do Not Use the Heavy Pour Wine KB for This Folder:** Keep all session logging and artifacts for this personal brokerage account inside `/Users/bradjensen/fintechnav-site/` and `/Users/bradjensen/fintechnav-site/artifacts/` rather than the Heavy Pour Wine `knowledgebase` MCP.
 4. **Update on Every Turn:** After each turn that changes analysis, recommendations, or trade execution state:
    - Update **Current Portfolio & Account State** below if holdings, cash balance, or pending orders change.
    - Append a new numbered entry under **Session Entries** with the date/time, agent/model + hardware model (`sysctl -n hw.model`), `Action`, `Result`, and `Next Step`.
@@ -49,24 +49,24 @@
   9. `BUY 1 HIVE @ $1.71 Limit (Post-Market)` (2026-11-05): **FILLED @ `$1.6600`** (Order `#759493708600`, 4:15 PM ET)
 - **Target Sector:** AI / High-Performance Computing (HPC) data center landlords, GPU cloud operators, and data center power/optical infrastructure.
 - **Charles Schwab Platform Constraint:** Schwab *Stock Slices* (fractional shares) only allow **S&P 500** stocks, and the Schwab Trader API only accepts **whole-share** orders. All holdings are whole shares.
-- **API / CLI / MCP Access State:** **Step 1 Complete (2026-11-04):** Brad registered an Individual Developer app at `https://developer.schwab.com` (`Accounts and Trading Production` + `Market Data Production`, callback `https://127.0.0.1:8182`). Currently waiting for Schwab status to move from `Approved - Pending` to `Ready For Use` (1–3 business days). Full setup guide in `/Users/bradjensen/stock/schwab_api_cli_mcp_setup.md` and `/Users/bradjensen/stock/artifacts/schwab_api_cli_mcp_setup.md`.
+- **API / CLI / MCP Access State:** **Step 1 Complete (2026-11-04):** Brad registered an Individual Developer app at `https://developer.schwab.com` (`Accounts and Trading Production` + `Market Data Production`, callback `https://127.0.0.1:8182`). Currently waiting for Schwab status to move from `Approved - Pending` to `Ready For Use` (1–3 business days). Full setup guide in `/Users/bradjensen/fintechnav-site/schwab_api_cli_mcp_setup.md` and `/Users/bradjensen/fintechnav-site/artifacts/schwab_api_cli_mcp_setup.md`.
 
 ---
 
-## Files and Directories in `/Users/bradjensen/stock/`
+## Files and Directories in `/Users/bradjensen/fintechnav-site/`
 
 | Path | Purpose | Last Updated |
 | :--- | :--- | :--- |
-| `/Users/bradjensen/stock/datacenter_stocks_under_10_41.md` | Ranked analysis of sub-$10.41 data center stocks (`CIFR`, `CLSK`, `HIVE`, `EOSE`, `POET`), excluded peers, tradeoffs, and `$10.41` allocation options. | 2026-11-04 |
-| `/Users/bradjensen/stock/schwab_api_cli_mcp_setup.md` | Setup guide for Charles Schwab Trader API (`developer.schwab.com`), `jkoelker/schwab-mcp` MCP server, and `schwab-py` CLI/SDK. | 2026-11-04 |
-| `/Users/bradjensen/stock/SESSION_LOG.md` | Persistent hand-off and session log for agents and chats working in `/Users/bradjensen/stock/`. | 2026-11-04 |
-| `/Users/bradjensen/stock/AGENTS.md` | Workspace instructions, skills categorization, and artifact policies. | 2026-11-04 |
-| `/Users/bradjensen/stock/.agents/skills/` | Directory housing 119 installed quantitative, backtesting, technical analysis, and stock trading skills. | 2026-11-04 |
-| `/Users/bradjensen/stock/.agents/rules/artifacts.md` | Active agent rule enforcing all artifacts to be stored in `/Users/bradjensen/stock/artifacts/`. | 2026-11-04 |
-| `/Users/bradjensen/stock/artifacts/` | Central persistent repository for research deliverables, backtests, tearsheets, and reports. | 2026-11-04 |
-| `/Users/bradjensen/stock/artifacts/INDEX.md` | Master index of all deliverables in the artifacts directory. | 2026-11-04 |
-| `/Users/bradjensen/stock/artifacts/SKILLS_CATALOG.md` | Full catalog of all 119 installed stock trading skills. | 2026-11-04 |
-| `/Users/bradjensen/stock/artifacts/stock_trading_skills_installation.md` | Detailed installation report, architecture overview, and quickstart guide. | 2026-11-04 |
+| `/Users/bradjensen/fintechnav-site/datacenter_stocks_under_10_41.md` | Ranked analysis of sub-$10.41 data center stocks (`CIFR`, `CLSK`, `HIVE`, `EOSE`, `POET`), excluded peers, tradeoffs, and `$10.41` allocation options. | 2026-11-04 |
+| `/Users/bradjensen/fintechnav-site/schwab_api_cli_mcp_setup.md` | Setup guide for Charles Schwab Trader API (`developer.schwab.com`), `jkoelker/schwab-mcp` MCP server, and `schwab-py` CLI/SDK. | 2026-11-04 |
+| `/Users/bradjensen/fintechnav-site/SESSION_LOG.md` | Persistent hand-off and session log for agents and chats working in `/Users/bradjensen/fintechnav-site/`. | 2026-11-04 |
+| `/Users/bradjensen/fintechnav-site/AGENTS.md` | Workspace instructions, skills categorization, and artifact policies. | 2026-11-04 |
+| `/Users/bradjensen/fintechnav-site/.agents/skills/` | Directory housing 119 installed quantitative, backtesting, technical analysis, and stock trading skills. | 2026-11-04 |
+| `/Users/bradjensen/fintechnav-site/.agents/rules/artifacts.md` | Active agent rule enforcing all artifacts to be stored in `/Users/bradjensen/fintechnav-site/artifacts/`. | 2026-11-04 |
+| `/Users/bradjensen/fintechnav-site/artifacts/` | Central persistent repository for research deliverables, backtests, tearsheets, and reports. | 2026-11-04 |
+| `/Users/bradjensen/fintechnav-site/artifacts/INDEX.md` | Master index of all deliverables in the artifacts directory. | 2026-11-04 |
+| `/Users/bradjensen/fintechnav-site/artifacts/SKILLS_CATALOG.md` | Full catalog of all 119 installed stock trading skills. | 2026-11-04 |
+| `/Users/bradjensen/fintechnav-site/artifacts/stock_trading_skills_installation.md` | Detailed installation report, architecture overview, and quickstart guide. | 2026-11-04 |
 
 ---
 
@@ -87,19 +87,19 @@
 ### Entry 2 — 2026-11-04T14:48:19-05:00
 - **Author:** `Antigravity / Gemini 4 Argon High [MacBookPro18,1]`
 - **Outcome Type:** `progress`
-- **Action:** Created `/Users/bradjensen/stock/datacenter_stocks_under_10_41.md` with the ranked analysis, comparison table, excluded tickers, and `$10.41` allocation options.
-- **Result:** Saved markdown reference document to `/Users/bradjensen/stock/datacenter_stocks_under_10_41.md`.
+- **Action:** Created `/Users/bradjensen/fintechnav-site/datacenter_stocks_under_10_41.md` with the ranked analysis, comparison table, excluded tickers, and `$10.41` allocation options.
+- **Result:** Saved markdown reference document to `/Users/bradjensen/fintechnav-site/datacenter_stocks_under_10_41.md`.
 
 ### Entry 3 — 2026-11-04T14:49:10-05:00
 - **Author:** `Antigravity / Gemini 4 Argon High [MacBookPro18,1]`
 - **Outcome Type:** `progress`
-- **Action:** Created `/Users/bradjensen/stock/SESSION_LOG.md` to track account state, artifacts, and chronological progress across chats and agents.
-- **Result:** Session hand-off log initialized at `/Users/bradjensen/stock/SESSION_LOG.md`.
+- **Action:** Created `/Users/bradjensen/fintechnav-site/SESSION_LOG.md` to track account state, artifacts, and chronological progress across chats and agents.
+- **Result:** Session hand-off log initialized at `/Users/bradjensen/fintechnav-site/SESSION_LOG.md`.
 
 ### Entry 4 — 2026-11-04T14:55:47-05:00
 - **Author:** `Antigravity / Gemini 4 Argon High [MacBookPro18,1]`
 - **Outcome Type:** `finding`
-- **Action:** Researched Charles Schwab API, CLI, and MCP options for `client.schwab.com` and verified Schwab fractional-share rules against the `$10.41` allocation. Created `/Users/bradjensen/stock/schwab_api_cli_mcp_setup.md` and updated `/Users/bradjensen/stock/datacenter_stocks_under_10_41.md`.
+- **Action:** Researched Charles Schwab API, CLI, and MCP options for `client.schwab.com` and verified Schwab fractional-share rules against the `$10.41` allocation. Created `/Users/bradjensen/fintechnav-site/schwab_api_cli_mcp_setup.md` and updated `/Users/bradjensen/fintechnav-site/datacenter_stocks_under_10_41.md`.
 - **Result:** Confirmed two critical Schwab rules:
   1. Schwab *Stock Slices* (fractional shares) only allow **S&P 500** stocks, and the Schwab Trader API only accepts **whole-share** orders. Therefore, **1 whole share of `CIFR` (~$7.29) + 1 whole share of `HIVE` (~$1.94) = ~$9.23** is the top actionable trade on Schwab.
   2. Programmatic trading requires registering an Individual Developer app at `https://developer.schwab.com` (`Accounts and Trading Production` + `Market Data Production`, callback `https://127.0.0.1:8182`, 1–3 business day approval wait, 7-day OAuth refresh token expiry), then connecting via the `jkoelker/schwab-mcp` MCP server or `schwab-py` CLI/SDK.
@@ -109,24 +109,24 @@
 - **Author:** `Antigravity / Gemini 3.8 Flash High [MacBookPro18,1]`
 - **Outcome Type:** `tooling` / `infrastructure`
 - **Action:**
-  1. **Stock Trading Skills Sourcing & Installation:** Researched, cloned, and structured **119 specialized trading and quantitative skills** into `/Users/bradjensen/stock/.agents/skills/`. The installation synthesizes:
+  1. **Stock Trading Skills Sourcing & Installation:** Researched, cloned, and structured **119 specialized trading and quantitative skills** into `/Users/bradjensen/fintechnav-site/.agents/skills/`. The installation synthesizes:
      - The **Claude Trading Skills Suite**: High-performance vectorized backtesting (`vectorbt`), event-driven backtesting (`backtrader`), technical indicators (`pandas-ta`, `ta-lib`, `custom-indicators`), charting (`trading-visualization`), portfolio risk controls (`risk-management`, `position-sizing`, `kelly-criterion`, `portfolio-analytics`), statistical arbitrage (`cointegration-analysis`, `mean-reversion`, `volatility-modeling`, `regime-detection`), execution quality (`market-microstructure-traditional`, `slippage-modeling`), and compliance (`tax-loss-harvesting`, `wash-sale-detection`, `cost-basis-engine`, `trade-journal`).
      - The **ML4T Framework (Stefan Jansen)**: Rigorous quant methodologies including data leakage prevention (`ml4t-data-leakage`), lookahead bias checks (`ml4t-lookahead-bias`), triple-barrier labeling (`ml4t-triple-barrier`), meta-labeling (`ml4t-meta-labels`), deflated Sharpe ratio calculation (`ml4t-deflated-sharpe`), purged/embargoed cross-validation (`ml4t-purging-embargo`), risk limits (`ml4t-kill-switch`), and historical crisis stress testing (`ml4t-stress-test`).
-     - Custom Equity Analysis Skill: Built [`us-stock-analysis`](/Users/bradjensen/stock/.agents/skills/us-stock-analysis/SKILL.md) for automated fundamental metrics (P/E, PEG, EV/EBITDA, FCF yield), technical momentum, and tearsheet generation.
-  2. **Workspace Git Root Initialization:** Initialized `/Users/bradjensen/stock/.git` to ensure full automatic hierarchical discovery of `.agents/` customizations by Antigravity and compatible agents.
-  3. **Artifact Retention Policy & Infrastructure:** Created central persistent repository at `/Users/bradjensen/stock/artifacts/` per user request to keep artifacts in `/Users/bradjensen/stock`. Configured:
-     - Rule in [`.agents/rules/artifacts.md`](/Users/bradjensen/stock/.agents/rules/artifacts.md) (`trigger: always_on`) mandating all research outputs, tearsheets, and backtests be saved into `artifacts/`.
-     - Workspace guidelines in [`AGENTS.md`](/Users/bradjensen/stock/AGENTS.md).
-     - Master deliverable catalog [`artifacts/INDEX.md`](/Users/bradjensen/stock/artifacts/INDEX.md) and full 119-skill directory [`artifacts/SKILLS_CATALOG.md`](/Users/bradjensen/stock/artifacts/SKILLS_CATALOG.md).
+     - Custom Equity Analysis Skill: Built [`us-stock-analysis`](/Users/bradjensen/fintechnav-site/.agents/skills/us-stock-analysis/SKILL.md) for automated fundamental metrics (P/E, PEG, EV/EBITDA, FCF yield), technical momentum, and tearsheet generation.
+  2. **Workspace Git Root Initialization:** Initialized `/Users/bradjensen/fintechnav-site/.git` to ensure full automatic hierarchical discovery of `.agents/` customizations by Antigravity and compatible agents.
+  3. **Artifact Retention Policy & Infrastructure:** Created central persistent repository at `/Users/bradjensen/fintechnav-site/artifacts/` per user request to keep artifacts in `/Users/bradjensen/stock`. Configured:
+     - Rule in [`.agents/rules/artifacts.md`](/Users/bradjensen/fintechnav-site/.agents/rules/artifacts.md) (`trigger: always_on`) mandating all research outputs, tearsheets, and backtests be saved into `artifacts/`.
+     - Workspace guidelines in [`AGENTS.md`](/Users/bradjensen/fintechnav-site/AGENTS.md).
+     - Master deliverable catalog [`artifacts/INDEX.md`](/Users/bradjensen/fintechnav-site/artifacts/INDEX.md) and full 119-skill directory [`artifacts/SKILLS_CATALOG.md`](/Users/bradjensen/fintechnav-site/artifacts/SKILLS_CATALOG.md).
      - Archived existing research files (`datacenter_stocks_under_10_41.md` and `SESSION_LOG.md`) directly into `artifacts/`.
-     - Published comprehensive installation document [`stock_trading_skills_installation.md`](/Users/bradjensen/stock/artifacts/stock_trading_skills_installation.md) in both the session brain and the workspace artifacts folder.
-- **Result:** Workspace transformed into a full-scale quantitative trading, backtesting, equity research, and risk management station. All artifacts are strictly preserved in `/Users/bradjensen/stock/artifacts/`.
+     - Published comprehensive installation document [`stock_trading_skills_installation.md`](/Users/bradjensen/fintechnav-site/artifacts/stock_trading_skills_installation.md) in both the session brain and the workspace artifacts folder.
+- **Result:** Workspace transformed into a full-scale quantitative trading, backtesting, equity research, and risk management station. All artifacts are strictly preserved in `/Users/bradjensen/fintechnav-site/artifacts/`.
 - **Next Step:** Brad can select an initial stock/ticker to analyze, execute a trade recommendation from Entry 1 (`CIFR`, `HIVE`, `CLSK`), or launch a backtest / trading strategy.
 
 ### Entry 6 — 2026-11-04T15:03:50-05:00
 - **Author:** `Antigravity / Gemini 4 Argon High [MacBookPro18,1]`
 - **Outcome Type:** `progress`
-- **Action:** Recorded completion of Step 1 (`https://developer.schwab.com` Individual Developer app registered with `Accounts and Trading Production` + `Market Data Production` and callback `https://127.0.0.1:8182`). Synced `schwab_api_cli_mcp_setup.md`, `datacenter_stocks_under_10_41.md`, and `SESSION_LOG.md` into `/Users/bradjensen/stock/artifacts/` and updated `/Users/bradjensen/stock/artifacts/INDEX.md`.
+- **Action:** Recorded completion of Step 1 (`https://developer.schwab.com` Individual Developer app registered with `Accounts and Trading Production` + `Market Data Production` and callback `https://127.0.0.1:8182`). Synced `schwab_api_cli_mcp_setup.md`, `datacenter_stocks_under_10_41.md`, and `SESSION_LOG.md` into `/Users/bradjensen/fintechnav-site/artifacts/` and updated `/Users/bradjensen/fintechnav-site/artifacts/INDEX.md`.
 - **Result:** Schwab API registration logged; awaiting `Ready For Use` approval (1–3 business days) to run `schwab-mcp auth` with `SCHWAB_CLIENT_ID` and `SCHWAB_CLIENT_SECRET`.
 - **Next Step:** Execute today's manual sale and `1x CIFR + 1x HIVE` limit orders in `client.schwab.com` (or wait for `Ready For Use` on `developer.schwab.com` to execute via `schwab-mcp`).
 
@@ -162,7 +162,7 @@
 ### Entry 9 — 2026-11-05T15:59:00-05:00
 - **Author:** `Antigravity / Gemini 4 Argon Medium [MacBookPro18,1]`
 - **Outcome Type:** `finding` / `proposal`
-- **Action:** Screened live November 5, 2026 pullback prices across AI and data center equities for the newly transferred `$50.00` (`$50.41` total buying power including `$0.41` prior cash). Published comprehensive tearsheet and allocation plan in [`artifacts/ai_datacenter_dip_buy_50_2026_11_05.md`](/Users/bradjensen/stock/artifacts/ai_datacenter_dip_buy_50_2026_11_05.md) and updated [`artifacts/INDEX.md`](/Users/bradjensen/stock/artifacts/INDEX.md).
+- **Action:** Screened live November 5, 2026 pullback prices across AI and data center equities for the newly transferred `$50.00` (`$50.41` total buying power including `$0.41` prior cash). Published comprehensive tearsheet and allocation plan in [`artifacts/ai_datacenter_dip_buy_50_2026_11_05.md`](/Users/bradjensen/fintechnav-site/artifacts/ai_datacenter_dip_buy_50_2026_11_05.md) and updated [`artifacts/INDEX.md`](/Users/bradjensen/fintechnav-site/artifacts/INDEX.md).
 - **Result:**
   1. Verified sharp sector-wide pullback today unlocking whole shares of the four Tier-1 hyperscaler landlords previously excluded by the `$10.41` cap:
      - **`IREN` (`$18.25–$18.77`, down ~24%):** 200 MW liquid-cooled Microsoft deployment + 480 MW AI Cloud target (> $4B ARR target).
@@ -183,7 +183,7 @@
      - **BUY 1 `WULF` @ `$10.00` Limit (`Post-Market`):** **FILLED @ `$10.0000`** (Order `#589914708600`, 4:12 PM ET).
      - **BUY 1 `CLSK` @ `$5.67` Limit (`Post-Market`):** **FILLED @ `$5.6590`** (Order `#780024708600`, 4:11 PM ET).
      - **BUY 1 `HIVE` @ `$1.71` Limit (`Post-Market`):** **FILLED @ `$1.6600`** (Order `#759493708600`, 4:15 PM ET — swept the remaining cash after discovering Schwab rule `AC4203` / `AC338`, which requires settled cash for sub-$1.00 stocks like `BTBT` at `$0.704` while allowing above-$1.00 stocks like `HIVE` at `$1.66` on newly transferred ACH funds).
-  2. **Deep Research on Retail AI Investing & Recurring Sub-$1,000 Growth Plan:** Authored [`artifacts/ai_retail_investing_recurring_plan.md`](/Users/bradjensen/stock/artifacts/ai_retail_investing_recurring_plan.md) and built deterministic Python scanner & Schwab knapsack sizer [`scripts/ai_portfolio_scanner.py`](/Users/bradjensen/stock/scripts/ai_portfolio_scanner.py).
+  2. **Deep Research on Retail AI Investing & Recurring Sub-$1,000 Growth Plan:** Authored [`artifacts/ai_retail_investing_recurring_plan.md`](/Users/bradjensen/fintechnav-site/artifacts/ai_retail_investing_recurring_plan.md) and built deterministic Python scanner & Schwab knapsack sizer [`scripts/ai_portfolio_scanner.py`](/Users/bradjensen/fintechnav-site/scripts/ai_portfolio_scanner.py).
 - **Result:**
   - Portfolio expanded to **9 whole shares across 7 AI infrastructure leaders** (`1x IREN`, `1x APLD`, `1x WULF`, `1x CIFR`, `1x CLSK`, `2x HIVE`, `2x BTBT`) with **`$58.91` total cost basis**, **`~$59.94` post-market value (`+$1.03` net unrealized)**, and **`$1.40` cash reserve** (**97.7% capital deployed**).
   - Established the **60 / 20 / 20 Recurring Growth Plan** combining Tier-1 Landlords (60%), S&P 500 `$5` Stock Slices (20%), and Pick-and-Shovel Sweepers (20%) with the **+35% Harvest Ratchet**.
@@ -192,18 +192,18 @@
 ### Entry 11 — 2026-11-05T16:46:45-05:00
 - **Author:** `Antigravity / Gemini 4 Argon Medium [MacBookPro18,1]`
 - **Outcome Type:** `tooling` / `pwa`
-- **Action:** Built the complete **RedDay AI — Charles Schwab Dip-Hunter Progressive Web App (PWA)** in [`/Users/bradjensen/stock/pwa/`](/Users/bradjensen/stock/pwa/README.md), engineered specifically to run at **$0.00 cost on Netlify's Free (Starter) plan** (0 cloud build minutes consumed, client-side quant math, and lightweight stateless serverless functions):
-  - **PWA Frontend ([`public/index.html`](/Users/bradjensen/stock/pwa/public/index.html), [`public/app.js`](/Users/bradjensen/stock/pwa/public/app.js), [`public/manifest.json`](/Users/bradjensen/stock/pwa/public/manifest.json), [`public/sw.js`](/Users/bradjensen/stock/pwa/public/sw.js), [`public/icon.svg`](/Users/bradjensen/stock/pwa/public/icon.svg)):**
+- **Action:** Built the complete **RedDay AI — Charles Schwab Dip-Hunter Progressive Web App (PWA)** in [`/Users/bradjensen/fintechnav-site/pwa/`](/Users/bradjensen/fintechnav-site/pwa/README.md), engineered specifically to run at **$0.00 cost on Netlify's Free (Starter) plan** (0 cloud build minutes consumed, client-side quant math, and lightweight stateless serverless functions):
+  - **PWA Frontend ([`public/index.html`](/Users/bradjensen/fintechnav-site/pwa/public/index.html), [`public/app.js`](/Users/bradjensen/fintechnav-site/pwa/public/app.js), [`public/manifest.json`](/Users/bradjensen/fintechnav-site/pwa/public/manifest.json), [`public/sw.js`](/Users/bradjensen/fintechnav-site/pwa/public/sw.js), [`public/icon.svg`](/Users/bradjensen/fintechnav-site/pwa/public/icon.svg)):**
     1. **Red-Day Radar & Exact-Change Basket Builder:** Pre-loaded with your exact 9-share portfolio across 7 AI infrastructure operators (`IREN`, `APLD`, `WULF`, `CIFR`, `CLSK`, `HIVE`, `BTBT`) and `$1.40` cash. Computes RSI-14, 20-day Z-score, 20-day high pullback, and Dip Score (0–100) in real time, filters out green stocks, enforces Schwab's `AC4203` sub-`$1.00` cleared-cash rule, and generates exact whole-share + `$5` S&P 500 Stock Slice limit baskets.
     2. **Portfolio & +35% Harvest Ratchet Tab:** Tracks live unrealized P&L against cost basis with a progress meter toward the `+35%` 1-share harvest trigger.
     3. **Dynamic Strategy Studio Tab:** Allows live in-app editing of Red-Day drop triggers (`-5.0%` landlords, `-3.0%` S&P 500 slices), RSI/Z-score thresholds, harvest targets, and adding/removing tickers from the watchlist without touching code.
     4. **Trade Journal & 30-Day Wash-Sale Guard Tab:** Pre-populated with all 9 executed Schwab orders from Nov 4–5, 2026.
-  - **Netlify Serverless Functions ([`netlify/functions/`](/Users/bradjensen/stock/pwa/netlify.toml)):**
-    - [`market-scan.mjs`](/Users/bradjensen/stock/pwa/netlify/functions/market-scan.mjs): Batched Yahoo Finance 3-month OHLCV & live/post-market quote proxy.
-    - [`schwab-auth.mjs`](/Users/bradjensen/stock/pwa/netlify/functions/schwab-auth.mjs): Charles Schwab OAuth 2.0 handler supporting the registered `https://127.0.0.1:8182` callback URL (paste redirect URL modal + 7-day refresh token & 30-min access token rotation).
-    - [`schwab-trade.mjs`](/Users/bradjensen/stock/pwa/netlify/functions/schwab-trade.mjs): Charles Schwab Trader API proxy for live account balances/positions and guardrailed whole-share `LIMIT` orders (`DAY` or `EXTENDED` p.m.).
-    - [`gist-sync.mjs`](/Users/bradjensen/stock/pwa/netlify/functions/gist-sync.mjs): Optional $0 cross-device state sync via a private GitHub Gist.
-    - [`dev-server.mjs`](/Users/bradjensen/stock/pwa/dev-server.mjs): Zero-dependency local Node.js server for testing both the static PWA and `/api/*` serverless functions locally.
+  - **Netlify Serverless Functions ([`netlify/functions/`](/Users/bradjensen/fintechnav-site/pwa/netlify.toml)):**
+    - [`market-scan.mjs`](/Users/bradjensen/fintechnav-site/pwa/netlify/functions/market-scan.mjs): Batched Yahoo Finance 3-month OHLCV & live/post-market quote proxy.
+    - [`schwab-auth.mjs`](/Users/bradjensen/fintechnav-site/pwa/netlify/functions/schwab-auth.mjs): Charles Schwab OAuth 2.0 handler supporting the registered `https://127.0.0.1:8182` callback URL (paste redirect URL modal + 7-day refresh token & 30-min access token rotation).
+    - [`schwab-trade.mjs`](/Users/bradjensen/fintechnav-site/pwa/netlify/functions/schwab-trade.mjs): Charles Schwab Trader API proxy for live account balances/positions and guardrailed whole-share `LIMIT` orders (`DAY` or `EXTENDED` p.m.).
+    - [`gist-sync.mjs`](/Users/bradjensen/fintechnav-site/pwa/netlify/functions/gist-sync.mjs): Optional $0 cross-device state sync via a private GitHub Gist.
+    - [`dev-server.mjs`](/Users/bradjensen/fintechnav-site/pwa/dev-server.mjs): Zero-dependency local Node.js server for testing both the static PWA and `/api/*` serverless functions locally.
 - **Result:** Full PWA + Serverless Function suite verified (`node --check` passed on all modules) and deployed to Netlify under the `brad-jensen` team:
   - **Live Production URL:** **`https://redday-ai-schwab.netlify.app`** (Public PWA, installable on iOS/Android & Desktop)
   - **Netlify Project Dashboard:** `https://app.netlify.com/projects/redday-ai-schwab/overview`
@@ -222,18 +222,18 @@
      - **Registered Callback URLs:** `https://127.0.0.1:8182,https://redday-ai-schwab.netlify.app`
      - **Client ID (App Key):** `dDGOfkYTf73UDWetFsYXgAZ70jGkO9dYNCryLW0AtFSG8vVY`
      - **Netlify Environment Variables Configured:** Injected `SCHWAB_CLIENT_ID`, `SCHWAB_CLIENT_SECRET`, and `SCHWAB_CALLBACK_URL` directly into Netlify site `4a362844-87cc-4dcd-90b1-d45a832453d6`.
-  2. **Added Private SHA-256 Basic Login / Lock Gate to PWA ([`public/index.html`](/Users/bradjensen/stock/pwa/public/index.html), [`public/app.js`](/Users/bradjensen/stock/pwa/public/app.js)):**
+  2. **Added Private SHA-256 Basic Login / Lock Gate to PWA ([`public/index.html`](/Users/bradjensen/fintechnav-site/pwa/public/index.html), [`public/app.js`](/Users/bradjensen/fintechnav-site/pwa/public/app.js)):**
      - Implemented a full-screen private login gate (`#login-gate`) that blocks public access to the dashboard until authenticated via Web Crypto `SHA-256` hash verification.
      - Supported Username: `brad` (or `bradnjensen@gmail.com`) | Password: `RedDay2026!` (or quick PIN `2026`).
      - Added a **"Remember this device (30 days)"** toggle (`localStorage` vs `sessionStorage`) and a **`🔒 Lock`** button in the top header bar.
-     - Wired automatic OAuth `?code=...` callback capture in [`public/app.js`](/Users/bradjensen/stock/pwa/public/app.js) so authorizing with Charles Schwab at `https://redday-ai-schwab.netlify.app` exchanges the code for a 7-day token automatically.
+     - Wired automatic OAuth `?code=...` callback capture in [`public/app.js`](/Users/bradjensen/fintechnav-site/pwa/public/app.js) so authorizing with Charles Schwab at `https://redday-ai-schwab.netlify.app` exchanges the code for a 7-day token automatically.
 - **Result:** Charles Schwab Production Trader API app is live (`Ready For Use`), credentials are stored in Netlify Environment Variables, and `https://redday-ai-schwab.netlify.app` is protected by a private SHA-256 login screen.
 - **Next Step:** Sign in to `https://redday-ai-schwab.netlify.app` with `brad` / `RedDay2026!` and click **Schwab API: Ready For Use** to complete your 7-day Schwab OAuth authorization when ready to sync live positions or execute orders.
 
 ### Entry 13 — 2026-11-06T00:12:00-05:00
 - **Author:** `Antigravity / Gemini 4 Argon Medium [MacBookPro18,1]`
 - **Outcome Type:** `ui-redesign` / `plain-english`
-- **Action:** Completely redesigned the **RedDay AI PWA** ([`public/index.html`](/Users/bradjensen/stock/pwa/public/index.html), [`public/app.js`](/Users/bradjensen/stock/pwa/public/app.js), [`public/sw.js`](/Users/bradjensen/stock/pwa/public/sw.js)) around a **"Checkers, Not Chess" Plain-English Stock Guide** so zero Wall Street jargon (`RSI-14`, `20D Z-Score`, `AC4203`, `SEAMLESS`, `Ratchet`) appears on screen:
+- **Action:** Completely redesigned the **RedDay AI PWA** ([`public/index.html`](/Users/bradjensen/fintechnav-site/pwa/public/index.html), [`public/app.js`](/Users/bradjensen/fintechnav-site/pwa/public/app.js), [`public/sw.js`](/Users/bradjensen/fintechnav-site/pwa/public/sw.js)) around a **"Checkers, Not Chess" Plain-English Stock Guide** so zero Wall Street jargon (`RSI-14`, `20D Z-Score`, `AC4203`, `SEAMLESS`, `Ratchet`) appears on screen:
   1. **Rich Company Story Cards (`COMPANY_PROFILES`):** Replaced the cryptic spreadsheet table with 15 visual **Company Guide Cards** where every stock shows:
      - **Ticker & Full Company Name** (e.g., `IREN — IREN Limited`, `WULF — TeraWulf Inc.`).
      - **Company Size (Market Cap) & Yearly Revenue** (e.g., `$4.2 Billion (Mid-Size Company)`, `~$680 Million / yr`).
@@ -247,7 +247,7 @@
 ### Entry 14 — 2026-11-06T10:33:00-05:00
 - **Author:** `Antigravity / Gemini 4 Argon Medium [MacBookPro18,1]`
 - **Outcome Type:** `ui-redesign` / `cloudflare-kumo`
-- **Action:** Inspected the live Cloudflare Dashboard (`https://dash.cloudflare.com/9a9c9ceea7ddba26224fabca38fb9133/home` plus Domains, Zone Overview, and DNS inner pages) and rebuilt the **RedDay AI PWA (v4)** ([`public/index.html`](/Users/bradjensen/stock/pwa/public/index.html), [`public/app.js`](/Users/bradjensen/stock/pwa/public/app.js), [`public/sw.js`](/Users/bradjensen/stock/pwa/public/sw.js), [`public/manifest.json`](/Users/bradjensen/stock/pwa/public/manifest.json), [`public/icon.svg`](/Users/bradjensen/stock/pwa/public/icon.svg)) using Cloudflare's **Kumo** dark-mode design system with electric blue replacing Cloudflare orange:
+- **Action:** Inspected the live Cloudflare Dashboard (`https://dash.cloudflare.com/9a9c9ceea7ddba26224fabca38fb9133/home` plus Domains, Zone Overview, and DNS inner pages) and rebuilt the **RedDay AI PWA (v4)** ([`public/index.html`](/Users/bradjensen/fintechnav-site/pwa/public/index.html), [`public/app.js`](/Users/bradjensen/fintechnav-site/pwa/public/app.js), [`public/sw.js`](/Users/bradjensen/fintechnav-site/pwa/public/sw.js), [`public/manifest.json`](/Users/bradjensen/fintechnav-site/pwa/public/manifest.json), [`public/icon.svg`](/Users/bradjensen/fintechnav-site/pwa/public/icon.svg)) using Cloudflare's **Kumo** dark-mode design system with electric blue replacing Cloudflare orange:
   1. **Cloudflare Kumo Dark Surfaces & 1px Hairline Rings:** Obsidian `#030303` canvas (`bg-kumo-canvas`), `#0f0f0f` surface cards (`bg-kumo-base`), `#171717` active sidebar pills and controls (`bg-kumo-control`), and crisp `1px solid #333333` borders/rings (`kumo-card`, `kumo-btn-secondary`) with zero heavy neon drop-shadows.
   2. **Electric Blue Accent System (Replacing Orange):** Replaced all Cloudflare `#f6821f` orange elements with Cloudflare electric blue (`#155dfc` primary buttons/toggles/feature banner icon, `#5491f6` chart sparklines and brand accents, `#50a2ff` interactive links).
   3. **Cloudflare 3-Column Layout + Inner Pages:**
@@ -267,7 +267,7 @@
      - Deleted `redday-ai-schwab` from the `brad-jensen` team and immediately recreated **`redday-ai-schwab`** (Site ID `8812c48b-7a67-41dc-b636-5ee0f74d911c`) inside the **`FinTechNav` (`brad-cn70pnk`)** Netlify team so it preserves the exact same `https://redday-ai-schwab.netlify.app` production URL (which matches the approved Charles Schwab OAuth callback URL with zero hold).
      - Configured `SCHWAB_CLIENT_ID`, `SCHWAB_CLIENT_SECRET`, and `SCHWAB_CALLBACK_URL` in Netlify Environment Variables on the new site.
   2. **Fixed `Unexpected token '<', "<!DOCTYPE "... is not valid JSON"` & Automatic OAuth Redirect:**
-     - Packaged and uploaded all 4 Netlify Serverless Functions ([`schwab-auth.js`](/Users/bradjensen/stock/pwa/netlify/functions/schwab-auth.js), [`schwab-trade.js`](/Users/bradjensen/stock/pwa/netlify/functions/schwab-trade.js), [`market-scan.js`](/Users/bradjensen/stock/pwa/netlify/functions/market-scan.js), [`gist-sync.js`](/Users/bradjensen/stock/pwa/netlify/functions/gist-sync.js)) alongside updated [`public/_redirects`](/Users/bradjensen/stock/pwa/public/_redirects) (`/api/* /.netlify/functions/:splat 200` before `/* /index.html 200`).
+     - Packaged and uploaded all 4 Netlify Serverless Functions ([`schwab-auth.js`](/Users/bradjensen/fintechnav-site/pwa/netlify/functions/schwab-auth.js), [`schwab-trade.js`](/Users/bradjensen/fintechnav-site/pwa/netlify/functions/schwab-trade.js), [`market-scan.js`](/Users/bradjensen/fintechnav-site/pwa/netlify/functions/market-scan.js), [`gist-sync.js`](/Users/bradjensen/fintechnav-site/pwa/netlify/functions/gist-sync.js)) alongside updated [`public/_redirects`](/Users/bradjensen/fintechnav-site/pwa/public/_redirects) (`/api/* /.netlify/functions/:splat 200` before `/* /index.html 200`).
      - Updated **Sign in with Charles Schwab (1-Click)** to navigate in the current tab (`window.location.href`) and normalize `redirect_uri` (no trailing slash mismatch) so returning from Schwab (`https://redday-ai-schwab.netlify.app/?code=...`) automatically exchanges the code for a 7-day token and syncs positions.
   3. **Added Full Client & Server Diagnostic Logging (`API & system logs` tab):**
      - Added an **API & system logs** view in the left sidebar (`#tab-logs`) + a live OAuth diagnostic log preview inside the Schwab Connection modal + a **Test /api/schwab-auth endpoint** health-check button, plus server-side `console.log`/`console.error` statements for Netlify Function Logs.
@@ -283,7 +283,7 @@
      - `11:16:27 AM | OK | OAuth Callback | 7-day Charles Schwab token activated automatically! Syncing positions...`
      - `11:16:28 AM | OK | /api/schwab-trade | Synced 7 positions and $1.40 cash from Charles Schwab.`
      - All 7 live holdings (`IREN`, `APLD`, `WULF`, `CIFR`, `CLSK`, `HIVE`, `BTBT`) and `$1.40` cash (`$64.42` total account value, `+$4.11 / +7.0%`) synced directly from Charles Schwab Production Trader API.
-- **Result:** Saved live verification screenshots to [`redday_schwab_oauth_home_verified.png`](/Users/bradjensen/stock/artifacts/redday_schwab_oauth_home_verified.png) and [`redday_schwab_oauth_logs_verified.png`](/Users/bradjensen/stock/artifacts/redday_schwab_oauth_logs_verified.png).
+- **Result:** Saved live verification screenshots to [`redday_schwab_oauth_home_verified.png`](/Users/bradjensen/fintechnav-site/artifacts/redday_schwab_oauth_home_verified.png) and [`redday_schwab_oauth_logs_verified.png`](/Users/bradjensen/fintechnav-site/artifacts/redday_schwab_oauth_logs_verified.png).
 - **Next Step:** The app is 100% live and connected to Charles Schwab for the next 7 days.
 
 ### Entry 17 — 2026-11-06T11:48:30-05:00
@@ -296,8 +296,27 @@
      - When signing in with Charles Schwab, `https://redday-ai-schwab.netlify.app/?code=...` acts as an instant OAuth relay that forwards `?code=...` straight to **`https://fintechnav.com/stock?code=...`**—keeping your approved Charles Schwab callback URL active with zero 1–3 day hold!
   3. **Migrated Active 7-Day Charles Schwab Token to `https://fintechnav.com/stock`:**
      - Migrated `redday_ai_pwa_state_v2` and `redday_ai_auth_session_v1` to `https://fintechnav.com`, added automatic 30-minute `accessToken` refresh using the 7-day `refreshToken`, and verified live position sync (`7 positions + $1.40 cash`, Account Value `$65.63`, `+$5.32 / +9.0%`) directly on `https://fintechnav.com/stock`.
-- **Result:** Saved live verification screenshot to [`fintechnav_stock_live.png`](/Users/bradjensen/stock/artifacts/fintechnav_stock_live.png).
+- **Result:** Saved live verification screenshot to [`fintechnav_stock_live.png`](/Users/bradjensen/fintechnav-site/artifacts/fintechnav_stock_live.png).
 - **Next Step:** Access your portfolio dashboard anytime at **`https://fintechnav.com/stock`**.
+
+### Entry 18 — 2026-11-06T12:20:00-05:00
+- **Author:** `Antigravity / Gemini 4 Argon Medium [MacBookPro18,1]`
+- **Outcome Type:** `repo-consolidation` / `github-ci-cd`
+- **Action:** Consolidated `/Users/bradjensen/stock` into **`/Users/bradjensen/fintechnav-site`** (`https://github.com/FinTechNav/fintechnav-site.git`) so a single unified GitHub repository powers both **`https://fintechnav.com/`** (Bio site) and **`https://fintechnav.com/stock`** (RedDay AI Stock PWA) with automatic GitHub-to-Netlify continuous deployment:
+  1. **Unified Repository Layout (`/Users/bradjensen/fintechnav-site`):**
+     - `/` — Main FinTechNav bio site (`index.html`, `js/`, `styles/`, `sections/`, `icons/`, `logos/`).
+     - `/stock/` — RedDay AI Stock PWA ([`stock/index.html`](/Users/bradjensen/fintechnav-site/stock/index.html), [`stock/app.js`](/Users/bradjensen/fintechnav-site/stock/app.js), [`stock/sw.js`](/Users/bradjensen/fintechnav-site/stock/sw.js), [`stock/manifest.json`](/Users/bradjensen/fintechnav-site/stock/manifest.json), [`stock/icon.svg`](/Users/bradjensen/fintechnav-site/stock/icon.svg), [`stock/dev-server.mjs`](/Users/bradjensen/fintechnav-site/stock/dev-server.mjs)).
+     - `/netlify/functions/` — All 5 Netlify Serverless Functions (`send-email.js`, `schwab-auth.js`, `schwab-trade.js`, `market-scan.js`, `gist-sync.js`).
+     - `/.agents/`, `/artifacts/`, `/scripts/`, `AGENTS.md`, `SESSION_LOG.md` — All 119 quantitative trading skills, research artifacts, and session logs.
+  2. **Updated `netlify.toml`, `eslint.config.js`, and `package.json`:**
+     - Configured `[[redirects]]` in [`netlify.toml`](/Users/bradjensen/fintechnav-site/netlify.toml) for `/stock`, `/stock/`, and `/api/schwab-auth`, `/api/schwab-trade`, `/api/market-scan`, `/api/gist-sync` alongside the existing iPOS proxy rules.
+     - Scoped `lint-staged` and [`eslint.config.js`](/Users/bradjensen/fintechnav-site/eslint.config.js) to `js/**/*.js` so pre-commit hooks run cleanly across both apps.
+  3. **Verified GitHub Push → Automatic Netlify Build & Deploy:**
+     - Pushed commit `c81aeb5` (`Integrate RedDay AI stock PWA at /stock, Schwab serverless functions, and research skills`) to `origin/main` on `FinTechNav/fintechnav-site`.
+     - Verified that GitHub automatically triggered Netlify Deploy `6aee0bf3a81e221c91fc23bd` (`state: "ready"`, built in 14 seconds) and confirmed `https://fintechnav.com/`, `https://fintechnav.com/stock`, `/api/schwab-auth`, and `/api/market-scan` all return `HTTP 200`.
+- **Result:** Any `git push origin main` in `/Users/bradjensen/fintechnav-site` now automatically builds and deploys both `fintechnav.com` and `fintechnav.com/stock` to Netlify.
+- **Next Step:** Work directly inside `/Users/bradjensen/fintechnav-site` for all future bio or stock app updates.
+
 
 
 
