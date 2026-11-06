@@ -23,5 +23,5 @@ Over 115+ specialized trading and quantitative skills are installed in `.agents/
 - **Tax & Compliance**: `tax-loss-harvesting`, `wash-sale-detection`, `cost-basis-engine`, `trade-accounting`, `trade-journal`
 
 ## Artifact Policy
-- **Primary Storage Directory**: All persistent artifacts, tearsheets, strategy plans, backtest reports, data tables, and analysis outputs MUST be saved in `/Users/bradjensen/fintechnav-site/artifacts/`.
-- Whenever an Antigravity artifact is generated in the session brain, ensure a corresponding copy or source markdown is saved directly into `/Users/bradjensen/fintechnav-site/artifacts/`.
+- **Primary Storage Directory**: All persistent artifacts, tearsheets, strategy plans, backtest reports, data tables, and analysis outputs MUST be saved in `artifacts/`.
+- Whenever an Antigravity artifact is generated in the session brain, ensure a corresponding copy or source markdown is saved directly into `artifacts/`.

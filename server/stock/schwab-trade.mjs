@@ -1,3 +1,4 @@
+import { canonicalProfile } from './private-config.mjs';
 import { randomBytes } from 'node:crypto';
 import { protect, json, readBody, hash, HttpError } from './security.mjs';
 import {
@@ -24,9 +25,9 @@ export const createHandler = (dependencies = {}) =>
     const orders = body?.action === 'prepare' ? validateOrders(body.orders) : null;
     if (body && !['prepare', 'submit'].includes(body.action))
       throw new HttpError(400, 'Review and confirm the orders before submitting.');
-    const profile = body?.action === 'prepare' ? body.profile || 'brad' : null;
-    if (profile && !['brad', 'dio'].includes(profile))
-      throw new HttpError(400, 'Choose Brad or Dio before preparing orders.');
+    const profile = body?.action === 'prepare' ? body.profile || 'primary' : null;
+    if (profile && !['primary', 'partner'].includes(profile))
+      throw new HttpError(400, 'Choose Primary or Partner before preparing orders.');
     const record = await getCredentials(store, user, fetcher);
     const account = await selectedAccount(store, user, record, fetcher);
     const prefix = `/accounts/${encodeURIComponent(account)}`;
@@ -108,6 +109,8 @@ export const createHandler = (dependencies = {}) =>
     ) {
       throw new HttpError(409, 'This confirmation has expired. Review the orders again.');
     }
+    const approvedProfile = canonicalProfile(approval.profile || 'primary');
+    if (!approvedProfile) throw new HttpError(409, 'Reload the app and review these orders again.');
     checkDayTrade(approval.orders, await brokerGet(historyPath(), record, fetcher));
     // Immutable one-time claim, not a read-then-write lock or in-memory dedupe.
     // A network timeout never causes an automatic resubmission of an order.
@@ -151,7 +154,7 @@ export const createHandler = (dependencies = {}) =>
             const label = await store.setJSON(
               tagPrefix(user, account) + orderId,
               {
-                profile: approval.profile || 'brad',
+                profile: approvedProfile,
                 symbol: order.symbol,
                 instruction: order.instruction,
                 createdAt: new Date().toISOString(),
@@ -165,7 +168,7 @@ export const createHandler = (dependencies = {}) =>
         }
         results.push({
           ...order,
-          profile: approval.profile || 'brad',
+          profile: approvedProfile,
           labelSaved,
           ...(response.ok && !labelSaved
             ? {

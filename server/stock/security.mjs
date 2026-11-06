@@ -1,7 +1,6 @@
 import { createHash } from 'node:crypto';
 import { getStore } from '@netlify/blobs';
 
-export const OWNER_EMAIL = 'brad@fintechnav.com';
 export const IDENTITY_URL = 'https://fintechnav.com/.netlify/identity';
 export const PRIVATE_HEADERS = {
   'Cache-Control': 'private, no-store',
@@ -20,6 +19,12 @@ export class HttpError extends Error {
 export const json = (body, status = 200) =>
   Response.json(body, { status, headers: PRIVATE_HEADERS });
 export const env = (name) => globalThis.Netlify?.env?.get(name) ?? process.env[name];
+export function ownerEmail() {
+  const value = String(env('STOCK_OWNER_EMAIL') || '').trim().toLowerCase();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value))
+    throw new HttpError(503, 'Private stock account configuration is unavailable.');
+  return value;
+}
 export const hash = (value) => createHash('sha256').update(value).digest('hex');
 
 export function checkOrigin(request) {
@@ -75,7 +80,7 @@ export async function verifyOwner(request, context, fetcher = fetch) {
   if (!response.ok)
     throw new HttpError(response.status >= 500 ? 503 : 401, 'Please sign in again.');
   const user = await response.json();
-  if (!user.id || user.email?.toLowerCase() !== OWNER_EMAIL || !user.confirmed_at) {
+  if (!user.id || user.email?.toLowerCase() !== ownerEmail() || !user.confirmed_at) {
     throw new HttpError(403, 'This stock account is private.');
   }
   hardenCookies(context);

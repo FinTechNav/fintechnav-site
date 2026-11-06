@@ -173,7 +173,7 @@ const COMPANY_PROFILES = {
 
 for (const [symbol, name, role] of PortfolioViews.DEFENSE) {
   COMPANY_PROFILES[symbol] = {name, categoryLabel:'Defense placeholder', marketCap:'Not loaded', annualRevenue:'Not loaded', targetPrice12m:0,
-    plainWhatTheyDo:role, whyWeLikeIt:'Editable placeholder for Dio. Uses the same red-day rules as Brad until Dio chooses her industries and approach.',
+    plainWhatTheyDo:role, whyWeLikeIt:'Editable company information. Configure each private view independently.',
     projectionNote:'Placeholder only. No analyst target or forecast is set.',sampleHistory30d:[],placeholder:true};
 }
 
@@ -193,40 +193,8 @@ const DEFAULT_STATE = {
     maxSingleStockWeightPct: 25.0
   },
   holdings: {},
-  watchlist: [
-    { symbol: 'IREN', bucket: 'Bucket 1: Landlord', role: 'Microsoft 200MW + 480MW AI Cloud', sp500Slice: false },
-    { symbol: 'APLD', bucket: 'Bucket 1: Landlord', role: '$36B-$86B Hyperscaler Leases (1,410MW)', sp500Slice: false },
-    { symbol: 'WULF', bucket: 'Bucket 1: Landlord', role: '$19B-$33B Anthropic + Fluidstack (839MW)', sp500Slice: false },
-    { symbol: 'CORZ', bucket: 'Bucket 1: Landlord', role: 'CoreWeave (590MW) + AMD (530MW) Colocation', sp500Slice: false },
-    { symbol: 'CIFR', bucket: 'Bucket 1: Landlord', role: '$16.6B Contracted HPC Leases (700MW)', sp500Slice: false },
-    { symbol: 'CLSK', bucket: 'Bucket 1: Landlord', role: '$6.6B-$11.6B 20-Yr Georgia HPC Lease (175MW)', sp500Slice: false },
-    { symbol: 'NVDA', bucket: 'Bucket 2: S&P 500 Slice', role: 'Blackwell/Rubin AI Accelerator Leader', sp500Slice: true },
-    { symbol: 'AVGO', bucket: 'Bucket 2: S&P 500 Slice', role: 'Custom AI ASICs (XPUs) & AI Networking', sp500Slice: true },
-    { symbol: 'VRT',  bucket: 'Bucket 2: S&P 500 Slice', role: 'Liquid Cooling & Data Center Power Mgmt', sp500Slice: true },
-    { symbol: 'ANET', bucket: 'Bucket 2: S&P 500 Slice', role: '800G/1.6T Cloud & AI Ethernet Switching', sp500Slice: true },
-    { symbol: 'VST',  bucket: 'Bucket 2: S&P 500 Slice', role: 'Nuclear & Natural Gas Baseload AI Power', sp500Slice: true },
-    { symbol: 'POET', bucket: 'Bucket 3: Sweeper/Pick', role: '800G/1.6T Optical Interposers for AI GPUs', sp500Slice: false },
-    { symbol: 'EOSE', bucket: 'Bucket 3: Sweeper/Pick', role: '$765M (3.2 GWh) Zinc Grid/DC Battery Storage', sp500Slice: false },
-    { symbol: 'HIVE', bucket: 'Bucket 3: Sweeper/Pick', role: 'NVIDIA GB300 NVL72 GPU Cloud ($350M TCV)', sp500Slice: false },
-    { symbol: 'BTBT', bucket: 'Bucket 3: Sweeper/Pick', role: 'Enovum Tier-3 Montreal DC + Cerebras Cloud', sp500Slice: false }
-  ],
-  quotes: {
-    IREN: { activePrice: 19.67, prevClose: 24.40, high20d: 25.80, rsi14: 36.4, zScore20d: -1.62, closes: COMPANY_PROFILES.IREN.sampleHistory30d },
-    APLD: { activePrice: 14.12, prevClose: 16.55, high20d: 17.40, rsi14: 38.2, zScore20d: -1.48, closes: COMPANY_PROFILES.APLD.sampleHistory30d },
-    WULF: { activePrice: 10.08, prevClose: 11.52, high20d: 12.30, rsi14: 39.5, zScore20d: -1.39, closes: COMPANY_PROFILES.WULF.sampleHistory30d },
-    CORZ: { activePrice: 14.30, prevClose: 15.25, high20d: 16.40, rsi14: 41.0, zScore20d: -1.28, closes: COMPANY_PROFILES.CORZ.sampleHistory30d },
-    CIFR: { activePrice: 5.66,  prevClose: 6.45,  high20d: 7.45,  rsi14: 35.8, zScore20d: -1.70, closes: COMPANY_PROFILES.CIFR.sampleHistory30d },
-    CLSK: { activePrice: 5.68,  prevClose: 7.50,  high20d: 8.10,  rsi14: 33.9, zScore20d: -1.85, closes: COMPANY_PROFILES.CLSK.sampleHistory30d },
-    NVDA: { activePrice: 186.50, prevClose: 195.80, high20d: 206.00, rsi14: 41.2, zScore20d: -1.22, closes: COMPANY_PROFILES.NVDA.sampleHistory30d },
-    AVGO: { activePrice: 301.20, prevClose: 314.50, high20d: 326.00, rsi14: 42.5, zScore20d: -1.15, closes: COMPANY_PROFILES.AVGO.sampleHistory30d },
-    VRT:  { activePrice: 176.80, prevClose: 188.40, high20d: 199.50, rsi14: 38.9, zScore20d: -1.41, closes: COMPANY_PROFILES.VRT.sampleHistory30d },
-    ANET: { activePrice: 161.10, prevClose: 169.20, high20d: 176.00, rsi14: 40.4, zScore20d: -1.30, closes: COMPANY_PROFILES.ANET.sampleHistory30d },
-    VST:  { activePrice: 142.30, prevClose: 148.90, high20d: 155.00, rsi14: 43.1, zScore20d: -1.10, closes: COMPANY_PROFILES.VST.sampleHistory30d },
-    POET: { activePrice: 4.42,  prevClose: 5.08,  high20d: 5.60,  rsi14: 37.5, zScore20d: -1.52, closes: COMPANY_PROFILES.POET.sampleHistory30d },
-    EOSE: { activePrice: 1.84,  prevClose: 2.04,  high20d: 2.35,  rsi14: 39.1, zScore20d: -1.36, closes: COMPANY_PROFILES.EOSE.sampleHistory30d },
-    HIVE: { activePrice: 1.66,  prevClose: 1.83,  high20d: 2.12,  rsi14: 36.8, zScore20d: -1.55, closes: COMPANY_PROFILES.HIVE.sampleHistory30d },
-    BTBT: { activePrice: 0.704, prevClose: 0.845, high20d: 0.98,  rsi14: 34.2, zScore20d: -1.78, closes: COMPANY_PROFILES.BTBT.sampleHistory30d }
-  },
+  watchlist: [],
+  quotes: {},
   journal: [],
   schwabAuth: { connected: false, accessTokenExpiresAt: 0, refreshTokenExpiresAt: 0, accountHash: '' }
 };
@@ -299,7 +267,7 @@ async function initLoginGate() {
     catch { lockDashboard('Sign-out could not be confirmed. Please try again.'); }
   });
   document.getElementById('btn-recover-account')?.addEventListener('click', async () => {
-    try { await window.StockAuth.recover(); lockDashboard('Check your email for a password reset link.'); }
+    try { const email = document.getElementById('login-username'); if (!email.value.trim() || !email.reportValidity()) { lockDashboard('Enter your stock-account email first.'); return; } await window.StockAuth.recover(email.value); lockDashboard('Check your email for a password reset link.'); }
     catch { lockDashboard('Could not request a reset. Please try again.'); }
   });
   try {
@@ -334,7 +302,7 @@ function loadState() {
 let state = loadState();
 let activeScanFilter = 'all';
 let searchQuery = '';
-let expandedTableSymbol = 'IREN';
+let expandedTableSymbol = '';
 let latestComputedRows = [];
 let latestBasket = [];
 
@@ -1734,7 +1702,7 @@ function initEvents() {
   // Outside-app trades are attributed only after a confirmed brokerage sync.
   document.getElementById('btn-simulate-fill')?.addEventListener('click', () => {
     switchTab('allocations');
-    showToast('Sync confirmed shares, then assign them to Brad or Dio.');
+    showToast('Sync confirmed shares, then assign them to a personal view.');
   });
 
   // The server stores the reviewed basket and accepts its one-use confirmation.
@@ -1759,7 +1727,7 @@ function initEvents() {
       const plan = await preview.json();
       if (!preview.ok) throw new Error(plan.error);
       const summary = plan.orders.map((order) => `${order.instruction} ${order.quantity} ${order.symbol} at a $${order.limitPrice.toFixed(2)} limit (${order.session})`).join('\n');
-      if (!window.confirm(`Submit these live orders for ${plan.profile === 'dio' ? 'Dio' : 'Brad'} to Charles Schwab?\n\n${summary}\n\nTotal limit value: $${plan.total.toFixed(2)}`)) return;
+      if (!window.confirm(`Submit these live orders for ${viewLabel(plan.profile)} to Charles Schwab?\n\n${summary}\n\nTotal limit value: $${plan.total.toFixed(2)}`)) return;
       const response = await stockFetch('/api/schwab-trade', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'submit', confirmationId: plan.confirmationId })
@@ -1789,8 +1757,10 @@ function initEvents() {
   });
 
   document.getElementById('btn-reset-rules')?.addEventListener('click', () => {
-    state.rules = structuredClone(DEFAULT_STATE.rules);
-    state.watchlist = activeView === 'dio' ? PortfolioViews.defaults(personalPreferences()).profiles.dio.watchlist : structuredClone(DEFAULT_STATE.watchlist);
+    const defaults = privateViewDefaults?.profiles[activeView];
+    if (!defaults) { showToast('Reload shared views before resetting private preferences.'); return; }
+    state.rules = structuredClone(defaults.rules);
+    state.watchlist = structuredClone(defaults.watchlist);
     saveState();
     renderAll();
     showToast('Reset settings to defaults');

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Red-Day AI & Data Center Dip Hunter + Charles Schwab Knapsack Allocator
-(/Users/bradjensen/stock/scripts/ai_portfolio_scanner.py)
+(scripts/ai_portfolio_scanner.py)
 
 Built for a <$1,000 Charles Schwab account to systematically:
 1. Detect "Red Days" across AI data center landlords, S&P 500 AI leaders, and pick-and-shovels.

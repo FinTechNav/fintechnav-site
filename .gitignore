@@ -9,3 +9,9 @@ coverage/
 
 # Private research, screenshots, support correspondence, generated reports and backups.
 /artifacts/local/
+
+# Local agent integrations and installed research skills may contain machine/private settings.
+/.codex/
+/.agents/
+*.bundle
+*.har

@@ -21,7 +21,8 @@
     "lint:fix": "eslint js/ --fix",
     "format": "prettier --write 'js/**/*.js'",
     "check-format": "prettier --check 'js/**/*.js'",
-    "validate": "npm run lint && npm run check-format"
+    "validate": "npm run lint && npm run check-format",
+    "check:privacy": "node scripts/check-public-privacy.mjs"
   },
   "lint-staged": {
     "js/**/*.js": [
