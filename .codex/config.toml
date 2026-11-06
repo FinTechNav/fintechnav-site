@@ -1,0 +1,10 @@
+[mcp_servers.cloudflare]
+enabled = true
+command = "/bin/bash"
+args = ["/Users/bradjensen/fintechnav-site/.codex/cloudflare-fintechnav.sh"]
+
+[mcp_servers.netlify]
+url = "https://mcp.netlify.com/mcp"
+enabled = true
+startup_timeout_sec = 30
+tool_timeout_sec = 120
