@@ -24,7 +24,11 @@ Verified normal output excludes retired pages, checkout stylesheet, logs, server
 
 ## Rollout status
 
-Implementation is ready for PR checks. Merge/settings/ruleset activation and production verification are pending. Do not treat this report as proof they are active. The historical Google API key security alert remains unresolved until its owner verifies revocation/restrictions.
+PR #17 was merged by the owner at 20:23:23 UTC, main 308b5ea98ee5e733dd77b67d80fdabb554393968. All eight GitHub Actions checks succeeded, verified app ID 15368. Netlify production deploy 6aee373d0db43cb5575d03e0 is ready for that exact commit, published 20:23:38 UTC. Production HTTP checks confirm the anchored layout/manifest and 404 on retired demo/proxy paths; anonymous stock auth remains 401.
+
+Repository settings now allow only squash merges, use PR title/blank squash message, delete merged branches and allow guarded auto-merge. External-contributor workflow approval is all_external_contributors. Active main-protection ruleset 26724392 has no bypass actors; it blocks deletion/force-push, requires an up-to-date PR with resolved threads and zero additional approvers, and requires security, lint, secret-scan, npm-audit, zizmor, sbom and both CodeQL Analyze checks from Actions app 15368. Effective branch rules were re-read and match the targets. Direct main writes are prohibited by those effective rules; no deliberate rejected push was attempted.
+
+Target payloads are stored alongside this report. A documentation-only follow-up PR exercises the new required checks and squash/auto-merge path. There is no active Dependabot update PR, so end-to-end bot-triggered merging has not been observed. Existing wiki/projects and global action policy were preserved; no usage evidence justified disabling them. The historical Google API key security alert remains unresolved until its owner verifies revocation/restrictions.
 
 ## Schwab diagnostic update
 
@@ -37,3 +41,7 @@ Owner's fresh callback surfaced invalid_client at the token endpoint, explaining
 - [zizmor audits](https://docs.zizmor.sh/audits/#known-vulnerable-actions)
 - [Gitleaks 8.30.1 release](https://github.com/gitleaks/gitleaks/releases/tag/v8.30.1)
 - [zizmor 1.32.0 release](https://github.com/zizmorcore/zizmor/releases/tag/v1.32.0)
+
+## Schwab research follow-up
+
+The owner confirms this is their only developer account and reports the app still linked in the brokerage account. Historical first-hand reports describe missing developer apps and broken management; these do not establish a current outage or the exact cause. Schwab's official Trader API product page lists TraderAPI@Schwab.com for support. A local research report/support draft was prepared separately, not sent. No app was replaced, edited or deactivated.
