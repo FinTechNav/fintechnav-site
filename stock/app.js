@@ -187,6 +187,8 @@ const DEFAULT_STATE = {
   cash: 1.40,
   deployBudget: 50.00,
   unsettledCash: true,
+  blockDayTrades: true,
+  todayOrders: [],
   sessionTiming: 'SEAMLESS',
   rules: {
     landlordRedTriggerPct: -5.0,
@@ -472,8 +474,56 @@ function computeStatsFromCloses(closes, activePrice, prevClose) {
   };
 }
 
+function isSameCalendarDay(dateStr) {
+  if (!dateStr) return false;
+  const todayLocal = new Date().toLocaleDateString();
+  const todayShort = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  const raw = String(dateStr);
+  if (raw.includes(todayLocal) || raw.includes(todayShort)) return true;
+  const parsed = new Date(raw);
+  if (!Number.isNaN(parsed.getTime())) {
+    return parsed.toLocaleDateString() === todayLocal;
+  }
+  return false;
+}
+
+function getSameDayTradeLocks() {
+  const boughtToday = new Set();
+  const soldToday = new Set();
+
+  // Check local trade journal
+  if (Array.isArray(state.journal)) {
+    for (const j of state.journal) {
+      if (!isSameCalendarDay(j.date)) continue;
+      const sym = String(j.symbol || '').toUpperCase().trim();
+      const act = String(j.action || '').toUpperCase();
+      if (sym && (act.includes('BUY') || act.includes('BOUGHT'))) boughtToday.add(sym);
+      if (sym && (act.includes('SELL') || act.includes('SOLD'))) soldToday.add(sym);
+    }
+  }
+
+  // Also check live Schwab todayOrders if synced
+  if (Array.isArray(state.todayOrders)) {
+    for (const o of state.todayOrders) {
+      const status = String(o.status || '').toUpperCase();
+      if (['CANCELED', 'REJECTED', 'EXPIRED'].includes(status)) continue;
+      const legs = o.orderLegCollection || [];
+      for (const leg of legs) {
+        const sym = String(leg.instrument?.symbol || '').toUpperCase();
+        const inst = String(leg.instruction || '').toUpperCase();
+        if (sym && inst.includes('BUY')) boughtToday.add(sym);
+        if (sym && inst.includes('SELL')) soldToday.add(sym);
+      }
+    }
+  }
+
+  return { boughtToday, soldToday };
+}
+
 function evaluateWatchlist() {
   const { rules, unsettledCash, holdings, quotes, watchlist } = state;
+  const blockDayTrades = state.blockDayTrades !== false;
+  const { boughtToday, soldToday } = getSameDayTradeLocks();
 
   const rows = watchlist.map((item) => {
     const profile = COMPANY_PROFILES[item.symbol] || {
@@ -523,6 +573,8 @@ function evaluateWatchlist() {
     const pnlPct = hold && hold.avgCost > 0 ? ((price - hold.avgCost) / hold.avgCost) * 100 : null;
 
     const ac4203Blocked = unsettledCash && price < 1.0 && !item.sp500Slice;
+    const pdtSellBlocked = blockDayTrades && boughtToday.has(item.symbol);
+    const pdtBuyBlocked = blockDayTrades && soldToday.has(item.symbol);
 
     const target12m = profile.targetPrice12m || Number((high20d * 1.25).toFixed(2));
     const upsidePct = price > 0 ? ((target12m - price) / price) * 100 : 0;
@@ -531,8 +583,16 @@ function evaluateWatchlist() {
     let verdictBadgeClass = 'bg-[#171717] text-[#a1a1a1] ring-1 ring-[#333333]';
 
     if (pnlPct !== null && pnlPct >= rules.harvestGainPct) {
-      verdictText = `Up +${pnlPct.toFixed(0)}% — Sell 1 Share`;
-      verdictBadgeClass = 'bg-[#10b981]/15 text-[#a4f4cf] ring-1 ring-[#10b981]/40 font-medium';
+      if (pdtSellBlocked) {
+        verdictText = `Up +${pnlPct.toFixed(0)}% — Hold Overnight (Anti-PDT)`;
+        verdictBadgeClass = 'bg-[#155dfc]/20 text-[#50a2ff] ring-1 ring-[#5491f6]/50 font-medium';
+      } else {
+        verdictText = `Up +${pnlPct.toFixed(0)}% — Sell 1 Share`;
+        verdictBadgeClass = 'bg-[#10b981]/15 text-[#a4f4cf] ring-1 ring-[#10b981]/40 font-medium';
+      }
+    } else if (pdtBuyBlocked) {
+      verdictText = 'Sold Today — Wait Tomorrow (Anti-PDT)';
+      verdictBadgeClass = 'bg-[#171717] text-[#a1a1a1] ring-1 ring-[#333333]';
     } else if (ac4203Blocked) {
       verdictText = 'Under $1.00 — Needs Settled Cash';
       verdictBadgeClass = 'bg-[#171717] text-[#a1a1a1] ring-1 ring-[#333333]';
@@ -565,6 +625,8 @@ function evaluateWatchlist() {
       avgCost,
       pnlPct,
       ac4203Blocked,
+      pdtSellBlocked,
+      pdtBuyBlocked,
       target12m,
       upsidePct,
       verdictText,
@@ -586,7 +648,7 @@ function computeRedDayBasket(rows, budget) {
   const basket = [];
   const { rules } = state;
 
-  const redEligible = rows.filter((r) => r.isRedToday && !r.ac4203Blocked);
+  const redEligible = rows.filter((r) => r.isRedToday && !r.ac4203Blocked && !r.pdtBuyBlocked);
 
   const redSlices = redEligible.filter((r) => r.sp500Slice && r.dayPct <= rules.sliceRedTriggerPct);
   if (redSlices.length > 0 && remaining >= 25.0) {
@@ -820,6 +882,8 @@ function renderKPIsAndPortfolio() {
   let totalMktVal = 0;
   const harvestHtml = [];
 
+  const { boughtToday, soldToday } = getSameDayTradeLocks();
+  const blockDayTrades = state.blockDayTrades !== false;
   const entries = Object.entries(state.holdings);
   const rowsHtml = entries.map(([sym, pos]) => {
     const profile = COMPANY_PROFILES[sym] || { name: sym, plainWhatTheyDo: pos.role };
@@ -837,16 +901,29 @@ function renderKPIsAndPortfolio() {
     const progressPct = Math.max(0, Math.min(100, (pnlPct / harvestTarget) * 100));
     const sellTargetPrice = pos.avgCost * (1 + harvestTarget / 100);
 
+    const lockedForOvernightHold = blockDayTrades && boughtToday.has(sym);
     if (pnlPct >= harvestTarget) {
-      harvestHtml.push(`
-        <div class="kumo-card p-3 flex items-center justify-between">
-          <div>
-            <strong class="text-[#f5f5f5] text-xs">${sym} (${profile.name})</strong>
-            <span class="block text-[#a4f4cf] text-[11px]">Up +${pnlPct.toFixed(1)}% ($${livePrice.toFixed(2)} vs $${pos.avgCost.toFixed(2)} paid)</span>
+      if (lockedForOvernightHold) {
+        harvestHtml.push(`
+          <div class="kumo-card p-3 flex items-center justify-between">
+            <div>
+              <strong class="text-[#f5f5f5] text-xs">${sym} (${profile.name})</strong>
+              <span class="block text-[#50a2ff] text-[11px]">Up +${pnlPct.toFixed(1)}% — Bought today! Hold overnight &amp; sell tomorrow to avoid Day-Trade flag.</span>
+            </div>
+            <span class="px-2 py-0.5 rounded bg-[#171717] ring-1 ring-[#5491f6] text-[#50a2ff] font-semibold text-[11px]">Hold Overnight</span>
           </div>
-          <span class="px-2 py-0.5 rounded bg-[#155dfc] text-white font-semibold text-[11px]">Sell 1 sh</span>
-        </div>
-      `);
+        `);
+      } else {
+        harvestHtml.push(`
+          <div class="kumo-card p-3 flex items-center justify-between">
+            <div>
+              <strong class="text-[#f5f5f5] text-xs">${sym} (${profile.name})</strong>
+              <span class="block text-[#a4f4cf] text-[11px]">Up +${pnlPct.toFixed(1)}% ($${livePrice.toFixed(2)} vs $${pos.avgCost.toFixed(2)} paid) — Held overnight (0 day-trade risk)</span>
+            </div>
+            <span class="px-2 py-0.5 rounded bg-[#155dfc] text-white font-semibold text-[11px]">Sell 1 sh</span>
+          </div>
+        `);
+      }
     }
 
     const pnlColor = pnl >= 0 ? 'text-[#a4f4cf]' : 'text-[#ff6467]';
@@ -872,6 +949,7 @@ function renderKPIsAndPortfolio() {
           </div>
           <span class="text-[11px] text-[#a1a1a1] block mt-1">
             Sell 1 sh at <strong class="text-[#f5f5f5]">$${sellTargetPrice.toFixed(2)}</strong> (+${harvestTarget}%)
+            ${lockedForOvernightHold ? '<span class="text-[#50a2ff] ml-1">&bull; Hold overnight (Anti-PDT)</span>' : ''}
           </span>
         </td>
       </tr>
@@ -906,6 +984,27 @@ function renderKPIsAndPortfolio() {
 
   const elBtnAcctCash = document.getElementById('btn-use-acct-cash');
   if (elBtnAcctCash) elBtnAcctCash.textContent = `Use Schwab cash ($${state.cash.toFixed(2)})`;
+
+  const pdtLocksEl = document.getElementById('pdt-today-locks');
+  const pdtBadgeEl = document.getElementById('pdt-status-badge');
+  if (pdtBadgeEl) {
+    pdtBadgeEl.textContent = blockDayTrades ? '0 / 3 Used (Protected)' : 'Shield Paused';
+    pdtBadgeEl.className = blockDayTrades
+      ? 'px-2 py-0.5 rounded bg-[#10b981]/20 text-[#a4f4cf] font-semibold text-[11px]'
+      : 'px-2 py-0.5 rounded bg-[#ff6467]/20 text-[#ff6467] font-semibold text-[11px]';
+  }
+  if (pdtLocksEl) {
+    const lockedBought = Array.from(boughtToday);
+    const lockedSold = Array.from(soldToday);
+    if (lockedBought.length === 0 && lockedSold.length === 0) {
+      pdtLocksEl.innerHTML = '✓ <strong class="text-[#a4f4cf]">0 trades today</strong> — All 7 holdings were bought on prior days and are 100% safe to sell anytime without counting as a day trade.';
+    } else {
+      const parts = [];
+      if (lockedBought.length > 0) parts.push(`Bought today (locked from selling until tomorrow): <strong class="text-[#50a2ff]">${lockedBought.join(', ')}</strong>`);
+      if (lockedSold.length > 0) parts.push(`Sold today (locked from re-buying until tomorrow): <strong class="text-[#ff6467]">${lockedSold.join(', ')}</strong>`);
+      pdtLocksEl.innerHTML = parts.join('<br/>');
+    }
+  }
 
   const harvestBox = document.getElementById('harvest-alerts-box');
   if (harvestBox) {
@@ -1463,6 +1562,18 @@ function initEvents() {
     });
   });
 
+  // Right-Rail Anti-PDT Day-Trade Shield Toggle Switch
+  document.getElementById('toggle-pdt-switch')?.addEventListener('click', (e) => {
+    state.blockDayTrades = state.blockDayTrades === false ? true : false;
+    const btn = e.currentTarget;
+    btn.className = state.blockDayTrades
+      ? 'w-9 h-5 rounded-full bg-[#155dfc] flex items-center justify-end px-0.5 shrink-0 mt-0.5 transition'
+      : 'w-9 h-5 rounded-full bg-[#404040] flex items-center justify-start px-0.5 shrink-0 mt-0.5 transition';
+    saveState();
+    renderAll();
+    showToast(state.blockDayTrades ? 'Anti-Day-Trade Shield enabled (0 day trades allowed)' : 'Anti-Day-Trade Shield paused');
+  });
+
   // Right-Rail Unsettled Cash Toggle Switch
   document.getElementById('toggle-unsettled-switch')?.addEventListener('click', (e) => {
     state.unsettledCash = !state.unsettledCash;
@@ -1578,7 +1689,8 @@ function initEvents() {
         body: JSON.stringify({
           accountHash: state.schwabAuth.accountHash,
           orders: latestBasket.filter((b) => !b.isSlice),
-          unsettledCash: state.unsettledCash
+          unsettledCash: state.unsettledCash,
+          blockDayTrades: state.blockDayTrades !== false
         })
       });
       const data = await res.json();
@@ -1760,6 +1872,7 @@ function initEvents() {
       if (data.ok) {
         const firstHash = data.accountNumbers?.[0]?.hashValue;
         if (firstHash) state.schwabAuth.accountHash = firstHash;
+        if (Array.isArray(data.todayOrders)) state.todayOrders = data.todayOrders;
         const secAcct = data.accounts?.[0]?.securitiesAccount;
         if (secAcct?.currentBalances?.cashAvailableForTrading !== undefined) {
           state.cash = Number(secAcct.currentBalances.cashAvailableForTrading);

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'redday-ai-pwa-v6-fintechnav-stock';
+const CACHE_NAME = 'redday-ai-pwa-v7-pdt-shield';
 const STATIC_ASSETS = [
   '/stock',
   '/stock/index.html',

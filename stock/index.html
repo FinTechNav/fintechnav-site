@@ -801,12 +801,36 @@
 
           <div class="flex items-start justify-between gap-3 pt-2">
             <div>
+              <span class="text-xs font-medium text-[#f5f5f5] block">Block Same-Day Round Trips (Anti-PDT)</span>
+              <span class="text-[11px] text-[#a1a1a1] block">Never buys &amp; sells the same stock on the same day (0 day trades).</span>
+            </div>
+            <button id="toggle-pdt-switch" type="button" class="w-9 h-5 rounded-full bg-[#155dfc] flex items-center justify-end px-0.5 shrink-0 mt-0.5 transition">
+              <span class="w-4 h-4 rounded-full bg-white"></span>
+            </button>
+          </div>
+
+          <div class="flex items-start justify-between gap-3 pt-2">
+            <div>
               <span class="text-xs font-medium text-[#f5f5f5] block">Block Under-$1.00 on New Cash</span>
               <span class="text-[11px] text-[#a1a1a1] block">Prevents Schwab rejection on newly transferred funds.</span>
             </div>
             <button id="toggle-unsettled-switch" type="button" class="w-9 h-5 rounded-full bg-[#155dfc] flex items-center justify-end px-0.5 shrink-0 mt-0.5 transition">
               <span class="w-4 h-4 rounded-full bg-white"></span>
             </button>
+          </div>
+        </div>
+
+        <!-- Day-Trader Protection Status Card (FINRA PDT Shield) -->
+        <div class="kumo-card p-4 space-y-2.5 text-xs">
+          <div class="flex items-center justify-between">
+            <h4 class="font-semibold text-[#f5f5f5]">Day-Trade Shield (PDT)</h4>
+            <span id="pdt-status-badge" class="px-2 py-0.5 rounded bg-[#10b981]/20 text-[#a4f4cf] font-semibold text-[11px]">0 / 3 Used (Safe)</span>
+          </div>
+          <p class="text-[11px] text-[#a1a1a1] leading-relaxed">
+            Schwab flags Margin accounts under $25,000 if you buy &amp; sell the same stock on the same day 4 times in 5 business days.
+          </p>
+          <div id="pdt-today-locks" class="text-[11px] text-[#d9d9d9] pt-1 border-t border-[#262626]">
+            Overnight hold rule active — 0 same-day round trips in last 5 business days.
           </div>
         </div>
 

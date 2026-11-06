@@ -1,6 +1,19 @@
 // Charles Schwab Trader API Proxy: Live Balances, Positions & Guardrailed Limit Order Placement
+// Enforces:
+// 1. Anti-PDT / No-Same-Day-Round-Trip Guardrail (blocks buying & selling the same ticker on the same calendar day)
+// 2. Limit-only orders, max dollar cap, and AC4203 sub-$1.00 cleared-cash checks.
 
 const SCHWAB_TRADER_BASE = 'https://api.schwabapi.com/trader/v1';
+
+function getTodayUtcRange() {
+  const now = new Date();
+  const start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 0));
+  const end = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 23, 59, 59));
+  return {
+    fromEnteredTime: start.toISOString(),
+    toEnteredTime: end.toISOString()
+  };
+}
 
 exports.handler = async function handler(event) {
   const headers = {
@@ -37,7 +50,7 @@ exports.handler = async function handler(event) {
 
   try {
     if (event.httpMethod === 'GET') {
-      console.log('[schwab-trade][GET] Fetching accountNumbers and positions from Schwab Trader API');
+      console.log('[schwab-trade][GET] Fetching accountNumbers, positions, and today orders from Schwab Trader API');
       const [acctHashRes, accountsRes] = await Promise.all([
         fetch(`${SCHWAB_TRADER_BASE}/accounts/accountNumbers`, {
           headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' }
@@ -59,17 +72,36 @@ exports.handler = async function handler(event) {
 
       const accountNumbers = await acctHashRes.json();
       const accounts = await accountsRes.json();
-      console.log(`[schwab-trade][GET][SUCCESS] Loaded ${accountNumbers.length || 0} account(s)`);
+
+      // Also fetch today's orders so client can display same-day round-trip (PDT) locks accurately
+      let todayOrders = [];
+      const firstHash = accountNumbers?.[0]?.hashValue;
+      if (firstHash) {
+        try {
+          const { fromEnteredTime, toEnteredTime } = getTodayUtcRange();
+          const ordRes = await fetch(
+            `${SCHWAB_TRADER_BASE}/accounts/${encodeURIComponent(firstHash)}/orders?fromEnteredTime=${encodeURIComponent(fromEnteredTime)}&toEnteredTime=${encodeURIComponent(toEnteredTime)}`,
+            { headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' } }
+          );
+          if (ordRes.ok) {
+            todayOrders = await ordRes.json();
+          }
+        } catch {
+          // non-fatal if orders endpoint unavailable
+        }
+      }
+
+      console.log(`[schwab-trade][GET][SUCCESS] Loaded ${accountNumbers.length || 0} account(s), ${todayOrders.length || 0} today order(s)`);
       return {
         statusCode: 200,
         headers,
-        body: JSON.stringify({ ok: true, accountNumbers, accounts })
+        body: JSON.stringify({ ok: true, accountNumbers, accounts, todayOrders })
       };
     }
 
     if (event.httpMethod === 'POST') {
       const body = JSON.parse(event.body || '{}');
-      const { accountHash, orders = [], maxOrderDollars = 100, unsettledCash = true } = body;
+      const { accountHash, orders = [], maxOrderDollars = 100, unsettledCash = true, blockDayTrades = true } = body;
 
       if (!accountHash) {
         return {
@@ -77,6 +109,37 @@ exports.handler = async function handler(event) {
           headers,
           body: JSON.stringify({ ok: false, error: 'Missing accountHash for Schwab order placement. Sync positions first.' })
         };
+      }
+
+      // Fetch live today's orders from Charles Schwab to enforce server-side Anti-PDT protection
+      const sameDayBuys = new Set();
+      const sameDaySells = new Set();
+      if (blockDayTrades) {
+        try {
+          const { fromEnteredTime, toEnteredTime } = getTodayUtcRange();
+          const ordRes = await fetch(
+            `${SCHWAB_TRADER_BASE}/accounts/${encodeURIComponent(accountHash)}/orders?fromEnteredTime=${encodeURIComponent(fromEnteredTime)}&toEnteredTime=${encodeURIComponent(toEnteredTime)}`,
+            { headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' } }
+          );
+          if (ordRes.ok) {
+            const liveOrders = await ordRes.json();
+            if (Array.isArray(liveOrders)) {
+              for (const o of liveOrders) {
+                const status = String(o.status || '').toUpperCase();
+                if (['CANCELED', 'REJECTED', 'EXPIRED'].includes(status)) continue;
+                const legs = o.orderLegCollection || [];
+                for (const leg of legs) {
+                  const sym = String(leg.instrument?.symbol || '').toUpperCase();
+                  const inst = String(leg.instruction || '').toUpperCase();
+                  if (sym && inst.includes('BUY')) sameDayBuys.add(sym);
+                  if (sym && inst.includes('SELL')) sameDaySells.add(sym);
+                }
+              }
+            }
+          }
+        } catch (e) {
+          console.warn('[schwab-trade][PDT-CHECK] Could not inspect today orders:', e.message);
+        }
       }
 
       const results = [];
@@ -93,6 +156,29 @@ exports.handler = async function handler(event) {
           results.push({ symbol, ok: false, error: 'Invalid symbol, whole-share quantity, or limit price.' });
           continue;
         }
+
+        // Anti-Day-Trade (PDT) Guardrail: Never allow opposite-side execution on the same calendar day
+        if (blockDayTrades) {
+          if (instruction === 'SELL' && sameDayBuys.has(symbol)) {
+            results.push({
+              symbol,
+              ok: false,
+              pdtBlocked: true,
+              error: `Anti-Day-Trade Guardrail (PDT Protection): You already bought ${symbol} today. Selling ${symbol} today would count as a Day Trade on your Margin account. Hold overnight and sell tomorrow!`
+            });
+            continue;
+          }
+          if (instruction === 'BUY' && sameDaySells.has(symbol)) {
+            results.push({
+              symbol,
+              ok: false,
+              pdtBlocked: true,
+              error: `Anti-Day-Trade Guardrail (PDT Protection): You already sold ${symbol} today. Re-buying ${symbol} today would count as a Day Trade + Wash Sale. Wait until tomorrow!`
+            });
+            continue;
+          }
+        }
+
         if (estTotal > maxOrderDollars) {
           results.push({
             symbol,
@@ -142,6 +228,8 @@ exports.handler = async function handler(event) {
         const orderId = locationHeader.split('/').pop() || 'SUBMITTED';
 
         if (orderRes.ok) {
+          if (instruction === 'BUY') sameDayBuys.add(symbol);
+          if (instruction === 'SELL') sameDaySells.add(symbol);
           results.push({ symbol, quantity, limitPrice, instruction, session, ok: true, orderId });
         } else {
           const errBody = await orderRes.text();
