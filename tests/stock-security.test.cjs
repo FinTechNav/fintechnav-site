@@ -441,6 +441,15 @@ test('preference sync excludes credentials, accounts and personal execution hist
   assert.ok(!JSON.stringify(clean).includes('private'));
   assert.deepEqual(clean.rules, { harvestGainPct: 35 });
 });
+test('brokerage credential sanitizer strips surrounding quotes and whitespace', async () => {
+  const [, brokerage] = await modules;
+  assert.equal(brokerage.cleanCredential('  "my-client-id"  '), 'my-client-id');
+  assert.equal(brokerage.cleanCredential("  'my-secret'  "), 'my-secret');
+  assert.equal(brokerage.cleanCredential('plain-key'), 'plain-key');
+  assert.equal(brokerage.cleanCredential(''), '');
+  assert.equal(brokerage.cleanCredential(null), '');
+  assert.equal(brokerage.cleanCredential(undefined), '');
+});
 test('deployed output excludes workspace/backend files and leaked default credentials', () => {
   for (const name of [
     'AGENTS.md',

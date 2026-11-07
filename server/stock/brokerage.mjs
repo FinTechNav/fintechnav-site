@@ -2,6 +2,8 @@ import { randomBytes } from 'node:crypto';
 import { env, HttpError, hash } from './security.mjs';
 
 export const BROKER = 'https://api.schwabapi.com/trader/v1';
+export const cleanCredential = (val) =>
+  typeof val === 'string' ? val.trim().replace(/^["'](.*)["']$/, '$1').trim() : '';
 export const credentialKey = (user) => `credentials/${hash(user.id)}`;
 export const credentialStatus = (record) => ({
   connected: Boolean(record?.refreshToken && record.refreshTokenExpiresAt > Date.now()),
@@ -9,13 +11,13 @@ export const credentialStatus = (record) => ({
   refreshTokenExpiresAt: record?.refreshTokenExpiresAt || 0,
 });
 export async function issueToken(params, previous, fetcher = fetch) {
-  const clientId = env('SCHWAB_CLIENT_ID');
-  const secret = env('SCHWAB_CLIENT_SECRET');
+  const clientId = cleanCredential(env('SCHWAB_CLIENT_ID'));
+  const secret = cleanCredential(env('SCHWAB_CLIENT_SECRET'));
   if (!clientId || !secret) throw new HttpError(503, 'The brokerage connection is not configured.');
   const response = await fetcher('https://api.schwabapi.com/v1/oauth/token', {
     method: 'POST',
     headers: {
-      Authorization: `Basic ${Buffer.from(`${clientId.trim()}:${secret.trim()}`).toString('base64')}`,
+      Authorization: `Basic ${Buffer.from(`${clientId}:${secret}`).toString('base64')}`,
       'Content-Type': 'application/x-www-form-urlencoded',
       Accept: 'application/json',
     },
@@ -33,7 +35,7 @@ export async function issueToken(params, previous, fetcher = fetch) {
     if (reason === 'invalid_client')
       throw new HttpError(
         503,
-        'Schwab rejected the app credentials. The app connection settings need repair; signing in again will not fix this.'
+        'Schwab rejected the app credentials. The app connection settings need repair; signing in again will not fix this. Please verify in the Schwab Developer Portal that the app status is "Ready for use" (not "Approved - Pending"), Netlify SCHWAB_CLIENT_ID and SCHWAB_CLIENT_SECRET match the portal App Key & Secret, and the registered Callback URL is https://redday-ai-schwab.netlify.app without a trailing slash.'
       );
     if (reason === 'invalid_grant')
       throw new HttpError(
