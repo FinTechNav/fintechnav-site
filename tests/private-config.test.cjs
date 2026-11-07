@@ -17,10 +17,15 @@ const prefs = {
 };
 
 test('private login configuration fails closed and never accepts an arbitrary verified identity', async () => {
-  const { ownerEmail, verifyOwner } = await import('../server/stock/security.mjs');
-  delete process.env.STOCK_OWNER_EMAIL;
-  assert.throws(ownerEmail, { status: 503 });
-  process.env.STOCK_OWNER_EMAIL = 'owner@example.test';
+  const { isOwnerEmail, verifyOwner } = await import('../server/stock/security.mjs');
+  delete process.env.STOCK_OWNER_EMAIL_SHA256;
+  assert.throws(() => isOwnerEmail('owner@example.test'), { status: 503 });
+  process.env.STOCK_OWNER_EMAIL_SHA256 = require('node:crypto')
+    .createHash('sha256')
+    .update('owner@example.test')
+    .digest('hex');
+  assert.equal(isOwnerEmail(' OWNER@EXAMPLE.TEST '), true);
+  assert.equal(isOwnerEmail('other@example.test'), false);
   const request = new Request('https://fintechnav.com/api/portfolio-views');
   const ctx = { cookies: { get: () => 'synthetic-session', set() {} } };
   await assert.rejects(
@@ -32,7 +37,7 @@ test('private login configuration fails closed and never accepts an arbitrary ve
   assert.equal(
     (
       await verifyOwner(request, ctx, async () =>
-        Response.json({ id: 'owner', email: ownerEmail(), confirmed_at: '2026-01-01' })
+        Response.json({ id: 'owner', email: 'owner@example.test', confirmed_at: '2026-01-01' })
       )
     ).id,
     'owner'
