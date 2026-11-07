@@ -41,7 +41,7 @@ Verified by read-back through GitHub:
 
 ## Remaining items and deployment boundary
 
-**Google API key alert #1 remains open.** Its recorded location is historical POS.html in commit a868dcf1527a4cc44d458008894730dc17b182e2, line 323. A scan of current first-party text source found no matching Google key. Removing it from current code does not revoke historical copies. Verify revocation, or API/referrer restrictions and actual usage in Google Cloud. Its value was not printed, tested against Google, rotated or dismissed during this review.
+**Google API key alert #1 remains open.** Its historical location remains in the owner-only Security alert and private audit record. A scan of current first-party text source found no matching Google key. Removing it from current code does not revoke historical copies. Verify revocation, or API/referrer restrictions and actual usage in Google Cloud. Its value was not printed, tested against Google, rotated or dismissed during this review.
 
 ESLint/Babel major migrations, full CSP enforcement and browser-CDN bundling are deferred to changes with broader compatibility/UI testing. Updating npm Babel tooling does not patch the independently loaded browser CDN Babel script.
 
