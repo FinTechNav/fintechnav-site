@@ -1824,12 +1824,13 @@ function initEvents() {
       const res = await stockFetch('/api/schwab-auth');
       const data = await safeReadJson(res, '/api/schwab-auth');
       if (res.ok && data.ok) { state.schwabAuth = data; renderAuthStatus(); }
+      const maskInfo = data.clientIdMasked ? `id=${data.clientIdMasked} (len=${data.clientIdLength}), secretLen=${data.secretLength}` : 'no credentials';
       addSystemLog(
         data.ok ? 'OK' : 'ERROR',
         '/api/schwab-auth',
-        `HTTP ${res.status} — credentialsConfigured=${data.credentialsConfigured}, connected=${data.connected}, callbackUrl=${data.callbackUrl}`
+        `HTTP ${res.status} — configured=${data.credentialsConfigured}, connected=${data.connected}, callbackUrl=${data.callbackUrl}, ${maskInfo}`
       );
-      showToast(data.credentialsConfigured ? 'Schwab serverless function healthy & credentials ready!' : 'Function active, check credentials');
+      showToast(data.credentialsConfigured ? `Schwab function ready: ${maskInfo}` : 'Function active, check credentials');
     } catch (err) {
       showToast(`Health check failed: ${err.message}`);
     }
@@ -1837,11 +1838,17 @@ function initEvents() {
 
   document.getElementById('btn-launch-schwab-oauth')?.addEventListener('click', async () => {
     try {
+      addSystemLog('INFO', '/api/schwab-auth', 'Requesting Schwab OAuth authorization URL...');
       const response = await stockFetch('/api/schwab-auth', {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'begin' })
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error);
+      const authUrlObj = new URL(data.authUrl);
+      const clientId = authUrlObj.searchParams.get('client_id') || '';
+      const maskedId = clientId ? `${clientId.slice(0, 4)}...${clientId.slice(-4)} (len ${clientId.length})` : 'none';
+      const redirectUri = authUrlObj.searchParams.get('redirect_uri') || '';
+      addSystemLog('INFO', '/api/schwab-auth', `Launching Schwab login: client_id=${maskedId}, redirect_uri=${redirectUri}`);
       window.location.href = data.authUrl;
     } catch (error) { showSchwabError(error.message); }
   });
@@ -1856,15 +1863,31 @@ function initEvents() {
 async function checkAutoOAuthCallback() {
   const parameters = new URLSearchParams(window.location.search);
   if (!parameters.has('code') && !parameters.has('error')) return;
+  const rawCode = parameters.get('code') || '';
+  const stateVal = parameters.get('state') || '';
+  const errorVal = parameters.get('error') || '';
+  const errorDesc = parameters.get('error_description') || '';
   window.history.replaceState({}, document.title, window.location.pathname);
-  if (parameters.has('error')) { showSchwabError('Charles Schwab sign-in was not completed.'); return; }
+  if (errorVal) {
+    addSystemLog('ERROR', '/api/schwab-auth', `Schwab redirect returned error: ${errorVal} (${errorDesc || 'no description'})`);
+    showSchwabError(`Charles Schwab sign-in was not completed: ${errorVal}`);
+    return;
+  }
+  addSystemLog(
+    'INFO',
+    '/api/schwab-auth',
+    `Callback received from Schwab: code_length=${rawCode.length}, endsWithAt=${rawCode.endsWith('@')}, state_present=${Boolean(stateVal)}`
+  );
   try {
     const response = await stockFetch('/api/schwab-auth', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'exchange', code: parameters.get('code'), state: parameters.get('state') })
+      body: JSON.stringify({ action: 'exchange', code: rawCode, state: stateVal })
     });
     const data = await response.json();
-    if (!response.ok || !data.connected) throw new Error(data.error || 'The Schwab connection was not saved.');
+    if (!response.ok || !data.connected) {
+      addSystemLog('ERROR', '/api/schwab-auth', `Exchange rejected (HTTP ${response.status}): ${data.error || 'The Schwab connection was not saved.'}`);
+      throw new Error(data.error || 'The Schwab connection was not saved.');
+    }
     state.schwabAuth = data;
     renderAuthStatus();
     document.getElementById('auth-modal-feedback')?.classList.add('hidden');

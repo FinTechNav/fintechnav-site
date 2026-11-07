@@ -31,11 +31,30 @@ export async function issueToken(params, previous, fetcher = fetch) {
     const reason = ['invalid_client', 'invalid_grant', 'invalid_request'].includes(data.error)
       ? data.error
       : 'upstream_rejection';
-    console.warn('Schwab token request rejected', { status: response.status, reason });
+    const safeErrorDesc =
+      typeof data.error_description === 'string'
+        ? data.error_description.slice(0, 100).replace(/[^\w\s.:-]/g, '')
+        : null;
+    const clientMask = clientId
+      ? `${clientId.slice(0, 4)}...${clientId.slice(-4)}`
+      : 'none';
+    console.warn('Schwab token request rejected', {
+      status: response.status,
+      statusText: response.statusText,
+      reason,
+      errorDescription: safeErrorDesc,
+      clientIdMasked: clientMask,
+      clientIdLength: clientId.length,
+      secretLength: secret.length,
+      redirectUri: params.redirect_uri || 'none',
+      grantType: params.grant_type || 'none',
+      codeLength: params.code ? params.code.length : 0,
+      codeEndsWithAt: params.code ? params.code.endsWith('@') : false,
+    });
     if (reason === 'invalid_client')
       throw new HttpError(
         503,
-        'Schwab rejected the app credentials. The app connection settings need repair; signing in again will not fix this. Please verify in the Schwab Developer Portal that the app status is "Ready for use" (not "Approved - Pending"), Netlify SCHWAB_CLIENT_ID and SCHWAB_CLIENT_SECRET match the portal App Key & Secret, and the registered Callback URL is https://redday-ai-schwab.netlify.app without a trailing slash.'
+        `Schwab rejected the app credentials (invalid_client, HTTP ${response.status}). Netlify env: client_id=${clientMask} (len ${clientId.length}), secretLen=${secret.length}, redirect_uri=${params.redirect_uri}. Verify: 1) Schwab Portal App status is "Ready for use" (not "Approved - Pending"), 2) App Key and Secret match Netlify exactly, 3) Callback URL in portal has no trailing slash, 4) Netlify site was redeployed after updating env vars.`
       );
     if (reason === 'invalid_grant')
       throw new HttpError(
@@ -48,7 +67,7 @@ export async function issueToken(params, previous, fetcher = fetch) {
     // would make the browser replay this single-use authorization exchange.
     throw new HttpError(
       502,
-      'Schwab could not complete the connection. Please try a new connection; if it repeats, the app settings need review.'
+      `Schwab could not complete the connection (HTTP ${response.status}, ${reason}). Please try a new connection; if it repeats, the app settings need review.`
     );
   }
   const data = await response.json();

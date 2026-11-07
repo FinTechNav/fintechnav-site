@@ -23,6 +23,11 @@ export const createHandler = (dependencies = {}) =>
         ok: true,
         credentialsConfigured: Boolean(clientId && secret),
         callbackUrl: callback,
+        clientIdMasked: clientId
+          ? `${clientId.slice(0, 4)}...${clientId.slice(-4)}`
+          : null,
+        clientIdLength: clientId.length,
+        secretLength: secret.length,
         ...credentialStatus(await store.get(credentialKey(user), { type: 'json' })),
       });
     }
@@ -42,6 +47,12 @@ export const createHandler = (dependencies = {}) =>
         userId: user.id,
         expiresAt: Date.now() + 600000,
         callback,
+      });
+      console.log('Schwab OAuth begin initiated', {
+        callback,
+        clientIdMasked: `${clientId.slice(0, 4)}...${clientId.slice(-4)}`,
+        clientIdLength: clientId.length,
+        secretLength: secret.length,
       });
       context.cookies.set({
         name: '__Host-stock-oauth',
@@ -76,6 +87,11 @@ export const createHandler = (dependencies = {}) =>
     const claim = await store.setJSON(`${key}/used`, { at: Date.now() }, { onlyIfNew: true });
     if (!claim.modified) throw new HttpError(409, 'This sign-in has already been used.');
     context.cookies.delete('__Host-stock-oauth');
+    console.log('Schwab OAuth exchange starting', {
+      redirectUri: pending.callback || callback,
+      codeLength: body.code.length,
+      codeEndsWithAt: body.code.endsWith('@'),
+    });
     const record = await issueToken(
       {
         grant_type: 'authorization_code',
