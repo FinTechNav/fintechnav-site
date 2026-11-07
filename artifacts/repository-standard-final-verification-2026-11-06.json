@@ -1,0 +1,35 @@
+{
+  "repo": "FinTechNav/fintechnav-site",
+  "implementation_pr": 17,
+  "documentation_pr": 18,
+  "implementation_commit": "308b5ea98ee5e733dd77b67d80fdabb554393968",
+  "final_main_commit": "b3867618ff22bdf915d18f1f8857b994da980648",
+  "protected_squash_auto_merge_verified": true,
+  "pr18_merged_at": "2026-11-06T20:30:23Z",
+  "ruleset_id": 26724392,
+  "ruleset_active": true,
+  "bypass_actors": [],
+  "required_checks": [
+    "security",
+    "lint",
+    "secret-scan",
+    "npm-audit",
+    "zizmor",
+    "sbom",
+    "Analyze (javascript-typescript)",
+    "Analyze (python)"
+  ],
+  "actions_app_id": 15368,
+  "required_checks_passed_on_pr18": true,
+  "outside_fork_workflow_approval": "all_external_contributors",
+  "default_workflow_permissions": "read",
+  "source_branches_cleaned": true,
+  "local_main_synchronized": true,
+  "notes": "Historical verification snapshot of PRs 17/18. Later cleanup changes have separate commits and validation.",
+  "production_deploy": {
+    "id": "6aee38e1065b1dac2f34efbe",
+    "state": "ready",
+    "commit": "b3867618ff22bdf915d18f1f8857b994da980648",
+    "published_at": "2026-11-06T20:30:41.235Z"
+  }
+}

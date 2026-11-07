@@ -1,0 +1,46 @@
+{
+  "name": "brad-jensen-site",
+  "version": "1.0.0",
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "description": "Professional biography website (fintechnav.com) & RedDay AI Stock Portfolio PWA (fintechnav.com/stock)",
+  "devDependencies": {
+    "esbuild": "^0.28.2",
+    "eslint": "^10.14.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.6.0",
+    "prettier": "^3.9.10"
+  },
+  "scripts": {
+    "prepare": "node -e \"if(process.env.CI !== 'true') { try { require('husky'); } catch(e) { console.log('Husky not found, skipping'); } }\"",
+    "build": "node scripts/build-site.mjs",
+    "test:security": "node --test tests/*.test.cjs",
+    "dev:stock": "node stock/dev-server.mjs",
+    "lint": "eslint js/",
+    "lint:fix": "eslint js/ --fix",
+    "format": "prettier --write 'js/**/*.js'",
+    "check-format": "prettier --check 'js/**/*.js'",
+    "validate": "npm run lint && npm run check-format",
+    "check:privacy": "node scripts/check-public-privacy.mjs"
+  },
+  "lint-staged": {
+    "js/**/*.js": [
+      "eslint --fix",
+      "prettier --write"
+    ]
+  },
+  "dependencies": {
+    "@netlify/blobs": "^11.1.7",
+    "@netlify/identity": "^2.0.0",
+    "nodemailer": "^10.3.1"
+  },
+  "overrides": {
+    "eslint": {
+      "minimatch": "^11.0.1",
+      "@eslint/config-array": {
+        "minimatch": "^11.0.1"
+      }
+    }
+  }
+}

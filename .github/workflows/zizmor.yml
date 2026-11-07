@@ -1,0 +1,48 @@
+name: Workflow security audit
+on:
+  push:
+    branches: [main]
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+  workflow_dispatch:
+  schedule:
+    - cron: '0 14 * * 1'
+permissions:
+  contents: read
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+jobs:
+  zizmor:
+    if: github.event_name != 'pull_request' || !github.event.pull_request.draft
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install verified zizmor release
+        run: |
+          curl --fail --silent --show-error --location --retry 3 https://github.com/zizmorcore/zizmor/releases/download/v1.32.0/zizmor-x86_64-unknown-linux-gnu.tar.gz -o "$RUNNER_TEMP/zizmor.tgz"
+          echo 'bb110cc765eca9cd7efb2e284a956be5974c60027b0970f16397d86208a9957b'"  $RUNNER_TEMP/zizmor.tgz" | sha256sum --check
+          mkdir -p "$RUNNER_TEMP/zizmor-bin"
+          tar -xzf "$RUNNER_TEMP/zizmor.tgz" -C "$RUNNER_TEMP/zizmor-bin" zizmor
+      - name: Audit online and block known vulnerable actions
+        run: |
+          test -n "$GH_TOKEN"
+          "$RUNNER_TEMP/zizmor-bin/zizmor" --no-config --no-ignores --strict-collection --no-progress --no-exit-codes --format=json .github/workflows > "$RUNNER_TEMP/zizmor.json"
+          python3 - <<'PYTHON'
+          import json, os
+          with open(os.path.join(os.environ['RUNNER_TEMP'], 'zizmor.json')) as handle:
+              findings = json.load(handle)
+          if not isinstance(findings, list):
+              raise SystemExit('Invalid zizmor report')
+          with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as summary:
+              summary.write('## Workflow security audit\n')
+              summary.write(f'Findings: {len(findings)}. Only known-vulnerable-actions blocks this job.\n\n')
+              for finding in findings:
+                  summary.write(f"- {finding['ident']}: {finding['desc']}\n")
+          raise SystemExit(1 if any(f['ident'] == 'known-vulnerable-actions' for f in findings) else 0)
+          PYTHON
+        env:
+          GH_TOKEN: ${{ github.token }}

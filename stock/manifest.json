@@ -1,0 +1,19 @@
+{
+  "name": "RedDay AI — Schwab Dip Hunter",
+  "short_name": "RedDay AI",
+  "description": "Dynamic Red-Day AI & Data Center Dip-Buying PWA for Charles Schwab (<$1,000 Growth Engine)",
+  "start_url": "/stock",
+  "scope": "/stock",
+  "display": "standalone",
+  "background_color": "#030303",
+  "theme_color": "#155dfc",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/stock/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

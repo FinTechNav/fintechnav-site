@@ -1,0 +1,17 @@
+node_modules/
+dist/
+.netlify/
+.DS_Store
+.env*
+!.env.example
+coverage/
+*.log
+
+# Private research, screenshots, support correspondence, generated reports and backups.
+/artifacts/local/
+
+# Local agent integrations and installed research skills may contain machine/private settings.
+/.codex/
+/.agents/
+*.bundle
+*.har
