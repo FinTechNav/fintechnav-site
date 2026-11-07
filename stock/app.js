@@ -179,18 +179,18 @@ for (const [symbol, name, role] of PortfolioViews.DEFENSE) {
 
 const DEFAULT_STATE = {
   cash: 0,
-  deployBudget: 50.00,
+  deployBudget: 0,
   unsettledCash: true,
   blockDayTrades: true,
   todayOrders: [],
-  sessionTiming: 'SEAMLESS',
+  sessionTiming: 'NORMAL',
   rules: {
-    landlordRedTriggerPct: -5.0,
-    sliceRedTriggerPct: -3.0,
-    oversoldRsiThreshold: 40,
-    zScoreTrigger: -1.25,
-    harvestGainPct: 35.0,
-    maxSingleStockWeightPct: 25.0
+    landlordRedTriggerPct: 0,
+    sliceRedTriggerPct: 0,
+    oversoldRsiThreshold: 0,
+    zScoreTrigger: 0,
+    harvestGainPct: 0,
+    maxSingleStockWeightPct: 0
   },
   holdings: {},
   watchlist: [],
@@ -1746,10 +1746,10 @@ function initEvents() {
     state.rules = {
       landlordRedTriggerPct: Number(document.getElementById('rule-landlord-drop').value),
       sliceRedTriggerPct: Number(document.getElementById('rule-slice-drop').value),
-      oversoldRsiThreshold: Number(document.getElementById('rule-rsi-buy').value || 40),
-      zScoreTrigger: Number(document.getElementById('rule-zscore-buy').value || -1.25),
+      oversoldRsiThreshold: Number(document.getElementById('rule-rsi-buy').value || state.rules.oversoldRsiThreshold),
+      zScoreTrigger: Number(document.getElementById('rule-zscore-buy').value || state.rules.zScoreTrigger),
       harvestGainPct: Number(document.getElementById('rule-harvest-pct').value),
-      maxSingleStockWeightPct: Number(document.getElementById('rule-max-weight').value || 25)
+      maxSingleStockWeightPct: Number(document.getElementById('rule-max-weight').value || state.rules.maxSingleStockWeightPct)
     };
     saveState();
     renderAll();

@@ -31,6 +31,8 @@ for (const path of paths) {
   const data = execFileSync('git', ['show', ':' + path], { maxBuffer: 32 * 1024 * 1024 });
   if (data.includes(0)) continue;
   const text = data.toString('utf8');
+  if (path === 'stock/index.html' && /id="input-schwab-(?:key|secret)"/.test(text))
+    failures.push(`${path}: brokerage credentials must be server-owned`);
   if (/\/Users\/[a-zA-Z0-9._-]+\//.test(text) || /\/home\/[a-zA-Z0-9._-]+\//.test(text))
     failures.push(`${path}: personal machine path`);
   if (/(?:accountNumber|account_number)\s*["']?\s*:\s*["']?\d{6,}/i.test(text))

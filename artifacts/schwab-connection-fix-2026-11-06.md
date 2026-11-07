@@ -23,4 +23,4 @@ References: [Netlify runtime context](https://docs.netlify.com/build/functions/a
 
 ## Fresh owner callback
 
-The owner reported the new invalid_client-specific error. Narrow UI inspection confirms both production credential settings exist, match the previously observed client ID and contain no obvious formatting issue; values were never printed or saved. The signed-in Schwab developer account shows an approved subscription but no apps or pending apps. Awaiting the owner locating the actual registered app/account before comparing the key/secret or changing settings. No live connection or sync success is claimed.
+The broker's invalid_client rejection identifies an app-configuration problem rather than a reusable session. Provider-portal observations and support research remain private local records. A successful real connection and read-only sync remain unverified; no live brokerage transaction is claimed.

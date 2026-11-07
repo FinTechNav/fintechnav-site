@@ -133,3 +133,22 @@ test('legacy view documents preserve quantities, revision and immutable order at
   );
   delete process.env.STOCK_PROFILE_LEGACY_IDS;
 });
+
+test('public browser defaults contain no private configuration or obsolete credential fields', () => {
+  const fs = require('node:fs');
+  const vm = require('node:vm');
+  const source = fs.readFileSync('stock/app.js', 'utf8');
+  const defaults = vm.runInNewContext(
+    source.slice(source.indexOf('const DEFAULT_STATE ='), source.indexOf('let appStarted =')) +
+      ';DEFAULT_STATE'
+  );
+  for (const key of ['watchlist', 'holdings', 'quotes', 'journal'])
+    assert.equal(Object.keys(defaults[key]).length, 0);
+  assert.equal(defaults.deployBudget, 0);
+  assert.ok(Object.values(defaults.rules).every((value) => value === 0));
+  const html = fs.readFileSync('stock/index.html', 'utf8');
+  assert.doesNotMatch(html, /id="input-schwab-(?:key|secret)"/);
+  assert.doesNotMatch(html, /<input[^>]+id="login-username"[^>]+value="[^"]+"/);
+  for (const input of html.matchAll(/<input[^>]+id="rule-[^"]+"[^>]*>/g))
+    assert.doesNotMatch(input[0], /value=/);
+});
