@@ -1,6 +1,6 @@
 import { login, logout, refreshSession, verifyRequestOrigin } from '@netlify/identity';
 import {
-  ownerEmail,
+  isOwnerEmail,
   json,
   checkOrigin,
   readBody,
@@ -57,12 +57,12 @@ export const createHandler =
           await identity.refreshSession();
         } else if (
           body.action !== 'login' ||
-          body.email?.toLowerCase() !== ownerEmail() ||
+          !isOwnerEmail(body.email) ||
           typeof body.password !== 'string'
         ) {
           throw new HttpError(401, 'Email or password is incorrect.');
         } else {
-          await identity.login(ownerEmail(), body.password);
+          await identity.login(body.email.trim().toLowerCase(), body.password);
         }
       } else if (request.method === 'GET') {
         // Refresh only via a same-origin POST; GET has no authentication mutations.

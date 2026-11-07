@@ -1,4 +1,7 @@
-process.env.STOCK_OWNER_EMAIL = 'owner@example.test';
+process.env.STOCK_OWNER_EMAIL_SHA256 = require('node:crypto')
+  .createHash('sha256')
+  .update('owner@example.test')
+  .digest('hex');
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');

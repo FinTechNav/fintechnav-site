@@ -4,7 +4,7 @@ The owner explicitly retained the intentionally public biography, professional p
 
 ## Current source
 
-- Neutral primary/partner identifiers replace private labels. Authenticated no-store configuration supplies display labels, migration aliases and initial preferences. The production owner allowlist is environment-driven and fails closed when missing; reset links use the entered email rather than a source-coded address.
+- Neutral primary/partner identifiers replace private labels. Authenticated no-store configuration supplies display labels, migration aliases and initial preferences. The production owner allowlist uses a private SHA-256 digest of the normalized email and fails closed when missing; reset links use the entered email rather than a source-coded address.
 - Existing shared configuration is translated on read while preserving quantities, immutable execution attribution, pending reviewed order ownership and compare-and-swap revisions. The migration does not reassign shares or submit orders. Older clients with retired identifiers must reload before preparing orders.
 - Public initial watchlists, holdings and quote snapshots are empty. Private configured defaults preserve the deployed app's existing setup. Private runtime variables are not build inputs or embedded browser data.
 - Local agent integration files and installed research skills are no longer tracked; all remain installed locally. Private archives, environment files, browser captures and Git recovery bundles are ignored. Both public journals contain engineering-only notes; the full previous versions remain in ignored local storage.
