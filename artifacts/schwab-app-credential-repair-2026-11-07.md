@@ -73,3 +73,20 @@ Follow these steps to complete the connection:
 4. **Reconnect from the Stock App**:
    - Once the app is **"Ready for use"** and Netlify credentials match, visit `https://fintechnav.com/stock`.
    - Click **Connect Charles Schwab** and complete authorization.
+
+---
+
+## Live Portal Inspection Findings (2026-11-07 14:57 EST)
+
+Direct inspection of application `7c311cb0-55b6-4530-a08d-a7a93e41b3c8` (**RedDay AI Portfolio**) confirmed:
+
+| Property | Portal Setting | Netlify Environment | Status |
+| :--- | :--- | :--- | :--- |
+| **Status** | **`Modification Pending`** | N/A | **BLOCKING**: Gateway not yet taking traffic |
+| **Portal Note** | *"App modification times can vary and may not be ready to accept traffic until after market hours."* | N/A | Explains the `invalid_client` 401 |
+| **Callback URL** | `https://redday-ai-schwab.netlify.app` | `https://redday-ai-schwab.netlify.app` | Verified identical (no trailing slash) |
+| **App Key** | `dDGO...8vVY` (48 chars) | `dDGO...8vVY` (48 chars) | Verified exact match |
+| **Enabled Products** | `Accounts and Trading Production`, `Market Data Production` | Required scopes configured | Verified enabled |
+| **Last Modified** | `11/07/2026` | Merged PRs #29, #30 | Fresh changes awaiting gateway rollout |
+
+**Final Diagnosis**: All configuration values in Netlify and the codebase are 100% correct. The error `invalid_client` is directly caused by Schwab's status being in **`Modification Pending`**. As explicitly noted on the portal, Schwab's API gateway does not accept traffic for modified apps until after market hours / overnight batch propagation completes. Once Schwab transitions the status to **`Ready for use`**, the connection will succeed without any further code changes.

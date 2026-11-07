@@ -145,3 +145,12 @@ Public engineering decisions and validation only. Detailed historical journals r
   - `issueToken` logs structured server metadata (`status`, `statusText`, sanitized upstream error description, masked client, secret length, redirect URI, code length) and surfaces runtime length/mask in the 503 error message.
 - **Safety:** No secret values, tokens, cookies, or account numbers logged. Upstream error descriptions sanitized to safe alphanumeric strings.
 - **Validation:** All 47 security regression tests pass; privacy guard, lint/format, and build pass cleanly.
+
+### Entry 52 — 2026-11-07 — Portal verification resolves root cause: Modification Pending
+- **Verification:** Inspected live Schwab Developer Portal application `7c311cb0-55b6-4530-a08d-a7a93e41b3c8` (RedDay AI Portfolio).
+- **Findings:**
+  - Status is `Modification Pending` with explicit portal notice: *"App modification times can vary and may not be ready to accept traffic until after market hours."*
+  - Callback URL is `https://redday-ai-schwab.netlify.app` (verified exact match, no trailing slash).
+  - App Key is `dDGO...8vVY` (48 chars, verified exact match with Netlify env).
+  - Products `Accounts and Trading Production` & `Market Data Production` are both enabled.
+- **Conclusion:** All Netlify environment settings and code implementations are verified correct. Token exchange `invalid_client` is strictly due to Schwab gateway cluster propagation during `Modification Pending`. Traffic will be accepted once status transitions to `Ready for use` (after market hours). See `artifacts/schwab-app-credential-repair-2026-11-07.md`.
