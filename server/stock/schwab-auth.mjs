@@ -1,6 +1,11 @@
 import { randomBytes } from 'node:crypto';
 import { protect, json, env, readBody, hash, HttpError } from './security.mjs';
-import { credentialKey, credentialStatus, issueToken } from './brokerage.mjs';
+import {
+  credentialKey,
+  credentialStatus,
+  issueToken,
+  cleanCredential,
+} from './brokerage.mjs';
 
 export const createHandler = (dependencies = {}) =>
   protect(async (request, context, user, store) => {
@@ -12,9 +17,11 @@ export const createHandler = (dependencies = {}) =>
     )
       throw new HttpError(503, 'The registered brokerage callback needs configuration.');
     if (request.method === 'GET') {
+      const clientId = cleanCredential(env('SCHWAB_CLIENT_ID'));
+      const secret = cleanCredential(env('SCHWAB_CLIENT_SECRET'));
       return json({
         ok: true,
-        credentialsConfigured: Boolean(env('SCHWAB_CLIENT_ID') && env('SCHWAB_CLIENT_SECRET')),
+        credentialsConfigured: Boolean(clientId && secret),
         callbackUrl: callback,
         ...credentialStatus(await store.get(credentialKey(user), { type: 'json' })),
       });
@@ -26,7 +33,9 @@ export const createHandler = (dependencies = {}) =>
       return json({ ok: true, connected: false });
     }
     if (body.action === 'begin') {
-      if (!env('SCHWAB_CLIENT_ID') || !env('SCHWAB_CLIENT_SECRET'))
+      const clientId = cleanCredential(env('SCHWAB_CLIENT_ID'));
+      const secret = cleanCredential(env('SCHWAB_CLIENT_SECRET'));
+      if (!clientId || !secret)
         throw new HttpError(503, 'The brokerage connection is not configured.');
       const state = randomBytes(32).toString('hex');
       await store.setJSON(`oauth/${hash(state)}`, {
@@ -46,7 +55,7 @@ export const createHandler = (dependencies = {}) =>
       const url = new URL('https://api.schwabapi.com/v1/oauth/authorize');
       url.search = new URLSearchParams({
         response_type: 'code',
-        client_id: env('SCHWAB_CLIENT_ID').trim(),
+        client_id: clientId,
         redirect_uri: callback,
         state,
       });

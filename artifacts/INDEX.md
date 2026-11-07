@@ -17,6 +17,7 @@
 - [Security audit snapshot](security-audit-2026-11-06.json).
 - [Dependency retirement](dependency-cleanup-2026-11-06.md).
 - [Schwab connection code repair](schwab-connection-fix-2026-11-06.md).
+- [Schwab app credential repair](schwab-app-credential-repair-2026-11-07.md).
 - [Repository merge-settings target](netlify-repo-settings-target-2026-11-06.json).
 - [Main ruleset target](netlify-main-ruleset-target-2026-11-06.json).
 
