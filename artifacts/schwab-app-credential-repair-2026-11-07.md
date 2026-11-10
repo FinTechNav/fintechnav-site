@@ -89,4 +89,19 @@ Direct inspection of application `7c311cb0-55b6-4530-a08d-a7a93e41b3c8` (**RedDa
 | **Enabled Products** | `Accounts and Trading Production`, `Market Data Production` | Required scopes configured | Verified enabled |
 | **Last Modified** | `11/07/2026` | Merged PRs #29, #30 | Fresh changes awaiting gateway rollout |
 
-**Final Diagnosis**: All configuration values in Netlify and the codebase are 100% correct. The error `invalid_client` is directly caused by Schwab's status being in **`Modification Pending`**. As explicitly noted on the portal, Schwab's API gateway does not accept traffic for modified apps until after market hours / overnight batch propagation completes. Once Schwab transitions the status to **`Ready for use`**, the connection will succeed without any further code changes.
+**Final Diagnosis (2026-11-07)**: While the app was in **`Modification Pending`**, Schwab's API gateway could not accept traffic until provisioning completed.
+
+---
+
+## Post-Propagation Secret Verification & Resolution (2026-11-10)
+
+Once the Schwab Developer Portal status transitioned to **`Ready For Use`**, token exchange (`POST /v1/oauth/token`) continued returning `HTTP 401 invalid_client` even though `clientIdLength` (`48`), `secretLength` (`64`), and `redirect_uri` (`https://redday-ai-schwab.netlify.app`) matched expected dimensions.
+
+1. **Zero-Exposure Cryptographic Comparison**:
+   - An in-page non-reversible `SHA-256` comparison between the Schwab Developer Portal and Netlify (`fintechnav`) environment variables confirmed:
+     - `SCHWAB_CLIENT_ID` (`48` chars) and `SCHWAB_CALLBACK_URL` matched 100% byte-for-byte (allowing `/v1/oauth/authorize` to succeed).
+     - `SCHWAB_CLIENT_SECRET` in Netlify (last saved `2026-11-06`, `64` alphanumeric chars) **did not match** the `Client Secret` active in the Schwab Developer Portal after Schwab's `2026-11-07` modification (`64` alphanumeric chars).
+2. **Remediation & Live Verification**:
+   - Updated `SCHWAB_CLIENT_SECRET` in Netlify (`fintechnav`) to match the active portal `Client Secret` and verified an exact `SHA-256` match (`64` chars, no quotes or whitespace).
+   - Triggered and published Netlify production deploy `6af37a0a06adc3a6b9af4b17` (`main@d5de512`) so serverless functions reloaded the updated environment variable.
+   - Completed end-to-end OAuth sign-in on `https://fintechnav.com/stock/` and confirmed live Charles Schwab connection succeeded.
