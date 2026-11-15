@@ -1528,10 +1528,12 @@ function renderJournal() {
   const tbody = document.getElementById('journal-tbody');
   if (!tbody) return;
   updateTableSortHeaders('journal');
-  tbody.innerHTML = sortedTableRows('journal', state.journal).map((j) => {
-    const isBuy = journalIsBuy(j);
-    const prof = COMPANY_PROFILES[j.symbol];
-    return `
+  tbody.innerHTML = state.journal.length
+    ? sortedTableRows('journal', state.journal)
+        .map((j) => {
+          const isBuy = journalIsBuy(j);
+          const prof = COMPANY_PROFILES[j.symbol];
+          return `
       <tr class="bg-[#0f0f0f] hover:bg-[#171717] h-11">
         <td class="py-2.5 px-4 text-[#a1a1a1] text-xs">${j.date}</td>
         <td class="py-2.5 px-3">
@@ -1545,12 +1547,18 @@ function renderJournal() {
         </td>
         <td class="py-2.5 px-3 text-right font-medium text-[#f5f5f5]">${j.qty}</td>
         <td class="py-2.5 px-3 text-right text-[#d9d9d9]">$${Number(j.price).toFixed(j.price < 1 ? 4 : 2)}</td>
-        <td class="py-2.5 px-3 text-right font-medium text-[#f5f5f5]">${j.total == null ? '—' : '$'+Number(j.total).toFixed(2)}</td>
+        <td class="py-2.5 px-3 text-right font-medium text-[#f5f5f5]">${j.total == null ? '—' : '$' + Number(j.total).toFixed(2)}</td>
         <td class="py-2.5 px-3 font-mono text-xs text-[#a1a1a1]">${j.orderId}</td>
         <td class="py-2.5 px-4 text-[#d9d9d9] text-xs">${j.note}</td>
       </tr>
     `;
-  }).join('');
+        })
+        .join('')
+    : `<tr><td colspan="8" class="py-6 text-center text-xs text-[#a1a1a1]">${
+        brokerSnapshot.orders?.length > 0 && activeView !== 'all'
+          ? `No orders specifically labeled for ${viewLabel(activeView)}. ${brokerSnapshot.orders.length} order(s) loaded in your account — switch to the "All" view to view all account trade history.`
+          : 'No confirmed trade executions loaded. Sync Schwab to load recent order history.'
+      }</td></tr>`;
 }
 
 function renderAuthStatus() {
@@ -1777,6 +1785,21 @@ function initEvents() {
     showToast('Sync confirmed shares, then assign them to a personal view.');
   });
 
+function getTradeAvailableCash() {
+  const b = (typeof brokerSnapshot !== 'undefined' && brokerSnapshot?.balances) || {};
+  return Number(
+    (b.cashAvailableForTrading > 0 ? b.cashAvailableForTrading : null) ??
+    (b.availableFunds > 0 ? b.availableFunds : null) ??
+    (b.cashBalance > 0 ? b.cashBalance : null) ??
+    (b.buyingPower > 0 ? b.buyingPower : null) ??
+    (state.cash > 0 ? state.cash : null) ??
+    b.cashAvailableForTrading ??
+    b.cashBalance ??
+    state.cash ??
+    0
+  );
+}
+
   // The server stores the reviewed basket and accepts its one-use confirmation.
   document.getElementById('btn-execute-schwab')?.addEventListener('click', async (event) => {
     if (!viewsReady || activeView === 'all' || sharedViews?.assignment.initialOwner || viewWriteError) { showToast('Choose a personal view and sync shared allocations before reviewing orders.'); return; }
@@ -1793,13 +1816,7 @@ function initEvents() {
       (sum, o) => sum + (o.cost || (o.qty || o.quantity || 1) * o.limitPrice),
       0
     );
-    const availableCash = Number(
-      brokerSnapshot?.balances?.cashAvailableForTrading ??
-      brokerSnapshot?.balances?.availableFunds ??
-      brokerSnapshot?.balances?.cashBalance ??
-      state.cash ??
-      0
-    );
+    const availableCash = getTradeAvailableCash();
     if (availableCash < totalOrderCost) {
       const shortBy = totalOrderCost - availableCash;
       showToast(`Insufficient funds: Basket requires $${totalOrderCost.toFixed(2)}, but you only have $${availableCash.toFixed(2)} cash available on Schwab (short $${shortBy.toFixed(2)}).`);
@@ -2046,13 +2063,7 @@ function updateTradeCalculations() {
   const total = Number((shares * price).toFixed(2));
   const action = actionInput.value || 'BUY';
 
-  const availableCash = Number(
-    brokerSnapshot?.balances?.cashAvailableForTrading ??
-    brokerSnapshot?.balances?.availableFunds ??
-    brokerSnapshot?.balances?.cashBalance ??
-    state.cash ??
-    0
-  );
+  const availableCash = getTradeAvailableCash();
 
   totalEl.textContent = `$${total.toFixed(2)}`;
   availEl.textContent = `$${availableCash.toFixed(2)}`;
@@ -2167,13 +2178,7 @@ function initTradeTicketModal() {
     }
 
     const total = quantity * limitPrice;
-    const availableCash = Number(
-      brokerSnapshot?.balances?.cashAvailableForTrading ??
-      brokerSnapshot?.balances?.availableFunds ??
-      brokerSnapshot?.balances?.cashBalance ??
-      state.cash ??
-      0
-    );
+    const availableCash = getTradeAvailableCash();
 
     if (action === 'BUY' && total > availableCash) {
       showToast(`Insufficient funds: Order requires $${total.toFixed(2)}, but you only have $${availableCash.toFixed(2)} cash available on Schwab.`);

@@ -139,7 +139,16 @@ function applyActiveView() {
       : activeView === 'primary' && !brokerSnapshot.syncedAt && sharedViews.assignment.initialOwner
         ? structuredClone(legacyPrimaryHoldings || {})
         : currentOwnership().holdings[activeView];
-  state.cash = Number(brokerSnapshot.balances.cashAvailableForTrading || 0);
+  const balances = brokerSnapshot.balances || {};
+  state.cash = Number(
+    (balances.cashAvailableForTrading > 0 ? balances.cashAvailableForTrading : null) ??
+    (balances.availableFunds > 0 ? balances.availableFunds : null) ??
+    (balances.cashBalance > 0 ? balances.cashBalance : null) ??
+    (balances.buyingPower > 0 ? balances.buyingPower : null) ??
+    balances.cashAvailableForTrading ??
+    balances.cashBalance ??
+    0
+  );
   state.journal = PortfolioViews.receipts(brokerSnapshot.orders, activeView);
   document.getElementById('input-deploy-cash').value = state.deployBudget;
   document.getElementById('select-order-session').value = state.sessionTiming;

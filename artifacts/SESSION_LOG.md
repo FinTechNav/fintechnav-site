@@ -187,3 +187,24 @@ Public engineering decisions and validation only. Detailed historical journals r
   5. *In-App Schwab Trade Ticket Modal:* Added `#modal-trade-ticket` accessible via "⚡ Trade" in the top navigation, "⚡ Place Order" in `#tab-portfolio`, and "⚡ Place Order for [SYMBOL]" in company detail modals. Features live quote lookup, real-time whole-share quantity calculation, session selector, real-time funds availability indicator, and strict $100 safety cap validation.
   6. *Available Funds Pre-Check:* Updated `#btn-execute-schwab` handler to calculate the total estimated cost of all whole-share buy orders and verify against `brokerSnapshot.balances.cashAvailableForTrading || state.cash` before calling `/api/schwab-trade` prepare, blocking underfunded submissions with an informative toast.
 - **Validation:** All 47 unit/security regression tests pass (`npm run test:security`); privacy guard passed for all tracked files (`npm run check:privacy`); `npm run validate` passed with clean lint/format; `npm run build` compiled public distribution cleanly. Zero secrets or credentials handled or logged.
+
+### Entry 56 — 2026-11-15 — Available cash balance resolution and resilient multi-strategy order history retrieval
+- **Observed issues:**
+  1. User had $5.43 in cash available on Schwab, but clicking "Buy basket on Schwab" triggered: `"Insufficient funds: Basket requires $3.82, but you only have $0.00 cash available on Schwab (short $3.82)."`.
+  2. "Schwab receipts & trade history" and "Recent orders · Last 60 days" displayed no orders even after syncing with Schwab.
+- **Root causes & resolutions:**
+  1. *Available Cash Fallback:*
+     - In Schwab accounts (notably cash accounts), `currentBalances.cashAvailableForTrading` can be `0` or omitted while `currentBalances.cashBalance` or `availableFunds` holds the actual positive cash (e.g., $5.43). In JavaScript, `0 ?? fallback` evaluates to `0` because `0` is not nullish.
+     - Updated `normalizeAccount()` in `server/stock/portfolio-views.mjs` to check `currentBalances`, `projectedBalances`, and `aggregatedBalance`. If `cashAvailableForTrading` is `<= 0` or missing, it falls back to the positive balance of `availableFunds`, `cashBalance`, `buyingPower`, or `settledFunds`.
+     - In `stock/view-controller.js` and `stock/app.js`, implemented `getTradeAvailableCash()` to consistently prioritize positive cash balances across `cashAvailableForTrading`, `availableFunds`, `cashBalance`, and `buyingPower`.
+  2. *Resilient Order History Retrieval:*
+     - The date-bounded query `fromEnteredTime` + `toEnteredTime` can return `[]` from Schwab due to server clock skew (if `toEnteredTime` is treated as a future timestamp) or strict query parameter parsing.
+     - Implemented `fetchOrderHistory(account, record, fetcher)` with resilient fallbacks:
+       a) Bounded 58-day query with `toEnteredTime` clamped safely 2 minutes in the past.
+       b) If that returns an empty array or 400/404, queries the default unparameterized `${prefix}/orders` endpoint.
+       c) If still empty, queries the global `/orders` endpoint across all linked accounts.
+       d) Preserves and propagates real brokerage outages and auth rejections (502, 503, 401, 409).
+     - In `normalizeAccount()`, expanded order parsing to recognize `state: 'FILLED'` (used by Schwab Trader API v1), `orderLegs`, `legs`, root `executionLegs`, and `executions`. If an order is FILLED with `filledQuantity > 0` but Schwab omitted the activity collection in the summary payload, synthesized a summary execution fact to ensure confirmed execution receipts and allocations are generated.
+     - In `server/stock/orders.mjs`, enhanced `inspectHistory()` to check `status || state`, root `executionLegs`, `closeTime`, and direct `order.symbol`.
+     - In `stock/app.js`, updated `renderJournal()` to display an empty-state message and notice when orders exist in the account but are not labeled for the currently selected personal view.
+- **Validation:** Added 2 new regression unit tests in `tests/stock-views.test.cjs`. All 49 mocked security & views tests pass (`npm run test:security`); privacy check passed (`npm run check:privacy`); lint & formatting clean (`npm run validate`); build succeeded (`npm run build`). No credentials or tokens logged.

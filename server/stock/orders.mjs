@@ -74,20 +74,38 @@ export function inspectHistory(history, now = Date.now()) {
   const sells = new Set();
   const today = marketDate(now);
   for (const order of history) {
-    const status = String(order.status || '').toUpperCase();
+    const status = String(order.status || order.state || '').toUpperCase();
     const canceledWithoutFills =
       ['CANCELED', 'REJECTED', 'EXPIRED'].includes(status) && !Number(order.filledQuantity);
     if (canceledWithoutFills) continue;
-    const executionToday = (order.orderActivityCollection || []).some((activity) =>
-      (activity.executionLegs || []).some((leg) => leg.time && marketDate(leg.time) === today)
-    );
-    const enteredToday = order.enteredTime && marketDate(order.enteredTime) === today;
+    const executionToday =
+      (order.orderActivityCollection || []).some((activity) =>
+        (activity.executionLegs || []).some((leg) => leg.time && marketDate(leg.time) === today)
+      ) ||
+      (order.executionLegs || []).some((leg) => leg.time && marketDate(leg.time) === today) ||
+      (order.executions || []).some((leg) => leg.time && marketDate(leg.time) === today);
+    const enteredToday =
+      (order.enteredTime && marketDate(order.enteredTime) === today) ||
+      (order.closeTime && marketDate(order.closeTime) === today);
     const working = !['FILLED', 'CANCELED', 'REJECTED', 'EXPIRED', 'REPLACED'].includes(status);
     if (!executionToday && !enteredToday && !working) continue;
-    for (const leg of order.orderLegCollection || []) {
-      const symbol = String(leg.instrument?.symbol || '').toUpperCase();
-      if (String(leg.instruction).includes('BUY')) buys.add(symbol);
-      if (String(leg.instruction).includes('SELL')) sells.add(symbol);
+    const legs =
+      order.orderLegCollection ||
+      order.orderLegs ||
+      order.legs ||
+      order.childOrderStrategies?.[0]?.orderLegCollection ||
+      [];
+    if (legs.length > 0) {
+      for (const leg of legs) {
+        const symbol = String(leg.instrument?.symbol || '').toUpperCase();
+        if (String(leg.instruction).includes('BUY')) buys.add(symbol);
+        if (String(leg.instruction).includes('SELL')) sells.add(symbol);
+      }
+    } else if (order.symbol) {
+      const symbol = String(order.symbol).toUpperCase();
+      const instruction = String(order.instruction || order.orderType || '').toUpperCase();
+      if (instruction.includes('BUY')) buys.add(symbol);
+      if (instruction.includes('SELL')) sells.add(symbol);
     }
   }
   return { buys, sells };

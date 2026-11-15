@@ -6,6 +6,7 @@ import {
   labeledSnapshot,
   tagPrefix,
   initializeExistingShares,
+  fetchOrderHistory,
 } from './portfolio-views.mjs';
 import { BROKER, getCredentials, selectedAccount, brokerGet } from './brokerage.mjs';
 import {
@@ -34,7 +35,7 @@ export const createHandler = (dependencies = {}) =>
     const historyPath = () => {
       // Include older GTC orders that may have executed today, not just orders
       // entered today. Saturated result sets fail closed in inspectHistory.
-      const to = new Date();
+      const to = new Date(Date.now() - 120000);
       const from = new Date(to.getTime() - 58 * 86400000);
       const query = new URLSearchParams({
         fromEnteredTime: from.toISOString(),
@@ -46,7 +47,7 @@ export const createHandler = (dependencies = {}) =>
     if (request.method === 'GET') {
       const [accounts, todayOrders] = await Promise.all([
         brokerGet('/accounts?fields=positions', record, fetcher),
-        brokerGet(historyPath(), record, fetcher),
+        fetchOrderHistory(account, record, fetcher),
       ]);
       const locks = inspectHistory(todayOrders);
       const snapshot = await labeledSnapshot(store, user, account, accounts, todayOrders);
@@ -79,7 +80,7 @@ export const createHandler = (dependencies = {}) =>
             'Sync the shared portfolio to initialize share ownership before trading.'
           );
       }
-      checkDayTrade(orders, await brokerGet(historyPath(), record, fetcher));
+      checkDayTrade(orders, await fetchOrderHistory(account, record, fetcher));
       const confirmationId = randomBytes(32).toString('hex');
       await store.setJSON(`approvals/${hash(confirmationId)}`, {
         userId: user.id,
@@ -113,7 +114,7 @@ export const createHandler = (dependencies = {}) =>
     }
     const approvedProfile = canonicalProfile(approval.profile || 'primary');
     if (!approvedProfile) throw new HttpError(409, 'Reload the app and review these orders again.');
-    checkDayTrade(approval.orders, await brokerGet(historyPath(), record, fetcher));
+    checkDayTrade(approval.orders, await fetchOrderHistory(account, record, fetcher));
     // Immutable one-time claim, not a read-then-write lock or in-memory dedupe.
     // A network timeout never causes an automatic resubmission of an order.
     const claim = await store.setJSON(`${key}/submitted`, { at: Date.now() }, { onlyIfNew: true });
@@ -126,7 +127,7 @@ export const createHandler = (dependencies = {}) =>
     for (const order of approval.orders) {
       try {
         // Recheck immediately before each order; any unavailable check stops the batch.
-        checkDayTrade([order], await brokerGet(historyPath(), record, fetcher));
+        checkDayTrade([order], await fetchOrderHistory(account, record, fetcher));
         const response = await fetcher(`${BROKER}${prefix}/orders`, {
           method: 'POST',
           headers: {
