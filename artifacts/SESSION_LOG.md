@@ -208,3 +208,34 @@ Public engineering decisions and validation only. Detailed historical journals r
      - In `server/stock/orders.mjs`, enhanced `inspectHistory()` to check `status || state`, root `executionLegs`, `closeTime`, and direct `order.symbol`.
      - In `stock/app.js`, updated `renderJournal()` to display an empty-state message and notice when orders exist in the account but are not labeled for the currently selected personal view.
 - **Validation:** Added 2 new regression unit tests in `tests/stock-views.test.cjs`. All 49 mocked security & views tests pass (`npm run test:security`); privacy check passed (`npm run check:privacy`); lint & formatting clean (`npm run validate`); build succeeded (`npm run build`). No credentials or tokens logged.
+
+### Entry 57 — 2026-11-15 — Resilient multi-tier order retrieval, portfolio sync error recovery & in-depth sync button logging
+- **Observed issues:**
+  1. User encountered "Portfolio sync failed" error when clicking the sync button on `https://fintechnav.com/stock/`.
+  2. "Recent orders · Last 60 days" and "Schwab receipts & trade history" remained empty even after syncing.
+  3. UI lacked detailed in-app logging during sync, making progress and failure diagnostics opaque to the user.
+- **Root causes & resolutions:**
+  1. *Portfolio Sync 502 / Failure Resolution:*
+     - In `server/stock/brokerage.mjs`, `brokerGet` maps all upstream non-401 HTTP errors to `HttpError(502)`. When Schwab rejected date-bounded queries (e.g. strict 60-day window or server clock skew) with HTTP 400 Bad Request, `brokerGet` threw `HttpError(502)`. In PR #35, `fetchOrderHistory` only caught `400` and `404`, so the 502 rethrew immediately, bypassing all fallbacks and causing `fetchSnapshot` and `/api/schwab-trade` to return 502.
+     - Implemented `fetchOrderHistoryWithDiagnostics(account, record, fetcher, failClosed)` with a 7-tier strategy ladder:
+       a) `account-bounded-58d`: 58-day window with 2-minute clock skew buffer and `maxResults=3000`.
+       b) `account-bounded-30d`: 30-day window without `maxResults`.
+       c) `account-bounded-7d`: 7-day window.
+       d) `global-bounded-58d`: Global `/orders` 58-day window.
+       e) `global-bounded-30d`: Global `/orders` 30-day window.
+       f) `account-unparameterized`: `${prefix}/orders`.
+       g) `global-unparameterized`: `/orders`.
+     - In `brokerGet`, wrapped unexpected fetch exceptions with `HttpError(502)`.
+     - When `failClosed` is `false` (during portfolio sync), order endpoint degradation returns `{ orders: [], diagnostics }` rather than failing the entire sync, ensuring account positions and cash balances are always loaded and displayed.
+     - When `failClosed` is `true` (during trade preparation and submission), real history errors throw `HttpError(502)` to maintain strict day-trade safety.
+  2. *Receipts and Orders Extraction Fix:*
+     - In `normalizeAccount()`, sanitized price and quantity coercion (`finite()`) to support string or numeric payloads.
+     - If `status === 'FILLED'` and `filledQuantity` is omitted or 0, resolved to `order.quantity`.
+     - Added multi-field price fallbacks (`order.price`, `order.limitPrice`, `order.averageExecutionPrice`, `order.avgFillPrice`, `leg.price`).
+     - Synthesized execution legs for filled orders lacking activity collections so they reliably populate the Receipts & Trade History table.
+  3. *Sync Button Logging and UX:*
+     - Added `#btn-sync-journal` ("⇄ Sync receipts from Schwab") to the header of Tab 5 (Receipts & Trade History).
+     - Wired loading spinner states, button disabling, and comprehensive system logging to `#btn-sync-schwab-positions`, `#btn-sync-account`, and `#btn-sync-journal`.
+     - Added step-by-step diagnostic logging via `addSystemLog` detailing OAuth connection checks, token validity timestamps, request latency (ms), position and order counts, available cash, and query strategy diagnostics (e.g. `[account-bounded-58d:error(502), account-bounded-30d:2 orders]`).
+     - Explicitly exported `window.addSystemLog = addSystemLog`.
+- **Validation:** All 50 regression and security tests pass (`npm run test:security`); privacy guard passed for all tracked files (`npm run check:privacy`); `npm run validate` passed with clean lint/format; `npm run build` compiled public distribution cleanly. Zero secrets or credentials handled or logged.

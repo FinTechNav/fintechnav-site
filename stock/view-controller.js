@@ -372,17 +372,43 @@ function checkUnassignedSharesNotification() {
     banner.classList.add('hidden');
   }
 }
+function safeLog(level, source, message) {
+  if (typeof addSystemLog === 'function') {
+    addSystemLog(level, source, message);
+  } else if (typeof window !== 'undefined' && typeof window.addSystemLog === 'function') {
+    window.addSystemLog(level, source, message);
+  } else {
+    console.log(`[${level}] ${source}: ${message}`);
+  }
+}
+
 async function syncSharedPortfolio() {
   await viewWriteQueue;
+  safeLog('INFO', '/api/schwab-trade', 'Sync starting: Checking Schwab OAuth connection...');
   const connection = await refreshSchwabStatus();
-  if (!connection.connected) {
-    document.getElementById('modal-auth').classList.remove('hidden');
+  if (!connection?.connected) {
+    document.getElementById('modal-auth')?.classList.remove('hidden');
+    safeLog('WARN', '/api/schwab-trade', 'Schwab connection not active. Opened auth modal.');
     showToast('Connect Charles Schwab to sync positions.');
     return;
   }
+  const expStr = connection.accessTokenExpiresAt
+    ? new Date(connection.accessTokenExpiresAt).toLocaleTimeString()
+    : 'active';
+  safeLog(
+    'INFO',
+    '/api/schwab-trade',
+    `Schwab OAuth active (token valid until ${expStr}). Requesting positions, balances, and orders...`
+  );
+  const startTime = Date.now();
   const response = await stockFetch('/api/schwab-trade');
+  const durationMs = Date.now() - startTime;
   const data = await safeReadJson(response, 'Schwab portfolio');
-  if (!response.ok || !data.ok) throw new Error(data.error || 'Could not sync Schwab.');
+  if (!response.ok || !data.ok) {
+    const errorMsg = data.error || `HTTP ${response.status} from /api/schwab-trade`;
+    safeLog('ERROR', '/api/schwab-trade', `Portfolio sync failed in ${durationMs}ms: ${errorMsg}`);
+    throw new Error(errorMsg);
+  }
   brokerSnapshot = data.snapshot;
   state.dayTradeLocks = data.dayTradeLocks;
   if (!pendingViewWrites && data.views?.document) {
@@ -401,16 +427,44 @@ async function syncSharedPortfolio() {
   saveState();
   renderAll();
   checkUnassignedSharesNotification();
-  showToast('Synced the shared Schwab portfolio');
+  const posCount = brokerSnapshot.positions?.length || 0;
+  const orderCount = brokerSnapshot.orders?.length || 0;
+  const diagStr = Array.isArray(data.orderDiagnostics)
+    ? data.orderDiagnostics
+        .map((d) => `${d.strategy}:${d.ok ? d.count + ' orders' : 'error(' + (d.status || d.error || 'failed') + ')'}`)
+        .join(', ')
+    : 'none';
+  safeLog(
+    'OK',
+    '/api/schwab-trade',
+    `Portfolio sync complete in ${durationMs}ms: ${posCount} holdings, ${orderCount} orders, cash available: $${state.cash.toFixed(2)}. Query strategies: [${diagStr}]`
+  );
+  showToast(`Synced Schwab: ${posCount} holdings, ${orderCount} orders`);
 }
 function initSharedViewEvents() {
   document
     .getElementById('portfolio-view-select')
     .addEventListener('change', (e) => selectPortfolioView(e.target.value));
   document.getElementById('btn-reload-views').addEventListener('click', initializeSharedViews);
-  document
-    .getElementById('btn-sync-account')
-    .addEventListener('click', () => syncSharedPortfolio().catch((e) => showToast(e.message)));
+  document.getElementById('btn-sync-account')?.addEventListener('click', async () => {
+    const btn = document.getElementById('btn-sync-account');
+    const origText = btn ? btn.textContent : '';
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = 'Syncing...';
+    }
+    safeLog('INFO', '/api/schwab-trade', 'Account tab sync button clicked.');
+    try {
+      await syncSharedPortfolio();
+    } catch (e) {
+      showToast('Sync failed: ' + e.message);
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = origText;
+      }
+    }
+  });
   document
     .getElementById('btn-allocate-all-primary')
     ?.addEventListener('click', () => allocateAllUnassigned('primary'));

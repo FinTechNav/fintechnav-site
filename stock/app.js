@@ -881,6 +881,9 @@ function addSystemLog(level, source, message) {
   }
   renderSystemLogs();
 }
+if (typeof window !== 'undefined') {
+  window.addSystemLog = addSystemLog;
+}
 
 async function safeReadJson(res, endpointLabel = 'API') {
   const rawText = await res.text();
@@ -1963,8 +1966,46 @@ function getTradeAvailableCash() {
     } catch (error) { showSchwabError(error.message); }
   });
 
-  document.getElementById('btn-sync-schwab-positions')?.addEventListener('click', () => {
-    syncSharedPortfolio().catch(error => { showToast(error.message); addSystemLog('ERROR','/api/schwab-trade','Portfolio sync failed.'); });
+  document.getElementById('btn-sync-schwab-positions')?.addEventListener('click', async () => {
+    const btn = document.getElementById('btn-sync-schwab-positions');
+    const origHtml = btn ? btn.innerHTML : '';
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = `<span class="inline-block animate-spin mr-1.5">⏳</span> Syncing...`;
+    }
+    addSystemLog('INFO', '/api/schwab-trade', 'Toolbar sync button clicked.');
+    try {
+      await syncSharedPortfolio();
+    } catch (error) {
+      showToast('Sync failed: ' + error.message);
+      addSystemLog('ERROR', '/api/schwab-trade', `Portfolio sync failed: ${error.message}`);
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = origHtml;
+      }
+    }
+  });
+
+  document.getElementById('btn-sync-journal')?.addEventListener('click', async () => {
+    const btn = document.getElementById('btn-sync-journal');
+    const origHtml = btn ? btn.innerHTML : '';
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = `<span class="inline-block animate-spin mr-1.5">⏳</span> Syncing...`;
+    }
+    addSystemLog('INFO', '/api/schwab-trade', 'Receipts tab sync button clicked.');
+    try {
+      await syncSharedPortfolio();
+    } catch (error) {
+      showToast('Sync failed: ' + error.message);
+      addSystemLog('ERROR', '/api/schwab-trade', `Portfolio sync failed: ${error.message}`);
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = origHtml;
+      }
+    }
   });
 
   document.getElementById('btn-refresh-quotes')?.addEventListener('click', refreshLiveQuotes);

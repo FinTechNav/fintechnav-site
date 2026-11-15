@@ -88,7 +88,7 @@ async function fixture(options = {}) {
       return Response.json([
         { securitiesAccount: { positions: [], currentBalances: { cashAvailableForTrading: 5 } } },
       ]);
-    if (String(url).includes('/orders?'))
+    if (String(url).includes('/orders') && init.method !== 'POST')
       return options.historyError
         ? new Response('', { status: 503 })
         : Response.json(options.history || []);
