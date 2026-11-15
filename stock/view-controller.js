@@ -140,15 +140,21 @@ function applyActiveView() {
         ? structuredClone(legacyPrimaryHoldings || {})
         : currentOwnership().holdings[activeView];
   const balances = brokerSnapshot.balances || {};
-  state.cash = Number(
-    (balances.cashAvailableForTrading > 0 ? balances.cashAvailableForTrading : null) ??
-    (balances.availableFunds > 0 ? balances.availableFunds : null) ??
-    (balances.cashBalance > 0 ? balances.cashBalance : null) ??
-    (balances.buyingPower > 0 ? balances.buyingPower : null) ??
-    balances.cashAvailableForTrading ??
-    balances.cashBalance ??
-    0
+  const cashCandidates = [
+    balances.cashAvailableForTrading,
+    balances.availableFunds,
+    balances.cashBalance,
+    balances.totalCash,
+    balances.settledCash,
+    balances.availableFundsNonMarginableTrade,
+    balances.moneyMarketFund,
+    balances.buyingPower,
+    balances.cashPositionsTotal,
+  ];
+  const positiveCash = cashCandidates.find(
+    (v) => typeof v === 'number' && Number.isFinite(v) && v > 0
   );
+  state.cash = positiveCash ?? Number(balances.cashAvailableForTrading || balances.cashBalance || 0);
   state.journal = PortfolioViews.receipts(brokerSnapshot.orders, activeView);
   document.getElementById('input-deploy-cash').value = state.deployBudget;
   document.getElementById('select-order-session').value = state.sessionTiming;
@@ -257,7 +263,12 @@ function renderAccountOverview() {
     ['Cash balance', 'cashBalance'],
     ['Available funds', 'availableFunds'],
     ['Buying power', 'buyingPower'],
+    ['Total cash', 'totalCash'],
+    ['Settled cash', 'settledCash'],
+    ['Money market fund', 'moneyMarketFund'],
+    ['Cash sweep positions', 'cashPositionsTotal'],
   ]
+    .filter(([_, key]) => Number.isFinite(snapshot.balances[key]))
     .map(
       ([label, key]) =>
         `<div class="kumo-card p-4"><p class="text-xs text-[#a1a1a1]">${label}</p><strong class="block mt-2">${viewMoney(snapshot.balances[key])}</strong></div>`
@@ -434,10 +445,21 @@ async function syncSharedPortfolio() {
         .map((d) => `${d.strategy}:${d.ok ? d.count + ' orders' : 'error(' + (d.status || d.error || 'failed') + ')'}`)
         .join(', ')
     : 'none';
+  const b = brokerSnapshot.balances || {};
+  const balanceBreakdown = [
+    `avail=$${state.cash.toFixed(2)}`,
+    Number.isFinite(b.cashBalance) ? `cashBal=$${b.cashBalance.toFixed(2)}` : null,
+    Number.isFinite(b.totalCash) ? `totalCash=$${b.totalCash.toFixed(2)}` : null,
+    Number.isFinite(b.settledCash) ? `settledCash=$${b.settledCash.toFixed(2)}` : null,
+    Number.isFinite(b.moneyMarketFund) ? `mmf=$${b.moneyMarketFund.toFixed(2)}` : null,
+    b.cashPositionsTotal > 0 ? `sweepPos=$${b.cashPositionsTotal.toFixed(2)}` : null,
+  ]
+    .filter(Boolean)
+    .join(', ');
   safeLog(
     'OK',
     '/api/schwab-trade',
-    `Portfolio sync complete in ${durationMs}ms: ${posCount} holdings, ${orderCount} orders, cash available: $${state.cash.toFixed(2)}. Query strategies: [${diagStr}]`
+    `Portfolio sync complete in ${durationMs}ms: ${posCount} holdings, ${orderCount} orders, balances: [${balanceBreakdown}]. Query strategies: [${diagStr}]`
   );
   showToast(`Synced Schwab: ${posCount} holdings, ${orderCount} orders`);
 }

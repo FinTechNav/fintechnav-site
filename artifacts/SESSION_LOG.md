@@ -239,3 +239,27 @@ Public engineering decisions and validation only. Detailed historical journals r
      - Added step-by-step diagnostic logging via `addSystemLog` detailing OAuth connection checks, token validity timestamps, request latency (ms), position and order counts, available cash, and query strategy diagnostics (e.g. `[account-bounded-58d:error(502), account-bounded-30d:2 orders]`).
      - Explicitly exported `window.addSystemLog = addSystemLog`.
 - **Validation:** All 50 regression and security tests pass (`npm run test:security`); privacy guard passed for all tracked files (`npm run check:privacy`); `npm run validate` passed with clean lint/format; `npm run build` compiled public distribution cleanly. Zero secrets or credentials handled or logged.
+
+### Entry 58 — 2026-11-15 — Cash sweep position extraction, multi-field balance resolution & Schwab transactions API trade retrieval
+- **Observed issues:**
+  1. User's live log confirmed portfolio sync succeeded without 502 (`10 holdings`), but reported `cash available: $0.00` despite $5.43 being available on Schwab.
+  2. All 5 date-bounded queries to `/orders` returned `0 orders` because orders entered outside this app (on Schwab web, mobile, or ThinkOrSwim) are isolated from the API's `/orders` endpoint.
+- **Root causes & resolutions:**
+  1. *Cash Balance & Cash Sweep Resolution:*
+     - In Schwab accounts (especially with automated cash sweep or money market funds), uninvested cash is frequently reported under `currentBalances.totalCash`, `currentBalances.settledCash`, `currentBalances.moneyMarketFund`, `currentBalances.availableFundsNonMarginableTrade`, or as a position with `assetType: 'CASH_EQUIVALENT'` (e.g., SWVXX, Bank Deposit sweep) rather than `currentBalances.cashAvailableForTrading` (which defaults to $0.00).
+     - Updated `normalizeAccount()` in `server/stock/portfolio-views.mjs` to extract all keys across `currentBalances`, `projectedBalances`, `aggregatedBalance`, and `initialBalances`.
+     - Added cash sweep position scanner that sums `marketValue` / `longQuantity` for positions matching `CASH_EQUIVALENT`, `CURRENCY`, `SWVXX`, `SNAXX`, `SPAXX`, `/BA`, or sweep keywords.
+     - Implemented prioritized cash resolution across `cashAvailableForTrading`, `availableFunds`, `cashBalance`, `totalCash`, `settledCash`, `availableFundsNonMarginableTrade`, `moneyMarketFund`, `buyingPower`, and `cashPositionsTotal`.
+     - Updated client-side cash resolution in `stock/view-controller.js` (`applyActiveView()`) and `stock/app.js` (`getTradeAvailableCash()`).
+     - Added dynamic cards for `totalCash`, `settledCash`, `moneyMarketFund`, and `cashPositionsTotal` in `#account-balances`.
+  2. *Outside-App Trade Retrieval via Transactions API:*
+     - Schwab's Trader API `/orders` endpoints only return orders placed through the API; trades placed on the Schwab website, mobile app, or ThinkOrSwim are tracked via `GET /accounts/{accountNumber}/transactions`.
+     - Implemented `transactionToOrder(tx)` in `server/stock/portfolio-views.mjs` to map `type: 'TRADE'` transaction records into normalized orders with `status: 'FILLED'`, share quantities, prices, and execution legs.
+     - Expanded `fetchOrderHistoryWithDiagnostics` with 4 transaction query strategies:
+       a) `account-tx-trade-ymd`: `${prefix}/transactions?startDate=YYYY-MM-DD&endDate=YYYY-MM-DD&types=TRADE`
+       b) `account-tx-trade-iso`: `${prefix}/transactions?startDate=ISO&endDate=ISO&types=TRADE`
+       c) `account-tx-trade`: `${prefix}/transactions?types=TRADE` (Schwab default 180-day window)
+       d) `account-tx-all`: `${prefix}/transactions`
+  3. *Comprehensive Balance Logging:*
+     - Enhanced sync complete logging in `stock/view-controller.js` to log detailed balance metrics: `balances: [avail=$..., cashBal=$..., totalCash=$..., settled=$..., mmf=$..., sweepPos=$...]`.
+- **Validation:** Added 2 new tests in `tests/stock-views.test.cjs`. All 52 tests pass (`npm run test:security`); privacy guard passed for all tracked files (`npm run check:privacy`); `npm run validate` passed with clean lint/format; `npm run build` compiled public distribution cleanly. Zero secrets or credentials handled or logged.
