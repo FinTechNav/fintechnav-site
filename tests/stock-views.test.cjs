@@ -674,3 +674,113 @@ test('transactionsToOrders extracts ticker, quantity, price, and instruction fro
   assert.equal(orders[1].price, 220.0);
   assert.equal(orders[1].status, 'FILLED');
 });
+
+test('GET /api/schwab-trade prioritizes single-account ledger endpoint and falls back to multi-account on upstream error', async () => {
+  const f = await fixture();
+  await f.api.initializeExistingShares(f.store, owner, f.initial, {
+    positions: [pos('LMT', 3)],
+    allocationOrders: [],
+  });
+  const { createHandler } = await import('../server/stock/schwab-trade.mjs');
+  const seenUrls = [];
+  const directFetcher = async (url) => {
+    seenUrls.push(String(url));
+    if (String(url).endsWith('/accountNumbers')) {
+      return Response.json([{ hashValue: 'test-account' }]);
+    }
+    if (String(url).endsWith('/accounts/test-account?fields=positions')) {
+      return Response.json({
+        securitiesAccount: {
+          type: 'MARGIN',
+          positions: [],
+          currentBalances: {
+            liquidationValue: 105.43,
+            longMarketValue: 100.0,
+            cashAvailableForTrading: 5.43,
+            intradayBuyingPowerAmount: 200,
+          },
+        },
+      });
+    }
+    if (String(url).includes('/orders') || String(url).includes('/transactions')) {
+      return Response.json([]);
+    }
+    throw new Error(`Unexpected url: ${url}`);
+  };
+  const directRes = await (await createHandler({ ...f.dependencies, fetcher: directFetcher })(request(), ctx)).json();
+  assert.equal(directRes.ok, true);
+  assert.equal(directRes.ledgerSource, 'single-account');
+  assert.equal(directRes.snapshot.balances.cashAvailableForTrading, 5.43);
+  assert.equal(directRes.snapshot.balances.intradayBuyingPowerAmount, 200);
+  assert.equal(directRes.snapshot.balances.accountType, 'MARGIN');
+  assert.ok(seenUrls.some((u) => u.endsWith('/accounts/test-account?fields=positions')));
+  assert.ok(!seenUrls.some((u) => u.endsWith('/accounts?fields=positions')));
+
+  const fallbackRes = await (await createHandler(f.dependencies)(request(), ctx)).json();
+  assert.equal(fallbackRes.ok, true);
+  assert.equal(fallbackRes.ledgerSource, 'multi-account');
+});
+
+test('fetchOrderHistoryWithDiagnostics unwraps object-wrapped payloads and preserves upstreamStatus', async () => {
+  const { fetchOrderHistoryWithDiagnostics } = await import('../server/stock/portfolio-views.mjs');
+  const fetcher = async (url) => {
+    if (String(url).includes('/orders?')) {
+      return new Response('Bad Request', { status: 400 });
+    }
+    if (String(url).includes('/transactions')) {
+      return Response.json({
+        transactions: [
+          {
+            activityId: 'tx-wrapped',
+            type: 'TRADE',
+            netAmount: -50,
+            time: '2026-11-15T12:00:00Z',
+            description: 'BOUGHT 10 POET @ 5.00',
+            transferItems: [
+              { amount: 10, price: 5, instrument: { symbol: 'POET', assetType: 'EQUITY' } },
+            ],
+          },
+        ],
+      });
+    }
+    return Response.json([]);
+  };
+  const res = await fetchOrderHistoryWithDiagnostics('test-account', { accessToken: 'tok' }, fetcher, false);
+  assert.equal(res.orders.length, 1);
+  assert.equal(res.orders[0].symbol, 'POET');
+  assert.equal(res.diagnostics[0].status, 400);
+  assert.match(res.diagnostics[1].shape, /^obj\(/);
+});
+
+test('normalizeAccount keeps margin intradayBuyingPowerAmount separate from cashAvailableForTrading', async () => {
+  const { normalizeAccount } = await import('../server/stock/portfolio-views.mjs');
+  const snapshot = normalizeAccount(
+    [
+      {
+        securitiesAccount: {
+          type: 'MARGIN',
+          positions: [
+            {
+              longQuantity: 10,
+              marketValue: 100,
+              instrument: { symbol: 'NVDA', assetType: 'EQUITY' },
+            },
+          ],
+          currentBalances: {
+            liquidationValue: 100,
+            longMarketValue: 100,
+            cashBalance: 0,
+            availableFunds: 0,
+            buyingPower: 0,
+            intradayBuyingPowerAmount: 400,
+          },
+        },
+      },
+    ],
+    [],
+    {}
+  );
+  assert.equal(snapshot.balances.cashAvailableForTrading, 0);
+  assert.equal(snapshot.balances.intradayBuyingPowerAmount, 400);
+  assert.equal(snapshot.balances.accountType, 'MARGIN');
+});

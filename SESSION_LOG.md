@@ -159,3 +159,36 @@ Public engineering decisions and validation only. Detailed historical journals r
 - **Observed error:** After Schwab transitioned the Developer Portal app status from `Modification Pending` to `Ready For Use`, `/api/schwab-auth` continued returning HTTP 503 (`invalid_client`, HTTP 401) during `/v1/oauth/token` exchange despite matching `clientIdLength: 48`, `secretLength: 64`, and `redirect_uri: https://redday-ai-schwab.netlify.app`.
 - **Diagnosis:** Performed an in-page non-reversible SHA-256 comparison (with zero raw credential exposure) between the Schwab Developer Portal and Netlify (`fintechnav`) environment variables. Confirmed `SCHWAB_CLIENT_ID` (48 chars) and `SCHWAB_CALLBACK_URL` matched byte-for-byte, explaining why `/v1/oauth/authorize` succeeded. However, `SCHWAB_CLIENT_SECRET` in Netlify (last updated 2026-11-06) did not match the 64-character alphanumeric `Client Secret` active in the Schwab Developer Portal following Schwab's 2026-11-07 app repair.
 - **Resolution & verification:** Owner updated `SCHWAB_CLIENT_SECRET` in Netlify (`fintechnav`); re-verified an exact SHA-256 match (64 chars, no quotes or whitespace) and published production deploy `6af37a0a06adc3a6b9af4b17` (`main@d5de512`). Owner completed interactive OAuth sign-in on `https://fintechnav.com/stock/` and confirmed live Charles Schwab connection succeeded. No credentials, hashes of secrets, authorization codes, cookies, or brokerage account data were logged or stored in repository records.
+
+### Entry 54 — 2026-11-15 — Password manager autofill compatibility fix for login gate
+- **Observed issue:** Google Password Manager auto-completed the account email on the sign-in screen, but did not auto-complete the password field.
+- **Root cause & fix:** Added `method="post"` and `action="#"` to `<form id="form-login-gate">` and `name="username"` / `name="password"` to the login inputs in `stock/index.html`.
+- **Validation:** 47 unit/security tests, privacy guard, and lint/format passed.
+
+### Entry 55 — 2026-11-15 — Portfolio UX improvements, allocation shortcuts, order history fix, pre-trade funds check & in-app trade ticket
+- **Changes:** Added `COMPANY_SHORT_DESCRIPTIONS`, one-click allocation buttons, unassigned shares banner, 58-day order history window, `#modal-trade-ticket`, and pre-trade available funds validation.
+- **Validation:** 47 tests, privacy guard, validate, and build passed.
+
+### Entry 56 — 2026-11-15 — Available cash balance resolution and resilient multi-strategy order history retrieval
+- **Changes:** Added positive-balance cash field fallbacks in `normalizeAccount()` and `getTradeAvailableCash()`, `fetchOrderHistory` fallback ladder, and `state: 'FILLED'` order execution synthesis.
+- **Validation:** 49 tests, privacy guard, validate, and build passed.
+
+### Entry 57 — 2026-11-15 — Resilient multi-tier order retrieval, portfolio sync error recovery & in-depth sync button logging
+- **Changes:** Added `fetchOrderHistoryWithDiagnostics()` multi-tier fallback ladder, graceful non-fail-closed sync handling, `#btn-sync-journal`, and detailed sync logging.
+- **Validation:** 50 tests, privacy guard, validate, and build passed.
+
+### Entry 58 — 2026-11-15 — Cash sweep position extraction, multi-field balance resolution & Schwab transactions API trade retrieval
+- **Changes:** Added cash sweep position extraction, expanded balance container resolution, and `/transactions` fallback mapping (`transactionsToOrders`).
+- **Validation:** 52 tests, privacy guard, validate, and build passed.
+
+### Entry 59 — 2026-11-15 — Direct-account live balance ledger, implied sweep cash derivation & multi-window transactions fallback
+- **Changes:** Added single-account `/accounts/{accountNumber}?fields=positions` fetch in `fetchSnapshot()`, implied cash fallback (`liquidationValue - stockMarketValue`), and multi-window `/transactions` queries.
+- **Validation:** 54 tests, privacy guard, validate, and build passed.
+
+### Entry 60 — 2026-11-15 — Fix missed single-account ledger path in `GET /api/schwab-trade`, order diagnostics, and budget input step
+- **Root causes & resolutions:**
+  1. Entry 59 updated `fetchSnapshot()` in `server/stock/portfolio-views.mjs`, leaving `GET /api/schwab-trade` in `server/stock/schwab-trade.mjs` calling `/accounts?fields=positions`. Extracted shared `fetchAccountData()` so both paths query `/accounts/{accountNumber}?fields=positions` first with fallback to `/accounts?fields=positions`, removed dead `historyPath`, and surfaced `ledgerSource` and `accountType` in diagnostics.
+  2. Live browser inspection showed Schwab returning HTTP 200 empty arrays (`raw: 0`) on all 13 parameterized `/orders` and `/transactions` queries and `400` (masked as `502`) on unparameterized `/orders`. Added `upstreamStatus` on `brokerGet` errors, object-wrapper unwrapping and `shape` logging in `fetchOrderHistoryWithDiagnostics()`, explicit all-types and no-millisecond query strategies, and parallel tier-2 fallback execution.
+  3. Kept margin `intradayBuyingPowerAmount` separate from cash while displaying it in Account Overview when positive; changed `#input-deploy-cash` to `step="0.01" min="0"` and rounded `deployBudget` to 2 decimals.
+  4. Updated `AGENTS.md` so future agent sessions automatically complete the full feature-branch → checks → commit → push → PR delivery workflow and verify live Netlify deployments before claiming live issues resolved.
+- **Validation:** Added 3 regression tests in `tests/stock-views.test.cjs`. All 57 tests pass (`npm run test:security`); `npm run check:privacy`, `npm run validate`, and `npm run build` passed. No credentials, tokens, cookies, or brokerage account data logged.
