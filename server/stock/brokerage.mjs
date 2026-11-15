@@ -97,10 +97,19 @@ export async function getCredentials(store, user, fetcher = fetch) {
   return record;
 }
 export async function brokerGet(path, record, fetcher = fetch) {
-  const response = await fetcher(`${BROKER}${path}`, {
-    headers: { Authorization: `Bearer ${record.accessToken}`, Accept: 'application/json' },
-    signal: AbortSignal.timeout(15000),
-  });
+  let response;
+  try {
+    response = await fetcher(`${BROKER}${path}`, {
+      headers: { Authorization: `Bearer ${record.accessToken}`, Accept: 'application/json' },
+      signal: AbortSignal.timeout(15000),
+    });
+  } catch (err) {
+    if (err instanceof HttpError) throw err;
+    throw new HttpError(
+      502,
+      'Could not verify brokerage data. No new orders were submitted by this check.'
+    );
+  }
   if (!response.ok)
     throw new HttpError(
       response.status === 401 ? 409 : 502,

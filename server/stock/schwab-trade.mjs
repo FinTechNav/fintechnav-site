@@ -7,6 +7,7 @@ import {
   tagPrefix,
   initializeExistingShares,
   fetchOrderHistory,
+  fetchOrderHistoryWithDiagnostics,
 } from './portfolio-views.mjs';
 import { BROKER, getCredentials, selectedAccount, brokerGet } from './brokerage.mjs';
 import {
@@ -45,12 +46,14 @@ export const createHandler = (dependencies = {}) =>
       return `${prefix}/orders?${query}`;
     };
     if (request.method === 'GET') {
-      const [accounts, todayOrders] = await Promise.all([
+      const [accounts, historyResult] = await Promise.all([
         brokerGet('/accounts?fields=positions', record, fetcher),
-        fetchOrderHistory(account, record, fetcher),
+        fetchOrderHistoryWithDiagnostics(account, record, fetcher, false),
       ]);
+      const todayOrders = historyResult.orders;
       const locks = inspectHistory(todayOrders);
       const snapshot = await labeledSnapshot(store, user, account, accounts, todayOrders);
+      snapshot.orderDiagnostics = historyResult.diagnostics;
       const views = await initializeExistingShares(
         store,
         user,
@@ -63,6 +66,7 @@ export const createHandler = (dependencies = {}) =>
         accounts,
         snapshot,
         views,
+        orderDiagnostics: historyResult.diagnostics,
         dayTradeLocks: { boughtToday: [...locks.buys], soldToday: [...locks.sells] },
         policy: {
           maxOrderDollars: MAX_ORDER_DOLLARS,
@@ -80,7 +84,7 @@ export const createHandler = (dependencies = {}) =>
             'Sync the shared portfolio to initialize share ownership before trading.'
           );
       }
-      checkDayTrade(orders, await fetchOrderHistory(account, record, fetcher));
+      checkDayTrade(orders, await fetchOrderHistory(account, record, fetcher, true));
       const confirmationId = randomBytes(32).toString('hex');
       await store.setJSON(`approvals/${hash(confirmationId)}`, {
         userId: user.id,
@@ -114,7 +118,7 @@ export const createHandler = (dependencies = {}) =>
     }
     const approvedProfile = canonicalProfile(approval.profile || 'primary');
     if (!approvedProfile) throw new HttpError(409, 'Reload the app and review these orders again.');
-    checkDayTrade(approval.orders, await fetchOrderHistory(account, record, fetcher));
+    checkDayTrade(approval.orders, await fetchOrderHistory(account, record, fetcher, true));
     // Immutable one-time claim, not a read-then-write lock or in-memory dedupe.
     // A network timeout never causes an automatic resubmission of an order.
     const claim = await store.setJSON(`${key}/submitted`, { at: Date.now() }, { onlyIfNew: true });
@@ -127,7 +131,7 @@ export const createHandler = (dependencies = {}) =>
     for (const order of approval.orders) {
       try {
         // Recheck immediately before each order; any unavailable check stops the batch.
-        checkDayTrade([order], await fetchOrderHistory(account, record, fetcher));
+        checkDayTrade([order], await fetchOrderHistory(account, record, fetcher, true));
         const response = await fetcher(`${BROKER}${prefix}/orders`, {
           method: 'POST',
           headers: {

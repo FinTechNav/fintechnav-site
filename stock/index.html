@@ -779,9 +779,16 @@
 
         <!-- ==================== TAB 5: RECEIPTS & ORDER HISTORY ==================== -->
         <section id="tab-journal" class="tab-panel hidden space-y-6">
-          <div>
-            <h1 class="text-2xl sm:text-[28px] font-semibold text-[#f5f5f5]">Receipts &amp; trade history</h1>
-            <p class="text-sm text-[#a1a1a1]">Complete log of your executed Charles Schwab orders.</p>
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h1 class="text-2xl sm:text-[28px] font-semibold text-[#f5f5f5]">Receipts &amp; trade history</h1>
+              <p class="text-sm text-[#a1a1a1]">Complete log of your executed Charles Schwab orders.</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <button id="btn-sync-journal" class="kumo-btn-primary h-9 px-3.5 text-xs flex items-center gap-2">
+                <span>⇄ Sync receipts from Schwab</span>
+              </button>
+            </div>
           </div>
 
           <div class="kumo-card overflow-hidden">

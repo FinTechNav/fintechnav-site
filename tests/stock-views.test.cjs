@@ -500,3 +500,21 @@ test('fetchOrderHistory falls back to plain /orders when date-bounded query retu
   const orders = await fetchOrderHistory('test-account-hash', { accessToken: 'tok' }, fetcher);
   assert.deepEqual(orders, expectedOrders);
 });
+
+test('fetchOrderHistory falls back to plain /orders when date-bounded query throws upstream 502 error', async () => {
+  const { fetchOrderHistory } = await import('../server/stock/portfolio-views.mjs');
+  const expectedOrders = [
+    { orderId: '7777', status: 'FILLED', symbol: 'IREN', filledQuantity: 2 },
+  ];
+  const fetcher = async (url) => {
+    if (String(url).includes('/orders?')) {
+      return new Response('{"error":"Bad Request"}', { status: 400 });
+    }
+    if (String(url).endsWith('/orders')) {
+      return Response.json(expectedOrders);
+    }
+    throw new Error(`Unexpected url: ${url}`);
+  };
+  const orders = await fetchOrderHistory('test-account-hash', { accessToken: 'tok' }, fetcher, false);
+  assert.deepEqual(orders, expectedOrders);
+});

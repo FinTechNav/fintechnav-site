@@ -119,28 +119,46 @@ export function normalizeAccount(accounts, history, labels = {}) {
     const allExecs = [...activityExecs, ...rootExecs];
     const executions = single
       ? allExecs
-          .filter(
-            (e) =>
-              Number.isFinite(e.quantity) &&
-              e.quantity > 0 &&
-              Number.isFinite(e.price) &&
-              Number.isFinite(Date.parse(e.time))
-          )
-          .map((e) => ({
-            factId: e.factId,
-            quantity: e.quantity,
-            price: e.price,
-            time: e.time,
-            total:
-              leg.instrument?.assetType === 'EQUITY' || !leg.instrument?.assetType
-                ? e.quantity * e.price
-                : null,
-          }))
+          .map((e) => {
+            const qty = finite(e.quantity);
+            let pr = finite(e.price);
+            if (pr <= 0) {
+              pr = Number(
+                order.price ??
+                order.limitPrice ??
+                order.averageExecutionPrice ??
+                order.avgFillPrice ??
+                leg.price ??
+                0
+              );
+            }
+            const time = e.time || order.closeTime || order.enteredTime || new Date().toISOString();
+            return {
+              factId: e.factId,
+              quantity: qty,
+              price: pr,
+              time,
+              total:
+                leg.instrument?.assetType === 'EQUITY' || !leg.instrument?.assetType
+                  ? qty * pr
+                  : null,
+            };
+          })
+          .filter((e) => e.quantity > 0)
       : [];
     const status = String(order.status || order.state || '').toUpperCase();
-    const filledQty = finite(order.filledQuantity);
+    const filledQty = finite(order.filledQuantity) > 0
+      ? finite(order.filledQuantity)
+      : (status === 'FILLED' ? finite(order.quantity) : 0);
     if (single && executions.length === 0 && filledQty > 0) {
-      const fillPrice = Number(order.price ?? order.limitPrice ?? leg.price ?? 0);
+      const fillPrice = Number(
+        order.price ??
+        order.limitPrice ??
+        order.averageExecutionPrice ??
+        order.avgFillPrice ??
+        leg.price ??
+        0
+      );
       const fillTime = order.closeTime || order.enteredTime || new Date().toISOString();
       executions.push({
         factId: `${orderId}-fill-0`,
@@ -223,66 +241,95 @@ export const historyPath = (account) => {
     maxResults: '3000',
   })}`;
 };
-export async function fetchOrderHistory(account, record, fetcher = fetch) {
+export async function fetchOrderHistoryWithDiagnostics(
+  account,
+  record,
+  fetcher = fetch,
+  failClosed = false
+) {
   const prefix = `/accounts/${encodeURIComponent(account)}`;
-  const to = new Date(Date.now() - 120000);
-  const from = new Date(to.getTime() - 58 * 86400000);
-  const query = new URLSearchParams({
-    fromEnteredTime: from.toISOString(),
+  const now = Date.now();
+  const to = new Date(now - 120000);
+  const from58 = new Date(to.getTime() - 58 * 86400000);
+  const from30 = new Date(to.getTime() - 30 * 86400000);
+  const from7 = new Date(to.getTime() - 7 * 86400000);
+
+  const query58 = new URLSearchParams({
+    fromEnteredTime: from58.toISOString(),
     toEnteredTime: to.toISOString(),
     maxResults: '3000',
   });
+  const query30 = new URLSearchParams({
+    fromEnteredTime: from30.toISOString(),
+    toEnteredTime: to.toISOString(),
+  });
+  const query7 = new URLSearchParams({
+    fromEnteredTime: from7.toISOString(),
+    toEnteredTime: to.toISOString(),
+  });
 
+  const diagnostics = [];
   let orders = null;
-  let primaryError = null;
+  let lastError = null;
 
-  try {
-    orders = await brokerGet(`${prefix}/orders?${query}`, record, fetcher);
-  } catch (err) {
-    primaryError = err;
-    if (err.status !== 400 && err.status !== 404) {
-      throw err;
-    }
-  }
+  const strategies = [
+    { name: 'account-bounded-58d', path: `${prefix}/orders?${query58}` },
+    { name: 'account-bounded-30d', path: `${prefix}/orders?${query30}` },
+    { name: 'account-bounded-7d', path: `${prefix}/orders?${query7}` },
+    { name: 'global-bounded-58d', path: `/orders?${query58}` },
+    { name: 'global-bounded-30d', path: `/orders?${query30}` },
+    { name: 'account-unparameterized', path: `${prefix}/orders` },
+    { name: 'global-unparameterized', path: `/orders` },
+  ];
 
-  if (!Array.isArray(orders) || orders.length === 0) {
+  for (const s of strategies) {
     try {
-      const fallbackOrders = await brokerGet(`${prefix}/orders`, record, fetcher);
-      if (Array.isArray(fallbackOrders) && fallbackOrders.length > 0) {
-        return fallbackOrders;
+      const res = await brokerGet(s.path, record, fetcher);
+      const count = Array.isArray(res) ? res.length : 0;
+      diagnostics.push({ strategy: s.name, ok: true, count });
+      if (count > 0) {
+        return { orders: res, diagnostics };
       }
-    } catch {
-      /* ignore */
+      if (orders === null && Array.isArray(res)) {
+        orders = res;
+      }
+    } catch (err) {
+      lastError = err;
+      diagnostics.push({ strategy: s.name, ok: false, error: err.message, status: err.status });
+      if (err.status === 409 || err.status === 401) throw err;
     }
   }
 
-  if (!Array.isArray(orders) || orders.length === 0) {
-    try {
-      const globalOrders = await brokerGet('/orders', record, fetcher);
-      if (Array.isArray(globalOrders) && globalOrders.length > 0) {
-        return globalOrders;
-      }
-    } catch {
-      /* ignore */
+  if (orders === null && lastError) {
+    if (failClosed) {
+      throw lastError instanceof HttpError
+        ? lastError
+        : new HttpError(502, lastError?.message || 'Could not verify brokerage data.');
     }
+    return { orders: [], diagnostics };
   }
 
-  if (orders === null && primaryError) {
-    throw primaryError;
-  }
-
-  return Array.isArray(orders) ? orders : [];
+  return { orders: Array.isArray(orders) ? orders : [], diagnostics };
 }
+
+export async function fetchOrderHistory(account, record, fetcher = fetch, failClosed = false) {
+  const result = await fetchOrderHistoryWithDiagnostics(account, record, fetcher, failClosed);
+  return result.orders;
+}
+
 export async function fetchSnapshot(store, user, fetcher) {
   const record = await getCredentials(store, user, fetcher);
   const account = await selectedAccount(store, user, record, fetcher);
-  const [accounts, history] = await Promise.all([
+  const [accounts, historyResult] = await Promise.all([
     brokerGet('/accounts?fields=positions', record, fetcher),
-    fetchOrderHistory(account, record, fetcher),
+    fetchOrderHistoryWithDiagnostics(account, record, fetcher, false),
   ]);
+  const history = historyResult.orders;
   if (!Array.isArray(history) || history.length >= 3000)
     throw new HttpError(503, 'Recent order history is incomplete; allocations were not changed.');
-  return labeledSnapshot(store, user, account, accounts, history);
+  const snapshot = await labeledSnapshot(store, user, account, accounts, history);
+  snapshot.orderDiagnostics = historyResult.diagnostics;
+  return snapshot;
 }
 function preferences(input) {
   const result = cleanState(input);
