@@ -84,6 +84,7 @@ async function initializeSharedViews() {
     setViewStatus('Shared views saved');
     applyActiveView();
     renderAll();
+    checkUnassignedSharesNotification();
     if (activeView === 'all') switchTab('account');
   } catch (error) {
     viewWriteError = true;
@@ -261,14 +262,27 @@ function renderAccountOverview() {
         )
         .join('')
     : '<tr><td colspan="6">Sync Schwab to load the entire account, including holdings outside either watchlist.</td></tr>';
-  document.getElementById('account-orders').innerHTML = snapshot.orders.length
-    ? snapshot.orders
+  const ordersList = Array.isArray(snapshot.orders) ? snapshot.orders : [];
+  const sortedOrders = [...ordersList].sort((a, b) => {
+    const tA = a.enteredTime ? new Date(a.enteredTime).getTime() : 0;
+    const tB = b.enteredTime ? new Date(b.enteredTime).getTime() : 0;
+    if (tB !== tA) return tB - tA;
+    return Number(b.orderId || 0) - Number(a.orderId || 0);
+  });
+  document.getElementById('account-orders').innerHTML = sortedOrders.length
+    ? sortedOrders
         .map(
           (o) =>
-            `<tr><td>${viewEscape(o.orderId)}</td><td>${viewEscape(o.symbol)}</td><td>${viewEscape(o.instruction)}</td><td>${viewEscape(o.status)}</td><td>${o.filledQuantity} / ${o.quantity}</td><td>${viewMoney(o.limitPrice)}</td></tr>`
+            `<tr><td>${viewEscape(o.orderId)}</td><td><strong class="text-[#50a2ff]">${viewEscape(o.symbol)}</strong></td><td>${viewEscape(o.instruction)}</td><td><span class="px-2 py-0.5 rounded text-[11px] font-medium ${
+              o.status === 'FILLED'
+                ? 'bg-[#10b981]/20 text-[#a4f4cf]'
+                : o.status === 'CANCELED'
+                ? 'bg-[#ff6467]/20 text-[#ff6467]'
+                : 'bg-[#50a2ff]/20 text-[#50a2ff]'
+            }">${viewEscape(o.status)}</span></td><td>${o.filledQuantity} / ${o.quantity}</td><td>${o.limitPrice ? viewMoney(o.limitPrice) : 'Market'}</td></tr>`
         )
         .join('')
-    : '<tr><td colspan="6">No recent orders loaded.</td></tr>';
+    : '<tr><td colspan="6">No recent orders loaded. Sync Schwab to load recent order history.</td></tr>';
   if (activeView === 'all') {
     document.getElementById('kpi-account-val').textContent = viewMoney(
       snapshot.balances.liquidationValue
@@ -289,6 +303,65 @@ function renderAllocationEditor() {
       .join('') ||
     '<tr><td colspan="5">Sync Schwab before splitting shares. All existing eligible shares will initially belong to the primary view.</td></tr>';
   document.getElementById('btn-save-allocations').disabled = !positions.length || !viewsReady;
+}
+function allocateAllUnassigned(targetProfile) {
+  const rows = document.querySelectorAll('#allocation-rows tr');
+  if (!rows.length) {
+    showToast('No positions loaded to allocate.');
+    return;
+  }
+  let totalAllocated = 0;
+  let countStocks = 0;
+  rows.forEach((row) => {
+    const primaryInput = row.querySelector('[data-allocation-profile="primary"]');
+    const partnerInput = row.querySelector('[data-allocation-profile="partner"]');
+    if (!primaryInput || !partnerInput) return;
+    const total = Number(row.cells[1]?.textContent) || 0;
+    const currentPrimary = Number(primaryInput.value) || 0;
+    const currentPartner = Number(partnerInput.value) || 0;
+    const unassigned = Math.max(0, PortfolioViews.round(total - currentPrimary - currentPartner));
+    if (unassigned > 1e-8) {
+      if (targetProfile === 'primary') {
+        primaryInput.value = PortfolioViews.round(currentPrimary + unassigned);
+      } else {
+        partnerInput.value = PortfolioViews.round(currentPartner + unassigned);
+      }
+      if (row.cells[4]) row.cells[4].textContent = '0';
+      primaryInput.setCustomValidity('');
+      partnerInput.setCustomValidity('');
+      totalAllocated += unassigned;
+      countStocks++;
+    }
+  });
+  if (countStocks > 0) {
+    allocationEditorDirty = true;
+    const saveBtn = document.getElementById('btn-save-allocations');
+    if (saveBtn) saveBtn.disabled = !viewsReady;
+    showToast(`Allocated unassigned shares across ${countStocks} holding(s) to ${viewLabel(targetProfile)}. Click "Save share split" to apply.`);
+  } else {
+    showToast('All shares are already fully allocated.');
+  }
+}
+function checkUnassignedSharesNotification() {
+  const banner = document.getElementById('banner-unassigned-shares');
+  if (!banner) return;
+  const ownership = currentOwnership();
+  const unassignedEntries = Object.entries(ownership.unassigned || {}).filter(
+    ([, qty]) => Number(qty) > 1e-8
+  );
+  if (unassignedEntries.length > 0 || (ownership.issues && ownership.issues.length > 0)) {
+    const msgEl = document.getElementById('banner-unassigned-message');
+    const tickers = [
+      ...unassignedEntries.map(([sym, qty]) => `${qty} ${sym}`),
+      ...(ownership.issues || []).map((sym) => `${sym} (review needed)`),
+    ];
+    if (msgEl) {
+      msgEl.textContent = `You have unassigned shares in your shared Schwab account: ${tickers.join(', ')}. Allocate them to Brad or Dio to keep personal portfolios accurate.`;
+    }
+    banner.classList.remove('hidden');
+  } else {
+    banner.classList.add('hidden');
+  }
 }
 async function syncSharedPortfolio() {
   await viewWriteQueue;
@@ -318,6 +391,7 @@ async function syncSharedPortfolio() {
   applyActiveView();
   saveState();
   renderAll();
+  checkUnassignedSharesNotification();
   showToast('Synced the shared Schwab portfolio');
 }
 function initSharedViewEvents() {
@@ -328,6 +402,23 @@ function initSharedViewEvents() {
   document
     .getElementById('btn-sync-account')
     .addEventListener('click', () => syncSharedPortfolio().catch((e) => showToast(e.message)));
+  document
+    .getElementById('btn-allocate-all-primary')
+    ?.addEventListener('click', () => allocateAllUnassigned('primary'));
+  document
+    .getElementById('btn-allocate-all-partner')
+    ?.addEventListener('click', () => allocateAllUnassigned('partner'));
+  document
+    .getElementById('btn-unassigned-action')
+    ?.addEventListener('click', () => {
+      switchTab('allocations');
+      document.getElementById('banner-unassigned-shares')?.classList.add('hidden');
+    });
+  document
+    .getElementById('btn-unassigned-dismiss')
+    ?.addEventListener('click', () => {
+      document.getElementById('banner-unassigned-shares')?.classList.add('hidden');
+    });
   document.getElementById('form-share-allocations').addEventListener('input', (event) => {
     allocationEditorDirty = true;
     const row = event.target.closest('tr');

@@ -242,6 +242,11 @@
         <span class="hidden sm:inline">Refresh</span>
       </button>
 
+      <button id="btn-open-trade-modal" class="kumo-btn-primary h-8 px-3 text-xs flex items-center gap-1.5 bg-[#155dfc] hover:bg-[#155dfc]/80 text-white font-medium shadow-sm" title="Open Trade Ticket to place an order on Schwab">
+        <span class="text-sm leading-none">⚡</span>
+        <span>Trade</span>
+      </button>
+
       <button id="btn-open-auth" class="kumo-btn-secondary h-8 px-2.5 text-xs flex items-center gap-2">
         <span id="token-status-dot" class="w-2 h-2 rounded-full bg-[#5491f6]"></span>
         <span id="token-status-text">Schwab API</span>
@@ -397,6 +402,29 @@
       <!-- Center Main Column -->
       <main class="flex-1 min-w-0 px-4 sm:px-8 py-7 max-w-[1060px] mx-auto space-y-8">
 
+        <!-- Unassigned Shares Notification Banner -->
+        <div id="banner-unassigned-shares" class="hidden mb-6 p-4 rounded-xl bg-[#171717] ring-1 ring-[#f59e0b]/50 border-l-4 border-[#f59e0b] shadow-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div class="flex items-start sm:items-center gap-3">
+            <div class="w-8 h-8 rounded-lg bg-[#f59e0b]/20 flex items-center justify-center shrink-0 text-[#f59e0b] mt-0.5 sm:mt-0">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 9v4m0 4h.01M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+              </svg>
+            </div>
+            <div>
+              <strong class="text-sm font-semibold text-[#f5f5f5] block">Unassigned shares need review</strong>
+              <p id="banner-unassigned-message" class="text-xs text-[#a1a1a1]">You have shares in your shared Schwab account that haven't been assigned to Brad or Dio.</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-2 self-end sm:self-auto shrink-0">
+            <button type="button" id="btn-unassigned-action" class="kumo-btn-primary h-8 px-3.5 text-xs bg-[#f59e0b] text-black font-semibold hover:bg-[#d97706]">
+              Split shared shares
+            </button>
+            <button type="button" id="btn-unassigned-dismiss" class="kumo-btn-secondary h-8 px-2.5 text-xs text-[#a1a1a1] hover:text-[#f5f5f5]" title="Dismiss notification">
+              Dismiss
+            </button>
+          </div>
+        </div>
+
         <div class="kumo-card p-4 mb-6 space-y-2" aria-live="polite">
           <div class="flex flex-wrap items-center justify-between gap-3">
             <h2 id="view-heading" class="font-semibold">Primary · Personal plan</h2>
@@ -416,6 +444,17 @@
           <h1 class="text-2xl font-semibold">Split shared shares</h1>
           <p class="text-sm text-[#a1a1a1]">Give each view its share count, including purchases made directly in Schwab. For example: one share in the first view and two in the second make three in All. The remainder stays unassigned in All. This updates app attribution only.</p>
           <p class="text-xs text-[#a1a1a1]">Existing long stock shares initially go to the primary view on the first sync. New confirmed app fills use the view chosen when the order was reviewed. Cost and profit/loss use the brokerage’s blended average cost. Other asset types remain in All.</p>
+          <div class="flex flex-wrap items-center gap-2 pt-1">
+            <span class="text-xs text-[#a1a1a1] mr-1">Quick assign:</span>
+            <button type="button" id="btn-allocate-all-primary" class="kumo-btn-secondary h-8 px-3 text-xs flex items-center gap-1.5 hover:border-[#5491f6]">
+              <span>Allocate all unassigned to</span>
+              <span data-profile-label="primary" class="font-medium text-[#50a2ff]">Brad</span>
+            </button>
+            <button type="button" id="btn-allocate-all-partner" class="kumo-btn-secondary h-8 px-3 text-xs flex items-center gap-1.5 hover:border-[#5491f6]">
+              <span>Allocate all unassigned to</span>
+              <span data-profile-label="partner" class="font-medium text-[#50a2ff]">Dio</span>
+            </button>
+          </div>
           <form id="form-share-allocations" class="space-y-4"><div class="kumo-card overflow-x-auto"><table class="account-table w-full"><thead><tr><th scope="col">Stock</th><th scope="col">Schwab total</th><th scope="col"><span data-profile-label="primary">Primary</span> shares</th><th scope="col"><span data-profile-label="partner">Partner</span> shares</th><th scope="col">Unassigned / review</th></tr></thead><tbody id="allocation-rows"></tbody></table></div><button id="btn-save-allocations" class="kumo-btn-primary px-4 py-2" disabled>Save share split</button></form>
         </section>
         <!-- ==================== TAB 1: ACCOUNT HOME (CLOUDFLARE HOME + ZONE OVERVIEW STYLE) ==================== -->
@@ -630,9 +669,15 @@
                 Sign in and sync Charles Schwab to load your current holdings and cash.
               </p>
             </div>
-            <button id="btn-sync-schwab-positions" class="kumo-btn-primary h-9 px-3.5 text-xs flex items-center gap-2">
-              <span>⇄ Sync shares from Schwab</span>
-            </button>
+            <div class="flex items-center gap-2">
+              <button id="btn-portfolio-trade" class="kumo-btn-secondary h-9 px-3.5 text-xs flex items-center gap-1.5 font-medium hover:border-[#5491f6]">
+                <span class="text-[#50a2ff]">⚡</span>
+                <span>Place Order</span>
+              </button>
+              <button id="btn-sync-schwab-positions" class="kumo-btn-primary h-9 px-3.5 text-xs flex items-center gap-2">
+                <span>⇄ Sync shares from Schwab</span>
+              </button>
+            </div>
           </div>
 
           <div class="kumo-card overflow-hidden">
@@ -642,7 +687,7 @@
                 <thead>
                   <tr class="bg-[#030303] border-b border-[#333333] text-[#a1a1a1] font-medium h-11">
                     <th scope="col" class="py-2 px-4" aria-sort="none"><button type="button" class="table-sort-button" data-sort-table="portfolio" data-sort-key="symbol" title="Sort by ticker symbol">Company<span class="table-sort-indicator" aria-hidden="true">↕</span></button></th>
-                    <th scope="col" class="py-2 px-3" aria-sort="none"><button type="button" class="table-sort-button" data-sort-table="portfolio" data-sort-key="role" title="Sort by what they do">What They Do<span class="table-sort-indicator" aria-hidden="true">↕</span></button></th>
+                    <th scope="col" class="py-2 px-3 min-w-[150px]" aria-sort="none"><button type="button" class="table-sort-button" data-sort-table="portfolio" data-sort-key="role" title="Sort by what they do">What They Do<span class="table-sort-indicator" aria-hidden="true">↕</span></button></th>
                     <th scope="col" class="py-2 px-3 text-right" aria-sort="none"><button type="button" class="table-sort-button" data-sort-table="portfolio" data-sort-key="shares" title="Sort by shares">Shares<span class="table-sort-indicator" aria-hidden="true">↕</span></button></th>
                     <th scope="col" class="py-2 px-3 text-right" aria-sort="none"><button type="button" class="table-sort-button" data-sort-table="portfolio" data-sort-key="paid" title="Sort by paid">Paid<span class="table-sort-indicator" aria-hidden="true">↕</span></button></th>
                     <th scope="col" class="py-2 px-3 text-right" aria-sort="none"><button type="button" class="table-sort-button" data-sort-table="portfolio" data-sort-key="price" title="Sort by price now">Price Now<span class="table-sort-indicator" aria-hidden="true">↕</span></button></th>
@@ -978,6 +1023,106 @@
           <div>Ready — click "Sign in with Charles Schwab (1-Click)" above.</div>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL 3: DIRECT SCHWAB TRADE TICKET ==================== -->
+  <div id="modal-trade-ticket" class="fixed inset-0 z-50 hidden bg-black/80 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+    <div class="kumo-card max-w-lg w-full p-6 space-y-4 text-xs my-8">
+      <div class="flex items-center justify-between border-b border-[#262626] pb-3">
+        <div>
+          <h3 class="text-base font-semibold text-[#f5f5f5] flex items-center gap-2">
+            <span class="text-[#50a2ff]">⚡</span> Place Order on Schwab
+          </h3>
+          <p class="text-[#a1a1a1]">Submit limit orders directly to Charles Schwab from this UI.</p>
+        </div>
+        <button id="btn-close-trade-modal" class="text-[#a1a1a1] hover:text-white text-xl font-bold leading-none px-2">&times;</button>
+      </div>
+
+      <form id="form-direct-trade" class="space-y-4">
+        <!-- View / Allocation Profile Selector -->
+        <div>
+          <label class="text-[#a1a1a1] block mb-1 font-medium">Assign To Portfolio View</label>
+          <select id="trade-select-profile" class="kumo-input w-full h-9 px-2.5 text-xs font-semibold">
+            <option value="primary">Brad (Primary View)</option>
+            <option value="partner">Dio (Partner View)</option>
+          </select>
+        </div>
+
+        <!-- Action BUY / SELL -->
+        <div>
+          <label class="text-[#a1a1a1] block mb-1 font-medium">Order Action</label>
+          <div class="grid grid-cols-2 gap-2">
+            <button type="button" id="btn-trade-action-buy" class="h-9 rounded-lg font-semibold border border-[#10b981] bg-[#10b981]/20 text-[#a4f4cf] transition">BUY</button>
+            <button type="button" id="btn-trade-action-sell" class="h-9 rounded-lg font-semibold border border-[#333333] bg-[#171717] text-[#a1a1a1] hover:text-[#f5f5f5] transition">SELL</button>
+          </div>
+          <input type="hidden" id="trade-input-action" value="BUY" />
+        </div>
+
+        <!-- Symbol & Live Quote -->
+        <div>
+          <div class="flex items-center justify-between mb-1">
+            <label class="text-[#a1a1a1] font-medium">Stock Symbol</label>
+            <span id="trade-quote-display" class="text-[#50a2ff] font-medium text-[11px]">Quote: —</span>
+          </div>
+          <div class="relative">
+            <input id="trade-input-symbol" type="text" placeholder="e.g. NVDA, POET, IREN, CIFR" required
+              class="kumo-input w-full h-9 px-3 text-sm font-semibold uppercase tracking-wider" />
+          </div>
+          <div id="trade-quick-symbols" class="flex flex-wrap gap-1.5 mt-1.5"></div>
+        </div>
+
+        <!-- Shares & Limit Price -->
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-[#a1a1a1] block mb-1 font-medium">Shares (Whole)</label>
+            <input id="trade-input-shares" type="number" min="1" step="1" value="1" required
+              class="kumo-input w-full h-9 px-3 text-sm font-semibold" />
+          </div>
+          <div>
+            <div class="flex items-center justify-between mb-1">
+              <label class="text-[#a1a1a1] font-medium">Limit Price ($)</label>
+              <button type="button" id="btn-trade-use-ask" class="text-[10px] text-[#50a2ff] hover:underline">Use quote</button>
+            </div>
+            <input id="trade-input-price" type="number" min="0.01" step="0.01" placeholder="0.00" required
+              class="kumo-input w-full h-9 px-3 text-sm font-semibold" />
+          </div>
+        </div>
+
+        <!-- Order Session -->
+        <div>
+          <label class="text-[#a1a1a1] block mb-1 font-medium">Trading Session</label>
+          <select id="trade-select-session" class="kumo-input w-full h-9 px-2.5 text-xs">
+            <option value="NORMAL" selected>Regular Market Hours Only (9:30 AM – 4:00 PM ET)</option>
+            <option value="SEAMLESS">Day + Extended Hours (Pre-market &amp; After-hours)</option>
+            <option value="EXTENDED">After-Hours Only (4:00 PM – 8:00 PM ET)</option>
+          </select>
+        </div>
+
+        <!-- Funds & Safety Calculation Box -->
+        <div class="kumo-card-recessed p-3.5 space-y-2 text-xs">
+          <div class="flex items-center justify-between">
+            <span class="text-[#a1a1a1]">Estimated order total:</span>
+            <strong id="trade-calc-total" class="text-sm font-semibold text-[#f5f5f5]">$0.00</strong>
+          </div>
+          <div class="flex items-center justify-between border-t border-[#262626] pt-1.5">
+            <span class="text-[#a1a1a1]">Schwab cash available:</span>
+            <span id="trade-calc-available" class="font-medium text-[#50a2ff]">$0.00</span>
+          </div>
+          <!-- Funds Check Indicator -->
+          <div id="trade-funds-status" class="pt-1 font-medium text-[11px] text-[#a4f4cf]">
+            ✓ Funds check ready
+          </div>
+        </div>
+
+        <!-- Submit and Cancel -->
+        <div class="flex items-center justify-end gap-2 pt-2 border-t border-[#262626]">
+          <button type="button" id="btn-trade-cancel" class="kumo-btn-secondary h-9 px-3.5 text-xs">Cancel</button>
+          <button type="submit" id="btn-trade-submit" class="kumo-btn-primary h-9 px-4 text-xs font-semibold bg-[#155dfc] text-white hover:bg-[#155dfc]/90">
+            Review &amp; Place Order on Schwab
+          </button>
+        </div>
+      </form>
     </div>
   </div>
 

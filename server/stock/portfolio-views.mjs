@@ -66,20 +66,27 @@ export function normalizeAccount(accounts, history, labels = {}) {
       .map((k) => [k, account.currentBalances[k]])
   );
   const orders = history.map((order) => {
-    const legs = order.orderLegCollection || [];
+    const legs =
+      order.orderLegCollection || order.childOrderStrategies?.[0]?.orderLegCollection || [];
     // Complex/multi-leg orders remain visible as orders; never misattribute a leg.
     const single = legs.length === 1;
-    const leg = single ? legs[0] : {};
+    const leg = single ? legs[0] : legs[0] || {};
     const orderId = String(order.orderId || '');
+    const activityExecs = (order.orderActivityCollection || [])
+      .filter((a) => a.activityType === 'EXECUTION' || a.executionType === 'FILL')
+      .flatMap((a, activityIndex) =>
+        (a.executionLegs || []).map((e, legIndex) => ({
+          ...e,
+          factId: `${orderId}-${a.activityId ?? activityIndex}-${legIndex}`,
+        }))
+      );
+    const rootExecs = (order.executionLegs || []).map((e, legIndex) => ({
+      ...e,
+      factId: `${orderId}-root-${legIndex}`,
+    }));
+    const allExecs = [...activityExecs, ...rootExecs];
     const executions = single
-      ? (order.orderActivityCollection || [])
-          .filter((a) => a.activityType === 'EXECUTION' || a.executionType === 'FILL')
-          .flatMap((a, activityIndex) =>
-            (a.executionLegs || []).map((e, legIndex) => ({
-              ...e,
-              factId: `${orderId}-${a.activityId ?? activityIndex}-${legIndex}`,
-            }))
-          )
+      ? allExecs
           .filter(
             (e) =>
               Number.isFinite(e.quantity) &&
@@ -97,13 +104,13 @@ export function normalizeAccount(accounts, history, labels = {}) {
       : [];
     return {
       orderId,
-      symbol: String(leg.instrument?.symbol || (single ? 'Unknown' : 'Multi-leg order')),
+      symbol: String(leg.instrument?.symbol || order.symbol || (single ? 'Unknown' : 'Multi-leg order')),
       assetType: String(leg.instrument?.assetType || 'OTHER'),
-      instruction: String(leg.instruction || ''),
+      instruction: String(leg.instruction || order.orderType || ''),
       status: String(order.status || ''),
       quantity: finite(order.quantity),
       filledQuantity: finite(order.filledQuantity),
-      enteredTime: order.enteredTime || null,
+      enteredTime: order.enteredTime || order.closeTime || null,
       limitPrice: Number.isFinite(order.price) ? order.price : null,
       profile:
         single && canonicalProfile(labels[orderId]?.profile)
@@ -154,8 +161,15 @@ export async function labeledSnapshot(store, user, account, accounts, history) {
     .map((fact) => ({ ...fact, profile: canonicalProfile(fact.profile) }));
   return snapshot;
 }
-export const historyPath = (account) =>
-  `/accounts/${encodeURIComponent(account)}/orders?${new URLSearchParams({ fromEnteredTime: new Date(Date.now() - 60 * 86400000).toISOString(), toEnteredTime: new Date().toISOString(), maxResults: '3000' })}`;
+export const historyPath = (account) => {
+  const to = new Date();
+  const from = new Date(to.getTime() - 58 * 86400000);
+  return `/accounts/${encodeURIComponent(account)}/orders?${new URLSearchParams({
+    fromEnteredTime: from.toISOString(),
+    toEnteredTime: to.toISOString(),
+    maxResults: '3000',
+  })}`;
+};
 export async function fetchSnapshot(store, user, fetcher) {
   const record = await getCredentials(store, user, fetcher);
   const account = await selectedAccount(store, user, record, fetcher);

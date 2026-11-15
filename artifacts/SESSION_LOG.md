@@ -170,3 +170,20 @@ Public engineering decisions and validation only. Detailed historical journals r
   - Added `name="username"` to the email input (`#login-username`).
   - Added `name="password"` to the password input (`#login-password`).
 - **Validation:** All 47 unit/security regression tests pass (`npm run test:security`); privacy guard passed for all tracked files (`npm run check:privacy`); `npm run validate` passed with clean lint/format. No credentials or secrets logged.
+
+### Entry 55 — 2026-11-15 — Portfolio UX improvements, allocation shortcuts, order history fix, pre-trade funds check & in-app trade ticket
+- **Observed issues & enhancements:**
+  1. In "What Brad owns right now" (`#tab-portfolio`), the "What they do" column displayed raw tickers or brokerage symbols rather than a concise business summary.
+  2. In "Split shared shares" (`#tab-allocations`), allocating unassigned shares required manual entry per position.
+  3. Upon login or account sync, users received no immediate notice when unassigned shares were pending division.
+  4. The "Recent orders · Last 60 days" table showed no orders despite confirmed trades having executed.
+  5. The UI lacked an in-app trade placement interface, requiring users to log into Schwab directly for individual trades.
+  6. The "Buy basket on Schwab" action lacked an upfront available funds check before placing orders.
+- **Root causes & resolutions:**
+  1. *What They Do Column:* Schwab API `position.description` returns uppercase tickers or legal entity names, masking business descriptions. Added `COMPANY_SHORT_DESCRIPTIONS` dictionary (1–4 words per holding, e.g. "AI Chips & GPUs", "AI Data Centers", "Optical AI Engines") and rendered with mouseover `title` displaying the full description. Widened the column header to `min-w-[150px]`.
+  2. *Quick Allocation Buttons:* Added `#btn-allocate-all-primary` ("Allocate all unassigned to Brad") and `#btn-allocate-all-partner` ("Allocate all unassigned to Dio") in `#tab-allocations` with `allocateAllUnassigned(targetProfile)` to assign all remainder shares in one click.
+  3. *Unassigned Shares Notification:* Added `#banner-unassigned-shares` above the workspace. Checks `currentOwnership()` on login, sync, and render; displays an actionable alert when unassigned shares exist with a direct link to the split screen and a dismiss button.
+  4. *Recent Orders 60-Day Fix & API v1 Support:* Schwab Trader API strictly rejects order history queries where the date range exceeds 60 days. Millisecond drift between separate `Date.now()` calls triggered HTTP 400 Bad Request. Changed the query window to a safe 58 days in both `server/stock/schwab-trade.mjs` and `server/stock/portfolio-views.mjs`. In `normalizeAccount()`, added support for root `executionLegs` and `childOrderStrategies[0].orderLegCollection` alongside legacy `orderActivityCollection`.
+  5. *In-App Schwab Trade Ticket Modal:* Added `#modal-trade-ticket` accessible via "⚡ Trade" in the top navigation, "⚡ Place Order" in `#tab-portfolio`, and "⚡ Place Order for [SYMBOL]" in company detail modals. Features live quote lookup, real-time whole-share quantity calculation, session selector, real-time funds availability indicator, and strict $100 safety cap validation.
+  6. *Available Funds Pre-Check:* Updated `#btn-execute-schwab` handler to calculate the total estimated cost of all whole-share buy orders and verify against `brokerSnapshot.balances.cashAvailableForTrading || state.cash` before calling `/api/schwab-trade` prepare, blocking underfunded submissions with an informative toast.
+- **Validation:** All 47 unit/security regression tests pass (`npm run test:security`); privacy guard passed for all tracked files (`npm run check:privacy`); `npm run validate` passed with clean lint/format; `npm run build` compiled public distribution cleanly. Zero secrets or credentials handled or logged.
