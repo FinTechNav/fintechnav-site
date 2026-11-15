@@ -6,10 +6,11 @@ import {
   labeledSnapshot,
   tagPrefix,
   initializeExistingShares,
+  fetchAccountData,
   fetchOrderHistory,
   fetchOrderHistoryWithDiagnostics,
 } from './portfolio-views.mjs';
-import { BROKER, getCredentials, selectedAccount, brokerGet } from './brokerage.mjs';
+import { BROKER, getCredentials, selectedAccount } from './brokerage.mjs';
 import {
   validateOrders,
   checkDayTrade,
@@ -33,27 +34,17 @@ export const createHandler = (dependencies = {}) =>
     const record = await getCredentials(store, user, fetcher);
     const account = await selectedAccount(store, user, record, fetcher);
     const prefix = `/accounts/${encodeURIComponent(account)}`;
-    const historyPath = () => {
-      // Include older GTC orders that may have executed today, not just orders
-      // entered today. Saturated result sets fail closed in inspectHistory.
-      const to = new Date(Date.now() - 120000);
-      const from = new Date(to.getTime() - 58 * 86400000);
-      const query = new URLSearchParams({
-        fromEnteredTime: from.toISOString(),
-        toEnteredTime: to.toISOString(),
-        maxResults: '3000',
-      });
-      return `${prefix}/orders?${query}`;
-    };
     if (request.method === 'GET') {
-      const [accounts, historyResult] = await Promise.all([
-        brokerGet('/accounts?fields=positions', record, fetcher),
+      const [accountResult, historyResult] = await Promise.all([
+        fetchAccountData(account, record, fetcher),
         fetchOrderHistoryWithDiagnostics(account, record, fetcher, false),
       ]);
+      const { accounts, ledgerSource } = accountResult;
       const todayOrders = historyResult.orders;
       const locks = inspectHistory(todayOrders);
       const snapshot = await labeledSnapshot(store, user, account, accounts, todayOrders);
       snapshot.orderDiagnostics = historyResult.diagnostics;
+      snapshot.ledgerSource = ledgerSource;
       const views = await initializeExistingShares(
         store,
         user,
@@ -66,6 +57,7 @@ export const createHandler = (dependencies = {}) =>
         accounts,
         snapshot,
         views,
+        ledgerSource,
         orderDiagnostics: historyResult.diagnostics,
         dayTradeLocks: { boughtToday: [...locks.buys], soldToday: [...locks.sells] },
         policy: {

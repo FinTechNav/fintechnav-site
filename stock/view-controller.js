@@ -158,7 +158,8 @@ function applyActiveView() {
   );
   state.cash = positiveCash ?? Number(balances.cashAvailableForTrading || balances.cashBalance || 0);
   state.journal = PortfolioViews.receipts(brokerSnapshot.orders, activeView);
-  document.getElementById('input-deploy-cash').value = state.deployBudget;
+  const cleanBudget = Math.round(Number(state.deployBudget || 0) * 100) / 100;
+  document.getElementById('input-deploy-cash').value = cleanBudget;
   document.getElementById('select-order-session').value = state.sessionTiming;
 }
 function selectPortfolioView(view) {
@@ -265,12 +266,17 @@ function renderAccountOverview() {
     ['Cash balance', 'cashBalance'],
     ['Available funds', 'availableFunds'],
     ['Buying power', 'buyingPower'],
+    ['Intraday buying power', 'intradayBuyingPowerAmount'],
     ['Total cash', 'totalCash'],
     ['Settled cash', 'settledCash'],
     ['Money market fund', 'moneyMarketFund'],
     ['Cash sweep positions', 'cashPositionsTotal'],
   ]
-    .filter(([_, key]) => Number.isFinite(snapshot.balances[key]))
+    .filter(([_, key]) =>
+      key === 'intradayBuyingPowerAmount'
+        ? Number.isFinite(snapshot.balances[key]) && snapshot.balances[key] > 0
+        : Number.isFinite(snapshot.balances[key])
+    )
     .map(
       ([label, key]) =>
         `<div class="kumo-card p-4"><p class="text-xs text-[#a1a1a1]">${label}</p><strong class="block mt-2">${viewMoney(snapshot.balances[key])}</strong></div>`
@@ -448,20 +454,28 @@ async function syncSharedPortfolio() {
           (d) =>
             `${d.strategy}:${
               d.ok
-                ? d.count + ' orders' + (d.raw !== undefined ? `[raw:${d.raw}]` : '')
+                ? d.count +
+                  ' orders' +
+                  (d.raw !== undefined ? `[raw:${d.raw}${d.shape ? ',' + d.shape : ''}]` : '')
                 : 'error(' + (d.status || d.error || 'failed') + ')'
             }`
         )
         .join(', ')
     : 'none';
   const b = brokerSnapshot.balances || {};
+  const ledgerSource = data.ledgerSource || brokerSnapshot.ledgerSource || 'unknown';
   const balanceBreakdown = [
+    `ledger=${ledgerSource}`,
+    b.accountType ? `type=${b.accountType}` : null,
     `avail=$${state.cash.toFixed(2)}${b.positiveCashSource ? `(${b.positiveCashSource})` : ''}`,
     Number.isFinite(b.cashBalance) ? `cashBal=$${b.cashBalance.toFixed(2)}` : null,
     Number.isFinite(b.totalCash) ? `totalCash=$${b.totalCash.toFixed(2)}` : null,
     Number.isFinite(b.settledCash) ? `settledCash=$${b.settledCash.toFixed(2)}` : null,
     Number.isFinite(b.moneyMarketFund) ? `mmf=$${b.moneyMarketFund.toFixed(2)}` : null,
     b.cashPositionsTotal > 0 ? `sweepPos=$${b.cashPositionsTotal.toFixed(2)}` : null,
+    Number.isFinite(b.intradayBuyingPowerAmount) && b.intradayBuyingPowerAmount > 0
+      ? `intradayBP=$${b.intradayBuyingPowerAmount.toFixed(2)}`
+      : null,
     Number.isFinite(b.liquidationValue) ? `liqVal=$${b.liquidationValue.toFixed(2)}` : null,
     Number.isFinite(b.longMarketValue) ? `longMkt=$${b.longMarketValue.toFixed(2)}` : null,
   ]

@@ -118,15 +118,18 @@ export function normalizeAccount(accounts, history, labels = {}) {
 
   const cashFieldNames = [
     'cashAvailableForTrading',
+    'cashAvailableForWithdrawal',
     'availableFunds',
     'cashBalance',
     'totalCash',
+    'totalCashValue',
     'settledCash',
     'settledFunds',
     'cashBuyingPower',
     'availableFundsNonMarginableTrade',
     'nonMarginableTradeFunds',
     'moneyMarketFund',
+    'cashEquivalentValue',
     'buyingPower',
     'dayTradingBuyingPower',
     'unsettledCash',
@@ -198,9 +201,14 @@ export function normalizeAccount(accounts, history, labels = {}) {
     balances.cashAvailableForTrading = cashPositionsTotal;
     balances.cashBalance = cashPositionsTotal;
     balances.availableFunds = cashPositionsTotal;
+  } else {
+    if (!Number.isFinite(balances.cashAvailableForTrading)) balances.cashAvailableForTrading = 0;
+    if (!Number.isFinite(balances.cashBalance)) balances.cashBalance = 0;
+    if (!Number.isFinite(balances.availableFunds)) balances.availableFunds = 0;
   }
   balances.cashPositionsTotal = cashPositionsTotal;
   balances.positiveCashSource = positiveCashSource;
+  if (account.type) balances.accountType = String(account.type);
   const orders = history.map((order) => {
     const legs =
       order.orderLegCollection ||
@@ -507,6 +515,31 @@ export function transactionsToOrders(transactions) {
   return tradeTxs.map(transactionToOrder).filter(Boolean);
 }
 
+export async function fetchAccountData(account, record, fetcher = fetch) {
+  try {
+    const direct = await brokerGet(
+      `/accounts/${encodeURIComponent(account)}?fields=positions`,
+      record,
+      fetcher
+    );
+    const first = Array.isArray(direct) ? direct[0] : direct;
+    if (first && (first.securitiesAccount || first.positions || first.currentBalances)) {
+      return {
+        accounts: Array.isArray(direct) ? direct : [direct],
+        ledgerSource: 'single-account',
+      };
+    }
+  } catch (err) {
+    if (err?.status === 401 || err?.status === 409) throw err;
+    // Fall back to multi-account endpoint
+  }
+  const multi = await brokerGet('/accounts?fields=positions', record, fetcher);
+  return {
+    accounts: Array.isArray(multi) ? multi : [multi],
+    ledgerSource: 'multi-account',
+  };
+}
+
 export async function fetchOrderHistoryWithDiagnostics(
   account,
   record,
@@ -516,6 +549,8 @@ export async function fetchOrderHistoryWithDiagnostics(
   const prefix = `/accounts/${encodeURIComponent(account)}`;
   const now = Date.now();
   const to = new Date(now - 120000);
+  const nowDate = new Date(now);
+  const noMsIso = (d) => d.toISOString().replace(/\.\d{3}Z$/, 'Z');
   const from365 = new Date(to.getTime() - 365 * 86400000);
   const from180 = new Date(to.getTime() - 180 * 86400000);
   const from90 = new Date(to.getTime() - 90 * 86400000);
@@ -536,6 +571,13 @@ export async function fetchOrderHistoryWithDiagnostics(
     fromEnteredTime: from7.toISOString(),
     toEnteredTime: to.toISOString(),
   });
+  const query58NoMs = new URLSearchParams({
+    fromEnteredTime: noMsIso(from58),
+    toEnteredTime: noMsIso(nowDate),
+  });
+
+  const ALL_TX_TYPES =
+    'TRADE,RECEIVE_AND_DELIVER,DIVIDEND_OR_INTEREST,ACH_RECEIPT,ACH_DISBURSEMENT,CASH_RECEIPT,CASH_DISBURSEMENT,ELECTRONIC_FUND,WIRE_OUT,WIRE_IN,JOURNAL,MEMORANDUM,MARGIN_CALL,MONEY_MARKET,SMA_ADJUSTMENT';
 
   const txQuery365All = new URLSearchParams({
     startDate: from365.toISOString(),
@@ -553,6 +595,11 @@ export async function fetchOrderHistoryWithDiagnostics(
     startDate: from58.toISOString(),
     endDate: to.toISOString(),
   });
+  const txQuery58AllTypes = new URLSearchParams({
+    startDate: from58.toISOString(),
+    endDate: nowDate.toISOString(),
+    types: ALL_TX_TYPES,
+  });
   const txQuery365Trade = new URLSearchParams({
     startDate: from365.toISOString(),
     endDate: to.toISOString(),
@@ -568,54 +615,109 @@ export async function fetchOrderHistoryWithDiagnostics(
     endDate: to.toISOString(),
     types: 'TRADE',
   });
+  const txQuery58NoMsTrade = new URLSearchParams({
+    startDate: noMsIso(from58),
+    endDate: noMsIso(nowDate),
+    types: 'TRADE',
+  });
 
   const diagnostics = [];
   let orders = null;
   let lastError = null;
 
-  const strategies = [
+  const extractPayload = (res, strategyType) => {
+    let rawArr = null;
+    let shape = null;
+    if (Array.isArray(res)) {
+      rawArr = res;
+    } else if (res && typeof res === 'object') {
+      const candidate =
+        res.orders || res.transactions || res.securitiesAccount?.orderStrategies || null;
+      if (Array.isArray(candidate)) {
+        rawArr = candidate;
+      }
+      shape = `obj(${Object.keys(res).slice(0, 6).join(',')})`;
+    } else {
+      shape = String(typeof res);
+    }
+    const list = rawArr ? (strategyType === 'transactions' ? transactionsToOrders(rawArr) : rawArr) : [];
+    return { rawArr, list, shape };
+  };
+
+  const runStrategy = async (s) => {
+    try {
+      const res = await brokerGet(s.path, record, fetcher);
+      const { rawArr, list, shape } = extractPayload(res, s.type);
+      const count = list.length;
+      const rawCount = rawArr ? rawArr.length : 0;
+      const diag = { strategy: s.name, ok: true, count, raw: rawCount };
+      if (shape) diag.shape = shape;
+      return { diag, list, isArray: Boolean(rawArr) };
+    } catch (err) {
+      if (err.status === 409 || err.status === 401) throw err;
+      return {
+        diag: {
+          strategy: s.name,
+          ok: false,
+          error: err.message,
+          status: err.upstreamStatus || err.status,
+        },
+        err,
+      };
+    }
+  };
+
+  const tier1 = [
     { name: 'account-bounded-58d', path: `${prefix}/orders?${query58}`, type: 'orders' },
+    { name: 'account-tx-58d-alltypes', path: `${prefix}/transactions?${txQuery58AllTypes}`, type: 'transactions' },
+    { name: 'account-tx-365d-trade', path: `${prefix}/transactions?${txQuery365Trade}`, type: 'transactions' },
+  ];
+
+  for (const s of tier1) {
+    const outcome = await runStrategy(s);
+    diagnostics.push(outcome.diag);
+    if (outcome.err) {
+      lastError = outcome.err;
+    } else {
+      if (outcome.list.length > 0) {
+        return { orders: outcome.list, diagnostics };
+      }
+      if (orders === null && outcome.isArray) {
+        orders = outcome.list;
+      }
+    }
+  }
+
+  const tier2 = [
     { name: 'account-bounded-30d', path: `${prefix}/orders?${query30}`, type: 'orders' },
     { name: 'account-bounded-7d', path: `${prefix}/orders?${query7}`, type: 'orders' },
     { name: 'account-orders-filled-58d', path: `${prefix}/orders?${query58}&status=FILLED`, type: 'orders' },
+    { name: 'account-orders-noms-58d', path: `${prefix}/orders?${query58NoMs}`, type: 'orders' },
     { name: 'global-bounded-58d', path: `/orders?${query58}`, type: 'orders' },
     { name: 'global-bounded-30d', path: `/orders?${query30}`, type: 'orders' },
     { name: 'account-tx-365d-all', path: `${prefix}/transactions?${txQuery365All}`, type: 'transactions' },
     { name: 'account-tx-180d-all', path: `${prefix}/transactions?${txQuery180All}`, type: 'transactions' },
     { name: 'account-tx-90d-all', path: `${prefix}/transactions?${txQuery90All}`, type: 'transactions' },
     { name: 'account-tx-58d-all', path: `${prefix}/transactions?${txQuery58All}`, type: 'transactions' },
-    { name: 'account-tx-365d-trade', path: `${prefix}/transactions?${txQuery365Trade}`, type: 'transactions' },
     { name: 'account-tx-180d-trade', path: `${prefix}/transactions?${txQuery180Trade}`, type: 'transactions' },
     { name: 'account-tx-58d-trade', path: `${prefix}/transactions?${txQuery58Trade}`, type: 'transactions' },
+    { name: 'account-tx-58d-noms-trade', path: `${prefix}/transactions?${txQuery58NoMsTrade}`, type: 'transactions' },
     { name: 'account-unparameterized', path: `${prefix}/orders`, type: 'orders' },
     { name: 'global-unparameterized', path: `/orders`, type: 'orders' },
   ];
 
-  for (const s of strategies) {
-    try {
-      const res = await brokerGet(s.path, record, fetcher);
-      let list = [];
-      if (Array.isArray(res)) {
-        if (s.type === 'transactions') {
-          list = transactionsToOrders(res);
-        } else {
-          list = res;
-        }
-      }
-      const count = list.length;
-      const rawCount = Array.isArray(res) ? res.length : 0;
-      diagnostics.push({ strategy: s.name, ok: true, count, raw: rawCount });
-      if (count > 0) {
-        return { orders: list, diagnostics };
-      }
-      if (orders === null && Array.isArray(res)) {
-        orders = list;
-      }
-    } catch (err) {
-      lastError = err;
-      diagnostics.push({ strategy: s.name, ok: false, error: err.message, status: err.status });
-      if (err.status === 409 || err.status === 401) throw err;
+  const tier2Outcomes = await Promise.all(tier2.map((s) => runStrategy(s)));
+  for (const outcome of tier2Outcomes) {
+    diagnostics.push(outcome.diag);
+    if (outcome.err) {
+      lastError = outcome.err;
+    } else if (outcome.isArray && orders === null) {
+      orders = outcome.list;
     }
+  }
+  const firstMatch = tier2Outcomes.find((o) => !o.err && o.list.length > 0);
+  if (firstMatch) {
+    return { orders: firstMatch.list, diagnostics };
   }
 
   if (orders === null && lastError) {
@@ -638,30 +740,17 @@ export async function fetchOrderHistory(account, record, fetcher = fetch, failCl
 export async function fetchSnapshot(store, user, fetcher) {
   const record = await getCredentials(store, user, fetcher);
   const account = await selectedAccount(store, user, record, fetcher);
-  const [accountData, historyResult] = await Promise.all([
-    (async () => {
-      try {
-        const direct = await brokerGet(
-          `/accounts/${encodeURIComponent(account)}?fields=positions`,
-          record,
-          fetcher
-        );
-        if (direct && (direct.securitiesAccount || direct.positions || direct.currentBalances)) {
-          return Array.isArray(direct) ? direct : [direct];
-        }
-      } catch {
-        // Fall back to multi-account endpoint
-      }
-      return brokerGet('/accounts?fields=positions', record, fetcher);
-    })(),
+  const [accountResult, historyResult] = await Promise.all([
+    fetchAccountData(account, record, fetcher),
     fetchOrderHistoryWithDiagnostics(account, record, fetcher, false),
   ]);
-  const accounts = Array.isArray(accountData) ? accountData : [accountData];
+  const accounts = accountResult.accounts;
   const history = historyResult.orders;
   if (!Array.isArray(history) || history.length >= 3000)
     throw new HttpError(503, 'Recent order history is incomplete; allocations were not changed.');
   const snapshot = await labeledSnapshot(store, user, account, accounts, history);
   snapshot.orderDiagnostics = historyResult.diagnostics;
+  snapshot.ledgerSource = accountResult.ledgerSource;
   return snapshot;
 }
 function preferences(input) {

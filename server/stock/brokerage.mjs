@@ -110,13 +110,16 @@ export async function brokerGet(path, record, fetcher = fetch) {
       'Could not verify brokerage data. No new orders were submitted by this check.'
     );
   }
-  if (!response.ok)
-    throw new HttpError(
+  if (!response.ok) {
+    const err = new HttpError(
       response.status === 401 ? 409 : 502,
       response.status === 401
         ? 'Schwab rejected the saved connection. Reconnect Charles Schwab.'
         : 'Could not verify brokerage data. No new orders were submitted by this check.'
     );
+    err.upstreamStatus = response.status;
+    throw err;
+  }
   return response.json();
 }
 export async function selectedAccount(store, user, record, fetcher = fetch) {

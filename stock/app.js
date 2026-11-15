@@ -1751,8 +1751,9 @@ function initEvents() {
 
   document.getElementById('btn-use-acct-cash')?.addEventListener('click', () => {
     const inp = document.getElementById('input-deploy-cash');
-    inp.value = state.cash.toFixed(2);
-    state.deployBudget = state.cash;
+    const roundedCash = Number(state.cash.toFixed(2));
+    inp.value = roundedCash.toFixed(2);
+    state.deployBudget = roundedCash;
     saveState();
     renderBasketAndRadar(latestComputedRows);
   });
