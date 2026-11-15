@@ -159,3 +159,14 @@ Public engineering decisions and validation only. Detailed historical journals r
 - **Observed error:** After Schwab transitioned the Developer Portal app status from `Modification Pending` to `Ready For Use`, `/api/schwab-auth` continued returning HTTP 503 (`invalid_client`, HTTP 401) during `/v1/oauth/token` exchange despite matching `clientIdLength: 48`, `secretLength: 64`, and `redirect_uri: https://redday-ai-schwab.netlify.app`.
 - **Diagnosis:** Performed an in-page non-reversible SHA-256 comparison (with zero raw credential exposure) between the Schwab Developer Portal and Netlify (`fintechnav`) environment variables. Confirmed `SCHWAB_CLIENT_ID` (48 chars) and `SCHWAB_CALLBACK_URL` matched byte-for-byte, explaining why `/v1/oauth/authorize` succeeded. However, `SCHWAB_CLIENT_SECRET` in Netlify (last updated 2026-11-06) did not match the 64-character alphanumeric `Client Secret` active in the Schwab Developer Portal following Schwab's 2026-11-07 app repair.
 - **Resolution & verification:** Owner updated `SCHWAB_CLIENT_SECRET` in Netlify (`fintechnav`); re-verified an exact SHA-256 match (64 chars, no quotes or whitespace) and published production deploy `6af37a0a06adc3a6b9af4b17` (`main@d5de512`). Owner completed interactive OAuth sign-in on `https://fintechnav.com/stock/` and confirmed live Charles Schwab connection succeeded. No credentials, hashes of secrets, authorization codes, cookies, or brokerage account data were logged or stored in repository records.
+
+### Entry 54 — 2026-11-15 — Password manager autofill compatibility fix for login gate
+- **Observed issue:** Google Password Manager auto-completed the account email on the sign-in screen, but did not auto-complete the password field.
+- **Root cause:**
+  1. `<form id="form-login-gate">` lacked `method="post"` and `action="#"`. In HTML5, `<form>` defaults to HTTP `GET`. Google Chrome and Google Password Manager deliberately suppress password autofill on `GET` forms to prevent credentials from being exposed in URL query parameters, while the generic address/profile autofill still filled the email input.
+  2. The input elements lacked standard `name` attributes (`name="username"` and `name="password"`). Password managers rely on the `name` attribute to map and pair username and password fields when retrieving credentials from the secure vault.
+- **Fix:**
+  - Added `method="post"` and `action="#"` to `<form id="form-login-gate">` in `stock/index.html` and `dist/stock/index.html`.
+  - Added `name="username"` to the email input (`#login-username`).
+  - Added `name="password"` to the password input (`#login-password`).
+- **Validation:** All 47 unit/security regression tests pass (`npm run test:security`); privacy guard passed for all tracked files (`npm run check:privacy`); `npm run validate` passed with clean lint/format. No credentials or secrets logged.
