@@ -1796,6 +1796,8 @@ function getTradeAvailableCash() {
     b.cashBalance,
     b.totalCash,
     b.settledCash,
+    b.impliedCash,
+    b.cashBuyingPower,
     b.availableFundsNonMarginableTrade,
     b.moneyMarketFund,
     b.buyingPower,

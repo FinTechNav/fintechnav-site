@@ -263,3 +263,30 @@ Public engineering decisions and validation only. Detailed historical journals r
   3. *Comprehensive Balance Logging:*
      - Enhanced sync complete logging in `stock/view-controller.js` to log detailed balance metrics: `balances: [avail=$..., cashBal=$..., totalCash=$..., settled=$..., mmf=$..., sweepPos=$...]`.
 - **Validation:** Added 2 new tests in `tests/stock-views.test.cjs`. All 52 tests pass (`npm run test:security`); privacy guard passed for all tracked files (`npm run check:privacy`); `npm run validate` passed with clean lint/format; `npm run build` compiled public distribution cleanly. Zero secrets or credentials handled or logged.
+
+### Entry 59 — 2026-11-15 — Direct-account live balance ledger, implied sweep cash derivation & multi-window transactions fallback
+- **Observed issues:**
+  1. Live log from user (`1:44:07 PM`) revealed:
+     `balances: [avail=$0.00, cashBal=$0.00, totalCash=$0.00, mmf=$0.00]`
+     `Query strategies: [account-bounded-58d:0 orders, ..., account-tx-trade-ymd:error(502), account-tx-trade-iso:0 orders, account-tx-trade:error(502), account-tx-all:error(502), ...]`
+  2. The single valid transaction query `account-tx-trade-iso` succeeded with HTTP 200 but returned 0 orders because it filtered strictly on `types=TRADE` and looked back only 58 days, excluding trades older than 58 days or categorized with other transaction types.
+  3. Cash balance on Schwab remained at $0.00 because `GET /accounts?fields=positions` returns lightweight/cached ledger summaries, and automated bank deposit sweep ledger balances were not reflected in cash sub-ledgers.
+- **Root causes & resolutions:**
+  1. *Direct Single-Account Ledger Pull in `fetchSnapshot`:*
+     - Prioritized `GET /accounts/{accountNumber}?fields=positions` over generic `/accounts?fields=positions`. In Schwab Trader API, querying the specific encrypted account hash hits the live trading and buying power ledger rather than the cached multi-account aggregator.
+     - Added graceful fallback to `/accounts?fields=positions` if single-account query fails.
+  2. *Implied Cash Balance Derivation:*
+     - When idle funds reside in Schwab's FDIC Bank Deposit Sweep program, sub-ledger cash balances report `$0.00` while `liquidationValue` / `equity` reflect total net worth and `longMarketValue` reflects stock equity.
+     - Implemented mathematical cash derivation:
+       $$\text{impliedCash} = \text{liquidationValue} - \text{longMarketValue}$$
+     - When explicit cash fields are $0.00, `normalizeAccount()` resolves `positiveCash` to `impliedCash` with source `'liquidationValue - stockMarketValue'`, correctly exposing the user's $5.43 available cash.
+     - Added `impliedCash` to client-side candidates in `stock/view-controller.js` and `stock/app.js` (`getTradeAvailableCash()`).
+  3. *Multi-Window, Comprehensive Transactions Retrieval:*
+     - Schwab `/transactions` endpoint supports up to 365 days (1 year) and strictly requires ISO-8601 timestamps (`YYYY-MM-DDTHH:mm:ss.sssZ`).
+     - Added multi-window transaction query strategies spanning 365 days, 180 days, 90 days, and 58 days.
+     - Prioritized queries *omitting* the `types` filter (`account-tx-365d-all`, `account-tx-180d-all`, `account-tx-90d-all`, `account-tx-58d-all`) followed by `types=TRADE` variants, allowing Schwab to return all activity.
+     - Implemented `transactionsToOrders()` to filter out pure non-trade transactions (ACH, electronic funds, dividends/interest) and convert trade transactions.
+     - In `transactionToOrder()`, improved transfer items parser to select the non-currency instrument, extract ticker and quantities from description regex ("BOUGHT 10 NVDA @ 125.00") if symbol is missing, and calculate execution prices.
+  4. *In-Depth Diagnostics & Balance Logging:*
+     - Enhanced sync completion log to record raw transaction counts (`raw: X`), positive cash source (`src: ...`), liquidation value, and long market value.
+- **Validation:** Added 2 new unit tests in `tests/stock-views.test.cjs`. All 54 tests pass (`npm run test:security`); privacy check passed (`npm run check:privacy`); lint & formatting clean (`npm run validate`); build verified (`npm run build`). No secrets or credentials handled or logged.

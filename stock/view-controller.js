@@ -146,6 +146,8 @@ function applyActiveView() {
     balances.cashBalance,
     balances.totalCash,
     balances.settledCash,
+    balances.impliedCash,
+    balances.cashBuyingPower,
     balances.availableFundsNonMarginableTrade,
     balances.moneyMarketFund,
     balances.buyingPower,
@@ -442,17 +444,26 @@ async function syncSharedPortfolio() {
   const orderCount = brokerSnapshot.orders?.length || 0;
   const diagStr = Array.isArray(data.orderDiagnostics)
     ? data.orderDiagnostics
-        .map((d) => `${d.strategy}:${d.ok ? d.count + ' orders' : 'error(' + (d.status || d.error || 'failed') + ')'}`)
+        .map(
+          (d) =>
+            `${d.strategy}:${
+              d.ok
+                ? d.count + ' orders' + (d.raw !== undefined ? `[raw:${d.raw}]` : '')
+                : 'error(' + (d.status || d.error || 'failed') + ')'
+            }`
+        )
         .join(', ')
     : 'none';
   const b = brokerSnapshot.balances || {};
   const balanceBreakdown = [
-    `avail=$${state.cash.toFixed(2)}`,
+    `avail=$${state.cash.toFixed(2)}${b.positiveCashSource ? `(${b.positiveCashSource})` : ''}`,
     Number.isFinite(b.cashBalance) ? `cashBal=$${b.cashBalance.toFixed(2)}` : null,
     Number.isFinite(b.totalCash) ? `totalCash=$${b.totalCash.toFixed(2)}` : null,
     Number.isFinite(b.settledCash) ? `settledCash=$${b.settledCash.toFixed(2)}` : null,
     Number.isFinite(b.moneyMarketFund) ? `mmf=$${b.moneyMarketFund.toFixed(2)}` : null,
     b.cashPositionsTotal > 0 ? `sweepPos=$${b.cashPositionsTotal.toFixed(2)}` : null,
+    Number.isFinite(b.liquidationValue) ? `liqVal=$${b.liquidationValue.toFixed(2)}` : null,
+    Number.isFinite(b.longMarketValue) ? `longMkt=$${b.longMarketValue.toFixed(2)}` : null,
   ]
     .filter(Boolean)
     .join(', ');

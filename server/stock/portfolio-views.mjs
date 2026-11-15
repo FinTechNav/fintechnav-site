@@ -36,9 +36,15 @@ export async function readViews(store, user) {
   return { document: normalizeViewDocument(entry?.data), revision: entry?.etag || null };
 }
 export function normalizeAccount(accounts, history, labels = {}) {
-  if (!Array.isArray(accounts) || accounts.length !== 1 || !accounts[0]?.securitiesAccount)
+  const accountList = Array.isArray(accounts) ? accounts : [accounts];
+  if (!accountList.length) {
     throw new HttpError(502, 'Could not verify a single brokerage portfolio.');
-  const account = accounts[0].securitiesAccount;
+  }
+  const accountObj = accountList.find((a) => a?.securitiesAccount) || accountList[0];
+  const account = accountObj?.securitiesAccount || accountObj;
+  if (!account) {
+    throw new HttpError(502, 'Could not verify a single brokerage portfolio.');
+  }
   const finite = (value) => (Number.isFinite(Number(value)) ? Number(value) : 0);
   const positions = (account.positions || []).map((p) => ({
     symbol: String(p.instrument?.symbol || p.instrument?.cusip || 'Unknown'),
@@ -61,10 +67,25 @@ export function normalizeAccount(accounts, history, labels = {}) {
   ].filter(Boolean);
 
   const balances = {};
+  // Prefer positive numerical values over $0.00 across all balance containers
   for (const src of balanceSources) {
     for (const [k, v] of Object.entries(src)) {
-      if (Number.isFinite(Number(v)) && balances[k] === undefined) {
-        balances[k] = Number(v);
+      const num = Number(v);
+      if (Number.isFinite(num)) {
+        if (balances[k] === undefined || (balances[k] <= 0 && num > 0)) {
+          balances[k] = num;
+        }
+      }
+    }
+  }
+
+  // Also inspect top-level properties on account and securitiesAccount
+  for (const obj of [account, accountList[0]]) {
+    for (const [k, v] of Object.entries(obj || {})) {
+      if (typeof v === 'number' && Number.isFinite(v)) {
+        if (balances[k] === undefined || (balances[k] <= 0 && v > 0)) {
+          balances[k] = v;
+        }
       }
     }
   }
@@ -80,6 +101,7 @@ export function normalizeAccount(accounts, history, labels = {}) {
       sym === 'SWVXX' ||
       sym === 'SNAXX' ||
       sym === 'SPAXX' ||
+      sym === 'SWGXX' ||
       sym === '/BA' ||
       sym.startsWith('QII') ||
       desc.includes('CASH') ||
@@ -94,24 +116,75 @@ export function normalizeAccount(accounts, history, labels = {}) {
     0
   );
 
-  const cashCandidates = [
-    balances.cashAvailableForTrading,
-    balances.availableFunds,
-    balances.cashBalance,
-    balances.totalCash,
-    balances.settledCash,
-    balances.settledFunds,
-    balances.availableFundsNonMarginableTrade,
-    balances.nonMarginableTradeFunds,
-    balances.moneyMarketFund,
-    balances.buyingPower,
-    balances.dayTradingBuyingPower,
-    cashPositionsTotal > 0 ? cashPositionsTotal : null,
+  const cashFieldNames = [
+    'cashAvailableForTrading',
+    'availableFunds',
+    'cashBalance',
+    'totalCash',
+    'settledCash',
+    'settledFunds',
+    'cashBuyingPower',
+    'availableFundsNonMarginableTrade',
+    'nonMarginableTradeFunds',
+    'moneyMarketFund',
+    'buyingPower',
+    'dayTradingBuyingPower',
+    'unsettledCash',
+    'cashReceipts',
   ];
 
-  const positiveCash = cashCandidates.find(
-    (v) => typeof v === 'number' && Number.isFinite(v) && v > 0
-  );
+  let positiveCash = null;
+  let positiveCashSource = null;
+
+  for (const field of cashFieldNames) {
+    if (typeof balances[field] === 'number' && balances[field] > 0) {
+      positiveCash = balances[field];
+      positiveCashSource = field;
+      break;
+    }
+  }
+
+  if (!positiveCash) {
+    for (const src of balanceSources) {
+      for (const field of cashFieldNames) {
+        const val = Number(src?.[field]);
+        if (Number.isFinite(val) && val > 0) {
+          positiveCash = val;
+          positiveCashSource = `container.${field}`;
+          break;
+        }
+      }
+      if (positiveCash) break;
+    }
+  }
+
+  if (!positiveCash && cashPositionsTotal > 0) {
+    positiveCash = cashPositionsTotal;
+    positiveCashSource = 'positions.sweep';
+  }
+
+  // Derive cash from account liquidationValue minus total securities market value.
+  // If Schwab cash is sitting in the FDIC bank sweep and ledger shows $0.00 cashBalance,
+  // liquidationValue - longMarketValue accurately yields the net cash balance.
+  if (!positiveCash) {
+    const liquidation = finite(
+      balances.liquidationValue ??
+      balances.equity ??
+      account.currentBalances?.liquidationValue ??
+      account.initialBalances?.liquidationValue
+    );
+    const stockMarketValue = finite(
+      balances.longMarketValue ??
+      balances.marketValue ??
+      positions.reduce((sum, p) => sum + (finite(p.marketValue) || (finite(p.longQuantity) * finite(p.averagePrice))), 0)
+    );
+    const implied = Math.round((liquidation - stockMarketValue) * 100) / 100;
+    if (implied > 0) {
+      positiveCash = implied;
+      positiveCashSource = 'liquidationValue - stockMarketValue';
+      balances.impliedCash = implied;
+    }
+  }
 
   if (positiveCash > 0) {
     balances.cashAvailableForTrading = positiveCash;
@@ -127,6 +200,7 @@ export function normalizeAccount(accounts, history, labels = {}) {
     balances.availableFunds = cashPositionsTotal;
   }
   balances.cashPositionsTotal = cashPositionsTotal;
+  balances.positiveCashSource = positiveCashSource;
   const orders = history.map((order) => {
     const legs =
       order.orderLegCollection ||
@@ -283,26 +357,102 @@ export const historyPath = (account) => {
   })}`;
 };
 export function transactionToOrder(tx) {
-  const item = tx.transferItems?.[0] || {};
-  const symbol = String(item.instrument?.symbol || item.instrument?.cusip || 'Unknown');
-  const assetType = String(item.instrument?.assetType || 'EQUITY');
-  const qty = Math.abs(Number(item.amount ?? tx.amount ?? 0));
+  if (!tx || typeof tx !== 'object') return null;
+
+  const items = Array.isArray(tx.transferItems) ? tx.transferItems : [];
+  const securityItem =
+    items.find(
+      (ti) =>
+        ti.instrument?.assetType === 'EQUITY' ||
+        (ti.instrument?.assetType && ti.instrument?.assetType !== 'CURRENCY')
+    ) ||
+    items.find((ti) => ti.instrument?.symbol && ti.instrument?.symbol !== 'USD') ||
+    items[0] ||
+    {};
+
+  const cashItem = items.find(
+    (ti) => ti.instrument?.assetType === 'CURRENCY' || ti.instrument?.symbol === 'USD'
+  );
+
+  let symbol = String(securityItem.instrument?.symbol || securityItem.instrument?.cusip || '').trim();
+  let assetType = String(securityItem.instrument?.assetType || 'EQUITY');
+
   const desc = String(tx.description || '').toUpperCase();
   const net = Number(tx.netAmount ?? tx.amount ?? 0);
-  const isBuy = desc.includes('BUY') || desc.includes('BOUGHT') || net < 0;
-  const instruction = isBuy ? 'BUY' : 'SELL';
-  let price = Number(item.price);
-  if (!Number.isFinite(price) || price <= 0) {
-    price = Number(
-      item.cost && qty > 0 ? item.cost / qty : qty > 0 ? Math.abs(net) / qty : 0
-    );
+
+  // If symbol is missing, unknown or currency, attempt regex extraction from description
+  if (!symbol || symbol === 'UNKNOWN' || symbol === 'USD') {
+    const descMatch =
+      desc.match(/(?:BOUGHT|SOLD|BUY|SELL|BOT|SLD)\s+([0-9.]+)?\s*([A-Z]{1,5})\b/i) ||
+      desc.match(/\b([A-Z]{1,5})\b/);
+    if (descMatch) {
+      const candidate = descMatch[2] || descMatch[1];
+      if (candidate && !['USD', 'CASH', 'THE', 'AND', 'FOR', 'AT'].includes(candidate.toUpperCase())) {
+        symbol = candidate.toUpperCase();
+      }
+    }
   }
+
+  if (!symbol || symbol === 'UNKNOWN') {
+    symbol = String(tx.symbol || tx.cusip || 'Unknown').trim();
+  }
+
+  // Determine quantity
+  let qty = Math.abs(Number(securityItem.amount ?? tx.quantity ?? tx.amount ?? 0));
+  if (qty <= 0) {
+    const qtyMatch = desc.match(/(?:BOUGHT|SOLD|BUY|SELL|BOT|SLD)\s+([0-9.]+)/i);
+    if (qtyMatch) {
+      qty = Math.abs(Number(qtyMatch[1]));
+    }
+  }
+  if (!Number.isFinite(qty) || qty <= 0) {
+    qty = 1;
+  }
+
+  // Determine instruction (BUY vs SELL)
+  let instruction = 'BUY';
+  if (
+    desc.includes('SELL') ||
+    desc.includes('SOLD') ||
+    desc.includes('SLD') ||
+    (securityItem.positionEffect === 'CLOSING' && securityItem.amount < 0)
+  ) {
+    instruction = 'SELL';
+  } else if (
+    desc.includes('BUY') ||
+    desc.includes('BOUGHT') ||
+    desc.includes('BOT') ||
+    net < 0
+  ) {
+    instruction = 'BUY';
+  } else if (securityItem.amount < 0 && net > 0) {
+    instruction = 'SELL';
+  } else if (securityItem.amount > 0 && net < 0) {
+    instruction = 'BUY';
+  }
+
+  // Determine execution price
+  let price = Number(securityItem.price ?? tx.price ?? 0);
+  if (!Number.isFinite(price) || price <= 0) {
+    if (securityItem.cost && qty > 0) {
+      price = Math.abs(Number(securityItem.cost)) / qty;
+    } else if (cashItem && Math.abs(Number(cashItem.amount)) > 0 && qty > 0) {
+      price = Math.abs(Number(cashItem.amount)) / qty;
+    } else if (net !== 0 && qty > 0) {
+      price = Math.abs(net) / qty;
+    }
+  }
+  if (!Number.isFinite(price)) price = 0;
+  price = Math.round(price * 100) / 100;
+
   const time = tx.time || tx.tradeDate || tx.settlementDate || new Date().toISOString();
-  const orderId = String(tx.orderId || tx.activityId || tx.positionId || '');
+  const orderId = String(
+    tx.orderId || tx.activityId || tx.transactionId || tx.positionId || Math.floor(Math.random() * 1000000000)
+  );
 
   return {
     orderId,
-    symbol,
+    symbol: symbol.toUpperCase(),
     assetType,
     instruction,
     status: 'FILLED',
@@ -317,9 +467,9 @@ export function transactionToOrder(tx) {
         instruction,
         quantity: qty,
         instrument: {
-          symbol,
+          symbol: symbol.toUpperCase(),
           assetType,
-          description: item.instrument?.description || symbol,
+          description: securityItem.instrument?.description || tx.description || symbol,
         },
       },
     ],
@@ -333,6 +483,30 @@ export function transactionToOrder(tx) {
   };
 }
 
+export function transactionsToOrders(transactions) {
+  if (!Array.isArray(transactions)) return [];
+  const tradeTxs = transactions.filter((t) => {
+    if (!t || typeof t !== 'object') return false;
+    const type = String(t.type || '').toUpperCase();
+    const desc = String(t.description || '').toUpperCase();
+    if (
+      type === 'ELECTRONIC_FUND' ||
+      type === 'ACH' ||
+      type === 'WIRE' ||
+      type === 'DIVIDEND_OR_INTEREST' ||
+      type === 'INTEREST'
+    ) {
+      return false;
+    }
+    if (type === 'TRADE') return true;
+    if (/BUY|BOUGHT|BOT|SELL|SOLD|SLD|PURCHASE/i.test(desc)) return true;
+    if (t.transferItems?.some((ti) => ti.instrument?.assetType === 'EQUITY')) return true;
+    return false;
+  });
+
+  return tradeTxs.map(transactionToOrder).filter(Boolean);
+}
+
 export async function fetchOrderHistoryWithDiagnostics(
   account,
   record,
@@ -342,6 +516,9 @@ export async function fetchOrderHistoryWithDiagnostics(
   const prefix = `/accounts/${encodeURIComponent(account)}`;
   const now = Date.now();
   const to = new Date(now - 120000);
+  const from365 = new Date(to.getTime() - 365 * 86400000);
+  const from180 = new Date(to.getTime() - 180 * 86400000);
+  const from90 = new Date(to.getTime() - 90 * 86400000);
   const from58 = new Date(to.getTime() - 58 * 86400000);
   const from30 = new Date(to.getTime() - 30 * 86400000);
   const from7 = new Date(to.getTime() - 7 * 86400000);
@@ -360,12 +537,33 @@ export async function fetchOrderHistoryWithDiagnostics(
     toEnteredTime: to.toISOString(),
   });
 
-  const txQueryYMD = new URLSearchParams({
-    startDate: from58.toISOString().slice(0, 10),
-    endDate: to.toISOString().slice(0, 10),
+  const txQuery365All = new URLSearchParams({
+    startDate: from365.toISOString(),
+    endDate: to.toISOString(),
+  });
+  const txQuery180All = new URLSearchParams({
+    startDate: from180.toISOString(),
+    endDate: to.toISOString(),
+  });
+  const txQuery90All = new URLSearchParams({
+    startDate: from90.toISOString(),
+    endDate: to.toISOString(),
+  });
+  const txQuery58All = new URLSearchParams({
+    startDate: from58.toISOString(),
+    endDate: to.toISOString(),
+  });
+  const txQuery365Trade = new URLSearchParams({
+    startDate: from365.toISOString(),
+    endDate: to.toISOString(),
     types: 'TRADE',
   });
-  const txQueryISO = new URLSearchParams({
+  const txQuery180Trade = new URLSearchParams({
+    startDate: from180.toISOString(),
+    endDate: to.toISOString(),
+    types: 'TRADE',
+  });
+  const txQuery58Trade = new URLSearchParams({
     startDate: from58.toISOString(),
     endDate: to.toISOString(),
     types: 'TRADE',
@@ -379,12 +577,16 @@ export async function fetchOrderHistoryWithDiagnostics(
     { name: 'account-bounded-58d', path: `${prefix}/orders?${query58}`, type: 'orders' },
     { name: 'account-bounded-30d', path: `${prefix}/orders?${query30}`, type: 'orders' },
     { name: 'account-bounded-7d', path: `${prefix}/orders?${query7}`, type: 'orders' },
+    { name: 'account-orders-filled-58d', path: `${prefix}/orders?${query58}&status=FILLED`, type: 'orders' },
     { name: 'global-bounded-58d', path: `/orders?${query58}`, type: 'orders' },
     { name: 'global-bounded-30d', path: `/orders?${query30}`, type: 'orders' },
-    { name: 'account-tx-trade-ymd', path: `${prefix}/transactions?${txQueryYMD}`, type: 'transactions' },
-    { name: 'account-tx-trade-iso', path: `${prefix}/transactions?${txQueryISO}`, type: 'transactions' },
-    { name: 'account-tx-trade', path: `${prefix}/transactions?types=TRADE`, type: 'transactions' },
-    { name: 'account-tx-all', path: `${prefix}/transactions`, type: 'transactions' },
+    { name: 'account-tx-365d-all', path: `${prefix}/transactions?${txQuery365All}`, type: 'transactions' },
+    { name: 'account-tx-180d-all', path: `${prefix}/transactions?${txQuery180All}`, type: 'transactions' },
+    { name: 'account-tx-90d-all', path: `${prefix}/transactions?${txQuery90All}`, type: 'transactions' },
+    { name: 'account-tx-58d-all', path: `${prefix}/transactions?${txQuery58All}`, type: 'transactions' },
+    { name: 'account-tx-365d-trade', path: `${prefix}/transactions?${txQuery365Trade}`, type: 'transactions' },
+    { name: 'account-tx-180d-trade', path: `${prefix}/transactions?${txQuery180Trade}`, type: 'transactions' },
+    { name: 'account-tx-58d-trade', path: `${prefix}/transactions?${txQuery58Trade}`, type: 'transactions' },
     { name: 'account-unparameterized', path: `${prefix}/orders`, type: 'orders' },
     { name: 'global-unparameterized', path: `/orders`, type: 'orders' },
   ];
@@ -395,20 +597,14 @@ export async function fetchOrderHistoryWithDiagnostics(
       let list = [];
       if (Array.isArray(res)) {
         if (s.type === 'transactions') {
-          list = res
-            .filter(
-              (t) =>
-                t.type === 'TRADE' ||
-                t.transferItems?.length ||
-                /buy|bought|sell|sold/i.test(t.description || '')
-            )
-            .map(transactionToOrder);
+          list = transactionsToOrders(res);
         } else {
           list = res;
         }
       }
       const count = list.length;
-      diagnostics.push({ strategy: s.name, ok: true, count });
+      const rawCount = Array.isArray(res) ? res.length : 0;
+      diagnostics.push({ strategy: s.name, ok: true, count, raw: rawCount });
       if (count > 0) {
         return { orders: list, diagnostics };
       }
@@ -442,10 +638,25 @@ export async function fetchOrderHistory(account, record, fetcher = fetch, failCl
 export async function fetchSnapshot(store, user, fetcher) {
   const record = await getCredentials(store, user, fetcher);
   const account = await selectedAccount(store, user, record, fetcher);
-  const [accounts, historyResult] = await Promise.all([
-    brokerGet('/accounts?fields=positions', record, fetcher),
+  const [accountData, historyResult] = await Promise.all([
+    (async () => {
+      try {
+        const direct = await brokerGet(
+          `/accounts/${encodeURIComponent(account)}?fields=positions`,
+          record,
+          fetcher
+        );
+        if (direct && (direct.securitiesAccount || direct.positions || direct.currentBalances)) {
+          return Array.isArray(direct) ? direct : [direct];
+        }
+      } catch {
+        // Fall back to multi-account endpoint
+      }
+      return brokerGet('/accounts?fields=positions', record, fetcher);
+    })(),
     fetchOrderHistoryWithDiagnostics(account, record, fetcher, false),
   ]);
+  const accounts = Array.isArray(accountData) ? accountData : [accountData];
   const history = historyResult.orders;
   if (!Array.isArray(history) || history.length >= 3000)
     throw new HttpError(503, 'Recent order history is incomplete; allocations were not changed.');
