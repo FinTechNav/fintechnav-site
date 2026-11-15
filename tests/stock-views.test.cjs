@@ -585,3 +585,92 @@ test('fetchOrderHistory falls back to /transactions when /orders returns 0 order
   assert.equal(orders[0].price, 150.25);
   assert.equal(orders[0].status, 'FILLED');
 });
+
+test('normalizeAccount derives positive cash from liquidationValue minus stockMarketValue when cashBalance is 0', async () => {
+  const { normalizeAccount } = await import('../server/stock/portfolio-views.mjs');
+  const accounts = [
+    {
+      securitiesAccount: {
+        positions: [
+          {
+            longQuantity: 10,
+            marketValue: 994.57,
+            instrument: {
+              assetType: 'EQUITY',
+              symbol: 'NVDA',
+              description: 'NVIDIA CORP',
+            },
+          },
+        ],
+        currentBalances: {
+          liquidationValue: 1000.0,
+          longMarketValue: 994.57,
+          cashAvailableForTrading: 0,
+          cashBalance: 0,
+          totalCash: 0,
+        },
+      },
+    },
+  ];
+  const snapshot = normalizeAccount(accounts, [], {});
+  assert.equal(snapshot.balances.cashAvailableForTrading, 5.43);
+  assert.equal(snapshot.balances.cashBalance, 5.43);
+  assert.equal(snapshot.balances.impliedCash, 5.43);
+  assert.equal(snapshot.balances.positiveCashSource, 'liquidationValue - stockMarketValue');
+});
+
+test('transactionsToOrders extracts ticker, quantity, price, and instruction from description and transferItems', async () => {
+  const { transactionsToOrders } = await import('../server/stock/portfolio-views.mjs');
+  const rawTxs = [
+    {
+      activityId: 'tx-101',
+      type: 'TRADE',
+      description: 'BOUGHT 5 MSFT @ 415.50',
+      netAmount: -2077.5,
+      transferItems: [
+        {
+          amount: -2077.5,
+          instrument: { assetType: 'CURRENCY', symbol: 'USD' },
+        },
+        {
+          amount: 5,
+          price: 415.5,
+          instrument: { assetType: 'EQUITY', symbol: 'MSFT' },
+        },
+      ],
+    },
+    {
+      activityId: 'tx-102',
+      type: 'TRADE',
+      description: 'SOLD 2 TSLA @ 220.00',
+      netAmount: 440.0,
+      transferItems: [
+        {
+          amount: -2,
+          price: 220.0,
+          positionEffect: 'CLOSING',
+          instrument: { assetType: 'EQUITY', symbol: 'TSLA' },
+        },
+      ],
+    },
+    {
+      activityId: 'tx-103',
+      type: 'ACH',
+      description: 'ELECTRONIC DEPOSIT',
+      netAmount: 500.0,
+    },
+  ];
+  const orders = transactionsToOrders(rawTxs);
+  assert.equal(orders.length, 2);
+  assert.equal(orders[0].symbol, 'MSFT');
+  assert.equal(orders[0].instruction, 'BUY');
+  assert.equal(orders[0].quantity, 5);
+  assert.equal(orders[0].price, 415.5);
+  assert.equal(orders[0].status, 'FILLED');
+
+  assert.equal(orders[1].symbol, 'TSLA');
+  assert.equal(orders[1].instruction, 'SELL');
+  assert.equal(orders[1].quantity, 2);
+  assert.equal(orders[1].price, 220.0);
+  assert.equal(orders[1].status, 'FILLED');
+});
