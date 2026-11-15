@@ -443,3 +443,60 @@ test('opposite-side account executions block orders regardless of the selected p
   );
   assert.equal(f.posted.length, 0);
 });
+
+test('normalizeAccount falls back to cashBalance/availableFunds and parses state: FILLED with summary executions', async () => {
+  const { normalizeAccount } = await import('../server/stock/portfolio-views.mjs');
+  const accounts = [
+    {
+      securitiesAccount: {
+        positions: [],
+        currentBalances: {
+          liquidationValue: 100,
+          cashAvailableForTrading: 0,
+          cashBalance: 5.43,
+          availableFunds: 5.43,
+        },
+      },
+    },
+  ];
+  const history = [
+    {
+      orderId: 9876,
+      state: 'FILLED',
+      filledQuantity: 1,
+      quantity: 1,
+      price: 3.82,
+      closeTime: '2026-11-15T15:00:00Z',
+      orderLegCollection: [
+        { instruction: 'BUY', instrument: { symbol: 'POET', assetType: 'EQUITY' } },
+      ],
+    },
+  ];
+  const snapshot = normalizeAccount(accounts, history, { 9876: { profile: 'primary' } });
+  assert.equal(snapshot.balances.cashAvailableForTrading, 5.43);
+  assert.equal(snapshot.balances.cashBalance, 5.43);
+  assert.equal(snapshot.orders.length, 1);
+  assert.equal(snapshot.orders[0].status, 'FILLED');
+  assert.equal(snapshot.orders[0].executions.length, 1);
+  assert.equal(snapshot.orders[0].executions[0].quantity, 1);
+  assert.equal(snapshot.orders[0].executions[0].price, 3.82);
+  assert.equal(snapshot.orders[0].executions[0].total, 3.82);
+});
+
+test('fetchOrderHistory falls back to plain /orders when date-bounded query returns empty', async () => {
+  const { fetchOrderHistory } = await import('../server/stock/portfolio-views.mjs');
+  const expectedOrders = [
+    { orderId: '5555', status: 'FILLED', symbol: 'POET', filledQuantity: 1 },
+  ];
+  const fetcher = async (url) => {
+    if (String(url).includes('/orders?')) {
+      return Response.json([]);
+    }
+    if (String(url).endsWith('/orders')) {
+      return Response.json(expectedOrders);
+    }
+    throw new Error(`Unexpected url: ${url}`);
+  };
+  const orders = await fetchOrderHistory('test-account-hash', { accessToken: 'tok' }, fetcher);
+  assert.deepEqual(orders, expectedOrders);
+});

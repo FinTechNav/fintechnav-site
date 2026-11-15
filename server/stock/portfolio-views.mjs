@@ -53,34 +53,66 @@ export function normalizeAccount(accounts, history, labels = {}) {
       finite(p.longQuantity) > 0 &&
       finite(p.shortQuantity) === 0,
   }));
-  const balances = Object.fromEntries(
-    [
-      'liquidationValue',
-      'cashAvailableForTrading',
-      'cashBalance',
-      'availableFunds',
-      'buyingPower',
-      'nonMarginableTradeFunds',
-    ]
-      .filter((k) => Number.isFinite(account.currentBalances?.[k]))
-      .map((k) => [k, account.currentBalances[k]])
-  );
+  const balanceKeys = [
+    'liquidationValue',
+    'cashAvailableForTrading',
+    'cashBalance',
+    'availableFunds',
+    'buyingPower',
+    'nonMarginableTradeFunds',
+    'settledFunds',
+    'cashDebitCallValue',
+    'unsettledCash',
+  ];
+  const balances = {};
+  for (const k of balanceKeys) {
+    const val =
+      account.currentBalances?.[k] ??
+      account.projectedBalances?.[k] ??
+      account.aggregatedBalance?.[k] ??
+      account.initialBalances?.[k];
+    if (Number.isFinite(Number(val))) {
+      balances[k] = Number(val);
+    }
+  }
+  if (!balances.cashAvailableForTrading || balances.cashAvailableForTrading <= 0) {
+    const positiveCash = [
+      balances.availableFunds,
+      balances.cashBalance,
+      balances.buyingPower,
+      balances.settledFunds,
+    ].find((v) => typeof v === 'number' && Number.isFinite(v) && v > 0);
+    if (positiveCash > 0) {
+      balances.cashAvailableForTrading = positiveCash;
+    }
+  }
   const orders = history.map((order) => {
     const legs =
-      order.orderLegCollection || order.childOrderStrategies?.[0]?.orderLegCollection || [];
+      order.orderLegCollection ||
+      order.orderLegs ||
+      order.legs ||
+      order.childOrderStrategies?.[0]?.orderLegCollection ||
+      order.childOrderStrategies?.[0]?.orderLegs ||
+      [];
     // Complex/multi-leg orders remain visible as orders; never misattribute a leg.
     const single = legs.length === 1;
-    const leg = single ? legs[0] : legs[0] || {};
+    const leg = single
+      ? legs[0]
+      : legs[0] || {
+          instrument: order.instrument || {
+            symbol: order.symbol,
+            assetType: order.assetType || 'EQUITY',
+          },
+          instruction: order.instruction || order.orderType || '',
+        };
     const orderId = String(order.orderId || '');
-    const activityExecs = (order.orderActivityCollection || [])
-      .filter((a) => a.activityType === 'EXECUTION' || a.executionType === 'FILL')
-      .flatMap((a, activityIndex) =>
-        (a.executionLegs || []).map((e, legIndex) => ({
-          ...e,
-          factId: `${orderId}-${a.activityId ?? activityIndex}-${legIndex}`,
-        }))
-      );
-    const rootExecs = (order.executionLegs || []).map((e, legIndex) => ({
+    const activityExecs = (order.orderActivityCollection || []).flatMap((a, activityIndex) =>
+      (a.executionLegs || []).map((e, legIndex) => ({
+        ...e,
+        factId: `${orderId}-${a.activityId ?? activityIndex}-${legIndex}`,
+      }))
+    );
+    const rootExecs = (order.executionLegs || order.executions || []).map((e, legIndex) => ({
       ...e,
       factId: `${orderId}-root-${legIndex}`,
     }));
@@ -99,17 +131,38 @@ export function normalizeAccount(accounts, history, labels = {}) {
             quantity: e.quantity,
             price: e.price,
             time: e.time,
-            total: leg.instrument?.assetType === 'EQUITY' ? e.quantity * e.price : null,
+            total:
+              leg.instrument?.assetType === 'EQUITY' || !leg.instrument?.assetType
+                ? e.quantity * e.price
+                : null,
           }))
       : [];
+    const status = String(order.status || order.state || '').toUpperCase();
+    const filledQty = finite(order.filledQuantity);
+    if (single && executions.length === 0 && filledQty > 0) {
+      const fillPrice = Number(order.price ?? order.limitPrice ?? leg.price ?? 0);
+      const fillTime = order.closeTime || order.enteredTime || new Date().toISOString();
+      executions.push({
+        factId: `${orderId}-fill-0`,
+        quantity: filledQty,
+        price: fillPrice,
+        time: fillTime,
+        total:
+          leg.instrument?.assetType === 'EQUITY' || !leg.instrument?.assetType
+            ? filledQty * fillPrice
+            : null,
+      });
+    }
     return {
       orderId,
-      symbol: String(leg.instrument?.symbol || order.symbol || (single ? 'Unknown' : 'Multi-leg order')),
-      assetType: String(leg.instrument?.assetType || 'OTHER'),
-      instruction: String(leg.instruction || order.orderType || ''),
-      status: String(order.status || ''),
+      symbol: String(
+        leg.instrument?.symbol || order.symbol || (single ? 'Unknown' : 'Multi-leg order')
+      ),
+      assetType: String(leg.instrument?.assetType || order.assetType || 'OTHER'),
+      instruction: String(leg.instruction || order.instruction || order.orderType || ''),
+      status,
       quantity: finite(order.quantity),
-      filledQuantity: finite(order.filledQuantity),
+      filledQuantity: filledQty,
       enteredTime: order.enteredTime || order.closeTime || null,
       limitPrice: Number.isFinite(order.price) ? order.price : null,
       profile:
@@ -162,7 +215,7 @@ export async function labeledSnapshot(store, user, account, accounts, history) {
   return snapshot;
 }
 export const historyPath = (account) => {
-  const to = new Date();
+  const to = new Date(Date.now() - 120000);
   const from = new Date(to.getTime() - 58 * 86400000);
   return `/accounts/${encodeURIComponent(account)}/orders?${new URLSearchParams({
     fromEnteredTime: from.toISOString(),
@@ -170,12 +223,62 @@ export const historyPath = (account) => {
     maxResults: '3000',
   })}`;
 };
+export async function fetchOrderHistory(account, record, fetcher = fetch) {
+  const prefix = `/accounts/${encodeURIComponent(account)}`;
+  const to = new Date(Date.now() - 120000);
+  const from = new Date(to.getTime() - 58 * 86400000);
+  const query = new URLSearchParams({
+    fromEnteredTime: from.toISOString(),
+    toEnteredTime: to.toISOString(),
+    maxResults: '3000',
+  });
+
+  let orders = null;
+  let primaryError = null;
+
+  try {
+    orders = await brokerGet(`${prefix}/orders?${query}`, record, fetcher);
+  } catch (err) {
+    primaryError = err;
+    if (err.status !== 400 && err.status !== 404) {
+      throw err;
+    }
+  }
+
+  if (!Array.isArray(orders) || orders.length === 0) {
+    try {
+      const fallbackOrders = await brokerGet(`${prefix}/orders`, record, fetcher);
+      if (Array.isArray(fallbackOrders) && fallbackOrders.length > 0) {
+        return fallbackOrders;
+      }
+    } catch {
+      /* ignore */
+    }
+  }
+
+  if (!Array.isArray(orders) || orders.length === 0) {
+    try {
+      const globalOrders = await brokerGet('/orders', record, fetcher);
+      if (Array.isArray(globalOrders) && globalOrders.length > 0) {
+        return globalOrders;
+      }
+    } catch {
+      /* ignore */
+    }
+  }
+
+  if (orders === null && primaryError) {
+    throw primaryError;
+  }
+
+  return Array.isArray(orders) ? orders : [];
+}
 export async function fetchSnapshot(store, user, fetcher) {
   const record = await getCredentials(store, user, fetcher);
   const account = await selectedAccount(store, user, record, fetcher);
   const [accounts, history] = await Promise.all([
     brokerGet('/accounts?fields=positions', record, fetcher),
-    brokerGet(historyPath(account), record, fetcher),
+    fetchOrderHistory(account, record, fetcher),
   ]);
   if (!Array.isArray(history) || history.length >= 3000)
     throw new HttpError(503, 'Recent order history is incomplete; allocations were not changed.');
