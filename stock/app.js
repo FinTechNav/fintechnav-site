@@ -310,6 +310,62 @@ let latestBasket = [];
 const tableSorts = { portfolio: null, companies: null, journal: null, account: null };
 const tableTextCollator = new Intl.Collator('en', { numeric: true, sensitivity: 'base' });
 
+const COMPANY_SHORT_DESCRIPTIONS = {
+  NVDA: 'AI Chips & GPUs',
+  IREN: 'AI Data Centers',
+  APLD: 'AI Supercomputer Campuses',
+  WULF: 'Zero-Carbon AI Centers',
+  CORZ: 'High-Power AI Centers',
+  CIFR: 'Wholesale AI Centers',
+  CLSK: 'AI Data Centers',
+  AVGO: 'Custom AI Silicon',
+  VRT: 'Liquid Cooling Systems',
+  ANET: 'AI Networking Systems',
+  VST: 'Clean Power Generation',
+  POET: 'Optical AI Engines',
+  EOSE: 'Energy Storage Batteries',
+  HIVE: 'Green AI Cloud',
+  BTBT: 'AI Cloud Hosting',
+  LMT: 'Aerospace & Defense',
+  RTX: 'Aviation & Air Defense',
+  NOC: 'Space & Defense Systems',
+  GD: 'Marine & Land Defense',
+  KTOS: 'Uncrewed Defense Systems',
+};
+
+function getCompanyShortDescription(symbol, pos = {}) {
+  if (COMPANY_SHORT_DESCRIPTIONS[symbol]) {
+    return COMPANY_SHORT_DESCRIPTIONS[symbol];
+  }
+  const profile = (typeof COMPANY_PROFILES !== 'undefined' && COMPANY_PROFILES[symbol]) || {};
+  if (profile.categoryLabel && !profile.placeholder && !profile.categoryLabel.includes('placeholder')) {
+    return profile.categoryLabel.split(/\s+/).slice(0, 4).join(' ');
+  }
+  if (pos && pos.role && pos.role !== symbol) {
+    const cleaned = String(pos.role).replace(/^(They\s+|We\s+)/i, '').trim();
+    const words = cleaned.split(/\s+/).slice(0, 4).join(' ');
+    if (words) return words;
+  }
+  if (profile.name && profile.name !== symbol) {
+    return profile.name.split(/\s+/).slice(0, 3).join(' ');
+  }
+  return 'Equity holding';
+}
+
+function getCompanyFullDescription(symbol, pos = {}) {
+  const profile = (typeof COMPANY_PROFILES !== 'undefined' && COMPANY_PROFILES[symbol]) || {};
+  if (profile.plainWhatTheyDo && !profile.placeholder) {
+    return profile.plainWhatTheyDo;
+  }
+  if (pos && pos.role && pos.role !== symbol) {
+    return pos.role;
+  }
+  if (profile.plainWhatTheyDo) {
+    return profile.plainWhatTheyDo;
+  }
+  return getCompanyShortDescription(symbol, pos);
+}
+
 function sortNumber(value) {
   if (value == null || value === '') return null;
   const number = Number(value);
@@ -333,14 +389,14 @@ function journalTime(entry) {
 }
 
 function holdingSortValue([symbol, position], key) {
-  const profile = COMPANY_PROFILES[symbol] || {};
+  const profile = (typeof COMPANY_PROFILES !== 'undefined' && COMPANY_PROFILES[symbol]) || {};
   const shares = sortNumber(position.shares);
   const paid = sortNumber(position.avgCost);
   const price = sortNumber(state.quotes[symbol]?.activePrice || position.avgCost);
   const basis = shares == null || paid == null ? null : shares * paid;
   const value = shares == null || price == null ? null : shares * price;
   return {
-    symbol, role: position.role || profile.plainWhatTheyDo,
+    symbol, role: getCompanyShortDescription(symbol, position),
     shares, paid, price, value,
     pnl: value == null || basis == null ? null : value - basis,
     progress: value == null || basis == null ? null : basis > 0 ? (value - basis) / basis : 0
@@ -944,6 +1000,8 @@ function renderKPIsAndPortfolio() {
   const entries = sortedTableRows('portfolio', Object.entries(state.holdings));
   const rowsHtml = entries.map(([sym, pos]) => {
     const profile = COMPANY_PROFILES[sym] || { name: sym, plainWhatTheyDo: pos.role };
+    const shortDesc = getCompanyShortDescription(sym, pos);
+    const fullDesc = getCompanyFullDescription(sym, pos);
     const q = state.quotes[sym] || { activePrice: pos.avgCost };
     const livePrice = Number(q.activePrice || pos.avgCost);
     const basis = pos.shares * pos.avgCost;
@@ -994,7 +1052,11 @@ function renderKPIsAndPortfolio() {
             <span class="text-xs text-[#a1a1a1]">${profile.name}</span>
           </button>
         </td>
-        <td class="py-2.5 px-3 text-[#d9d9d9] text-xs max-w-xs">${PortfolioViews.escape(pos.role || profile.plainWhatTheyDo)}</td>
+        <td class="py-2.5 px-3 text-[#d9d9d9] text-xs min-w-[150px] max-w-xs">
+          <span title="${PortfolioViews.escape(fullDesc)}" class="cursor-help hover:text-[#50a2ff] transition underline decoration-dotted decoration-[#555] underline-offset-2">
+            ${PortfolioViews.escape(shortDesc)}
+          </span>
+        </td>
         <td class="py-2.5 px-3 text-right font-medium text-[#f5f5f5]">${pos.shares}</td>
         <td class="py-2.5 px-3 text-right text-[#a1a1a1]">$${pos.avgCost.toFixed(pos.avgCost < 1 ? 4 : 2)}</td>
         <td class="py-2.5 px-3 text-right font-medium text-[#f5f5f5]">$${livePrice.toFixed(livePrice < 1 ? 4 : 2)}</td>
@@ -1410,6 +1472,16 @@ function openCompanyDetailModal(symbol) {
         }
       </p>
     </div>
+
+    <div class="flex items-center justify-between pt-3 border-t border-[#262626]">
+      <span class="text-xs text-[#a1a1a1]">Ready to invest?</span>
+      <div class="flex items-center gap-2">
+        <button type="button" class="kumo-btn-secondary h-8 px-3 text-xs" onclick="document.getElementById('modal-company-detail').classList.add('hidden')">Close</button>
+        <button type="button" class="kumo-btn-primary h-8 px-3.5 text-xs flex items-center gap-1.5 bg-[#155dfc] text-white hover:bg-[#155dfc]/90" onclick="document.getElementById('modal-company-detail').classList.add('hidden'); openTradeModal('${row.symbol}', 'BUY');">
+          <span>⚡ Place Order for ${row.symbol}</span>
+        </button>
+      </div>
+    </div>
   `;
 
   modal.classList.remove('hidden');
@@ -1712,6 +1784,27 @@ function initEvents() {
     if (viewWriteError) { showToast('Reload shared views before reviewing orders.'); return; }
     const orderProfile = activeView;
     const orderBasket = structuredClone(latestBasket);
+    const nonSliceOrders = orderBasket.filter((order) => !order.isSlice);
+    if (!nonSliceOrders.length) {
+      showToast('No eligible whole-share orders in the shopping list to place.');
+      return;
+    }
+    const totalOrderCost = nonSliceOrders.reduce(
+      (sum, o) => sum + (o.cost || (o.qty || o.quantity || 1) * o.limitPrice),
+      0
+    );
+    const availableCash = Number(
+      brokerSnapshot?.balances?.cashAvailableForTrading ??
+      brokerSnapshot?.balances?.availableFunds ??
+      brokerSnapshot?.balances?.cashBalance ??
+      state.cash ??
+      0
+    );
+    if (availableCash < totalOrderCost) {
+      const shortBy = totalOrderCost - availableCash;
+      showToast(`Insufficient funds: Basket requires $${totalOrderCost.toFixed(2)}, but you only have $${availableCash.toFixed(2)} cash available on Schwab (short $${shortBy.toFixed(2)}).`);
+      return;
+    }
     if (!state.schwabAuth?.connected) {
       document.getElementById('modal-auth')?.classList.remove('hidden');
       showToast('Connect Charles Schwab first.');
@@ -1722,7 +1815,7 @@ function initEvents() {
     try {
       const preview = await stockFetch('/api/schwab-trade', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'prepare', profile:orderProfile, orders: orderBasket.filter((order) => !order.isSlice) })
+        body: JSON.stringify({ action: 'prepare', profile:orderProfile, orders: nonSliceOrders })
       });
       const plan = await preview.json();
       if (!preview.ok) throw new Error(plan.error);
@@ -1858,6 +1951,271 @@ function initEvents() {
   });
 
   document.getElementById('btn-refresh-quotes')?.addEventListener('click', refreshLiveQuotes);
+  initTradeTicketModal();
+}
+
+function openTradeModal(symbol = '', defaultAction = 'BUY') {
+  const modal = document.getElementById('modal-trade-ticket');
+  if (!modal) return;
+  const symInput = document.getElementById('trade-input-symbol');
+  const profileSelect = document.getElementById('trade-select-profile');
+
+  if (activeView === 'partner') {
+    profileSelect.value = 'partner';
+  } else {
+    profileSelect.value = 'primary';
+  }
+
+  setTradeAction(defaultAction);
+
+  if (symbol) {
+    symInput.value = symbol.toUpperCase();
+    onTradeSymbolChanged(symbol.toUpperCase());
+  } else if (symInput.value) {
+    onTradeSymbolChanged(symInput.value.toUpperCase());
+  } else {
+    const defaultSym = state.watchlist[0]?.symbol || 'POET';
+    symInput.value = defaultSym;
+    onTradeSymbolChanged(defaultSym);
+  }
+
+  populateQuickTradeSymbols();
+  updateTradeCalculations();
+  modal.classList.remove('hidden');
+}
+
+function setTradeAction(action) {
+  const actionInput = document.getElementById('trade-input-action');
+  const buyBtn = document.getElementById('btn-trade-action-buy');
+  const sellBtn = document.getElementById('btn-trade-action-sell');
+  if (!actionInput || !buyBtn || !sellBtn) return;
+  actionInput.value = action;
+  if (action === 'BUY') {
+    buyBtn.className = 'h-9 rounded-lg font-semibold border border-[#10b981] bg-[#10b981]/20 text-[#a4f4cf] transition';
+    sellBtn.className = 'h-9 rounded-lg font-semibold border border-[#333333] bg-[#171717] text-[#a1a1a1] hover:text-[#f5f5f5] transition';
+  } else {
+    sellBtn.className = 'h-9 rounded-lg font-semibold border border-[#ff6467] bg-[#ff6467]/20 text-[#ff6467] transition';
+    buyBtn.className = 'h-9 rounded-lg font-semibold border border-[#333333] bg-[#171717] text-[#a1a1a1] hover:text-[#f5f5f5] transition';
+  }
+  updateTradeCalculations();
+}
+
+function onTradeSymbolChanged(sym) {
+  const display = document.getElementById('trade-quote-display');
+  const priceInput = document.getElementById('trade-input-price');
+  if (!sym) {
+    if (display) display.textContent = 'Quote: —';
+    return;
+  }
+  const q = state.quotes[sym];
+  const holding = state.holdings[sym];
+  let livePrice = Number(q?.activePrice || holding?.avgCost || 0);
+  if (!livePrice) {
+    const row = latestComputedRows.find((r) => r.symbol === sym);
+    if (row && row.price) livePrice = row.price;
+  }
+  if (display) {
+    if (livePrice > 0) {
+      display.textContent = `$${livePrice.toFixed(livePrice < 1 ? 4 : 2)} (live)`;
+    } else {
+      display.textContent = 'Quote: awaiting price';
+    }
+  }
+  if (priceInput && (!priceInput.value || priceInput.dataset.autoFilled === 'true' || Number(priceInput.value) <= 0)) {
+    if (livePrice > 0) {
+      priceInput.value = livePrice.toFixed(livePrice < 1 ? 4 : 2);
+      priceInput.dataset.autoFilled = 'true';
+    }
+  }
+  updateTradeCalculations();
+}
+
+function updateTradeCalculations() {
+  const totalEl = document.getElementById('trade-calc-total');
+  const availEl = document.getElementById('trade-calc-available');
+  const statusEl = document.getElementById('trade-funds-status');
+  const submitBtn = document.getElementById('btn-trade-submit');
+  const sharesInput = document.getElementById('trade-input-shares');
+  const priceInput = document.getElementById('trade-input-price');
+  const actionInput = document.getElementById('trade-input-action');
+
+  if (!totalEl || !availEl || !statusEl || !submitBtn || !sharesInput || !priceInput || !actionInput) return;
+
+  const shares = Math.max(0, Math.floor(Number(sharesInput.value) || 0));
+  const price = Math.max(0, Number(priceInput.value) || 0);
+  const total = Number((shares * price).toFixed(2));
+  const action = actionInput.value || 'BUY';
+
+  const availableCash = Number(
+    brokerSnapshot?.balances?.cashAvailableForTrading ??
+    brokerSnapshot?.balances?.availableFunds ??
+    brokerSnapshot?.balances?.cashBalance ??
+    state.cash ??
+    0
+  );
+
+  totalEl.textContent = `$${total.toFixed(2)}`;
+  availEl.textContent = `$${availableCash.toFixed(2)}`;
+
+  if (shares < 1 || price <= 0) {
+    statusEl.textContent = 'Enter whole shares and limit price.';
+    statusEl.className = 'pt-1 font-medium text-[11px] text-[#a1a1a1]';
+    submitBtn.disabled = true;
+    return;
+  }
+
+  if (action === 'BUY') {
+    if (total > availableCash) {
+      const shortBy = total - availableCash;
+      statusEl.textContent = `⚠️ Insufficient funds: Short by $${shortBy.toFixed(2)} (Cash: $${availableCash.toFixed(2)})`;
+      statusEl.className = 'pt-1 font-medium text-[11px] text-[#ff6467]';
+      submitBtn.disabled = true;
+      return;
+    }
+    if (price < 1) {
+      statusEl.textContent = '⚠️ Sub-$1 purchases require settled cash on Schwab.';
+      statusEl.className = 'pt-1 font-medium text-[11px] text-[#ff6467]';
+      submitBtn.disabled = true;
+      return;
+    }
+  }
+
+  if (total > 100) {
+    statusEl.textContent = '⚠️ Exceeds safety limit: App orders are capped at $100.00 max per batch.';
+    statusEl.className = 'pt-1 font-medium text-[11px] text-[#ff6467]';
+    submitBtn.disabled = true;
+    return;
+  }
+
+  const remaining = availableCash - total;
+  statusEl.textContent = action === 'BUY'
+    ? `✓ Funds available ($${remaining.toFixed(2)} cash remaining after fill)`
+    : `✓ Ready to place limit order on Schwab`;
+  statusEl.className = 'pt-1 font-medium text-[11px] text-[#a4f4cf]';
+  submitBtn.disabled = false;
+}
+
+function populateQuickTradeSymbols() {
+  const container = document.getElementById('trade-quick-symbols');
+  if (!container) return;
+  const symbols = ['POET', 'CIFR', 'HIVE', 'IREN', 'CORZ', 'CLSK', 'APLD'];
+  container.innerHTML = symbols
+    .map(
+      (sym) =>
+        `<button type="button" class="px-2 py-0.5 rounded bg-[#171717] hover:bg-[#262626] text-[11px] font-semibold text-[#a1a1a1] hover:text-[#50a2ff] transition" onclick="document.getElementById('trade-input-symbol').value='${sym}'; onTradeSymbolChanged('${sym}');">${sym}</button>`
+    )
+    .join('');
+}
+
+function initTradeTicketModal() {
+  window.openTradeModal = openTradeModal;
+  window.onTradeSymbolChanged = onTradeSymbolChanged;
+
+  document.getElementById('btn-open-trade-modal')?.addEventListener('click', () => openTradeModal());
+  document.getElementById('btn-portfolio-trade')?.addEventListener('click', () => openTradeModal());
+  document.getElementById('btn-close-trade-modal')?.addEventListener('click', () => {
+    document.getElementById('modal-trade-ticket')?.classList.add('hidden');
+  });
+  document.getElementById('btn-trade-cancel')?.addEventListener('click', () => {
+    document.getElementById('modal-trade-ticket')?.classList.add('hidden');
+  });
+  document.getElementById('modal-trade-ticket')?.addEventListener('click', (e) => {
+    if (e.target.id === 'modal-trade-ticket') e.target.classList.add('hidden');
+  });
+
+  document.getElementById('btn-trade-action-buy')?.addEventListener('click', () => setTradeAction('BUY'));
+  document.getElementById('btn-trade-action-sell')?.addEventListener('click', () => setTradeAction('SELL'));
+
+  const symInput = document.getElementById('trade-input-symbol');
+  symInput?.addEventListener('input', (e) => {
+    const sym = e.target.value.trim().toUpperCase();
+    onTradeSymbolChanged(sym);
+  });
+
+  document.getElementById('trade-input-shares')?.addEventListener('input', updateTradeCalculations);
+  const priceInput = document.getElementById('trade-input-price');
+  priceInput?.addEventListener('input', () => {
+    priceInput.dataset.autoFilled = 'false';
+    updateTradeCalculations();
+  });
+
+  document.getElementById('btn-trade-use-ask')?.addEventListener('click', () => {
+    const sym = symInput?.value.trim().toUpperCase();
+    if (sym) {
+      priceInput.dataset.autoFilled = 'true';
+      onTradeSymbolChanged(sym);
+    }
+  });
+
+  document.getElementById('form-direct-trade')?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    if (!state.schwabAuth?.connected) {
+      document.getElementById('modal-auth')?.classList.remove('hidden');
+      showToast('Connect Charles Schwab first.');
+      return;
+    }
+    const profile = document.getElementById('trade-select-profile').value || activeView || 'primary';
+    const action = document.getElementById('trade-input-action').value || 'BUY';
+    const symbol = document.getElementById('trade-input-symbol').value.trim().toUpperCase();
+    const quantity = Math.floor(Number(document.getElementById('trade-input-shares').value) || 0);
+    const limitPrice = Number(document.getElementById('trade-input-price').value) || 0;
+    const session = document.getElementById('trade-select-session').value || 'NORMAL';
+
+    if (!symbol || quantity < 1 || limitPrice <= 0) {
+      showToast('Fill in all order fields correctly.');
+      return;
+    }
+
+    const total = quantity * limitPrice;
+    const availableCash = Number(
+      brokerSnapshot?.balances?.cashAvailableForTrading ??
+      brokerSnapshot?.balances?.availableFunds ??
+      brokerSnapshot?.balances?.cashBalance ??
+      state.cash ??
+      0
+    );
+
+    if (action === 'BUY' && total > availableCash) {
+      showToast(`Insufficient funds: Order requires $${total.toFixed(2)}, but you only have $${availableCash.toFixed(2)} cash available on Schwab.`);
+      return;
+    }
+
+    const button = document.getElementById('btn-trade-submit');
+    button.disabled = true;
+    try {
+      const orderPayload = [{ symbol, qty: quantity, limitPrice, instruction: action, session }];
+      const preview = await stockFetch('/api/schwab-trade', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'prepare', profile, orders: orderPayload })
+      });
+      const plan = await preview.json();
+      if (!preview.ok || !plan.ok) throw new Error(plan.error || 'Could not prepare order.');
+
+      const summary = plan.orders.map((o) => `${o.instruction} ${o.quantity} ${o.symbol} @ $${o.limitPrice.toFixed(2)} Limit (${o.session})`).join('\n');
+      if (!window.confirm(`Submit this live order for ${viewLabel(plan.profile)} to Charles Schwab?\n\n${summary}\n\nTotal order cost: $${plan.total.toFixed(2)}`)) {
+        return;
+      }
+
+      const response = await stockFetch('/api/schwab-trade', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'submit', confirmationId: plan.confirmationId })
+      });
+      const result = await response.json();
+      if (!result.ok) {
+        throw new Error(result.error || result.results?.find((o) => !o.ok)?.error || 'Check Schwab for order status.');
+      }
+
+      document.getElementById('modal-trade-ticket')?.classList.add('hidden');
+      showToast(`Order submitted to Charles Schwab! Fills will be attributed to ${viewLabel(plan.profile)}.`);
+      document.getElementById('btn-sync-schwab-positions')?.click();
+    } catch (error) {
+      showToast(error.message);
+    } finally {
+      button.disabled = false;
+    }
+  });
 }
 
 async function checkAutoOAuthCallback() {

@@ -34,9 +34,11 @@ export const createHandler = (dependencies = {}) =>
     const historyPath = () => {
       // Include older GTC orders that may have executed today, not just orders
       // entered today. Saturated result sets fail closed in inspectHistory.
+      const to = new Date();
+      const from = new Date(to.getTime() - 58 * 86400000);
       const query = new URLSearchParams({
-        fromEnteredTime: new Date(Date.now() - 60 * 86400000).toISOString(),
-        toEnteredTime: new Date().toISOString(),
+        fromEnteredTime: from.toISOString(),
+        toEnteredTime: to.toISOString(),
         maxResults: '3000',
       });
       return `${prefix}/orders?${query}`;
