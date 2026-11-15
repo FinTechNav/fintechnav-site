@@ -169,15 +169,15 @@
         </div>
       </div>
 
-      <form id="form-login-gate" class="space-y-4 text-sm">
+      <form id="form-login-gate" method="post" action="#" class="space-y-4 text-sm">
         <p id="login-instructions" class="text-xs text-[#a1a1a1]">Sign in with your private stock account.</p>
         <div>
           <label for="login-username" class="text-[#a1a1a1] block mb-1.5 text-xs">Email</label>
-          <input id="login-username" type="email" autocomplete="username" placeholder="Your stock-account email" required class="kumo-input w-full px-3 py-2 text-sm" />
+          <input id="login-username" name="username" type="email" autocomplete="username" placeholder="Your stock-account email" required class="kumo-input w-full px-3 py-2 text-sm" />
         </div>
         <div>
           <label for="login-password" class="text-[#a1a1a1] block mb-1.5 text-xs">Password</label>
-          <input id="login-password" type="password" autocomplete="current-password" required minlength="12" class="kumo-input w-full px-3 py-2 text-sm" />
+          <input id="login-password" name="password" type="password" autocomplete="current-password" required minlength="12" class="kumo-input w-full px-3 py-2 text-sm" />
         </div>
         <div id="login-error-msg" role="alert" class="hidden text-[#ff6467] text-xs"></div>
         <button type="submit" class="kumo-btn-primary w-full h-9 text-sm">Sign in to dashboard</button>
