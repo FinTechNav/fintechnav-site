@@ -1790,17 +1790,20 @@ function initEvents() {
 
 function getTradeAvailableCash() {
   const b = (typeof brokerSnapshot !== 'undefined' && brokerSnapshot?.balances) || {};
-  return Number(
-    (b.cashAvailableForTrading > 0 ? b.cashAvailableForTrading : null) ??
-    (b.availableFunds > 0 ? b.availableFunds : null) ??
-    (b.cashBalance > 0 ? b.cashBalance : null) ??
-    (b.buyingPower > 0 ? b.buyingPower : null) ??
-    (state.cash > 0 ? state.cash : null) ??
-    b.cashAvailableForTrading ??
-    b.cashBalance ??
-    state.cash ??
-    0
-  );
+  const candidates = [
+    b.cashAvailableForTrading,
+    b.availableFunds,
+    b.cashBalance,
+    b.totalCash,
+    b.settledCash,
+    b.availableFundsNonMarginableTrade,
+    b.moneyMarketFund,
+    b.buyingPower,
+    b.cashPositionsTotal,
+    state.cash,
+  ];
+  const positive = candidates.find((v) => typeof v === 'number' && Number.isFinite(v) && v > 0);
+  return positive ?? Math.max(0, Number(b.cashAvailableForTrading || b.cashBalance || state.cash || 0));
 }
 
   // The server stores the reviewed basket and accepts its one-use confirmation.

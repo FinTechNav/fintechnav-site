@@ -518,3 +518,70 @@ test('fetchOrderHistory falls back to plain /orders when date-bounded query thro
   const orders = await fetchOrderHistory('test-account-hash', { accessToken: 'tok' }, fetcher, false);
   assert.deepEqual(orders, expectedOrders);
 });
+
+test('normalizeAccount extracts cash from cash sweep positions (CASH_EQUIVALENT) and totalCash/settledCash', async () => {
+  const { normalizeAccount } = await import('../server/stock/portfolio-views.mjs');
+  const accounts = [
+    {
+      securitiesAccount: {
+        positions: [
+          {
+            longQuantity: 5.43,
+            marketValue: 5.43,
+            instrument: {
+              assetType: 'CASH_EQUIVALENT',
+              symbol: 'SWVXX',
+              description: 'SCHWAB BANK DEPOSIT ACCOUNT',
+            },
+          },
+        ],
+        currentBalances: {
+          liquidationValue: 100,
+          cashAvailableForTrading: 0,
+          cashBalance: 0,
+        },
+      },
+    },
+  ];
+  const snapshot = normalizeAccount(accounts, [], {});
+  assert.equal(snapshot.balances.cashAvailableForTrading, 5.43);
+  assert.equal(snapshot.balances.cashBalance, 5.43);
+  assert.equal(snapshot.balances.cashPositionsTotal, 5.43);
+});
+
+test('fetchOrderHistory falls back to /transactions when /orders returns 0 orders', async () => {
+  const { fetchOrderHistory } = await import('../server/stock/portfolio-views.mjs');
+  const mockTransactions = [
+    {
+      activityId: 'tx-999',
+      type: 'TRADE',
+      netAmount: -150.25,
+      time: '2026-11-15T12:00:00Z',
+      description: 'BOUGHT 1 AAPL @ 150.25',
+      transferItems: [
+        {
+          amount: 1,
+          price: 150.25,
+          cost: 150.25,
+          instrument: { symbol: 'AAPL', assetType: 'EQUITY', description: 'APPLE INC' },
+        },
+      ],
+    },
+  ];
+  const fetcher = async (url) => {
+    if (String(url).includes('/orders')) {
+      return Response.json([]);
+    }
+    if (String(url).includes('/transactions')) {
+      return Response.json(mockTransactions);
+    }
+    throw new Error(`Unexpected url: ${url}`);
+  };
+  const orders = await fetchOrderHistory('test-account-hash', { accessToken: 'tok' }, fetcher);
+  assert.equal(orders.length, 1);
+  assert.equal(orders[0].symbol, 'AAPL');
+  assert.equal(orders[0].instruction, 'BUY');
+  assert.equal(orders[0].quantity, 1);
+  assert.equal(orders[0].price, 150.25);
+  assert.equal(orders[0].status, 'FILLED');
+});

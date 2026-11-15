@@ -53,39 +53,80 @@ export function normalizeAccount(accounts, history, labels = {}) {
       finite(p.longQuantity) > 0 &&
       finite(p.shortQuantity) === 0,
   }));
-  const balanceKeys = [
-    'liquidationValue',
-    'cashAvailableForTrading',
-    'cashBalance',
-    'availableFunds',
-    'buyingPower',
-    'nonMarginableTradeFunds',
-    'settledFunds',
-    'cashDebitCallValue',
-    'unsettledCash',
-  ];
+  const balanceSources = [
+    account.currentBalances,
+    account.projectedBalances,
+    account.aggregatedBalance,
+    account.initialBalances,
+  ].filter(Boolean);
+
   const balances = {};
-  for (const k of balanceKeys) {
-    const val =
-      account.currentBalances?.[k] ??
-      account.projectedBalances?.[k] ??
-      account.aggregatedBalance?.[k] ??
-      account.initialBalances?.[k];
-    if (Number.isFinite(Number(val))) {
-      balances[k] = Number(val);
+  for (const src of balanceSources) {
+    for (const [k, v] of Object.entries(src)) {
+      if (Number.isFinite(Number(v)) && balances[k] === undefined) {
+        balances[k] = Number(v);
+      }
     }
   }
-  if (!balances.cashAvailableForTrading || balances.cashAvailableForTrading <= 0) {
-    const positiveCash = [
-      balances.availableFunds,
-      balances.cashBalance,
-      balances.buyingPower,
-      balances.settledFunds,
-    ].find((v) => typeof v === 'number' && Number.isFinite(v) && v > 0);
-    if (positiveCash > 0) {
-      balances.cashAvailableForTrading = positiveCash;
+
+  // Identify cash sweep positions (CASH_EQUIVALENT, CURRENCY, money market)
+  const cashPositions = (account.positions || []).filter((p) => {
+    const type = String(p.instrument?.assetType || '').toUpperCase();
+    const sym = String(p.instrument?.symbol || '').toUpperCase();
+    const desc = String(p.instrument?.description || '').toUpperCase();
+    return (
+      type === 'CASH_EQUIVALENT' ||
+      type === 'CURRENCY' ||
+      sym === 'SWVXX' ||
+      sym === 'SNAXX' ||
+      sym === 'SPAXX' ||
+      sym === '/BA' ||
+      sym.startsWith('QII') ||
+      desc.includes('CASH') ||
+      desc.includes('BANK DEPOSIT') ||
+      desc.includes('MONEY MARKET') ||
+      desc.includes('SWEEP')
+    );
+  });
+
+  const cashPositionsTotal = cashPositions.reduce(
+    (sum, p) => sum + (finite(p.marketValue) || finite(p.longQuantity) || 0),
+    0
+  );
+
+  const cashCandidates = [
+    balances.cashAvailableForTrading,
+    balances.availableFunds,
+    balances.cashBalance,
+    balances.totalCash,
+    balances.settledCash,
+    balances.settledFunds,
+    balances.availableFundsNonMarginableTrade,
+    balances.nonMarginableTradeFunds,
+    balances.moneyMarketFund,
+    balances.buyingPower,
+    balances.dayTradingBuyingPower,
+    cashPositionsTotal > 0 ? cashPositionsTotal : null,
+  ];
+
+  const positiveCash = cashCandidates.find(
+    (v) => typeof v === 'number' && Number.isFinite(v) && v > 0
+  );
+
+  if (positiveCash > 0) {
+    balances.cashAvailableForTrading = positiveCash;
+    if (!balances.cashBalance || balances.cashBalance <= 0) {
+      balances.cashBalance = positiveCash;
     }
+    if (!balances.availableFunds || balances.availableFunds <= 0) {
+      balances.availableFunds = positiveCash;
+    }
+  } else if (cashPositionsTotal > 0) {
+    balances.cashAvailableForTrading = cashPositionsTotal;
+    balances.cashBalance = cashPositionsTotal;
+    balances.availableFunds = cashPositionsTotal;
   }
+  balances.cashPositionsTotal = cashPositionsTotal;
   const orders = history.map((order) => {
     const legs =
       order.orderLegCollection ||
@@ -241,6 +282,57 @@ export const historyPath = (account) => {
     maxResults: '3000',
   })}`;
 };
+export function transactionToOrder(tx) {
+  const item = tx.transferItems?.[0] || {};
+  const symbol = String(item.instrument?.symbol || item.instrument?.cusip || 'Unknown');
+  const assetType = String(item.instrument?.assetType || 'EQUITY');
+  const qty = Math.abs(Number(item.amount ?? tx.amount ?? 0));
+  const desc = String(tx.description || '').toUpperCase();
+  const net = Number(tx.netAmount ?? tx.amount ?? 0);
+  const isBuy = desc.includes('BUY') || desc.includes('BOUGHT') || net < 0;
+  const instruction = isBuy ? 'BUY' : 'SELL';
+  let price = Number(item.price);
+  if (!Number.isFinite(price) || price <= 0) {
+    price = Number(
+      item.cost && qty > 0 ? item.cost / qty : qty > 0 ? Math.abs(net) / qty : 0
+    );
+  }
+  const time = tx.time || tx.tradeDate || tx.settlementDate || new Date().toISOString();
+  const orderId = String(tx.orderId || tx.activityId || tx.positionId || '');
+
+  return {
+    orderId,
+    symbol,
+    assetType,
+    instruction,
+    status: 'FILLED',
+    quantity: qty,
+    filledQuantity: qty,
+    enteredTime: time,
+    closeTime: time,
+    price,
+    limitPrice: price,
+    orderLegCollection: [
+      {
+        instruction,
+        quantity: qty,
+        instrument: {
+          symbol,
+          assetType,
+          description: item.instrument?.description || symbol,
+        },
+      },
+    ],
+    executionLegs: [
+      {
+        quantity: qty,
+        price,
+        time,
+      },
+    ],
+  };
+}
+
 export async function fetchOrderHistoryWithDiagnostics(
   account,
   record,
@@ -268,30 +360,60 @@ export async function fetchOrderHistoryWithDiagnostics(
     toEnteredTime: to.toISOString(),
   });
 
+  const txQueryYMD = new URLSearchParams({
+    startDate: from58.toISOString().slice(0, 10),
+    endDate: to.toISOString().slice(0, 10),
+    types: 'TRADE',
+  });
+  const txQueryISO = new URLSearchParams({
+    startDate: from58.toISOString(),
+    endDate: to.toISOString(),
+    types: 'TRADE',
+  });
+
   const diagnostics = [];
   let orders = null;
   let lastError = null;
 
   const strategies = [
-    { name: 'account-bounded-58d', path: `${prefix}/orders?${query58}` },
-    { name: 'account-bounded-30d', path: `${prefix}/orders?${query30}` },
-    { name: 'account-bounded-7d', path: `${prefix}/orders?${query7}` },
-    { name: 'global-bounded-58d', path: `/orders?${query58}` },
-    { name: 'global-bounded-30d', path: `/orders?${query30}` },
-    { name: 'account-unparameterized', path: `${prefix}/orders` },
-    { name: 'global-unparameterized', path: `/orders` },
+    { name: 'account-bounded-58d', path: `${prefix}/orders?${query58}`, type: 'orders' },
+    { name: 'account-bounded-30d', path: `${prefix}/orders?${query30}`, type: 'orders' },
+    { name: 'account-bounded-7d', path: `${prefix}/orders?${query7}`, type: 'orders' },
+    { name: 'global-bounded-58d', path: `/orders?${query58}`, type: 'orders' },
+    { name: 'global-bounded-30d', path: `/orders?${query30}`, type: 'orders' },
+    { name: 'account-tx-trade-ymd', path: `${prefix}/transactions?${txQueryYMD}`, type: 'transactions' },
+    { name: 'account-tx-trade-iso', path: `${prefix}/transactions?${txQueryISO}`, type: 'transactions' },
+    { name: 'account-tx-trade', path: `${prefix}/transactions?types=TRADE`, type: 'transactions' },
+    { name: 'account-tx-all', path: `${prefix}/transactions`, type: 'transactions' },
+    { name: 'account-unparameterized', path: `${prefix}/orders`, type: 'orders' },
+    { name: 'global-unparameterized', path: `/orders`, type: 'orders' },
   ];
 
   for (const s of strategies) {
     try {
       const res = await brokerGet(s.path, record, fetcher);
-      const count = Array.isArray(res) ? res.length : 0;
+      let list = [];
+      if (Array.isArray(res)) {
+        if (s.type === 'transactions') {
+          list = res
+            .filter(
+              (t) =>
+                t.type === 'TRADE' ||
+                t.transferItems?.length ||
+                /buy|bought|sell|sold/i.test(t.description || '')
+            )
+            .map(transactionToOrder);
+        } else {
+          list = res;
+        }
+      }
+      const count = list.length;
       diagnostics.push({ strategy: s.name, ok: true, count });
       if (count > 0) {
-        return { orders: res, diagnostics };
+        return { orders: list, diagnostics };
       }
       if (orders === null && Array.isArray(res)) {
-        orders = res;
+        orders = list;
       }
     } catch (err) {
       lastError = err;

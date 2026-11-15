@@ -88,10 +88,10 @@ async function fixture(options = {}) {
       return Response.json([
         { securitiesAccount: { positions: [], currentBalances: { cashAvailableForTrading: 5 } } },
       ]);
-    if (String(url).includes('/orders') && init.method !== 'POST')
+    if ((String(url).includes('/orders') || String(url).includes('/transactions')) && init.method !== 'POST')
       return options.historyError
         ? new Response('', { status: 503 })
-        : Response.json(options.history || []);
+        : Response.json(options.history || options.transactions || []);
     if (String(url).endsWith('/orders') && init.method === 'POST')
       return new Response(null, { status: 201, headers: { Location: '/orders/mock-order-id' } });
     if (String(url).endsWith('/oauth/token') && options.tokenError)
