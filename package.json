@@ -7,10 +7,10 @@
   "description": "Professional biography website (fintechnav.com) & RedDay AI Stock Portfolio PWA (fintechnav.com/stock)",
   "devDependencies": {
     "esbuild": "^0.28.2",
-    "eslint": "^10.14.0",
+    "eslint": "^10.15.0",
     "husky": "^9.1.7",
-    "lint-staged": "^17.6.0",
-    "prettier": "^3.9.10"
+    "lint-staged": "^17.6.1",
+    "prettier": "^3.10.1"
   },
   "scripts": {
     "prepare": "node -e \"if(process.env.CI !== 'true') { try { require('husky'); } catch(e) { console.log('Husky not found, skipping'); } }\"",
@@ -31,9 +31,9 @@
     ]
   },
   "dependencies": {
-    "@netlify/blobs": "^11.1.8",
+    "@netlify/blobs": "^11.1.9",
     "@netlify/identity": "^2.0.1",
-    "nodemailer": "^10.4.0"
+    "nodemailer": "^10.6.0"
   },
   "overrides": {
     "eslint": {
